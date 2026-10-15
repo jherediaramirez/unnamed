@@ -258,6 +258,25 @@ TArray<FHudDraw> HudDrawList::Build(
     if (!S.bVisible) return B.Draws;
     // F1 hides the HUD; the open chat and the death screen (screens) still draw.
     const bool bHud = !S.bHideHud;
+    // The red damage tint, first so everything draws over it: overlay texel 0xB2FF0000 while hurtTime > 0 or dead
+    // [survival.r6.hud_rules]. PROVISIONAL: the final framebuffer alpha was not measured (SF 10088). It is vanilla's
+    // world/entity render effect, not HUD, so F1 does not hide it.
+    if (S.bDamageTint) B.Rect({0, 0}, L.Size, FLinearColor(FColor(0xFF, 0x00, 0x00, 0xB2)));
+    // The first-person fire overlay (PROVISIONAL placement, no measurement): two copies of the current fire_1 frame,
+    // each half the screen width square, bottom aligned, shifted outward by 0.24 of their size, alpha 0.9, the right
+    // one mirrored. Like the tint it is a render effect, so F1 keeps it.
+    if (S.bOnFire && S.bFirstPerson)
+    {
+        const int32 Side = L.Size.X / 2, Shift = FMath::RoundToInt(.24f * Side);
+        const float V0 = float(S.FireFrame % HudDrawList::FireFrames) / HudDrawList::FireFrames,
+                    V1 = float(S.FireFrame % HudDrawList::FireFrames + 1) / HudDrawList::FireFrames;
+        const FLinearColor Tint(1, 1, 1, .9f);
+        B.Draws.Add({TEXT("block/fire_1"), FIntRect({-Shift, L.Size.Y - Side}, {Side - Shift, L.Size.Y}),
+            FBox2f(FVector2f(0, V0), FVector2f(1, V1)), Tint});
+        B.Draws.Add(
+            {TEXT("block/fire_1"), FIntRect({L.Size.X - Side + Shift, L.Size.Y - Side}, {L.Size.X + Shift, L.Size.Y}),
+                FBox2f(FVector2f(1, V0), FVector2f(0, V1)), Tint});
+    }
     // The death screen hides the crosshair; the rest of the HUD stays under it.
     if (bHud && !S.bDeathScreen && HudModel::IsCrosshairVisible(S))
     {
@@ -397,10 +416,23 @@ TArray<FHudDraw> HudDrawList::Build(
     if (S.bChatOpen)
     {
         B.Rect({2, L.Size.Y - 14}, {L.Size.X - 4, 12}, FLinearColor(0, 0, 0, .5f));
-        // A line longer than the bar shows its end (vanilla scrolls with the cursor; the caret here is always last).
-        FString Typed = S.ChatInput + TEXT("_");
-        while (Typed.Len() > 1 && MeasureText(Typed, Glyphs) > L.Size.X - 8)
-            Typed.RightChopInline(1);
+        // A line longer than the bar shows its end (vanilla scrolls with the cursor): characters drop from the left
+        // until the line and, at the end, its "_" fit; a caret further left keeps itself in view.
+        const int32 Caret = S.CaretIndex < 0 ? S.ChatInput.Len() : FMath::Min(S.CaretIndex, S.ChatInput.Len());
+        const bool bAtEnd = Caret == S.ChatInput.Len();
+        const FString Tail = bAtEnd ? TEXT("_") : TEXT("");
+        int32 Cut = 0;
+        while (Cut < Caret && MeasureText(S.ChatInput.Mid(Cut) + Tail, Glyphs) > L.Size.X - 8)
+            ++Cut;
+        FString Typed = S.ChatInput.Mid(Cut);
+        while (Typed.Len() > 1 && !bAtEnd && MeasureText(Typed, Glyphs) > L.Size.X - 8)
+            Typed.LeftChopInline(1);
+        // The blink [survival.r4.caret]: a "_" after the text at the end, otherwise a 1 px bar, line height, at the
+        // caret.
+        if (bAtEnd && S.bCaretVisible) Typed += TEXT("_");
+        if (!bAtEnd && S.bCaretVisible)
+            B.Rect({4 + MeasureText(S.ChatInput.Mid(Cut, Caret - Cut), Glyphs), L.Size.Y - 13}, {1, 10},
+                FLinearColor(FColor(0xE0, 0xE0, 0xE0)));
         B.Text(Typed, {4, L.Size.Y - 12}, FLinearColor(FColor(0xE0, 0xE0, 0xE0)));
     }
     // Fixture data is always labelled: the whole cluster, or only the token hotbar beside real vitals.

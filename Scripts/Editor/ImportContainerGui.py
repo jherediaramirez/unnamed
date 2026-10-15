@@ -1,7 +1,8 @@
 """Import the survival inventory screen's art (survival step 5b) from Reference/minecraft-menu as standalone GUI
 textures under GuiRoot/Container (UUnnamedProjectSettings::GuiRoot): container/inventory.png, the empty armor and
 offhand slot silhouettes and the recipe-book button; the crafting table's container/crafting_table.png (survival
-step 7); the furnace's container/furnace.png with its flame and arrow sprites (T1 step 8a2); and the vanilla button
+step 7); the furnace's container/furnace.png with its flame and arrow sprites (T1 step 8a2); the smoker's
+and blast furnace's backgrounds and sprites (T1 step 8b); and the vanilla button
 sprites widget/button, button_highlighted and button_disabled (the death screen, survival step 11a). Same pixel
 settings as ImportBlocks.py's creative textures.
 
@@ -28,6 +29,9 @@ SOURCES = ["gui/container/inventory"] + ["gui/sprites/container/slot/" + name fo
           ["gui/sprites/recipe_book/button", "gui/sprites/recipe_book/button_highlighted",
            "gui/container/crafting_table", "gui/container/furnace",
            "gui/sprites/container/furnace/lit_progress", "gui/sprites/container/furnace/burn_progress"] + \
+          [part for name in ("smoker", "blast_furnace") for part in
+           ("gui/container/" + name, "gui/sprites/container/" + name + "/lit_progress",
+            "gui/sprites/container/" + name + "/burn_progress")] + \
           ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")]
 TAG = "SourceSha256"
 assets = unreal.EditorAssetLibrary

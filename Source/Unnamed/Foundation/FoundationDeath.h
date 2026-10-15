@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Foundation/FoundationVitals.h"
 
 // Death (survival step 11a): the death screen's switch and the drop rules. Sourced from the survival findings
 // (C:\dev\projects\value-holder\SURVIVAL-FINDINGS-26.3.md, section "R6 Hurt and death") and the value report
@@ -34,5 +35,31 @@ namespace FoundationDeath
     inline int32 GetExperienceDrop(int32 Level)
     {
         return int32(FMath::Clamp(int64(Level) * 7, int64(0), int64(100)));
+    }
+}
+
+// Hurt and death camera (survival step 11b). Pure functions; the pawn applies them when foundation.Death.Screen is 1.
+namespace FoundationHurt
+{
+    // [hurt.camera_tilt] the roll in degrees: -14 x sin((hurtTime / hurtDuration)^4 x pi) x the Damage Tilt preference.
+    // hurtTime counts down from hurtDuration (10) at the hit. Generic damage has no direction (hurtDir 0), so the tilt
+    // is a plain roll about the view axis.
+    inline double GetHurtTiltDegrees(double HurtTime, double HurtDuration, double Strength)
+    {
+        if (HurtDuration <= 0) return 0;
+        return -14. * FMath::Sin(FMath::Pow(HurtTime / HurtDuration, 4.) * UE_DOUBLE_PI) * Strength;
+    }
+
+    // [hurt.camera] the death roll in degrees: 40 - 8000 / (min(deathTime, 20) + 200).
+    inline double GetDeathRollDegrees(double DeathTime)
+    {
+        return 40. - 8000. / (FMath::Min(DeathTime, 20.) + 200.);
+    }
+
+    // [hurt.cooldown] the vitals' hurt animation: the cooldown starts at 20 and the animation is its first 10, so a
+    // fresh hit is 10 and it counts down to 0.
+    inline int32 GetHurtTime(const FFoundationVitals& Vitals)
+    {
+        return FMath::Max(0, Vitals.DamageCooldown - 10);
     }
 }

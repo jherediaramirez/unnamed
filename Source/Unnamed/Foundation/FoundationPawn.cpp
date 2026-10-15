@@ -672,6 +672,16 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             }
         }
     }
+    // Survival step 11b (foundation.Death.Screen 1, first person only): the hurt tilt and the death roll about the
+    // view axis. Provisional: the hurt time runs between ticks as hurtTime - partialTick [hurt.camera_tilt]; generic
+    // damage has no direction (hurtDir 0).
+    if (FoundationDeath::IsScreenEnabled() && !IsSpringArmView() && Perspective == 0)
+    {
+        if (const int32 HurtTime = FoundationHurt::GetHurtTime(Vitals); HurtTime > 0)
+            View.Roll += FoundationHurt::GetHurtTiltDegrees(
+                HurtTime - Alpha, 10., FMath::Clamp(ReadNumber(TEXT("damageTiltStrength"), 1.), 0., 1.));
+        if (Vitals.IsDead()) View.Roll += FoundationHurt::GetDeathRollDegrees(Vitals.DeathTicks + Alpha);
+    }
     Camera->SetWorldLocationAndRotation(CameraLocation, View);
     UpdateBody(Alpha, DeltaSeconds, Control, Eye, CameraLocation);
     int32 ViewportWidth = 0, ViewportHeight = 0;

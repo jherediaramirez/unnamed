@@ -53,8 +53,10 @@ namespace
         int64 StepIndex = 0;
         FVector Eye = FVector(50, 50, 150);
         FIntVector Aimed = FIntVector(2, 0, 1);
+        // The aimed block: the furnace, or the smoker or blast furnace (8b).
+        FName Block;
 
-        FFurnaceLab()
+        explicit FFurnaceLab(const TCHAR* InBlock = TEXT("furnace")) : Block(InBlock)
         {
             UFoundationInteractionSettings::Get().BuildRules(A.Rules);
             A.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
@@ -75,7 +77,7 @@ namespace
             for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
                 Inv().SetSlot(Slot, {});
             Inv().Select(0);
-            A.World.Set(Aimed, A.World.FindBlock(TEXT("furnace"))->GetDefaultState());
+            A.World.Set(Aimed, A.World.FindBlock(Block)->GetDefaultState());
             Steps(1);
         }
 
@@ -137,7 +139,12 @@ namespace
         FFoundationResult Close() { return A.Execute(Player, Make(EFoundationCommandType::ContainerClose), Vitals); }
 
         // The furnace's entity (made as its use does when there is none yet).
-        FEntity& F() { return A.BlockEntities.FindOrAdd(Aimed, EFoundationBlockEntityKind::Furnace, TEXT("furnace")); }
+        FEntity& F() { return A.BlockEntities.FindOrAdd(Aimed, EFoundationBlockEntityKind::Furnace, Block); }
+        // The aimed block's lit property.
+        bool IsBlockLit() const
+        {
+            return A.World.GetRegistry().GetValue(A.World.Get(Aimed).State, TEXT("lit")) == FName(TEXT("true"));
+        }
         // Fills the furnace's slots directly (nullptr leaves one empty).
         void Load(const TCHAR* Input, int32 InputCount, const TCHAR* Fuel, int32 FuelCount)
         {
@@ -478,8 +485,9 @@ bool FFoundationFurnaceMenuTest::RunTest(const FString&)
         L.Load(TEXT("raw_iron"), 5, TEXT("oak_log"), 2);
         L.F().Items[FEntity::FurnaceResult] = L.Stack(TEXT("iron_ingot"), 10);
         L.F().RecipesUsed.Add(Iron, 10);
+        // Opened with the switch on (off, there is no menu since 8b1), then off so nothing cooks during the break.
+        TestTrue(TEXT("opened before the break"), L.Open() > 0 && L.P().OpenMenu.IsOpen());
         L.A.Options.bFurnace = false;
-        L.Open();
         TestTrue(TEXT("broken"), L.Break());
         L.Steps(1);
         TestFalse(TEXT("broken: menu closed"), L.P().OpenMenu.IsOpen());
@@ -491,6 +499,146 @@ bool FFoundationFurnaceMenuTest::RunTest(const FString&)
         TestEqual(TEXT("oak logs dropped"), Dropped.FindRef(L.Item(TEXT("oak_log"))), 2);
         TestEqual(TEXT("ingots dropped"), Dropped.FindRef(L.Item(TEXT("iron_ingot"))), 10);
         TestEqual(TEXT("stored XP paid"), L.OrbTotal(), 7);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationFurnaceSwitchTest, "Unnamed.Foundation.Furnace.Switch0", FurnaceTestFlags)
+
+bool FFoundationFurnaceSwitchTest::RunTest(const FString&)
+{
+    // foundation.Furnace 0 is as before 8a (Codex review 18, finding 1): the furnace, smoker and blast furnace have no
+    // use, so planks in hand place against them and no block entity is made. On, the use opens the block's own menu.
+    const struct
+    {
+        const TCHAR* Block;
+        EFoundationMenuKind Kind;
+    } Blocks[] = {{TEXT("furnace"), EFoundationMenuKind::Furnace}, {TEXT("smoker"), EFoundationMenuKind::Smoker},
+        {TEXT("blast_furnace"), EFoundationMenuKind::BlastFurnace}};
+    for (const auto& [Block, Kind] : Blocks)
+    {
+        {
+            FFurnaceLab L(Block);
+            L.A.BlockEntities.Clear();
+            L.A.Options.bFurnace = false;
+            L.Inv().SetSlot(0, L.Stack(TEXT("oak_planks"), 4));
+            // The preview's question (WouldUseBlock) agrees: no use, so it shows the placement.
+            TestFalse(FString::Printf(TEXT("%s off: no use foreseen"), Block),
+                L.A.WouldUseBlock(L.P(), L.A.Resolve(L.P().Facts)));
+            const FFoundationResult Result = L.Use();
+            const FName Placed =
+                L.A.World.IsKnown(Result.Cell) ? L.A.World.GetBlock(L.A.World.Get(Result.Cell).State).Id : NAME_None;
+            TestTrue(FString::Printf(TEXT("%s off: the planks place against it"), Block),
+                Result.IsCommitted() && Result.OpenedMenu == EFoundationMenuKind::Inventory && Result.Cell != L.Aimed &&
+                    Placed == TEXT("oak_planks"));
+            TestFalse(FString::Printf(TEXT("%s off: no menu"), Block), L.P().OpenMenu.IsOpen());
+            TestNull(FString::Printf(TEXT("%s off: no entity"), Block), L.A.BlockEntities.Find(L.Aimed));
+        }
+        {
+            FFurnaceLab L(Block);
+            L.A.BlockEntities.Clear();
+            L.Inv().SetSlot(0, L.Stack(TEXT("oak_planks"), 4));
+            TestTrue(FString::Printf(TEXT("%s on: its use foreseen"), Block),
+                L.A.WouldUseBlock(L.P(), L.A.Resolve(L.P().Facts)));
+            const FFoundationResult Result = L.Use();
+            TestTrue(FString::Printf(TEXT("%s on: its own menu"), Block),
+                Result.IsCommitted() && Result.OpenedMenu == Kind && L.P().OpenMenu.Block == FName(Block));
+            TestTrue(FString::Printf(TEXT("%s on: its entity, nothing placed"), Block),
+                L.A.BlockEntities.Find(L.Aimed) && L.Inv().GetHand(EFoundationHand::Main).Count == 4);
+        }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationFurnaceSpeedTest, "Unnamed.Foundation.Furnace.Speed", FurnaceTestFlags)
+
+bool FFoundationFurnaceSpeedTest::RunTest(const FString&)
+{
+    using FEntity = FFoundationBlockEntity;
+    // Burn boundaries per block (survival.r3.furnace_ticks, F 3114-3121; speed 2, survival.r3.fuels and .recipes):
+    // coal burns 1600/800/800 ticks and cooks in 200/100/100, making 8 items; oak planks burn 300/150/150, make 1 and
+    // cool from 98/48/48. The block turns lit on tick 1 and unlit on fuel + 1, the same ticks as its fuel.
+    const struct
+    {
+        const TCHAR *Block, *Input, *Output;
+        int32 CoalTicks, CookTicks, PlankTicks, Cooled;
+    } Rows[] = {{TEXT("furnace"), TEXT("raw_iron"), TEXT("iron_ingot"), 1600, 200, 300, 98},
+        {TEXT("smoker"), TEXT("beef"), TEXT("cooked_beef"), 800, 100, 150, 48},
+        {TEXT("blast_furnace"), TEXT("raw_iron"), TEXT("iron_ingot"), 800, 100, 150, 48}};
+    for (const auto& [Block, Input, Output, CoalTicks, CookTicks, PlankTicks, Cooled] : Rows)
+    {
+        const EFoundationCookingKind Kind = FoundationFurnace::GetCookingKind(Block);
+        {
+            FFurnaceLab L(Block);
+            const FFoundationCooking& Cooking = L.A.GetCooking();
+            TestEqual(FString::Printf(TEXT("%s: coal burns"), Block), Cooking.GetBurnTicks(L.Item(TEXT("coal")), Kind),
+                CoalTicks);
+            TestEqual(FString::Printf(TEXT("%s: %s cooks"), Block, Input),
+                FoundationFurnace::GetCookTotal(Cooking.Get(Cooking.Find(Kind, L.Item(Input))), Kind), CookTicks);
+            L.Load(Input, 9, TEXT("coal"), 1);
+            FoundationFurnace::OnInputChanged(L.F(), Cooking, Kind);
+            TestFalse(FString::Printf(TEXT("%s: unlit before"), Block), L.IsBlockLit());
+            L.Steps(1);
+            TestTrue(FString::Printf(TEXT("%s: lit at tick 1, block and entity"), Block),
+                L.F().IsLit() && L.IsBlockLit() && L.F().LitDuration == CoalTicks);
+            // The lit flip is a plain state change: no place event, the same block id, the same entity.
+            TestFalse(FString::Printf(TEXT("%s: the flip places nothing"), Block),
+                L.A.GetEvents().ContainsByPredicate(
+                    [](const FFoundationEvent& Event) { return Event.Kind == EFoundationEventKind::Placed; }));
+            TestTrue(FString::Printf(TEXT("%s: same block, entity kept"), Block),
+                L.A.World.GetBlock(L.A.World.Get(L.Aimed).State).Id == FName(Block) &&
+                    L.A.BlockEntities.Find(L.Aimed) && L.A.BlockEntities.Find(L.Aimed)->LitDuration == CoalTicks);
+            L.Steps(CookTicks - 2);
+            TestTrue(FString::Printf(TEXT("%s: nothing at tick %d"), Block, CookTicks - 1),
+                L.F().Items[FEntity::FurnaceResult].IsEmpty());
+            L.Steps(1);
+            TestTrue(FString::Printf(TEXT("%s: first output at tick %d"), Block, CookTicks),
+                L.Holds(L.F().Items[FEntity::FurnaceResult], Output, 1));
+            L.Steps(CoalTicks - CookTicks);
+            TestTrue(FString::Printf(TEXT("%s: 8 at tick %d, still lit"), Block, CoalTicks),
+                L.Holds(L.F().Items[FEntity::FurnaceResult], Output, 8) && L.IsBlockLit());
+            L.Steps(1);
+            TestTrue(FString::Printf(TEXT("%s: unlit at tick %d, block too"), Block, CoalTicks + 1),
+                !L.F().IsLit() && !L.IsBlockLit() && L.F().CookProgress == 0);
+        }
+        {
+            FFurnaceLab L(Block);
+            L.Load(Input, 8, TEXT("oak_planks"), 1);
+            FoundationFurnace::OnInputChanged(L.F(), L.A.GetCooking(), Kind);
+            L.Steps(PlankTicks);
+            TestTrue(FString::Printf(TEXT("%s planks: 1 output, lit"), Block),
+                L.Holds(L.F().Items[FEntity::FurnaceResult], Output, 1) && L.F().IsLit());
+            L.Steps(1);
+            TestEqual(FString::Printf(TEXT("%s planks: cooled to %d at the first unlit tick"), Block, Cooled),
+                L.F().CookProgress, Cooled);
+        }
+    }
+
+    // Shift-click routing per block (survival.r3.shift_click, F 3219-3234): what the block cooks goes to its input
+    // (a smoker's beef, a blast furnace's raw iron), else fuel to the fuel slot (an oak log too), else main 9 goes
+    // to hotbar 0 (menu 30).
+    const struct
+    {
+        const TCHAR* Block;
+        const TCHAR* Item;
+        int32 Slot;
+    } Routes[] = {{TEXT("smoker"), TEXT("coal"), 1}, {TEXT("smoker"), TEXT("oak_log"), 1},
+        {TEXT("smoker"), TEXT("oak_planks"), 1}, {TEXT("smoker"), TEXT("raw_iron"), 30},
+        {TEXT("smoker"), TEXT("cobblestone"), 30}, {TEXT("smoker"), TEXT("sand"), 30},
+        {TEXT("smoker"), TEXT("beef"), 0}, {TEXT("smoker"), TEXT("bucket"), 30},
+        {TEXT("blast_furnace"), TEXT("coal"), 1}, {TEXT("blast_furnace"), TEXT("oak_log"), 1},
+        {TEXT("blast_furnace"), TEXT("oak_planks"), 1}, {TEXT("blast_furnace"), TEXT("raw_iron"), 0},
+        {TEXT("blast_furnace"), TEXT("cobblestone"), 30}, {TEXT("blast_furnace"), TEXT("sand"), 30},
+        {TEXT("blast_furnace"), TEXT("beef"), 30}, {TEXT("blast_furnace"), TEXT("bucket"), 30}};
+    for (const auto& [Block, ItemId, Slot] : Routes)
+    {
+        FFurnaceLab L(Block);
+        const int32 Id = L.Open();
+        L.Inv().SetSlot(FFoundationInventory::FirstMain, L.Stack(ItemId, 8));
+        L.Click(Id, 3, 0, EFoundationClickType::QuickMove);
+        const TArray<FFoundationItemInstance> Menu = L.A.GetOpenMenu(L.P());
+        TestTrue(FString::Printf(TEXT("%s: %s x8 to slot %d"), Block, ItemId, Slot),
+            Menu.IsValidIndex(Slot) && L.Holds(Menu[Slot], ItemId, 8) && Menu[3].IsEmpty());
     }
     return true;
 }

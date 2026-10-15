@@ -261,8 +261,9 @@ struct FFoundationLabOptions
     bool bMobSpawn = false;
     // Fire (step 16a): mobs take lava contact and burning damage, as the pawn does. The pawn copies foundation.Fire in.
     bool bFire = false;
-    // Furnaces (T1 step 8a): every furnace in a loaded column ticks each step (fuel, cooking, cooling), open or not.
-    // Off, a furnace opens and holds items but never ticks. The pawn copies foundation.Furnace in before each step.
+    // Furnaces (T1 steps 8a, 8b; smokers and blast furnaces too): a right-click opens the block's menu, and every one
+    // in a loaded column ticks each step (fuel, cooking, cooling, its lit state), open or not. Off, as before 8a: no
+    // menu (the click passes on and places) and no ticks. The pawn copies foundation.Furnace in before each step.
     bool bFurnace = false;
 };
 
@@ -654,8 +655,9 @@ private:
     void SpawnContents(const FIntVector& Cell, TConstArrayView<FFoundationItemInstance> Items, int32 RandomSeed);
     mutable FFoundationCooking Cooking;
     mutable int32 CookingItems = INDEX_NONE;
-    // The item facts container clicks read (max stack, equipment slot).
-    FFoundationContainerRules MakeContainerRules() const;
+    // The item facts container clicks read (max stack, equipment slot); Block, an open furnace's, picks what its
+    // shift-click counts as cookable.
+    FFoundationContainerRules MakeContainerRules(FName Block = NAME_None) const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
     bool MakePlacementContext(const FFoundationPlayer& Player, const FFoundationHit& Hit,
         const FFoundationBlockType& Placing, FFoundationPlacementContext& OutContext, bool& bOutAccepted,

@@ -17,6 +17,8 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Brushes/SlateNoResource.h"
+#include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -411,13 +413,37 @@ void UFoundationPanels::OpenText(bool bCommand)
 {
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
     TSharedPtr<SEditableTextBox> Edit;
+    const bool bChat = FoundationChat::AreCommandsEnabled();
+    // The chat's hidden box draws nothing of its own: no background brushes, so no focus outline (the 1 px blue
+    // line at the bar). Switch 0 keeps the default style.
+    static const FEditableTextBoxStyle ChatStyle =
+        FEditableTextBoxStyle(FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox"))
+            .SetBackgroundImageNormal(FSlateNoResource())
+            .SetBackgroundImageHovered(FSlateNoResource())
+            .SetBackgroundImageFocused(FSlateNoResource())
+            .SetBackgroundImageReadOnly(FSlateNoResource());
+    // The box, for the change handler (assigned below).
+    const TSharedRef<TWeakPtr<SEditableTextBox>> EditRef = MakeShared<TWeakPtr<SEditableTextBox>>();
     // clang-format off
     const TSharedRef<SVerticalBox> List = SNew(SVerticalBox);
     List->AddSlot().AutoHeight()[Label(TEXT("Local chat/command fixture — Enter records text, Escape cancels"))];
     List->AddSlot().AutoHeight().Padding(0, 10)
     [
         SAssignNew(Edit, SEditableTextBox).MinDesiredWidth(600)
+            .Style(bChat ? &ChatStyle : &FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox"))
             .Text(FText::FromString(bCommand ? TEXT("/") : TEXT("")))
+            // [survival.r4.open_fields] the chat line takes 256 characters (switch 1).
+            .OnTextChanged_Lambda([bChat, EditRef](const FText& Text)
+            {
+                const TSharedPtr<SEditableTextBox> Box = EditRef->Pin();
+                if (!bChat || !Box || Text.ToString().Len() <= 256) return;
+                Box->SetText(FText::FromString(Text.ToString().Left(256)));
+                Box->GoTo(ETextLocation::EndOfDocument);
+            })
+            .OnCursorMovedWithSelection_Lambda([WeakThis](const FTextLocation& Location, const FTextSelection&)
+            {
+                if (WeakThis.IsValid()) WeakThis->TypedCaret = Location.GetOffset();
+            })
             .OnTextCommitted_Lambda([WeakThis](const FText& Text, ETextCommit::Type Type)
             {
                 if (Type != ETextCommit::OnEnter || !WeakThis.IsValid()) return;
@@ -436,7 +462,9 @@ void UFoundationPanels::OpenText(bool bCommand)
             })
     ];
     // clang-format on
-    if (FoundationChat::AreCommandsEnabled())
+    *EditRef = Edit;
+    TypedCaret = INDEX_NONE;
+    if (bChat)
     {
         // Vanilla's input bar is the HUD's (FHudSnapshot::ChatInput); the box only takes the keys, unseen.
         List->RemoveSlot(Edit.ToSharedRef());
@@ -455,6 +483,12 @@ void UFoundationPanels::OpenText(bool bCommand)
 FString UFoundationPanels::GetTypedText() const
 {
     return bTextOpen && TextBox ? TextBox->GetText().ToString() : FString();
+}
+
+int32 UFoundationPanels::GetTypedCaret() const
+{
+    const int32 Length = GetTypedText().Len();
+    return TypedCaret == INDEX_NONE ? Length : FMath::Clamp(TypedCaret, 0, Length);
 }
 
 bool UFoundationPanels::IsTypingInInventory() const
@@ -647,7 +681,7 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
     // A furnace's fuel slot takes fuel and the empty bucket (FFoundationContainerMenu::MayPlace): the drag needs it.
     TSet<FName> FuelItems;
-    if (Kind == EFoundationMenuKind::Furnace)
+    if (IsFurnaceMenu(Kind))
     {
         const FFoundationCooking& Cooking = Authority.GetCooking();
         for (int32 Item = 0; Item < Authority.Rules.Items.Num(); ++Item)
@@ -687,7 +721,7 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
                 View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
             // An open furnace's flame and arrow (T1 step 8a2): its fuel left and cooking progress.
-            if (Player->OpenMenu.ContainerId == ContainerId && Player->OpenMenu.Kind == EFoundationMenuKind::Furnace)
+            if (Player->OpenMenu.ContainerId == ContainerId && IsFurnaceMenu(Player->OpenMenu.Kind))
                 if (const FFoundationBlockEntity* Furnace = A.BlockEntities.Find(Player->OpenMenu.Cell))
                 {
                     View.bLit = Furnace->IsLit();
@@ -727,6 +761,8 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     FSlateApplication::Get().SetKeyboardFocus(Survival);
     Controller->GetHud()->LogEvent(Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table")
             : Kind == EFoundationMenuKind::Furnace                       ? TEXT("furnace")
+            : Kind == EFoundationMenuKind::Smoker                        ? TEXT("smoker")
+            : Kind == EFoundationMenuKind::BlastFurnace                  ? TEXT("blast furnace")
                                                                          : TEXT("survival inventory"));
     bInventoryOpen = true;
     return true;
