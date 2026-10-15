@@ -40,6 +40,18 @@ enum class EFoundationEquipmentSlot : uint8
     Offhand
 };
 
+// 26.3's blocks_attacks (the shield, survival step 19b; DA_Items): held up with a use, after DelayTicks it blocks the
+// attacks it covers (one all-damage reduction: Base + Factor x damage, within AngleDegrees of the look), wearing the
+// item by ItemDamageBase + floor(ItemDamageFactor x damage) once the damage reaches ItemDamageThreshold.
+struct FFoundationBlocksAttacks
+{
+    bool bValid = false;
+    int32 DelayTicks = 0;
+    float DisableCooldownScale = 1, AngleDegrees = 90, Base = 0, Factor = 1;
+    float ItemDamageThreshold = 0, ItemDamageBase = 0, ItemDamageFactor = 1.5f;
+    FName BlockSound, DisabledSound;
+};
+
 // What eating an item gives (26.3's food component) and how long it takes (its consumable component's
 // consume_seconds, in reference ticks; `consumable: {}` is the default 1.6 s, 32 ticks).
 struct FFoundationConsumable
@@ -131,6 +143,12 @@ struct FFoundationItemDefinition
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     bool bSwappable = true;
 
+    // 26.3's damage_resistant #minecraft:is_fire (the netherite pieces): worn, it takes no wear from fire damage
+    // (minecraft.wiki "Java Edition 24w37a": the component "also affects whether the equipped item is damaged when the
+    // wearer is hurt by a given damage type"; Codex review 31 #4).
+    UPROPERTY(Config, EditAnywhere, Category = "Item")
+    bool bFireResistant = false;
+
     // 26.3's equippable equip_sound, played when it goes into its slot (None: silent).
     UPROPERTY(Config, EditAnywhere, Category = "Item")
     FName EquipSound;
@@ -169,6 +187,8 @@ struct FFoundationItemDefinition
     // Consumable capability (step 10, eating). Unset (0 ticks) here, the 26.3 reference's food for this Id applies
     // (FoundationConsumables::FindReference); tests author their own.
     FFoundationConsumable Consumable;
+    // Blocking (step 19b): the shield's blocks_attacks; bValid false for every other item.
+    FFoundationBlocksAttacks BlocksAttacks;
 
     bool CanPlace() const { return !PlacesBlock.IsNone(); }
     // The definition's own consumable, else the reference's for its Id, else none (0 ticks).

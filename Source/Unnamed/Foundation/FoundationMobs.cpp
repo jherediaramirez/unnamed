@@ -17,16 +17,16 @@ namespace
     // [mobs.base_attributes, catalog.entities; value-swaps.md T6] health, movement attribute, armor, toughness,
     // knockback resistance, width x height (eye); [survival.r10.ai_defaults] the panic and tempt modifiers;
     // [survival.r5.play_calls] the volume; [survival.r10.death_roll] the roll; wiki "Experience" (provisional) the
-    // experience.
+    // experience; the attack damage, follow range and look distance (FFoundationMobKind); the en_us.json name.
     const FFoundationMobKind MobKinds[] = {
-        {TEXT("cow"), 10, .2f, 0, 0, 0, 90, 140, 130, 2.f, 1.25f, .4f, 90, 1, 3, true},
-        {TEXT("pig"), 10, .25f, 0, 0, 0, 90, 90, 76.5, 1.25f, 1.2f, 1, 90, 1, 3, true},
-        {TEXT("sheep"), 8, .23f, 0, 0, 0, 90, 130, 123.5, 1.25f, 1.1f, 1, 90, 1, 3, true},
-        {TEXT("chicken"), 4, .25f, 0, 0, 0, 40, 70, 64.4, 1.4f, 1.f, 1, 90, 1, 3, true},
-        {TEXT("zombie"), 20, .23f, 2, 0, 0, 60, 195, 174, 0, 0, 1, 90, 5, 5, false},
-        {TEXT("skeleton"), 20, .25f, 0, 0, 0, 60, 199, 174, 0, 0, 1, 90, 5, 5, false},
-        {TEXT("creeper"), 20, .25f, 0, 0, 0, 60, 170, 144.5, 0, 0, 1, 90, 5, 5, false},
-        {TEXT("spider"), 16, .3f, 0, 0, 0, 140, 90, 65, 0, 0, 1, 180, 5, 5, false},
+        {TEXT("cow"), 10, .2f, 0, 0, 0, 90, 140, 130, 2.f, 1.25f, .4f, 90, 1, 3, true, 0, 1600, 600, TEXT("Cow")},
+        {TEXT("pig"), 10, .25f, 0, 0, 0, 90, 90, 76.5, 1.25f, 1.2f, 1, 90, 1, 3, true, 0, 1600, 600, TEXT("Pig")},
+        {TEXT("sheep"), 8, .23f, 0, 0, 0, 90, 130, 123.5, 1.25f, 1.1f, 1, 90, 1, 3, true, 0, 1600, 600, TEXT("Sheep")},
+        {TEXT("chicken"), 4, .25f, 0, 0, 0, 40, 70, 64.4, 1.4f, 1.f, 1, 90, 1, 3, true, 0, 1600, 600, TEXT("Chicken")},
+        {TEXT("zombie"), 20, .23f, 2, 0, 0, 60, 195, 174, 0, 0, 1, 90, 5, 5, true, 3, 3500, 800, TEXT("Zombie")},
+        {TEXT("skeleton"), 20, .25f, 0, 0, 0, 60, 199, 174, 0, 0, 1, 90, 5, 5, false, 2, 1600, 800, TEXT("Skeleton")},
+        {TEXT("creeper"), 20, .25f, 0, 0, 0, 60, 170, 144.5, 0, 0, 1, 90, 5, 5, false, 2, 1600, 800, TEXT("Creeper")},
+        {TEXT("spider"), 16, .3f, 0, 0, 0, 140, 90, 65, 0, 0, 1, 180, 5, 5, false, 2, 1600, 800, TEXT("Spider")},
     };
     static_assert(UE_ARRAY_COUNT(MobKinds) == int32(EFoundationMobType::Count));
 
@@ -184,6 +184,106 @@ bool FoundationMobs::IsCreature(EFoundationMobType Type)
     return Type < EFoundationMobType::Zombie;
 }
 
+bool FoundationMobs::IsMonster(EFoundationMobType Type)
+{
+    return Type >= EFoundationMobType::Zombie && Type < EFoundationMobType::Count;
+}
+
+float FoundationMobs::GetBrightness(int32 Level)
+{
+    const float F = float(FMath::Clamp(Level, 0, 15)) / 15.f;
+    return F / (4.f - 3.f * F);
+}
+
+bool FoundationMobs::RollSunBurn(FFoundationMob& Mob, float Brightness)
+{
+    return Mob.Random.GetFraction() * 30.f < (Brightness - .4f) * 2.f;
+}
+
+bool FoundationMobs::IsInMeleeReach(
+    const FFoundationMob& Mob, const FVector& OriginCm, const FFoundationMobPlayer& Player)
+{
+    const FBox Reach = GetBox(Mob.Type, OriginCm + Mob.LocalCm).ExpandBy(FVector(MeleeReachCm, MeleeReachCm, 0));
+    const FVector Half(Player.WidthCm * .5, Player.WidthCm * .5, 0);
+    return Reach.Intersect(FBox(Player.FeetCm - Half, Player.FeetCm + Half + FVector(0, 0, Player.HeightCm)));
+}
+
+void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
+    TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee)
+{
+    Mob.bAttackNow = false;
+    if (Mob.AttackSwing < AttackSwingTicks) ++Mob.AttackSwing;
+    if (!Mob.IsAlive() || !IsMonster(Mob.Type)) return;
+    const FFoundationMobKind& Kind = GetKind(Mob.Type);
+    const FVector Feet = OriginCm + Mob.LocalCm;
+    const FVector Eye = Feet + FVector(0, 0, Kind.EyeCm);
+    const auto InRange = [&](const FFoundationMobPlayer& Player)
+    {
+        const FVector Delta = Player.FeetCm - Feet;
+        return Player.bTargetable && FMath::Abs(Delta.Z) <= TargetSearchUpCm + Kind.HeightCm &&
+            FMath::Abs(Delta.X) <= Kind.FollowRangeCm && FMath::Abs(Delta.Y) <= Kind.FollowRangeCm &&
+            Delta.SizeSquared() <= Kind.FollowRangeCm * Kind.FollowRangeCm;
+    };
+    // Keep the target while it is targetable, in range and seen within UnseenMemoryTicks.
+    const FFoundationMobPlayer* Target =
+        Players.FindByPredicate([&Mob](const FFoundationMobPlayer& Player) { return Player.Id == Mob.Target; });
+    // Only a target in range is looked for (the line of sight is a grid walk).
+    const bool bInRange = Target && InRange(*Target);
+    bool bSees = bInRange && CanSee(Eye, Target->EyeCm);
+    if (bInRange)
+        Mob.UnseenTicks = bSees ? 0 : Mob.UnseenTicks + 1;
+    if (Mob.Target != 0 && (!bInRange || Mob.UnseenTicks > UnseenMemoryTicks))
+    {
+        Mob.Target = 0;
+        Target = nullptr;
+        bSees = false;
+        if (Mob.bMoving) MobStopMove(Mob);
+    }
+    // A new target: the nearest player in range that it sees.
+    if (!Target && Mob.Age % 2 == 0 && Mob.Random.RandHelper(TargetChance) == 0)
+    {
+        double Best = MAX_dbl;
+        for (const FFoundationMobPlayer& Player : Players)
+            if (const double Distance = FVector::DistSquared(Player.FeetCm, Feet);
+                Distance < Best && InRange(Player) && CanSee(Eye, Player.EyeCm))
+            {
+                Best = Distance;
+                Target = &Player;
+            }
+        if (Target)
+        {
+            Mob.Target = Target->Id;
+            Mob.UnseenTicks = 0;
+            Mob.AttackCooldown = 0;
+            Mob.RepathTicks = 0;
+            bSees = true;
+        }
+    }
+    if (!Target) return;
+    // The melee goal: chase it (a fresh path when the delay ran out and it can see it), look at it, and hit it when
+    // the swing is due and it is in reach and in sight.
+    const FVector Goal = Target->FeetCm - OriginCm;
+    if (Mob.RepathTicks <= 0 && (bSees || !Mob.bMoving))
+    {
+        MobStartMove(Mob, Goal, 1, false, 0);
+        // Farther targets wait longer (squared blocks).
+        const double Distance = FVector::DistSquared(Target->FeetCm, Feet) / 1e4;
+        Mob.RepathTicks = RepathMinTicks + Mob.Random.RandHelper(RepathRandomTicks) +
+            (Distance > 1024 ? 10 : Distance > 256 ? 5 : 0);
+    }
+    else if (Mob.bMoving)
+        Mob.TargetCm = Goal;
+    Mob.LookTicks = FMath::Max(Mob.LookTicks, 1);
+    Mob.LookAtCm = Target->EyeCm - OriginCm;
+    Mob.AttackCooldown = FMath::Max(Mob.AttackCooldown - 1, 0);
+    if (Mob.AttackCooldown <= 0 && bSees && IsInMeleeReach(Mob, OriginCm, *Target))
+    {
+        Mob.AttackCooldown = MeleeIntervalTicks;
+        Mob.AttackSwing = 0;
+        Mob.bAttackNow = true;
+    }
+}
+
 int32 FoundationMobs::GetCreatureCap(int32 EligibleColumns)
 {
     return CreatureBaseCap * FMath::Max(0, EligibleColumns) / CapChunks;
@@ -203,6 +303,13 @@ void FoundationMobs::OnHurt(FFoundationMob& Mob, const FVector& OriginCm, const 
     }
     Mob.bHurtByEntity = true;
     Mob.HurtFromCm = AttackerWorldCm - OriginCm;
+    // [survival.r10.ai_defaults] HurtByTargetGoal: a monster turns on the player that hit it (ThinkHostile drops a
+    // player it may not target). Alerting the others of its type waits.
+    if (bByPlayer && IsMonster(Mob.Type) && Mob.Target != Player)
+    {
+        Mob.Target = Player;
+        Mob.UnseenTicks = Mob.AttackCooldown = Mob.RepathTicks = 0;
+    }
     if (Mob.Health.IsDead())
     {
         Mob.bKilledByPlayer = bByPlayer;
@@ -287,13 +394,14 @@ void FoundationMobs::Think(
         Mob.GrazeTicks = GrazeLengthTicks;
         MobStopMove(Mob);
     }
-    if (!Mob.bMoving && Mob.GrazeTicks == 0 && !Tempter && Mob.Random.RandHelper(StrollChance) == 0)
+    if (!Mob.bMoving && Mob.GrazeTicks == 0 && !Tempter && Mob.Target == 0 &&
+        Mob.Random.RandHelper(StrollChance) == 0)
         MobStartMove(
             Mob, MobRandomTarget(Mob, Mob.LocalCm, StrollRangeCells, StrollRangeUpCells), 1, false, StrollRangeUpCells);
     // Look-at-player (priority 6) runs beside the movement goals; a tempted mob looks at its player.
     const FVector Eye = Feet + FVector(0, 0, Kind.EyeCm);
     const FVector* Nearest = nullptr;
-    double Best = LookRangeCm * LookRangeCm;
+    double Best = Kind.LookCm * Kind.LookCm;
     for (const FFoundationMobPlayer& Player : Players)
         if (const double Distance = FVector::DistSquared(Player.EyeCm, Eye); Distance < Best)
         {
@@ -313,6 +421,14 @@ void FoundationMobs::Think(
         Mob.LookTicks = FMath::Max(Mob.LookTicks, 1);
         Mob.LookAtCm = Tempter->EyeCm - OriginCm;
     }
+    // A monster with a target looks at it (ThinkHostile set the point).
+    if (Mob.Target != 0)
+        if (const FFoundationMobPlayer* Target = Players.FindByPredicate(
+                [&Mob](const FFoundationMobPlayer& Player) { return Player.Id == Mob.Target; }))
+        {
+            Mob.LookTicks = FMath::Max(Mob.LookTicks, 1);
+            Mob.LookAtCm = Target->EyeCm - OriginCm;
+        }
 }
 
 void FoundationMobs::PlanPath(FFoundationMob& Mob, TFunctionRef<FFoundationPathCell(const FIntVector&)> Query)

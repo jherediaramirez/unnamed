@@ -20,6 +20,8 @@
 #include "Foundation/FoundationBlockTextureTable.h"
 #include "Foundation/FoundationGrid.h"
 #include "Random/VoxelRandom.h"
+#include "Sky/VoxelTimeline.h"
+#include "Voxel/VoxelSkyReference.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationPawn.h"
@@ -527,6 +529,27 @@ void AVoxelWorld::SetupAuthority()
         return Source && Source->GetTable().Biomes.IsValidIndex(Index) ? FName(Source->GetTable().Biomes[Index].Name)
                                                                        : FName();
     };
+    // Monsters (survival T6 20c) read the day timeline's sky light level and monsters_burn at the world clock's
+    // time of day (the sky reference: Reference/minecraft-sky-26.3). Without the reference: 15 and no burning.
+    {
+        const FString Root = VoxelSkyReference::GetReferenceRoot();
+        TSharedRef<FVoxelTimeline> Day = MakeShared<FVoxelTimeline>();
+        FVector4f LevelBase(15.f);
+        FString Error;
+        if (VoxelSkyReference::ReadTimeline(Root, TEXT("minecraft:day"), *Day, Error) &&
+            VoxelSkyReference::ReadOverworldBase(Root, VoxelSky::SkyLightLevel, LevelBase, Error))
+            Authority.GetSkyFacts = [this, Day, LevelBase](float& OutLevel, bool& bOutBurn)
+            {
+                const double Ticks = Clock.GetTimeOfDay();
+                OutLevel = Day->Apply(VoxelSky::SkyLightLevel, Ticks, LevelBase).X;
+                bOutBurn = Day->Apply(VoxelSky::MonstersBurn, Ticks, FVector4f(0.f)).X > .5f;
+            };
+        else
+        {
+            Authority.GetSkyFacts = nullptr;
+            UE_LOG(LogUnnamedVoxel, Warning, TEXT("Monsters see no day: %s"), *Error);
+        }
+    }
     const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     ModelCollides.Init(false, Registry.GetStateLimit());
     TArray<FBox> Boxes;

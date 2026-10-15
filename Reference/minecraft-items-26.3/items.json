@@ -12741,6 +12741,155 @@
      }
     ]
    }
+  },
+  {
+   "id": "shield",
+   "protocol_id": 1446,
+   "group": "shield",
+   "material": null,
+   "kind": null,
+   "name": "Shield",
+   "max_stack": 1,
+   "max_damage": 336,
+   "enchantability": null,
+   "repair": {
+    "items": "#minecraft:wooden_tool_materials",
+    "resolved": [
+     "acacia_planks",
+     "bamboo_planks",
+     "birch_planks",
+     "cherry_planks",
+     "crimson_planks",
+     "dark_oak_planks",
+     "jungle_planks",
+     "mangrove_planks",
+     "oak_planks",
+     "pale_oak_planks",
+     "poplar_planks",
+     "spruce_planks",
+     "warped_planks"
+    ]
+   },
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "banner_patterns",
+    "blocks_attacks",
+    "break_sound",
+    "damage",
+    "enchantments",
+    "equippable",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "repairable",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/durability",
+    "enchantable/vanishing"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1359
+    },
+    {
+     "tab": "combat",
+     "index": 23
+    }
+   ],
+   "model": {
+    "definition": "items/shield.json",
+    "type": "condition",
+    "models": [
+     {
+      "model": "item/shield",
+      "when": {
+       "property": "using_item",
+       "is": [
+        false
+       ]
+      }
+     },
+     {
+      "model": "item/shield_blocking",
+      "when": {
+       "property": "using_item",
+       "is": [
+        true
+       ]
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [],
+   "equippable": {
+    "slot": "offhand",
+    "equip_sound": "minecraft:item.armor.equip_generic",
+    "asset_id": null,
+    "swappable": false
+   },
+   "special": {
+    "type": "shield",
+    "texture": "entity/shield/shield_base_nopattern",
+    "transformation": {
+     "left_rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "right_rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "scale": [
+      1.0,
+      -1.0,
+      -1.0
+     ],
+     "translation": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   "blocks_attacks": {
+    "block_delay_seconds": 0.25,
+    "disable_cooldown_scale": 1.0,
+    "damage_reductions": [
+     {
+      "horizontal_blocking_angle": 90.0,
+      "base": 0.0,
+      "factor": 1.0
+     }
+    ],
+    "item_damage": {
+     "threshold": 3.0,
+     "base": 1.0,
+     "factor": 1.0
+    },
+    "bypassed_by": "#minecraft:bypasses_shield",
+    "block_sound": "minecraft:item.shield.block",
+    "disabled_sound": "minecraft:item.shield.break"
+   }
   }
  ]
 }

@@ -115,6 +115,10 @@ struct FFoundationLootCandidate
     TArray<int32> Conditions;
     // Applied in order to a count of 1.
     TArray<FFoundationLootModifier> Modifiers;
+    // 0: one of the pool's ordered alternatives (the first whose conditions pass). Above 0 (survival T6 20c, the
+    // zombie's rare drop): the pool's entries are a weighted choice among those whose conditions pass (minecraft.wiki
+    // "Loot table": weight, default 1).
+    int32 Weight = 0;
 };
 
 struct FFoundationLootPool

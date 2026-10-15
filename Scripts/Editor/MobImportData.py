@@ -11,12 +11,14 @@ and `uv run --no-project --python 3.13 python -I Scripts/Editor/MobImportData.py
 """
 import hashlib
 import json
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 REF = REPO / "Reference/minecraft-entities-26.3"
 LOOT = REF / "data/minecraft/loot_table/entities"
 RECIPES = REF / "data/minecraft/recipe"
+COOKING = REPO / "Source/Unnamed/Foundation/FoundationCookingData.inl"
 # Read only (survival T6 20b2): the biomes' natural_mob_spawns and creature_world_gen_spawn_probability attributes.
 WORLDGEN = REPO / "Reference/minecraft-worldgen-26.3"
 BIOMES = WORLDGEN / "data/minecraft/worldgen/biome"
@@ -125,6 +127,14 @@ def furnace_results():
         recipe = json.loads(path.read_text(encoding="utf-8"))
         if recipe["type"] == "minecraft:smelting" and isinstance(recipe["ingredient"], str):
             results[bare(recipe["ingredient"])] = bare(recipe["result"]["id"])
+    # Survival T6 20c: the ones the entity reference does not carry (the zombie's potato) from the furnace's cooking
+    # table, generated from the same 26.3 jar's recipes (Scripts/GenerateCookingData.py).
+    for result, ingredients in re.findall(
+            r'FOUNDATION_COOKING\(TEXT\("[^"]+"\), Smelting, TEXT\("([^"]+)"\), [^)]*?, ((?:TEXT\("[^"]+"\)\s*)+)\)',
+            COOKING.read_text(encoding="utf-8")):
+        for ingredient in re.findall(r'TEXT\("([^"]+)"\)', ingredients):
+            for one in ingredient.split():
+                results.setdefault(one, result)
     return results
 
 
@@ -166,11 +176,22 @@ def entity_facts(predicate):
             # The direct attacker's main-hand enchantments (#minecraft:smelts_loot): nothing is enchanted yet, so a
             # fact nothing has, which fails.
             facts.append(("equipment_enchantments", json.dumps(value, sort_keys=True)))
+        elif key == "vehicle":
+            # Nothing rides anything yet (survival T6 20c: treated as false), so a fact nothing has, which fails.
+            facts.append(("vehicle", json.dumps(value, sort_keys=True)))
         elif key == "type":
             facts.append(("type", str(value)))
         else:
             raise Unsupported(f"entity predicate {key}")
     return facts
+
+
+def needs_vehicle(condition):
+    """The condition (or a term every pass needs) checks what the entity rides."""
+    kind = bare(condition.get("type", condition.get("condition", "")))
+    if kind == "all_of":
+        return any(needs_vehicle(term) for term in condition["terms"])
+    return kind == "entity_properties" and any(bare(key) == "vehicle" for key in condition.get("predicate", {}))
 
 
 class Table:
@@ -246,14 +267,22 @@ class Table:
     def build(self, data):
         pools = []
         for pool in data["pools"]:
+            # A pool only a rider passes never drops while nothing rides (20c: the zombie's chicken-jockey disc, an
+            # item DA_Items does not carry); left out so the rest of the table loads.
+            if any(needs_vehicle(c) for c in conditions_of(pool)):
+                continue
             rolls = pool.get("rolls", 1)
             if not isinstance(rolls, int) or pool.get("bonus_rolls"):
                 raise Unsupported("rolls")
             entries = pool["entries"]
-            # Several entries without conditions are a weighted choice, not "the first that passes".
-            if len(entries) > 1 and sum(1 for e in entries if not conditions_of(e)) > 1:
-                raise Unsupported("a weighted choice between entries")
             candidates = [c for e in entries for c in self.candidates(e)]
+            # Several entries without conditions are a weighted choice, not "the first that passes" (20c: the
+            # zombie's rare drop): each plain item entry gets its weight (1: candidates() rejects any other weight).
+            if len(entries) > 1 and sum(1 for e in entries if not conditions_of(e)) > 1:
+                if any(bare(e["type"]) != "item" for e in entries):
+                    raise Unsupported("a weighted choice between composite entries")
+                for candidate in candidates:
+                    candidate["weight"] = 1
             pools.append({"rolls": rolls, "tests": [self.node(c) for c in conditions_of(pool)],
                           "modifiers": self.modifiers(functions_of(pool), None),
                           "candidates": candidates})
@@ -276,7 +305,8 @@ def loot_tables():
 
 def candidate_values(candidate):
     """FFoundationLootCandidateAsset's values (the modifiers stay dicts; ImportMobs.py makes them structs)."""
-    return {"item": candidate["item"], "tests": candidate["tests"], "modifiers": candidate["modifiers"]}
+    return {"item": candidate["item"], "tests": candidate["tests"], "modifiers": candidate["modifiers"],
+            "weight": candidate.get("weight", 0)}
 
 
 if __name__ == "__main__":

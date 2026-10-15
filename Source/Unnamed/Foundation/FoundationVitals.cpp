@@ -175,7 +175,7 @@ void FFoundationVitals::TickFood()
         FoodTimer = 0;
 }
 
-bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
+bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount, const FString& Attacker)
 {
     const FDamageRule& Rule = GetRule(Type);
     if (IsDead() || !(Amount > 0.f) || (IsInvulnerable() && !Rule.bBypassesInvulnerability)) return false;
@@ -203,7 +203,10 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
     // Armor, then the absorption buffer; only damage reaching health costs exhaustion.
     if (!Rule.bBypassesArmor)
     {
-        PendingArmorWear += FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        const int32 Wear = FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
+        PendingArmorWear += Wear;
+        // #minecraft:is_fire holds lava and on_fire (26.3 data/minecraft/tags/damage_type/is_fire.json).
+        if (Type == EFoundationDamage::Lava || Type == EFoundationDamage::OnFire) PendingFireArmorWear += Wear;
         Dealt = GetDamageAfterArmor(Dealt, GetArmor(), GetArmorToughness());
     }
     const float Absorbed = FMath::Min(Dealt, Absorption);
@@ -222,10 +225,10 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
         Health = 0;
         DeathTicks = 0;
         ++Deaths;
-        // No attacker names yet: mob and player attacks read death.attack.generic until mobs (step 20c) pass one.
-        const FDeathText Text = GetDeathText(Type, FallDistanceCm);
+        // A mob or player attack without an attacker name reads death.attack.generic.
+        const FDeathText Text = GetDeathText(Type, FallDistanceCm, Attacker);
         DeathKey = Text.Key;
-        DeathMessage = FormatDeathMessage(Text, PlayerName, FString());
+        DeathMessage = FormatDeathMessage(Text, PlayerName, Attacker);
         // The death screen's score: the experience points held at death, before the respawn clears them.
         DeathScore = TotalExperience;
     }

@@ -200,7 +200,9 @@ bool FFoundationMobSpawnTest::RunTest(const FString&)
     for (int32 Type = 0; Type < int32(EFoundationMobType::Count); ++Type)
     {
         const FFoundationMobKind& Kind = FoundationMobs::GetKind(EFoundationMobType(Type));
-        TestEqual(*FString::Printf(TEXT("%s spawnable"), *Kind.Id.ToString()), Kind.bSpawnable, Type < 4);
+        // 20c: the zombie is summonable too.
+        TestEqual(*FString::Printf(TEXT("%s spawnable"), *Kind.Id.ToString()), Kind.bSpawnable,
+            Type < 4 || Type == int32(EFoundationMobType::Zombie));
         if (Type >= 4) continue;
         TestEqual(*FString::Printf(TEXT("%s box"), *Kind.Id.ToString()),
             FoundationMobs::GetBox(EFoundationMobType(Type), FVector::ZeroVector).GetSize(), Boxes[Type]);
@@ -1306,6 +1308,298 @@ bool FFoundationMobCycleLongRunTest::RunTest(const FString&)
         FPlatformTime::Seconds() - Start, L->A.MobCycles, ByType[0], ByType[1], ByType[2], ByType[3]));
     TestTrue(TEXT("arrivals"), L->Spawned.Num() > 0);
     TestTrue(TEXT("the cap holds (10, overshoot under 4)"), CountCreatures(*L) <= 10 + FoundationMobs::ClusterMax - 1);
+    return true;
+}
+
+// Survival T6 20c1: the zombie's data. value-swaps.md T6 [mobs.base_attributes, catalog.entities]: 20 health, 0.23,
+// attack 3, armor 2, 0.6 x 1.95 (eye 1.74); [survival.r10.ai_rules] follow range 35; [survival.r10.ai_defaults
+// S 5388] look distance 8; en_us.json "Zombie". Its loot (entities/zombie.json, the vehicle pool never passes):
+// rotten flesh 0-2 each a third; the rare pool only on a player's kill, 2.5%, iron ingot, carrot and potato a third
+// each (a weighted choice, not the first that passes); a burning zombie's potato is baked; never red mushroom.
+// Mutations: the rare pool as ordered alternatives (only iron ingots); the zombie's attack 2.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobZombieTest, "Unnamed.Foundation.Mobs.Zombie",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobZombieTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    const FFoundationMobKind& Kind = FoundationMobs::GetKind(EFoundationMobType::Zombie);
+    TestEqual(TEXT("health"), Kind.MaxHealth, 20.f);
+    TestEqual(TEXT("movement"), Kind.Speed, .23f);
+    TestEqual(TEXT("armor"), Kind.Armor, 2.f);
+    TestEqual(TEXT("attack"), Kind.AttackDamage, 3.f);
+    TestEqual(TEXT("box"), FoundationMobs::GetBox(EFoundationMobType::Zombie, FVector::ZeroVector).GetSize(),
+        FVector(60, 60, 195));
+    TestEqual(TEXT("eye"), Kind.EyeCm, 174.);
+    TestEqual(TEXT("follow range"), Kind.FollowRangeCm, 3500.);
+    TestEqual(TEXT("look distance"), Kind.LookCm, 800.);
+    TestEqual(TEXT("name"), FString(Kind.Name), FString(TEXT("Zombie")));
+    TestTrue(TEXT("a monster"), FoundationMobs::IsMonster(EFoundationMobType::Zombie) &&
+            !FoundationMobs::IsMonster(EFoundationMobType::Cow) && !FoundationMobs::IsCreature(EFoundationMobType::Zombie));
+    FMobLab L;
+    const FFoundationLootTable* Table = L.A.Rules.EntityLootTables.Find(TEXT("zombie"));
+    if (!TestNotNull(TEXT("entities/zombie from DA_Mobs"), Table)) return false;
+    const int32 Flesh = L.A.Rules.FindItem(TEXT("rotten_flesh")), Iron = L.A.Rules.FindItem(TEXT("iron_ingot")),
+                Carrot = L.A.Rules.FindItem(TEXT("carrot")), Potato = L.A.Rules.FindItem(TEXT("potato")),
+                Baked = L.A.Rules.FindItem(TEXT("baked_potato")), Mushroom = L.A.Rules.FindItem(TEXT("red_mushroom"));
+    TestTrue(TEXT("the drops are items"),
+        Flesh >= 0 && Iron >= 0 && Carrot >= 0 && Potato >= 0 && Baked >= 0 && Mushroom >= 0);
+    FRandomStream Random(263);
+    constexpr int32 Rolls = 30000;
+    int32 FleshCounts[3] = {}, Rare = 0, RareBy[3] = {}, Mushrooms = 0, Unkilled = 0;
+    for (int32 Roll = 0; Roll < Rolls; ++Roll)
+    {
+        FFoundationLootContext Context{L.A.Rules.Hand};
+        Context.bKilledByPlayer = true;
+        TArray<FFoundationLootDrop> Drops;
+        FoundationLoot::Roll(*Table, L.A.Rules.LootPredicates, Context, Random, Drops);
+        int32 FleshCount = 0;
+        for (const FFoundationLootDrop& Drop : Drops)
+        {
+            FleshCount += Drop.Item == Flesh ? Drop.Count : 0;
+            Mushrooms += Drop.Item == Mushroom;
+            const int32 Which = Drop.Item == Iron ? 0 : Drop.Item == Carrot ? 1 : Drop.Item == Potato ? 2 : -1;
+            if (Which >= 0)
+            {
+                ++Rare;
+                ++RareBy[Which];
+            }
+        }
+        if (FleshCount <= 2) ++FleshCounts[FleshCount];
+        FFoundationLootContext NotPlayer{L.A.Rules.Hand};
+        TArray<FFoundationLootDrop> Plain;
+        FoundationLoot::Roll(*Table, L.A.Rules.LootPredicates, NotPlayer, Random, Plain);
+        for (const FFoundationLootDrop& Drop : Plain)
+            Unkilled += Drop.Item == Iron || Drop.Item == Carrot || Drop.Item == Potato;
+    }
+    for (int32 Count = 0; Count < 3; ++Count)
+        TestEqual(*FString::Printf(TEXT("rotten flesh %d"), Count), FleshCounts[Count] / double(Rolls), 1 / 3., .01);
+    TestEqual(TEXT("the rare pool 2.5%"), Rare / double(Rolls), .025, .005);
+    for (int32 Which = 0; Which < 3; ++Which)
+        TestEqual(*FString::Printf(TEXT("rare drop %d a third"), Which), RareBy[Which] / double(FMath::Max(Rare, 1)),
+            1 / 3., .06);
+    TestEqual(TEXT("no red mushroom (nothing rides)"), Mushrooms, 0);
+    TestEqual(TEXT("no rare drop without a player's kill"), Unkilled, 0);
+    bool bBaked = false, bRawWhileBurning = false;
+    for (int32 Roll = 0; Roll < 20000 && !bBaked; ++Roll)
+    {
+        FFoundationLootContext Context{L.A.Rules.Hand};
+        Context.bKilledByPlayer = Context.bOnFire = true;
+        TArray<FFoundationLootDrop> Drops;
+        FoundationLoot::Roll(*Table, L.A.Rules.LootPredicates, Context, Random, Drops);
+        for (const FFoundationLootDrop& Drop : Drops)
+        {
+            bBaked |= Drop.Item == Baked;
+            bRawWhileBurning |= Drop.Item == Potato;
+        }
+    }
+    TestTrue(TEXT("a burning zombie's potato is baked"), bBaked && !bRawWhileBurning);
+    return true;
+}
+
+namespace MobTestsLocal
+{
+    // A zombie at the origin and the lab's player 2 blocks away on -X (a survival player of 180 x 60 cm).
+    int32 SpawnZombie(FMobLab& L, const FVector& At = FVector::ZeroVector)
+    {
+        return L.A.SpawnMob(EFoundationMobType::Zombie, At);
+    }
+}
+
+// Survival T6 20c1: the zombie's melee [survival.r10.ai_defaults S 5392-5398: attackInterval 20, speedModifier 1;
+// mobs.base_attributes: attack 3]. It finds the survival player 2 blocks away, walks up and hits it; standing still in
+// reach it hits every 20 steps; each hit is queued for the player's owner with 3 damage, the name and where it
+// stood. A creative player is never targeted; a wall in between hides the player. Mutations: interval 10; no line of
+// sight test (it targets through the wall); the creative player targeted.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobZombieMeleeTest, "Unnamed.Foundation.Mobs.ZombieMelee",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobZombieMeleeTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    {
+        FMobLab L;
+        const int32 Id = SpawnZombie(L);
+        TArray<int64> HitSteps;
+        TArray<FFoundationMobHit> Hits;
+        for (int32 Step = 0; Step < 200; ++Step)
+        {
+            L.Steps(1);
+            for (const FFoundationMobHit& Hit : L.A.TakeMobHits(L.Player))
+            {
+                HitSteps.Add(L.StepIndex);
+                Hits.Add(Hit);
+            }
+        }
+        const FFoundationMob* Zombie = L.A.FindMob(Id);
+        if (!TestNotNull(TEXT("the zombie"), Zombie)) return false;
+        TestEqual(TEXT("it targets the player"), Zombie->Target, L.Player);
+        if (!TestTrue(TEXT("it hit the player"), HitSteps.Num() >= 3)) return false;
+        TestEqual(TEXT("3 damage"), Hits[0].Damage, 3.f);
+        TestEqual(TEXT("named"), Hits[0].Attacker, FString(TEXT("Zombie")));
+        TestTrue(TEXT("from where it stood"), FVector::Dist2D(Hits[0].FromCm, L.P().Facts.FeetCm) < 200);
+        for (int32 Index = 1; Index < HitSteps.Num(); ++Index)
+            TestEqual(*FString::Printf(TEXT("hit %d 20 steps after the last"), Index),
+                HitSteps[Index] - HitSteps[Index - 1], int64(20));
+        TestEqual(TEXT("counted"), L.A.MobMeleeHits, HitSteps.Num());
+    }
+    {
+        FMobLab L;
+        FFoundationPlayerFacts Facts = L.P().Facts;
+        Facts.Mode = EFoundationPlayerMode::Creative;
+        L.A.SetFacts(L.Player, Facts);
+        const int32 Id = SpawnZombie(L);
+        L.Steps(200);
+        TestEqual(TEXT("a creative player is not targeted"), L.A.FindMob(Id)->Target, 0);
+        TestEqual(TEXT("nor hit"), L.A.TakeMobHits(L.Player).Num(), 0);
+    }
+    {
+        // A stone wall across the lab between them, three blocks high (above the zombie's eyes and the player's).
+        FMobLab L;
+        for (int32 Y = -20; Y <= 19; ++Y)
+            for (int32 Z = 0; Z < 3; ++Z)
+                SetBlock(L, FIntVector(-1, Y, Z), TEXT("stone"));
+        const int32 Id = SpawnZombie(L, FVector(150, 0, 0));
+        L.Steps(200);
+        TestEqual(TEXT("behind a wall: no target"), L.A.FindMob(Id)->Target, 0);
+    }
+    return true;
+}
+
+// Survival T6 20c1: targeting as a pure rule. The search runs on even steps with a 1 in 5 roll [S 5398: randomInterval
+// 5]; a player inside the follow range (35 blocks) is found, one just outside is not; an unseen target is dropped after
+// 60 steps unseen [unseenMemoryTicks 60]; a hit from a player makes it the target (HurtByTargetGoal). Mutations: range
+// 16; memory 20.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobTargetTest, "Unnamed.Foundation.Mobs.Target",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobTargetTest::RunTest(const FString&)
+{
+    FFoundationMob Mob;
+    Mob.Type = EFoundationMobType::Zombie;
+    Mob.Health.MaxHealth = Mob.Health.Health = 20;
+    Mob.Random.Initialize(5);
+    bool bSee = true;
+    const auto CanSee = [&bSee](const FVector&, const FVector&) { return bSee; };
+    FFoundationMobPlayer Far;
+    Far.Id = 7;
+    Far.FeetCm = FVector(3510, 0, 0);
+    Far.EyeCm = Far.FeetCm + FVector(0, 0, 162);
+    for (int32 Step = 0; Step < 400; ++Step, ++Mob.Age)
+        FoundationMobs::ThinkHostile(Mob, FVector::ZeroVector, MakeArrayView(&Far, 1), CanSee);
+    TestEqual(TEXT("35.1 blocks: out of range"), Mob.Target, 0);
+    FFoundationMobPlayer Near = Far;
+    Near.FeetCm = FVector(3450, 0, 0);
+    Near.EyeCm = Near.FeetCm + FVector(0, 0, 162);
+    int32 Found = -1;
+    for (int32 Step = 0; Step < 400 && Found < 0; ++Step, ++Mob.Age)
+    {
+        FoundationMobs::ThinkHostile(Mob, FVector::ZeroVector, MakeArrayView(&Near, 1), CanSee);
+        if (Mob.Target == Near.Id) Found = Step;
+    }
+    TestTrue(TEXT("34.5 blocks: found"), Found >= 0);
+    // Out of sight: kept for 60 unseen steps, dropped after.
+    bSee = false;
+    int32 Kept = 0;
+    for (int32 Step = 0; Step < 100 && Mob.Target != 0; ++Step, ++Mob.Age)
+    {
+        FoundationMobs::ThinkHostile(Mob, FVector::ZeroVector, MakeArrayView(&Near, 1), CanSee);
+        Kept += Mob.Target != 0;
+    }
+    TestEqual(TEXT("kept 60 steps unseen"), Kept, 60);
+    // A player's hit: that player is the target at once.
+    FoundationMobs::OnHurt(Mob, FVector::ZeroVector, Near.FeetCm, true, true, Near.Id);
+    TestEqual(TEXT("hurt by a player: its target"), Mob.Target, Near.Id);
+    return true;
+}
+
+// Survival T6 20c1: the zombie's sun burn [survival.r10.idle_and_sun S 5457]. The brightness curve f / (4 - 3f): 1 at
+// light 15, 4/15 -> 1/12; at brightness 1 the roll U x 30 < 1.2 passes 4% of the time. In the lab under a burning day
+// (sky light 15) it catches fire for 160 steps; not with monsters_burn off, at night (sky 4), under a roof, or with
+// foundation.Fire 0. Mutations: the roll's factor 30 -> 3; the roof ignored.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSunBurnTest, "Unnamed.Foundation.Mobs.SunBurn",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSunBurnTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    TestEqual(TEXT("brightness 15"), FoundationMobs::GetBrightness(15), 1.f);
+    TestEqual(TEXT("brightness 4"), FoundationMobs::GetBrightness(4), 1.f / 12.f, 1e-6f);
+    TestEqual(TEXT("brightness 0"), FoundationMobs::GetBrightness(0), 0.f);
+    FFoundationMob Roller;
+    Roller.Random.Initialize(263);
+    int32 Passes = 0;
+    for (int32 Roll = 0; Roll < 30000; ++Roll)
+        Passes += FoundationMobs::RollSunBurn(Roller, 1);
+    TestEqual(TEXT("4% at brightness 1"), Passes / 30000., .04, .005);
+    const auto Burned = [](float Level, bool bBurns, bool bFire, bool bRoof)
+    {
+        FMobLab L;
+        L.A.Options.bFire = bFire;
+        L.A.GetSkyFacts = [Level, bBurns](float& OutLevel, bool& bOutBurns)
+        {
+            OutLevel = Level;
+            bOutBurns = bBurns;
+        };
+        // A creative player (no target to chase); the zombie held in place by a pen two blocks high.
+        FFoundationPlayerFacts Facts = L.P().Facts;
+        Facts.Mode = EFoundationPlayerMode::Creative;
+        L.A.SetFacts(L.Player, Facts);
+        const FVector At(1500, 1500, 0);
+        for (int32 X = 14; X <= 16; ++X)
+            for (int32 Y = 14; Y <= 16; ++Y)
+                for (int32 Z = 0; Z < 2; ++Z)
+                    if (X != 15 || Y != 15) SetBlock(L, FIntVector(X, Y, Z), TEXT("stone"));
+        if (bRoof) SetBlock(L, FIntVector(15, 15, 5), TEXT("stone"));
+        const int32 Id = L.A.SpawnMob(EFoundationMobType::Zombie, At + FVector(50, 50, 0));
+        int32 MaxFire = 0;
+        for (int32 Step = 0; Step < 600 && MaxFire == 0; ++Step)
+        {
+            L.Steps(1);
+            if (const FFoundationMob* Zombie = L.A.FindMob(Id)) MaxFire = Zombie->Health.FireTicks;
+        }
+        return MaxFire;
+    };
+    const int32 Fire = Burned(15, true, true, false);
+    TestTrue(TEXT("noon: it catches fire for 8 s"), Fire >= 159 && Fire <= 160);
+    TestEqual(TEXT("monsters_burn off"), Burned(15, false, true, false), 0);
+    TestEqual(TEXT("night sky 4"), Burned(4, true, true, false), 0);
+    TestEqual(TEXT("under a roof"), Burned(15, true, true, true), 0);
+    TestEqual(TEXT("foundation.Fire 0"), Burned(15, true, false, false), 0);
+    return true;
+}
+
+// Survival T6 20c1: a mob's hit on the player's vitals [FFoundationVitals::Hurt with the attacker; the difficulty
+// rules]: Normal 3, Easy min(3 / 2 + 1, 3) = 2.5, Hard 4.5, Peaceful none; a death by it reads "Player was slain by
+// Zombie" (death.attack.mob); without a name it stays death.attack.generic, as before. The knockback the owner applies
+// is the mobs' [survival2.r20.mob_physics: grounded from rest 0.4 away and 0.4 up]. Mutation: drop the name.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobPlayerHitTest, "Unnamed.Foundation.Mobs.PlayerHit",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobPlayerHitTest::RunTest(const FString&)
+{
+    const EFoundationDifficulty Difficulties[] = {EFoundationDifficulty::Normal, EFoundationDifficulty::Easy,
+        EFoundationDifficulty::Hard, EFoundationDifficulty::Peaceful};
+    const float Expected[] = {3.f, 2.5f, 4.5f, 0.f};
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        FFoundationVitals Vitals;
+        Vitals.Difficulty = Difficulties[Index];
+        Vitals.Hurt(EFoundationDamage::MobAttack, 3, TEXT("Zombie"));
+        TestEqual(*FString::Printf(TEXT("difficulty %d"), Index), 20.f - Vitals.Health, Expected[Index]);
+    }
+    FFoundationVitals Vitals;
+    Vitals.Health = 2;
+    Vitals.Hurt(EFoundationDamage::MobAttack, 3, TEXT("Zombie"));
+    TestEqual(TEXT("slain by a zombie"), Vitals.DeathMessage, FString(TEXT("Player was slain by Zombie")));
+    TestEqual(TEXT("death.attack.mob"), Vitals.DeathKey, FString(TEXT("death.attack.mob")));
+    FFoundationVitals Nameless;
+    Nameless.Health = 2;
+    Nameless.Hurt(EFoundationDamage::MobAttack, 3);
+    TestEqual(TEXT("no name: generic, as before"), Nameless.DeathKey, FString(TEXT("death.attack.generic")));
+    FVector Velocity = FVector::ZeroVector;
+    FoundationMobs::ApplyKnockback(Velocity, FVector2D(-1, 0), true, FoundationMobs::KnockbackCm);
+    TestEqual(TEXT("knocked 0.4 away and 0.4 up"), Velocity, FVector(-40, 0, 40));
     return true;
 }
 #endif

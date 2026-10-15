@@ -553,6 +553,11 @@ bool FFoundationVitalsArmorTest::RunTest(const FString&)
     FFoundationVitals Bypass = Quiet();
     Bypass.Hurt(EFoundationDamage::Generic, 10);
     TestEqual(TEXT("armor-bypassing damage owes none"), Bypass.PendingArmorWear, 0);
+    // Lava is #minecraft:is_fire: its wear is owed as fire wear too, which fire-resistant pieces skip (Codex 31 #4).
+    TestEqual(TEXT("a player attack owes no fire wear"), V.PendingFireArmorWear, 0);
+    FFoundationVitals Lava = Quiet();
+    Lava.Hurt(EFoundationDamage::Lava, 8);
+    TestTrue(TEXT("lava 8 owes 2 wear, all of it fire"), Lava.PendingArmorWear == 2 && Lava.PendingFireArmorWear == 2);
     // Respawn keeps what is worn (the holder sets it again each step).
     V.Respawn();
     TestTrue(TEXT("respawn keeps the worn pieces"), V.WornArmor == 8 && V.WornToughness == 2.f);

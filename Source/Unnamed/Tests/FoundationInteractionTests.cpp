@@ -65,7 +65,7 @@ namespace
             Item.PlacesBlock = TEXT("lab_block");
             Item.Icon = TEXT("block");
             A.Rules.Items.Add(Item);
-            A.Rules.Loadout[0] = TEXT("lab_block");
+            A.Rules.Loadout = {TEXT("lab_block"), TEXT("iron_pickaxe"), TEXT("iron_sword")};
             A.World.SetRegistry(MakeRegistry());
             A.PlantSurvival = VoxelBlocks::GetPlantSurvival(A.World.GetRegistry());
             A.World.BoundsMin = FIntVector(-20, -20, 0);
@@ -1156,7 +1156,26 @@ bool FFoundationInteractionDataTest::RunTest(const FString&)
     TestTrue(TEXT("stone item places stone"),
         StoneItem != INDEX_NONE && Rules.Items[StoneItem].PlacesBlock == TEXT("stone") &&
             Rules.Items[StoneItem].MaxStack == 64);
-    TestEqual(TEXT("loadout slot 1"), Rules.Loadout[0], FName(TEXT("stone")));
+    // Step 19b: no starting items, as in vanilla survival (Jesus, 2026-10-15): a new player and a reset start empty.
+    TestEqual(TEXT("no starting loadout"), Rules.Loadout.Num(), 0);
+    {
+        FFoundationAuthority Fresh;
+        Fresh.Rules = Rules;
+        const int32 Id = Fresh.AddPlayer();
+        auto Filled = [&Fresh, Id]
+        {
+            int32 Count = 0;
+            for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+            {
+                const FFoundationItemInstance* Stack = Fresh.FindPlayer(Id)->Inventory.GetSlot(Slot);
+                Count += Stack && !Stack->IsEmpty();
+            }
+            return Count;
+        };
+        TestEqual(TEXT("a new player's 41 slots are empty"), Filled(), 0);
+        Fresh.Reset();
+        TestEqual(TEXT("and stay empty after a reset"), Filled(), 0);
+    }
     TestEqual(TEXT("no item for water"), Rules.FindItem(TEXT("water")), int32(INDEX_NONE));
     if (!TestTrue(TEXT("the 26.3 iron tools (DA_Items)"),
             Rules.FindItem(TEXT("iron_pickaxe")) != INDEX_NONE && Rules.FindItem(TEXT("iron_sword")) != INDEX_NONE))
