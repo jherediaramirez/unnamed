@@ -10,8 +10,9 @@
 #include "UnrealClient.h"
 
 // The mobs' captures (survival T6 20a) on the Playground's open ground: a summoned cow standing, walking across the
-// view, hit (the red overlay and the knockback), dying (the roll) and its drops, then the foundation.Mobs control
-// pair (1 drawn, 0 hidden). Shots are named <output>-mobs-<name>.png.
+// view, hit (the red overlay and the knockback), dying (the roll) and its drops; 20b: the overlay close up (unhurt,
+// hurt), the pig, sheep and chicken, the chicken falling and the sheep grazing; then the foundation.Mobs control pair
+// (1 drawn, 0 hidden). Shots are named <output>-mobs-<name>.png.
 void UFoundationRuntimeProbe::AddMobCases()
 {
 #if WITH_DEV_AUTOMATION_TESTS
@@ -194,6 +195,103 @@ void UFoundationRuntimeProbe::AddMobCases()
             Record(TEXT("mobs: the corpse is gone and beef dropped"), !FindCow() && Beef >= 1,
                 FString::Printf(TEXT("beef %d, leather %d"), Beef, Leather));
             Shot(TEXT("5-drops"));
+        });
+    Flush();
+    // 20b: the hurt overlay close up (the look call against vanilla's Cow_Death.png), unhurt then hurt.
+    AddCase(
+        TEXT("mobs: close-up unhurt"), .6,
+        [this, SetMobs, Summon, LookAt]
+        {
+            SetMobs(1);
+            ResetPlayer(Spot);
+            Summon(Spot + FVector(180, 0, 0), 120);
+            LookAt(Spot + FVector(180, 0, 80));
+        },
+        [Shot] { Shot(TEXT("8a-closeup-unhurt")); });
+    Flush();
+    AddCase(
+        TEXT("mobs: close-up hurt"), .12,
+        [this, Attack, FindCow]
+        {
+            Attack();
+            if (FFoundationMob* Cow = FindCow())
+            {
+                Cow->VelocityCm = FVector::ZeroVector;
+                Cow->bMoving = false;
+            }
+        },
+        [this, Shot, FindCow]
+        {
+            const FFoundationMob* Cow = FindCow();
+            Record(TEXT("mobs: close-up hurt"), Cow && Cow->HurtTime > 0,
+                Cow ? FString::Printf(TEXT("hurt %d"), Cow->HurtTime) : TEXT("no cow"));
+            Shot(TEXT("8b-closeup-hurt"));
+        });
+    Flush();
+    // 20b: the pig, the sheep (its wool layer) and the chicken beside each other, then the chicken falling (its wings)
+    // and the sheep grazing (its head down).
+    auto Farm = MakeShared<TArray<int32>>();
+    auto FindFarm = [Authority, Farm](int32 Index) -> FFoundationMob*
+    { return Authority() && Farm->IsValidIndex(Index) ? Authority()->FindMob((*Farm)[Index]) : nullptr; };
+    AddCase(
+        TEXT("mobs: pig, sheep, chicken"), 1.,
+        [this, SetMobs, Authority, Farm, LookAt]
+        {
+            SetMobs(1);
+            ResetPlayer(Spot);
+            FFoundationAuthority* A = Authority();
+            if (!A) return;
+            A->ClearMobs();
+            A->Options.bMobs = true;
+            Farm->Reset();
+            const EFoundationMobType Types[] = {
+                EFoundationMobType::Pig, EFoundationMobType::Sheep, EFoundationMobType::Chicken};
+            for (int32 Index = 0; Index < 3; ++Index)
+                Farm->Add(
+                    A->SpawnMob(Types[Index], Spot + FVector(400, 180 * (Index - 1), 0) - A->World.OriginCm, 150));
+            LookAt(Spot + FVector(400, 0, 50));
+        },
+        [this, Shot, Drawn, FindFarm]
+        {
+            for (int32 Index = 0; Index < 3; ++Index)
+                if (FFoundationMob* Mob = FindFarm(Index)) Mob->bMoving = false;
+            Record(TEXT("mobs: pig, sheep and chicken drawn"), Drawn() == 3, FString::FromInt(Drawn()));
+            Shot(TEXT("9-farm"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: chicken falls"), .35,
+        [FindFarm]
+        {
+            if (FFoundationMob* Chicken = FindFarm(2))
+            {
+                Chicken->LocalCm.Z += 300;
+                Chicken->PreviousLocalCm = Chicken->LocalCm;
+                Chicken->bOnGround = false;
+            }
+        },
+        [this, Shot, FindFarm]
+        {
+            const FFoundationMob* Chicken = FindFarm(2);
+            Record(TEXT("mobs: the chicken flaps and falls slowly"),
+                Chicken && !Chicken->bOnGround && Chicken->FlapSpeed > .5f && Chicken->VelocityCm.Z > -19.5,
+                Chicken ? FString::Printf(TEXT("flap speed %.2f, vy %.1f"), Chicken->FlapSpeed, Chicken->VelocityCm.Z)
+                        : TEXT("no chicken"));
+            Shot(TEXT("10-chicken-falls"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: sheep grazes"), 1.,
+        [FindFarm]
+        {
+            if (FFoundationMob* Sheep = FindFarm(1)) Sheep->GrazeTicks = 40;
+        },
+        [this, Shot, FindFarm]
+        {
+            const FFoundationMob* Sheep = FindFarm(1);
+            Record(TEXT("mobs: the sheep's head is down"), Sheep && Sheep->GrazeTicks > 4 && Sheep->GrazeTicks < 36,
+                Sheep ? FString::Printf(TEXT("graze %d"), Sheep->GrazeTicks) : TEXT("no sheep"));
+            Shot(TEXT("11-sheep-grazes"));
         });
     Flush();
     // The control pair: the same cow with foundation.Mobs 1, then 0.

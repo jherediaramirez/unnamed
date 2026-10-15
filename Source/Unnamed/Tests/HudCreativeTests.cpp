@@ -41,7 +41,7 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     FHudCreativeModel Model;
     FFoundationRules Rules;
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
-    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 104 items fill
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 114 items fill
     // Tools & Utilities, Combat, Food & Drinks, Ingredients and Natural Blocks, so every tab shows here (spawn eggs:
     // the spawners).
     FHudCreativeModel Bare;

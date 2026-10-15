@@ -671,8 +671,6 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
 
 bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
 {
-    // The furnace's screen (its background, flame and arrow) is step 8a2's.
-    if (Kind == EFoundationMenuKind::Furnace) return false;
     if (bOpen) Close();
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
@@ -681,6 +679,15 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
+    // A furnace's fuel slot takes fuel and the empty bucket (FFoundationContainerMenu::MayPlace): the drag needs it.
+    TSet<FName> FuelItems;
+    if (Kind == EFoundationMenuKind::Furnace)
+    {
+        const FFoundationCooking& Cooking = Authority.GetCooking();
+        for (int32 Item = 0; Item < Authority.Rules.Items.Num(); ++Item)
+            if (Cooking.IsFuel(Item) || Authority.Rules.Items[Item].Id == FName(TEXT("bucket")))
+                FuelItems.Add(Authority.Rules.Items[Item].Id);
+    }
     // clang-format off
     Survival = SNew(SHudContainerScreen)
         .Registry(Authority.World.GetRegistryRef())
@@ -688,6 +695,7 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         .RequestedGuiScale(MakeGuiScale(Controller))
         .Kind(Kind)
         .Items(MakeScreenItems(Authority))
+        .FuelItems(MoveTemp(FuelItems))
         .GetView([WeakLab, WeakPawn, ContainerId]
         {
             FHudContainerView View;
@@ -712,6 +720,14 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
             for (int32 Slot = 0; Slot < Menu.Num(); ++Slot)
                 View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
+            // An open furnace's flame and arrow (T1 step 8a2): its fuel left and cooking progress.
+            if (Player->OpenMenu.ContainerId == ContainerId && Player->OpenMenu.Kind == EFoundationMenuKind::Furnace)
+                if (const FFoundationBlockEntity* Furnace = A.BlockEntities.Find(Player->OpenMenu.Cell))
+                {
+                    View.bLit = Furnace->IsLit();
+                    View.LitFraction = float(Furnace->LitTime) / float(FMath::Max(Furnace->LitDuration, 1));
+                    View.CookFraction = Furnace->CookTotal > 0 ? float(Furnace->CookProgress) / Furnace->CookTotal : 0;
+                }
             return View;
         })
         .OnClick([WeakLab, WeakPawn, ContainerId](const FHudContainerClick& Click)
@@ -743,8 +759,9 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     Mode.SetWidgetToFocus(Survival);
     Controller->SetInputMode(Mode);
     FSlateApplication::Get().SetKeyboardFocus(Survival);
-    Controller->GetHud()->LogEvent(
-        Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table") : TEXT("survival inventory"));
+    Controller->GetHud()->LogEvent(Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table")
+            : Kind == EFoundationMenuKind::Furnace                       ? TEXT("furnace")
+                                                                         : TEXT("survival inventory"));
     bInventoryOpen = true;
     return true;
 }

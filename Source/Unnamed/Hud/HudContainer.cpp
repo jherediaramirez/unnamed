@@ -26,9 +26,17 @@ FIntPoint FHudContainerModel::GetSlotPosition(int32 Slot)
 FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Slot)
 {
     if (Kind == EFoundationMenuKind::Inventory) return GetSlotPosition(Slot);
-    // The crafting table: result 124,35; the 3x3 from 30,17; the main grid from 8,84; the hotbar at y 142.
+    // The crafting table: result 124,35; the 3x3 from 30,17. The furnace: input 56,17, fuel 56,53, result 116,35. Both:
+    // the main grid from 8,84; the hotbar at y 142.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
-    if (Slot == FContainerModelMenu::ResultSlot) return {124, 35};
+    if (Layout.IsContainer(Slot))
+    {
+        static const FIntPoint Furnace[] = {{56, 17}, {56, 53}, {116, 35}};
+        const int32 Index = Slot - Layout.FirstContainer;
+        return Kind == EFoundationMenuKind::Furnace && Index < UE_ARRAY_COUNT(Furnace) ? Furnace[Index]
+                                                                                       : FIntPoint(-1000, -1000);
+    }
+    if (Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot) return {124, 35};
     if (Layout.IsCraft(Slot))
         return {30 + (Slot - Layout.FirstCraft) % Layout.CraftWidth * 18,
             17 + (Slot - Layout.FirstCraft) / Layout.CraftWidth * 18};
@@ -41,7 +49,26 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
 FIntPoint FHudContainerModel::GetRecipeButton(EFoundationMenuKind Kind)
 {
     return Kind == EFoundationMenuKind::Crafting ? FIntPoint(CraftingRecipeButtonX, CraftingRecipeButtonY)
+        : Kind == EFoundationMenuKind::Furnace   ? FIntPoint(FurnaceRecipeButtonX, FurnaceRecipeButtonY)
                                                  : FIntPoint(RecipeButtonX, RecipeButtonY);
+}
+
+int32 FHudContainerModel::GetFlameHeight(bool bLit, float LitFraction)
+{
+    return bLit && LitFraction > 0
+        ? FMath::Min(FMath::CeilToInt(FMath::Clamp(LitFraction, 0.f, 1.f) * 13) + 1, FlameSize)
+        : 0;
+}
+
+int32 FHudContainerModel::GetArrowWidth(float CookFraction)
+{
+    return FMath::CeilToInt(FMath::Clamp(CookFraction, 0.f, 1.f) * ArrowWidth);
+}
+
+int32 FHudContainerModel::GetResultSlot() const
+{
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    return Layout.HasCraftResult() ? FContainerModelMenu::ResultSlot : Layout.TakeOnly;
 }
 
 bool FHudContainerModel::IsShown(int32 Slot) const
@@ -80,7 +107,11 @@ bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) co
 {
     // Never the result slot (it only gives); the crafting grid takes a drag like any slot.
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
-    if (Slot < Layout.FirstCraft || Slot >= Layout.Slots || View.Carried.IsEmpty()) return false;
+    if (Slot < Layout.FirstCraft || Slot >= Layout.Slots || View.Carried.IsEmpty() || Slot == GetResultSlot())
+        return false;
+    // A furnace's fuel slot takes only fuel and the empty bucket.
+    if (Layout.FuelSlot != INDEX_NONE && Slot == Layout.FuelSlot && !FuelItems.Contains(View.Carried.Item))
+        return false;
     if (Layout.IsArmor(Slot))
     {
         // The armor slots, head to feet, take only their own slot's items.
@@ -106,8 +137,8 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     // moves every stack like the one moved; either happens on the release. Never on the result slot: each click there
     // crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no double-click
     // row; Codex review 10, finding 4).
-    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside &&
-        Slot != FContainerModelMenu::ResultSlot && Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
+    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside && Slot != GetResultSlot() &&
+        Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
         (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
     LastSlot = Slot;
     LastTime = bDouble ? -1000 : Time;

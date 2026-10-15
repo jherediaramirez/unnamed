@@ -8968,6 +8968,625 @@
    "textures": [
     "item/cooked_mutton"
    ]
+  },
+  {
+   "id": "charcoal",
+   "protocol_id": 1011,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Charcoal",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "coals",
+    "furnace_minecart_fuel"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1649
+    },
+    {
+     "tab": "ingredients",
+     "index": 1
+    }
+   ],
+   "model": {
+    "definition": "items/charcoal.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/charcoal",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/charcoal"
+   ]
+  },
+  {
+   "id": "brick",
+   "protocol_id": 1142,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "decorated_pot_ingredients"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1710
+    },
+    {
+     "tab": "ingredients",
+     "index": 72
+    }
+   ],
+   "model": {
+    "definition": "items/brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/brick"
+   ]
+  },
+  {
+   "id": "lime_dye",
+   "protocol_id": 1204,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Lime Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1698
+    },
+    {
+     "tab": "ingredients",
+     "index": 60
+    }
+   ],
+   "model": {
+    "definition": "items/lime_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/lime_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/lime_dye"
+   ]
+  },
+  {
+   "id": "green_dye",
+   "protocol_id": 1212,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Green Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1706
+    },
+    {
+     "tab": "ingredients",
+     "index": 68
+    }
+   ],
+   "model": {
+    "definition": "items/green_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/green_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/green_dye"
+   ]
+  },
+  {
+   "id": "dried_kelp",
+   "protocol_id": 1257,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Dried Kelp",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 1,
+    "saturation": 0.6
+   },
+   "consumable": {
+    "consume_seconds": 0.8
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1468
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 14
+    }
+   ],
+   "model": {
+    "definition": "items/dried_kelp.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/dried_kelp",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/dried_kelp"
+   ]
+  },
+  {
+   "id": "baked_potato",
+   "protocol_id": 1380,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Baked Potato",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 5,
+    "saturation": 6.0
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1464
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 10
+    }
+   ],
+   "model": {
+    "definition": "items/baked_potato.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/baked_potato",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/baked_potato"
+   ]
+  },
+  {
+   "id": "nether_brick",
+   "protocol_id": 1396,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Nether Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1711
+    },
+    {
+     "tab": "ingredients",
+     "index": 73
+    }
+   ],
+   "model": {
+    "definition": "items/nether_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/nether_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/nether_brick"
+   ]
+  },
+  {
+   "id": "resin_brick",
+   "protocol_id": 1397,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Resin Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1712
+    },
+    {
+     "tab": "ingredients",
+     "index": 74
+    }
+   ],
+   "model": {
+    "definition": "items/resin_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/resin_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/resin_brick"
+   ]
+  },
+  {
+   "id": "iron_nugget",
+   "protocol_id": 1456,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Iron Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1659
+    },
+    {
+     "tab": "ingredients",
+     "index": 12
+    }
+   ],
+   "model": {
+    "definition": "items/iron_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_nugget"
+   ]
+  },
+  {
+   "id": "copper_nugget",
+   "protocol_id": 1457,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Copper Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1658
+    },
+    {
+     "tab": "ingredients",
+     "index": 11
+    }
+   ],
+   "model": {
+    "definition": "items/copper_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_nugget"
+   ]
   }
  ]
 }
