@@ -4,6 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 15, 2026
 
+- [Handoff: survival step 19b, the shield](2026-10-15-Shield-Handoff-Step19b.md): the current T2 handoff (lane `feature/survival-entities`): the held leather tint look call (A-5) first, the shield item (DA_Items lock), blocking per R18, first-person held-item motion only.
 - [Survival step 19a2: the armor pieces' data](2026-10-15-Armor-19a2.md): record, lane `feature/survival-entities`. The item reference's `armor` group (29 pieces, additions only, proven) and `DA_Items` (DA_Items lock), the leather tint, the pumpkin blur, R23's orb bounce, scan phase and reward box, Codex review 27's two fixes.
 - [Survival step 19a1: the items tail and armor logic](2026-10-15-Armor-19a1.md): record, lane `feature/survival-entities`. Codex reviews 11 and 14 (the push-out now follows SURVIVAL-RUN2-FINDINGS R23, which replaces the Codex 11 #1/FX-a fix; the orb merge follows R23), and armor without new item data: worn values in the hurt path and the HUD row, wear, right-click equip (R19), equip sounds, `carved_pumpkin` on the head. 19a2 (the item reference and `DA_Items`) follows.
 - [Survival step 8b2 handoff: the furnace particles and Codex 22's rest](2026-10-15-Inventory-Handoff-Step8b2.md): start here for T1's next step (lane `feature/survival-containers`): Codex 22 #2/#3 first, then the R15 particles (front = centre + facing x 0.52, lifetimes), R23's menu reach (drop its provisional mark) and shift-craft partial fit; light 13 is T5 B3a's. Short prompt in section 10.
