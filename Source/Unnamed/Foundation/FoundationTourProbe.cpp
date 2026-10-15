@@ -1826,5 +1826,28 @@ void UFoundationRuntimeProbe::AddTourCases()
             }
         },
         [] {});
+    // m. A survival screen runs the simulation under it (Codex review 12, finding 2): with the inventory open the
+    // reference steps go on and a burning player's fire ticks (T3 16a, FFoundationVitals::Step) count down.
+    const TSharedRef<TPair<int64, int32>> Before = MakeShared<TPair<int64, int32>>();
+    AddCase(
+        TEXT("tour screen runs the simulation"), .5,
+        [this, Lab, Before]
+        {
+            ResetPlayer({0, 0, 0});
+            Controller->GetPanels()->OpenSurvivalInventory(*Lab);
+            Pawn->Vitals.FireTicks = 100;
+            *Before = {Pawn->ReferenceSteps, Pawn->Vitals.FireTicks};
+        },
+        [this, Before]
+        {
+            const int64 Steps = Pawn->ReferenceSteps - Before->Key;
+            const int32 Fire = Pawn->Vitals.FireTicks;
+            Record(TEXT("tour screen runs the simulation"),
+                Controller->GetPanels()->GetSurvivalScreen().IsValid() && Steps > 0 && Fire < Before->Value,
+                FString::Printf(
+                    TEXT("inventory open: %lld reference steps, fire ticks %d -> %d"), Steps, Before->Value, Fire));
+            Controller->GetPanels()->Close();
+            Pawn->Vitals.FireTicks = 0;
+        });
 #endif
 }
