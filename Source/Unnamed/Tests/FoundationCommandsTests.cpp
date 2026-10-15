@@ -375,7 +375,7 @@ bool FFoundationChatTest::RunTest(const FString& Parameters)
     }
 
     TestEqual(TEXT("full for 9 s"), FFoundationChat::GetAlpha(9), 1.f);
-    TestEqual(TEXT("half at 9.5 s"), FFoundationChat::GetAlpha(9.5), .5f);
+    TestEqual(TEXT("a quarter at 9.5 s"), FFoundationChat::GetAlpha(9.5), .25f);
     TestEqual(TEXT("gone at 10 s"), FFoundationChat::GetAlpha(10), 0.f);
     FFoundationChat Chat;
     for (int32 Index = 0; Index < 105; ++Index)
@@ -383,7 +383,7 @@ bool FFoundationChatTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("100 kept"), Chat.Num(), 100);
     TestEqual(TEXT("oldest dropped"), Chat.GetText(0), FString(TEXT("5")));
     TestEqual(TEXT("closed: the last 10 s"), Chat.GetVisible(104.5, false).Num(), 10);
-    TestEqual(TEXT("fading"), Chat.GetVisible(104.5, false)[0].Alpha, .5f);
+    TestEqual(TEXT("fading"), Chat.GetVisible(104.5, false)[0].Alpha, .25f);
     TestEqual(TEXT("open: everything"), Chat.GetVisible(1000, true).Num(), 100);
 
     // The draw list: an empty chat adds nothing; a message draws its band and glyphs; long text wraps at 320 px.

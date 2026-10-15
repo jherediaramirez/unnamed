@@ -9,10 +9,11 @@ class UNNAMED_API FFoundationChat
 {
 public:
     // minecraft.wiki "Chat": the history keeps 100 messages; a message shows for 10 s while the chat is closed.
-    // The fade over its last second is provisional (linear; the exact curve is client code only).
+    // [survival.r4.fade] it stays opaque for 180 ticks (9 s), then fades with ((200 - t) / 20)^2 to 0 at 200 ticks.
     static constexpr int32 MaxMessages = 100;
     static constexpr double VisibleSeconds = 10;
-    static constexpr double FadeSeconds = 1;
+    static constexpr double FullTicks = 180;
+    static constexpr double VisibleTicks = 200;
 
     void Add(TArray<FHudChatRun> Runs, double Now);
     void AddText(const FString& Text, FLinearColor Color, double Now) { Add({{Text, Color}}, Now); }
@@ -32,7 +33,7 @@ public:
     // Closed: the messages younger than 10 s with their fade. Open: every message at full opacity. Oldest first; the
     // draw list keeps the newest rows that fit.
     TArray<FHudChatLine> GetVisible(double Now, bool bOpen) const;
-    // 1 until the last second, then linear to 0 at 10 s; quantized to 1/20 so a closed chat redraws per HUD tick.
+    // 1 until 9 s, then ((200 - t) / 20)^2 to 0 at 10 s (t in ticks, floored), so a closed chat redraws per HUD tick.
     static float GetAlpha(double Age);
 
 private:
