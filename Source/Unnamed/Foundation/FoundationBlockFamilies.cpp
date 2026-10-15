@@ -3,6 +3,7 @@
 #include "Algo/Find.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlocks.h"
+#include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameplayTagContainer.h"
 #include "HAL/IConsoleManager.h"
@@ -362,6 +363,8 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
     FFoundationBlockState State, const FIntVector& Cell, EFoundationFace Toward, FFoundationBlockState Neighbour,
     FGetState Get)
 {
+    if (FoundationChests::IsChest(Registry.GetBlock(State).Id))
+        return FoundationChests::UpdateShape(Registry, State, Toward, Neighbour);
     const FFoundationBlockType& Block = Registry.GetBlock(State);
     const EFoundationBlockFamily Family = GetFamily(Block);
     switch (Family)
@@ -415,6 +418,7 @@ FFoundationBlockState FoundationBlockFamilies::SettleShape(
 FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFoundationBlockWorld& World,
     const FFoundationBlockType& Block, const FFoundationPlacementContext& Context, bool bTopHalf)
 {
+    if (FoundationChests::IsChest(Block.Id)) return FoundationChests::GetStateForPlacement(World, Block, Context);
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     FFoundationBlockState State = Block.GetDefaultState();
     const EFoundationBlockFamily Family = GetFamily(Block);
@@ -465,7 +469,7 @@ void FoundationBlockFamilies::UpdateNeighbourShapes(FFoundationBlockWorld& World
         if (!World.IsKnown(At)) return;
         const FFoundationBlockState State = World.Get(At).State;
         const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
-        if (Family == EFoundationBlockFamily::None ||
+        if ((Family == EFoundationBlockFamily::None && !FoundationChests::IsChest(Registry.GetBlock(State).Id)) ||
             (Side == EFoundationFace::Down && Family != EFoundationBlockFamily::Wall))
             return;
         const FFoundationBlockState Updated =
@@ -484,6 +488,7 @@ bool FoundationBlockFamilies::IsInteractOn()
 
 bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Block)
 {
+    if (FoundationChests::IsChest(Block.Id)) return FoundationChests::IsOn();
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor) return IsInteractOn();
     return Family != EFoundationBlockFamily::None;

@@ -928,4 +928,55 @@ bool FHudContainerBarrelTest::RunTest(const FString&)
         *this, TEXT("a drag over the barrel and the main grid"), Drag.GetDragSlots(), TArray<int32>{0, 1, 26, 27});
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudContainerChestTest, "Unnamed.Hud.Container.Chest", ContainerScreenTestFlags)
+
+bool FHudContainerChestTest::RunTest(const FString&)
+{
+    // T1 step 18-chest: a single chest's screen is the barrel's (value-swaps.md l.47: 176 x 168; 8,18 / 8,85 / 8,143).
+    constexpr EFoundationMenuKind Chest = EFoundationMenuKind::Chest;
+    for (const int32 Slot : {0, 26, 27, 53, 54, 62})
+        TestEqual(FString::Printf(TEXT("slot %d as the barrel's"), Slot),
+            FHudContainerModel::GetSlotPosition(Chest, Slot),
+            FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Barrel, Slot));
+    TestEqual(TEXT("168 high"), FHudContainerModel::GetHeight(Chest), 168);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::HasRecipeButton(Chest));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Chest;
+    TestEqual(TEXT("63 slots"), Model.GetSlots(), 63);
+    TestEqual(TEXT("y 167 is in the window"), Model.HitTest({2, 167}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 168 is outside"), Model.HitTest({2, 168}), int32(FScreenMenu::Outside));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerLargeChestTest, "Unnamed.Hud.Container.LargeChest", ContainerScreenTestFlags)
+
+bool FHudContainerLargeChestTest::RunTest(const FString&)
+{
+    // T1 step 18-chest: a double chest's screen (generic_54 with 6 rows; value-swaps.md l.48, inventory.layouts: 176 x
+    // 222, container 0-53 at 8 + 18c, y 18..108; main 54-80 at y 139/157/175; hotbar 81-89 at y 197).
+    constexpr EFoundationMenuKind Large = EFoundationMenuKind::LargeChest;
+    auto At = [Large](int32 Slot) { return FHudContainerModel::GetSlotPosition(Large, Slot); };
+    TestEqual(TEXT("container 0 at 8,18"), At(0), FIntPoint(8, 18));
+    TestEqual(TEXT("container 27 at 8,72"), At(27), FIntPoint(8, 72));
+    TestEqual(TEXT("container 53 at 152,108"), At(53), FIntPoint(152, 108));
+    TestEqual(TEXT("first main slot at 8,139"), At(54), FIntPoint(8, 139));
+    TestEqual(TEXT("last main slot at 152,175"), At(80), FIntPoint(152, 175));
+    TestEqual(TEXT("first hotbar slot at 8,197"), At(81), FIntPoint(8, 197));
+    TestEqual(TEXT("last hotbar slot at 152,197"), At(89), FIntPoint(152, 197));
+    TestEqual(TEXT("222 high"), FHudContainerModel::GetHeight(Large), 222);
+    TestEqual(TEXT("Inventory label at y 128 (imageHeight - 94)"), FHudContainerModel::LargeChestInventoryLabelY,
+        FHudContainerModel::GetHeight(Large) - 94);
+    TestFalse(TEXT("no recipe-book button"), FHudContainerModel::HasRecipeButton(Large));
+    FHudContainerModel Model = MakeScreenModel();
+    Model.Kind = Large;
+    TestEqual(TEXT("90 slots"), Model.GetSlots(), 90);
+    for (const int32 Slot : {0, 26, 27, 53, 54, 80, 81, 89})
+        TestEqual(
+            FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
+    TestEqual(TEXT("y 221 is in the window"), Model.HitTest({2, 221}), int32(INDEX_NONE));
+    TestEqual(TEXT("y 222 is outside"), Model.HitTest({2, 222}), int32(FScreenMenu::Outside));
+    return true;
+}
 #endif

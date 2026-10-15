@@ -69,7 +69,11 @@ enum class EFoundationMenuKind : uint8
     Smoker,
     BlastFurnace,
     // A barrel's (vanilla's ChestMenu with 3 rows, T1 step 9): its 27 slots, main, hotbar.
-    Barrel
+    Barrel,
+    // A chest's (T1 step 18-chest): the barrel's layout; a double chest's (ChestMenu with 6 rows): its 54 slots, the
+    // type=right half's then the type=left half's, main, hotbar.
+    Chest,
+    LargeChest
 };
 
 // The furnace, smoker and blast furnace menus share one layout and one block entity kind.
@@ -79,10 +83,22 @@ inline bool IsFurnaceMenu(EFoundationMenuKind Kind)
         Kind == EFoundationMenuKind::BlastFurnace;
 }
 
-// The menus whose container slots are a block entity's (the authority's store, T1 steps 8a, 9).
+// The chest menus (T1 step 18-chest).
+inline bool IsChestMenu(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Chest || Kind == EFoundationMenuKind::LargeChest;
+}
+
+// The menus whose block shows its viewers (an open barrel, a chest's sounds; T1 steps 9, 18-chest).
+inline bool HasViewers(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Barrel || IsChestMenu(Kind);
+}
+
+// The menus whose container slots are a block entity's (the authority's store, T1 steps 8a, 9, 18-chest).
 inline bool UsesBlockEntity(EFoundationMenuKind Kind)
 {
-    return IsFurnaceMenu(Kind) || Kind == EFoundationMenuKind::Barrel;
+    return IsFurnaceMenu(Kind) || HasViewers(Kind);
 }
 
 // A menu's slot numbering: one row per kind (furnaces and the barrel add theirs). Every range is [First, Next);
@@ -146,7 +162,8 @@ struct FFoundationMenuLayout
 // caller's Grid, the screen's own), 10-36 the main grid, 37-45 the hotbar. A furnace's (EFoundationMenuKind::Furnace,
 // T1 step 8a) is 0 the input, 1 the fuel, 2 the result (the caller's Grid: its block entity's slots), 3-29 the main
 // grid, 30-38 the hotbar; its result only gives, and nothing is crafted. A barrel's (EFoundationMenuKind::Barrel, T1
-// step 9) is 0-26 its block entity's slots, 27-53 the main grid, 54-62 the hotbar.
+// step 9) is 0-26 its block entity's slots, 27-53 the main grid, 54-62 the hotbar; a chest's (Chest, 18-chest) the
+// same. A double chest's (LargeChest) is 0-53 its two halves' slots, 54-80 the main grid, 81-89 the hotbar.
 class UNNAMED_API FFoundationContainerMenu
 {
 public:

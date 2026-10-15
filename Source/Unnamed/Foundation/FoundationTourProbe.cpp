@@ -2069,6 +2069,116 @@ void UFoundationRuntimeProbe::AddTourCases()
                 }
             },
             [] {});
+
+        // n3. The double chest's screen (T1 step 18-chest): two chest halves facing west in two known air cells
+        // beside the player (type=left, its type=right partner to the north), a few stacks in each, opened through
+        // the authority (LargeChest: the right half's slots 0-26, the left half's 27-53) as generic_54 with 6 rows.
+        // Put back after, with the inventory.
+        const TSharedRef<TArray<TPair<FIntVector, FFoundationBlockState>>> SavedChest =
+            MakeShared<TArray<TPair<FIntVector, FFoundationBlockState>>>();
+        AddCase(
+            TEXT("tour double chest"), .8,
+            [this, Lab, Authority, SavedInventory, SavedChest]
+            {
+                ResetPlayer({0, 0, 0});
+                FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                if (!Player) return;
+                *SavedInventory = Player->Inventory;
+                SavedChest->Reset();
+                FFoundationBlockWorld& World = Authority().World;
+                const FVector Back = -FRotator(0, Controller->GetControlRotation().Yaw, 0).Vector();
+                const FVector Side = FVector::CrossProduct(FVector::UpVector, Back);
+                const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+                const FIntVector North = FoundationGrid::FaceOffset(EFoundationFace::North);
+                auto IsAir = [&World](const FIntVector& Cell)
+                { return World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == TEXT("air"); };
+                TOptional<FIntVector> LeftCell;
+                for (const FVector& Offset : {Back * 150, Back * 250, Side * 150, Side * -150})
+                    if (const FIntVector Cell = FoundationGrid::CellAt(Feet + Offset, World.OriginCm);
+                        !LeftCell && IsAir(Cell) && IsAir(Cell + North))
+                        LeftCell = Cell;
+                const FFoundationBlockType* Chest = World.FindBlock(TEXT("chest"));
+                // A failed setup leaves no screen, so the check below records it.
+                if (!Chest || !LeftCell) return;
+                const FFoundationBlockRegistry& Registry = World.GetRegistry();
+                const FFoundationBlockState West =
+                    Registry.WithValue(Chest->GetDefaultState(), TEXT("facing"), TEXT("west"));
+                const FIntVector RightCell = *LeftCell + North;
+                SavedChest->Emplace(*LeftCell, World.Get(*LeftCell).State);
+                SavedChest->Emplace(RightCell, World.Get(RightCell).State);
+                World.Set(*LeftCell, Registry.WithValue(West, TEXT("type"), TEXT("left")));
+                World.Set(RightCell, Registry.WithValue(West, TEXT("type"), TEXT("right")));
+                FFoundationBlockEntities& Store = Authority().BlockEntities;
+                FFoundationBlockEntity& Left =
+                    Store.FindOrAdd(*LeftCell, EFoundationBlockEntityKind::Chest, TEXT("chest"));
+                FFoundationBlockEntity& Right =
+                    Store.FindOrAdd(RightCell, EFoundationBlockEntityKind::Chest, TEXT("chest"));
+                const struct
+                {
+                    FFoundationBlockEntity* Half;
+                    int32 Slot;
+                    const TCHAR* Item;
+                    int32 Count;
+                } Contents[] = {{&Right, 0, TEXT("oak_log"), 12}, {&Right, 13, TEXT("coal"), 7},
+                    {&Left, 4, TEXT("cobblestone"), 64}, {&Left, 26, TEXT("iron_ingot"), 3}};
+                for (const auto& [Half, Slot, Id, Count] : Contents)
+                    if (const int32 Item = Authority().Rules.FindItem(Id); Item != INDEX_NONE)
+                        Half->Items[Slot] = Store.MakeStack(Item, Count);
+                FFoundationResult Opened;
+                Authority().OpenContainer(*Player, EFoundationMenuKind::LargeChest, *LeftCell, TEXT("chest"), Opened);
+                if (!Opened.IsCommitted()) return;
+                Player->OpenMenu.Partner = RightCell;
+                ++Player->Inventory.Revision;
+                Controller->GetPanels()->OpenContainerScreen(
+                    *Lab, EFoundationMenuKind::LargeChest, Opened.OpenedContainer);
+                if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+                {
+                    Screen->GetModel().Reset();
+                    Screen->SetMouse(
+                        FHudContainerModel::GetSlotPosition(EFoundationMenuKind::LargeChest, 0) + FIntPoint(8, 8));
+                }
+                CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+            },
+            [this, Authority, SavedChest]
+            {
+                const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+                const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                const TArray<FFoundationItemInstance> Shown =
+                    Player ? Authority().GetOpenMenu(*Player) : TArray<FFoundationItemInstance>();
+                Record(TEXT("tour double chest open"),
+                    SavedChest->Num() == 2 && Screen.IsValid() && Screen->HasArt() && Shown.Num() == 90,
+                    TEXT("a double chest placed in two known air cells opens its 90-slot screen with its imported "
+                         "background (generic_54.png, 6 rows)"));
+                Record(TEXT("tour double chest: slot order"),
+                    Shown.Num() == 90 && !Shown[0].IsEmpty() && !Shown[53].IsEmpty(),
+                    TEXT("menu slot 0 is the type=right half's slot 0 and 53 the type=left half's 26 "
+                         "(chest_probe.txt)"));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24k-double-chest.png"), true, false);
+            });
+        AddCase(TEXT("tour flush 24k-double-chest"), .4, [] {}, [] {});
+        AddCase(
+            TEXT("tour double chest close"), .3,
+            [this, Authority, SavedInventory, SavedChest]
+            {
+                Controller->GetPanels()->Close();
+                // Only the blocks this case placed are put back, with the inventory it saved.
+                if (SavedChest->IsEmpty()) return;
+                for (const TPair<FIntVector, FFoundationBlockState>& Saved : *SavedChest)
+                {
+                    Authority().BlockEntities.Remove(Saved.Key);
+                    if (Authority().World.IsKnown(Saved.Key)) Authority().World.Set(Saved.Key, Saved.Value);
+                }
+                SavedChest->Reset();
+                if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+                {
+                    const int32 Revision = Player->Inventory.Revision;
+                    Player->OpenMenu = {};
+                    Player->Inventory = *SavedInventory;
+                    Player->Inventory.Revision = Revision + 1;
+                }
+            },
+            [] {});
     }
 
     // o. The lit furnace block (T1 step 8b): a furnace in front of the player, burning coal, turns lit=true on its next
