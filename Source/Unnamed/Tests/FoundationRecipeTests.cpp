@@ -214,7 +214,8 @@ bool FFoundationRecipeChainTest::RunTest(const FString&)
             L.Inv().Carried.IsEmpty());
     TestTrue(TEXT("the result shows 4 oak planks"), L.Holds(L.Menu(Result), TEXT("oak_planks"), 4));
     const int32 Revision = L.Inv().Revision;
-    TestTrue(TEXT("taking the result commits"), L.Click(Result, 0, EFoundationClickType::Pickup).IsCommitted());
+    // Right on the result takes one whole craft, never half (a count-4 result: Codex review 10, finding 3).
+    TestTrue(TEXT("taking the result commits"), L.Click(Result, 1, EFoundationClickType::Pickup).IsCommitted());
     TestTrue(TEXT("4 planks on the cursor, the log used"),
         L.Holds(L.Inv().Carried, TEXT("oak_planks"), 4) && L.Inv().Craft[3].IsEmpty() && L.Menu(Result).IsEmpty());
     TestTrue(TEXT("a craft bumps the inventory revision"), L.Inv().Revision > Revision);
@@ -222,8 +223,7 @@ bool FFoundationRecipeChainTest::RunTest(const FString&)
     for (int32 Slot = 1; Slot <= 4; ++Slot)
         L.Click(Slot, 1, EFoundationClickType::Pickup);
     TestTrue(TEXT("the result shows a crafting table"), L.Holds(L.Menu(Result), TEXT("crafting_table"), 1));
-    // Right on the result also takes one craft, never half.
-    L.Click(Result, 1, EFoundationClickType::Pickup);
+    L.Click(Result, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("the crafting table on the cursor, the grid empty"),
         L.Holds(L.Inv().Carried, TEXT("crafting_table"), 1) && L.Inv().Craft[0].IsEmpty() &&
             L.Inv().Craft[1].IsEmpty() && L.Inv().Craft[2].IsEmpty() && L.Inv().Craft[3].IsEmpty());
@@ -329,21 +329,32 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationRecipeSwitchTest, "Unnamed.Foundatio
 
 bool FFoundationRecipeSwitchTest::RunTest(const FString&)
 {
-    // foundation.Crafting 0: the grid takes and holds items; the result stays empty and a click on it does nothing.
+    // foundation.Crafting 0 restores step 5b's menu (Codex review 10, finding 1): the grid and the result are no slots,
+    // so clicks on them are refused and change nothing; what the grid already holds still comes back on close.
     FRecipeLab L;
-    L.A.Options.bCrafting = false;
     FFoundationInventory& I = L.Inv();
-    I.SetSlot(0, I.MakeStack(L.Item(TEXT("oak_log")), 1));
+    I.SetSlot(0, I.MakeStack(L.Item(TEXT("oak_log")), 2));
     L.Click(FFoundationContainerMenu::FirstHotbar, 0, EFoundationClickType::Pickup);
-    L.Click(1, 0, EFoundationClickType::Pickup);
-    TestTrue(TEXT("the log sits in the grid"), L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 1));
-    TestTrue(TEXT("no result"), L.Menu(FFoundationContainerMenu::ResultSlot).IsEmpty());
-    L.Click(FFoundationContainerMenu::ResultSlot, 0, EFoundationClickType::Pickup);
-    TestTrue(TEXT("a click on the result does nothing"),
-        L.Inv().Carried.IsEmpty() && L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 1));
+    L.Click(1, 1, EFoundationClickType::Pickup);
+    TestTrue(TEXT("on: one log in the grid"), L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 1));
+    L.A.Options.bCrafting = false;
+    TestTrue(TEXT("off: a click on the grid is refused"),
+        L.Click(2, 0, EFoundationClickType::Pickup).Reason == EFoundationReason::InvalidSlot);
+    TestTrue(TEXT("off: the grid takes nothing"),
+        L.Inv().Craft[1].IsEmpty() && L.Holds(L.Inv().Carried, TEXT("oak_log"), 1));
+    TestTrue(TEXT("off: no result"), L.Menu(FFoundationContainerMenu::ResultSlot).IsEmpty());
+    TestTrue(TEXT("off: a click on the result is refused"),
+        L.Click(FFoundationContainerMenu::ResultSlot, 0, EFoundationClickType::Pickup).Reason ==
+            EFoundationReason::InvalidSlot);
+    TestTrue(TEXT("off: a shift-click on the grid is refused"),
+        L.Click(1, 0, EFoundationClickType::QuickMove).Reason == EFoundationReason::InvalidSlot);
     L.A.Options.bCrafting = true;
     TestTrue(TEXT("on again: the result shows"),
         L.Holds(L.Menu(FFoundationContainerMenu::ResultSlot), TEXT("oak_planks"), 4));
+    L.A.Options.bCrafting = false;
+    TestTrue(TEXT("off: close commits"), L.Close().IsCommitted());
+    TestTrue(TEXT("off: the grid's log and the cursor's come back"),
+        L.Inv().Craft[0].IsEmpty() && L.Inv().Carried.IsEmpty() && L.Holds(L.Inv().Hotbar[0], TEXT("oak_log"), 2));
     return true;
 }
 #endif

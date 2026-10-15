@@ -12,6 +12,7 @@ The creative screen's existing textures from `Reference/minecraft-menu` (`gui/co
 | `/Game/Gui/Container/gui/sprites/container/slot/leggings` | `assets/minecraft/textures/gui/sprites/container/slot/leggings.png` | The empty legs slot | Survival 5b |
 | `/Game/Gui/Container/gui/sprites/container/slot/boots` | `assets/minecraft/textures/gui/sprites/container/slot/boots.png` | The empty feet slot | Survival 5b |
 | `/Game/Gui/Container/gui/sprites/container/slot/shield` | `assets/minecraft/textures/gui/sprites/container/slot/shield.png` | The empty offhand slot | Survival 5b |
+| `/Game/Gui/Container/gui/container/crafting_table` | `assets/minecraft/textures/gui/container/crafting_table.png` | The crafting table screen's background (`SHudContainerScreen`, `Kind` Crafting) | Survival 7 |
 | `/Game/Gui/Container/gui/sprites/recipe_book/button` | `assets/minecraft/textures/gui/sprites/recipe_book/button.png` | The recipe-book button (inert) | Survival 5b |
 | `/Game/Gui/Container/gui/sprites/recipe_book/button_highlighted` | `assets/minecraft/textures/gui/sprites/recipe_book/button_highlighted.png` | The recipe-book button, hovered | Survival 5b |
 | `/Game/Entities/T_ExperienceOrb` | `assets/minecraft/textures/entity/experience/experience_orb.png` (via `Reference/minecraft-entities-26.3`) | `M_ExperienceOrb`, the XP orbs' quads (`FFoundationExperienceOrbView`; 16 x 16 icons in 4 columns, `xp.value_icons`) | Survival 12 |

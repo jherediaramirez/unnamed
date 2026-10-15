@@ -9,6 +9,7 @@ class AFoundationLab;
 class AFoundationPawn;
 class AFoundationPlayground;
 class SHudContainerScreen;
+enum class EFoundationMenuKind : uint8;
 class SHudCreativeScreen;
 class SWidget;
 
@@ -39,6 +40,9 @@ public:
     // The survival inventory screen (foundation.Inventory.Screen 1, outside creative). Public for probes, which open
     // it in the creative Playground too.
     void OpenSurvivalInventory(AFoundationLab& Lab);
+    // A container's screen over the menu the authority opened (survival step 7: a crafting table's, ContainerId from
+    // the block use's result); the inventory's is container 0. Closing sends ContainerClose, which returns its grid.
+    void OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId);
     // foundation.Panels.Preload 1: builds the creative screen before its first open, so its textures load now and the
     // first open neither builds it nor draws a frame without them. Returns false while the player's lab is not ready
     // (try again next frame); true once built, or when the lab has no creative inventory.

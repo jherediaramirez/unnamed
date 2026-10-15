@@ -46,6 +46,49 @@ struct FFoundationContainerRules
     // What a crafting grid makes (survival step 6): its item indices row-major, INDEX_NONE for an empty slot. Unset,
     // the result slot stays empty.
     TFunction<FFoundationRecipeResult(TConstArrayView<int32> Grid, int32 Width, int32 Height)> Craft;
+    // foundation.Crafting: off, the crafting grid and its result are no slots (step 5b's menu); what a grid already
+    // holds still comes back on close (Codex review 10, finding 1).
+    bool bCrafting = true;
+};
+
+// The menus a container screen can show (survival step 7: the crafting table).
+enum class EFoundationMenuKind : uint8
+{
+    // The player's own menu (vanilla's InventoryMenu): result, 2x2, armor, main, hotbar, offhand.
+    Inventory,
+    // A crafting table's (vanilla's CraftingMenu): result, 3x3, main, hotbar; no armor or offhand.
+    Crafting
+};
+
+// A menu's slot numbering: one row per kind (furnaces and the barrel add theirs). Every range is [First, Next);
+// INDEX_NONE marks a range the menu does not have.
+struct FFoundationMenuLayout
+{
+    int32 Slots = 0;
+    int32 FirstCraft = 1;
+    int32 CraftWidth = 0;
+    int32 CraftHeight = 0;
+    int32 FirstArmor = INDEX_NONE;
+    int32 FirstMain = INDEX_NONE;
+    int32 FirstHotbar = INDEX_NONE;
+    int32 Offhand = INDEX_NONE;
+
+    int32 GetCraftEnd() const { return FirstCraft + CraftWidth * CraftHeight; }
+    int32 GetMainEnd() const { return FirstHotbar; }
+    int32 GetHotbarEnd() const { return FirstHotbar + FFoundationInventory::HotbarSlots; }
+    bool IsCraft(int32 Slot) const { return Slot >= FirstCraft && Slot < GetCraftEnd(); }
+    bool IsArmor(int32 Slot) const
+    {
+        return FirstArmor != INDEX_NONE && Slot >= FirstArmor && Slot < FirstArmor + FFoundationInventory::ArmorSlots;
+    }
+    bool IsMain(int32 Slot) const { return Slot >= FirstMain && Slot < GetMainEnd(); }
+    bool IsHotbar(int32 Slot) const { return Slot >= FirstHotbar && Slot < GetHotbarEnd(); }
+    bool IsOffhand(int32 Slot) const { return Offhand != INDEX_NONE && Slot == Offhand; }
+    // A menu slot's Inventory number (0-40), or INDEX_NONE for the result, the grid or a slot the menu lacks.
+    int32 ToInventorySlot(int32 MenuSlot) const;
+    int32 ToMenuSlot(int32 InventorySlot) const;
+
+    static const FFoundationMenuLayout& Get(EFoundationMenuKind Kind);
 };
 
 // One container screen's slots and click rules (vanilla's AbstractContainerMenu.clicked), UObject-free, over an
@@ -54,6 +97,8 @@ struct FFoundationContainerRules
 // grid (survival step 6; FFoundationInventory::Craft), 5-8 the armor (head to feet), 9-35 the main grid, 36-44 the
 // hotbar, 45 the offhand. A moved whole stack keeps its identity (instance id); a split part is a new instance. The
 // result slot holds what the grid makes now (Rules.Craft); taking it crafts once, using one item of every grid slot.
+// A crafting table's menu (EFoundationMenuKind::Crafting, survival step 7) is 0 the result, 1-9 its 3x3 grid (the
+// caller's Grid, the screen's own), 10-36 the main grid, 37-45 the hotbar.
 class UNNAMED_API FFoundationContainerMenu
 {
 public:
@@ -72,11 +117,16 @@ public:
 
     // The player's menu over Inventory. bCreative allows CLONE and middle drags.
     FFoundationContainerMenu(FFoundationInventory& Inventory, const FFoundationContainerRules& Rules, bool bCreative);
+    // Another menu over Inventory; Grid is its crafting grid (CraftWidth x CraftHeight slots, the caller's).
+    FFoundationContainerMenu(FFoundationInventory& Inventory, const FFoundationContainerRules& Rules, bool bCreative,
+        EFoundationMenuKind Kind, TArrayView<FFoundationItemInstance> Grid);
 
-    // A menu slot's Inventory number (0-40), or INDEX_NONE for a slot that is not one (the crafting slots 0-4, or a
-    // slot this menu does not have).
+    // The player's menu: a menu slot's Inventory number (0-40), or INDEX_NONE for a slot that is not one (the
+    // crafting slots 0-4, or a slot this menu does not have).
     static int32 ToInventorySlot(int32 MenuSlot);
     static int32 ToMenuSlot(int32 InventorySlot);
+
+    const FFoundationMenuLayout& GetLayout() const { return Layout; }
 
     // Vanilla's QUICK_CRAFT button: the phase (0 start, 1 add a slot, 2 end) and the drag type (0 left, 1 right,
     // 2 middle).
@@ -114,6 +164,9 @@ private:
     FFoundationInventory& Inventory;
     const FFoundationContainerRules& Rules;
     bool bCreative = false;
+    const FFoundationMenuLayout& Layout;
+    // The crafting grid's slots, row-major (the inventory's 2x2 or the caller's).
+    TArrayView<FFoundationItemInstance> Grid;
     // The result slot's stack; the menu's own, never the inventory's.
     mutable FFoundationItemInstance ResultStack;
 };

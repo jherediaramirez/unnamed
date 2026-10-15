@@ -31,40 +31,79 @@ bool FoundationInventory::IsFull()
     return CVarInventoryFull.GetValueOnAnyThread() != 0;
 }
 
+const FFoundationMenuLayout& FFoundationMenuLayout::Get(EFoundationMenuKind Kind)
+{
+    using Menu = FFoundationContainerMenu;
+    static const FFoundationMenuLayout Player{Menu::PlayerMenuSlots, Menu::FirstCraft, Menu::CraftWidth,
+        Menu::CraftHeight, Menu::FirstArmor, Menu::FirstMain, Menu::FirstHotbar, Menu::OffhandSlot};
+    // value-swaps.md, "Crafting table (menu 1-9)" and "player rows (menu 10-36 main, 37-45 hotbar)".
+    static const FFoundationMenuLayout Crafting{46, 1, 3, 3, INDEX_NONE, 10, 37, INDEX_NONE};
+    return Kind == EFoundationMenuKind::Crafting ? Crafting : Player;
+}
+
+int32 FFoundationMenuLayout::ToInventorySlot(int32 MenuSlot) const
+{
+    if (IsArmor(MenuSlot))
+        return FFoundationInventory::FirstArmor + FFoundationInventory::ArmorSlots - 1 - (MenuSlot - FirstArmor);
+    if (IsMain(MenuSlot)) return FFoundationInventory::FirstMain + MenuSlot - FirstMain;
+    if (IsHotbar(MenuSlot)) return MenuSlot - FirstHotbar;
+    if (IsOffhand(MenuSlot)) return FFoundationInventory::OffhandSlot;
+    return INDEX_NONE;
+}
+
+int32 FFoundationMenuLayout::ToMenuSlot(int32 InventorySlot) const
+{
+    if (InventorySlot >= 0 && InventorySlot < FFoundationInventory::HotbarSlots) return FirstHotbar + InventorySlot;
+    if (InventorySlot >= FFoundationInventory::FirstMain && InventorySlot < FFoundationInventory::FirstArmor)
+        return FirstMain + InventorySlot - FFoundationInventory::FirstMain;
+    if (FirstArmor != INDEX_NONE && InventorySlot >= FFoundationInventory::FirstArmor &&
+        InventorySlot < FFoundationInventory::OffhandSlot)
+        return FirstArmor + FFoundationInventory::ArmorSlots - 1 - (InventorySlot - FFoundationInventory::FirstArmor);
+    if (InventorySlot == FFoundationInventory::OffhandSlot) return Offhand;
+    return INDEX_NONE;
+}
+
 FFoundationContainerMenu::FFoundationContainerMenu(
     FFoundationInventory& InInventory, const FFoundationContainerRules& InRules, bool bInCreative)
-    : Inventory(InInventory), Rules(InRules), bCreative(bInCreative)
+    : Inventory(InInventory),
+      Rules(InRules),
+      bCreative(bInCreative),
+      Layout(FFoundationMenuLayout::Get(EFoundationMenuKind::Inventory)),
+      Grid(InInventory.Craft)
+{
+    UpdateResult();
+}
+
+FFoundationContainerMenu::FFoundationContainerMenu(FFoundationInventory& InInventory,
+    const FFoundationContainerRules& InRules, bool bInCreative, EFoundationMenuKind Kind,
+    TArrayView<FFoundationItemInstance> InGrid)
+    : Inventory(InInventory),
+      Rules(InRules),
+      bCreative(bInCreative),
+      Layout(FFoundationMenuLayout::Get(Kind)),
+      Grid(InGrid)
 {
     UpdateResult();
 }
 
 int32 FFoundationContainerMenu::ToInventorySlot(int32 MenuSlot)
 {
-    if (MenuSlot >= FirstArmor && MenuSlot < FirstMain)
-        return FFoundationInventory::FirstArmor + FFoundationInventory::ArmorSlots - 1 - (MenuSlot - FirstArmor);
-    if (MenuSlot >= FirstMain && MenuSlot < FirstHotbar) return MenuSlot;
-    if (MenuSlot >= FirstHotbar && MenuSlot < OffhandSlot) return MenuSlot - FirstHotbar;
-    if (MenuSlot == OffhandSlot) return FFoundationInventory::OffhandSlot;
-    return INDEX_NONE;
+    return FFoundationMenuLayout::Get(EFoundationMenuKind::Inventory).ToInventorySlot(MenuSlot);
 }
 
 int32 FFoundationContainerMenu::ToMenuSlot(int32 InventorySlot)
 {
-    if (InventorySlot >= 0 && InventorySlot < FFoundationInventory::HotbarSlots) return FirstHotbar + InventorySlot;
-    if (InventorySlot >= FFoundationInventory::FirstMain && InventorySlot < FFoundationInventory::FirstArmor)
-        return InventorySlot;
-    if (InventorySlot >= FFoundationInventory::FirstArmor && InventorySlot < FFoundationInventory::OffhandSlot)
-        return FirstArmor + FFoundationInventory::ArmorSlots - 1 - (InventorySlot - FFoundationInventory::FirstArmor);
-    if (InventorySlot == FFoundationInventory::OffhandSlot) return OffhandSlot;
-    return INDEX_NONE;
+    return FFoundationMenuLayout::Get(EFoundationMenuKind::Inventory).ToMenuSlot(InventorySlot);
 }
 
 FFoundationItemInstance* FFoundationContainerMenu::GetSlot(int32 MenuSlot) const
 {
-    if (MenuSlot == ResultSlot) return &ResultStack;
-    if (MenuSlot >= FirstCraft && MenuSlot < FirstArmor)
-        return Inventory.Craft.IsValidIndex(MenuSlot - FirstCraft) ? &Inventory.Craft[MenuSlot - FirstCraft] : nullptr;
-    const int32 Slot = ToInventorySlot(MenuSlot);
+    // Crafting off: the grid and the result are inert, as before step 6.
+    if (MenuSlot == ResultSlot) return Rules.bCrafting ? &ResultStack : nullptr;
+    if (Layout.IsCraft(MenuSlot))
+        return Rules.bCrafting && Grid.IsValidIndex(MenuSlot - Layout.FirstCraft) ? &Grid[MenuSlot - Layout.FirstCraft]
+                                                                                  : nullptr;
+    const int32 Slot = Layout.ToInventorySlot(MenuSlot);
     return Slot == INDEX_NONE ? nullptr : Inventory.GetSlot(Slot);
 }
 
@@ -72,11 +111,12 @@ bool FFoundationContainerMenu::MayPlace(int32 MenuSlot, const FFoundationItemIns
 {
     // The result slot only gives (ResultSlot.mayPlace).
     if (MenuSlot == ResultSlot) return false;
-    if (MenuSlot < FirstArmor || MenuSlot >= FirstMain) return true;
+    if (!Layout.IsArmor(MenuSlot)) return true;
     // Head, chest, legs, feet; only an item equippable there (ArmorSlot.mayPlace).
     static const EFoundationEquipmentSlot Wanted[] = {EFoundationEquipmentSlot::Head, EFoundationEquipmentSlot::Chest,
         EFoundationEquipmentSlot::Legs, EFoundationEquipmentSlot::Feet};
-    return !Stack.IsEmpty() && Rules.GetEquipment && Rules.GetEquipment(Stack.Item) == Wanted[MenuSlot - FirstArmor];
+    return !Stack.IsEmpty() && Rules.GetEquipment &&
+        Rules.GetEquipment(Stack.Item) == Wanted[MenuSlot - Layout.FirstArmor];
 }
 
 int32 FFoundationContainerMenu::GetMaxStack(const FFoundationItemInstance& Stack) const
@@ -87,7 +127,7 @@ int32 FFoundationContainerMenu::GetMaxStack(const FFoundationItemInstance& Stack
 int32 FFoundationContainerMenu::GetSlotMax(int32 MenuSlot, const FFoundationItemInstance& Stack) const
 {
     // An armor slot holds one item.
-    const int32 SlotMax = MenuSlot >= FirstArmor && MenuSlot < FirstMain ? 1 : 64;
+    const int32 SlotMax = Layout.IsArmor(MenuSlot) ? 1 : 64;
     return FMath::Min(SlotMax, GetMaxStack(Stack));
 }
 
@@ -152,12 +192,11 @@ int32 FFoundationContainerMenu::GetRoom(const FFoundationItemInstance& Stack, in
 
 void FFoundationContainerMenu::UpdateResult()
 {
-    TArray<int32, TInlineAllocator<FFoundationInventory::CraftSlots>> Grid;
-    for (int32 Index = 0; Index < CraftWidth * CraftHeight; ++Index)
-        Grid.Add(Inventory.Craft.IsValidIndex(Index) && !Inventory.Craft[Index].IsEmpty() ? Inventory.Craft[Index].Item
-                                                                                          : INDEX_NONE);
+    TArray<int32, TInlineAllocator<9>> Items;
+    for (int32 Index = 0; Index < Layout.CraftWidth * Layout.CraftHeight; ++Index)
+        Items.Add(Grid.IsValidIndex(Index) && !Grid[Index].IsEmpty() ? Grid[Index].Item : INDEX_NONE);
     const FFoundationRecipeResult Made =
-        Rules.Craft ? Rules.Craft(Grid, CraftWidth, CraftHeight) : FFoundationRecipeResult();
+        Rules.Craft ? Rules.Craft(Items, Layout.CraftWidth, Layout.CraftHeight) : FFoundationRecipeResult();
     ResultStack = {};
     if (Made.IsEmpty()) return;
     // A stack for the view and the clicks; taking it makes a real instance (TakeResult). -1 is never an inventory
@@ -172,7 +211,7 @@ FFoundationItemInstance FFoundationContainerMenu::TakeResult()
     if (ResultStack.IsEmpty()) return {};
     const FFoundationItemInstance Made = Inventory.MakeStack(ResultStack.Item, ResultStack.Count);
     // One item of every grid slot (no recipe among today's items leaves a remainder, such as a bucket).
-    for (FFoundationItemInstance& Stack : Inventory.Craft)
+    for (FFoundationItemInstance& Stack : Grid)
         if (!Stack.IsEmpty() && --Stack.Count <= 0) Stack = {};
     UpdateResult();
     return Made;
@@ -194,12 +233,12 @@ void FFoundationContainerMenu::ClickResult(int32 Button, EFoundationClickType Ty
     case EFoundationClickType::QuickMove:
         // Shift crafts while the result stays the same item and all of it fits in the main grid and hotbar, filled
         // from the hotbar's last slot (provisional: minecraft.wiki "Crafting"; the value report has no crafting row).
-        for (int32 Crafts = 0; Crafts < FFoundationInventory::CraftSlots * 64; ++Crafts)
+        for (int32 Crafts = 0; Crafts < Grid.Num() * 64; ++Crafts)
         {
             const int32 Item = ResultStack.Item;
-            if (GetRoom(ResultStack, FirstMain, OffhandSlot) < ResultStack.Count) break;
+            if (GetRoom(ResultStack, Layout.FirstMain, Layout.GetHotbarEnd()) < ResultStack.Count) break;
             FFoundationItemInstance Made = TakeResult();
-            MoveInto(Made, FirstMain, OffhandSlot, true);
+            MoveInto(Made, Layout.FirstMain, Layout.GetHotbarEnd(), true);
             if (ResultStack.IsEmpty() || ResultStack.Item != Item) break;
         }
         break;
@@ -278,29 +317,49 @@ void FFoundationContainerMenu::QuickMove(int32 Slot)
     FFoundationItemInstance& Stack = *Source;
     const EFoundationEquipmentSlot Equipment =
         Rules.GetEquipment ? Rules.GetEquipment(Stack.Item) : EFoundationEquipmentSlot::None;
+    const int32 Main = Layout.FirstMain, Hotbar = Layout.FirstHotbar, End = Layout.GetHotbarEnd();
+    if (Layout.FirstArmor == INDEX_NONE)
+    {
+        // vanilla's CraftingMenu routing (provisional: minecraft.wiki "Crafting Table"; the value report measures
+        // only the furnaces'): the grid goes to the main grid and hotbar; the main grid and hotbar fill the 3x3
+        // first, then trade with each other.
+        if (Layout.IsCraft(Slot))
+            MoveInto(Stack, Main, End);
+        else
+        {
+            MoveInto(Stack, Layout.FirstCraft, Layout.GetCraftEnd());
+            if (Stack.IsEmpty()) return;
+            if (Layout.IsMain(Slot))
+                MoveInto(Stack, Hotbar, End);
+            else if (Layout.IsHotbar(Slot))
+                MoveInto(Stack, Main, Hotbar);
+        }
+        return;
+    }
     // vanilla's InventoryMenu routing (minecraft.wiki "Inventory"): armor goes back to the main grid and hotbar; a
     // wearable item goes to its empty armor slot, an offhand item to an empty offhand; otherwise the hotbar and the
     // main grid trade, and the offhand goes to the main grid and hotbar.
-    const int32 ArmorSlot = Equipment == EFoundationEquipmentSlot::Head ? FirstArmor
-        : Equipment == EFoundationEquipmentSlot::Chest                  ? FirstArmor + 1
-        : Equipment == EFoundationEquipmentSlot::Legs                   ? FirstArmor + 2
-        : Equipment == EFoundationEquipmentSlot::Feet                   ? FirstArmor + 3
+    const int32 Armor = Layout.FirstArmor, Offhand = Layout.Offhand;
+    const int32 ArmorSlot = Equipment == EFoundationEquipmentSlot::Head ? Armor
+        : Equipment == EFoundationEquipmentSlot::Chest                  ? Armor + 1
+        : Equipment == EFoundationEquipmentSlot::Legs                   ? Armor + 2
+        : Equipment == EFoundationEquipmentSlot::Feet                   ? Armor + 3
                                                                         : INDEX_NONE;
-    if (Slot >= FirstCraft && Slot < FirstArmor)
+    if (Layout.IsCraft(Slot))
         // The crafting grid goes to the main grid and the hotbar.
-        MoveInto(Stack, FirstMain, OffhandSlot);
-    else if (Slot >= FirstArmor && Slot < FirstMain)
-        MoveInto(Stack, FirstMain, OffhandSlot);
+        MoveInto(Stack, Main, End);
+    else if (Layout.IsArmor(Slot))
+        MoveInto(Stack, Main, End);
     else if (ArmorSlot != INDEX_NONE && GetSlot(ArmorSlot) && GetSlot(ArmorSlot)->IsEmpty())
         MoveInto(Stack, ArmorSlot, ArmorSlot + 1);
-    else if (Equipment == EFoundationEquipmentSlot::Offhand && GetSlot(OffhandSlot) && GetSlot(OffhandSlot)->IsEmpty())
-        MoveInto(Stack, OffhandSlot, OffhandSlot + 1);
-    else if (Slot >= FirstMain && Slot < FirstHotbar)
-        MoveInto(Stack, FirstHotbar, OffhandSlot);
-    else if (Slot >= FirstHotbar && Slot < OffhandSlot)
-        MoveInto(Stack, FirstMain, FirstHotbar);
-    else if (Slot == OffhandSlot)
-        MoveInto(Stack, FirstMain, OffhandSlot);
+    else if (Equipment == EFoundationEquipmentSlot::Offhand && GetSlot(Offhand) && GetSlot(Offhand)->IsEmpty())
+        MoveInto(Stack, Offhand, Offhand + 1);
+    else if (Layout.IsMain(Slot))
+        MoveInto(Stack, Hotbar, End);
+    else if (Layout.IsHotbar(Slot))
+        MoveInto(Stack, Main, Hotbar);
+    else if (Layout.IsOffhand(Slot))
+        MoveInto(Stack, Main, End);
 }
 
 void FFoundationContainerMenu::SwapWith(int32 Slot, int32 Button)
@@ -402,9 +461,9 @@ void FFoundationContainerMenu::PickupAll(int32 Slot, int32 Button)
     if (!Clicked || Carried.IsEmpty() || !Clicked->IsEmpty()) return;
     const int32 Max = GetMaxStack(Carried);
     for (int32 Pass = 0; Pass < 2; ++Pass)
-        for (int32 Index = 0; Index < PlayerMenuSlots && Carried.Count < Max; ++Index)
+        for (int32 Index = 0; Index < Layout.Slots && Carried.Count < Max; ++Index)
         {
-            const int32 Menu = Button == 0 ? Index : PlayerMenuSlots - 1 - Index;
+            const int32 Menu = Button == 0 ? Index : Layout.Slots - 1 - Index;
             FFoundationItemInstance* Stack = Menu == ResultSlot ? nullptr : GetSlot(Menu);
             if (!Stack || !SameItem(*Stack, Carried) || (Pass == 0 && Stack->Count >= GetMaxStack(*Stack))) continue;
             const int32 Move = FMath::Min(Stack->Count, Max - Carried.Count);
@@ -425,7 +484,7 @@ FFoundationClickResult FFoundationContainerMenu::Click(int32 Slot, int32 Button,
     // Before, to tell what changed.
     // The result slot is not the inventory's; the grid's change shows.
     TArray<FFoundationItemInstance, TInlineAllocator<PlayerMenuSlots>> Before;
-    for (int32 Index = 0; Index < PlayerMenuSlots; ++Index)
+    for (int32 Index = 0; Index < Layout.Slots; ++Index)
         Before.Add(GetSlot(Index) ? *GetSlot(Index) : FFoundationItemInstance());
     const FFoundationItemInstance CarriedBefore = Inventory.Carried;
     const FFoundationQuickCraft DragBefore = Inventory.QuickCraft;
@@ -485,7 +544,7 @@ FFoundationClickResult FFoundationContainerMenu::Click(int32 Slot, int32 Button,
         if (Now.InstanceId == Then.InstanceId) ++Now.Revision;
         return true;
     };
-    for (int32 Index = FirstCraft; Index < PlayerMenuSlots; ++Index)
+    for (int32 Index = Layout.FirstCraft; Index < Layout.Slots; ++Index)
         if (FFoundationItemInstance* Stack = GetSlot(Index))
             Result.bChanged |= Touched(*Stack, Before[Index]) || (Stack->IsEmpty() && !Before[Index].IsEmpty());
     Result.bChanged |= Touched(Inventory.Carried, CarriedBefore) ||
