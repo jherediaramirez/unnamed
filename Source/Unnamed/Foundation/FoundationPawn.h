@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationBody.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationVitals.h"
@@ -35,8 +36,25 @@ public:
     FVector GetEyePosition() const;
     FFoundationTarget TraceTarget() const;
     void SetSimulationEnabled(bool bEnabled);
-    // Restores fresh vitals at the lab's spawn (death respawn, also used by the probe).
+    // A survival screen (the inventory, a container) is open: the simulation keeps running (vitals, item entities,
+    // orbs, furnaces) with the player's movement and look input zeroed (Codex review 12, finding 2).
+    void SetScreenInput(bool bScreen);
+    bool HasScreenInput() const { return bScreenInput; }
+    // Restores fresh vitals at the respawn point the authority holds (FFoundationAuthority::SetRespawnPoint, beds B7),
+    // else at the lab's spawn (death respawn, also used by the probe).
     void Respawn();
+
+    // The death screen (step 11a), for its UI. Active while dead with foundation.Death.Screen 1; the pawn then waits
+    // for RequestRespawn instead of respawning by itself.
+    bool IsDeathScreenActive() const;
+    // Reference ticks since death (-1 alive); they keep counting while the screen is up.
+    int32 GetDeathTicks() const { return Vitals.DeathTicks; }
+    // The Respawn button: respawns when the death screen is active and its buttons are enabled (DeathTicks >= 20
+    // [survival.r6.death_screen]); false otherwise.
+    bool RequestRespawn();
+    // The last death's message ("Player fell from a high place") and score (the experience points held at death).
+    FString GetDeathMessage() const { return Vitals.DeathMessage; }
+    int32 GetDeathScore() const { return Vitals.DeathScore; }
     // Moves the feet to a world position (cm), as /tp: motion and fall distance reset, flight and pose kept.
     void TeleportFeet(const FVector& FeetCm);
 
@@ -84,8 +102,14 @@ public:
     int64 ReferenceSteps = 0;
 
 private:
-    // Feeds one reference step of movement and water facts to Vitals; respawns once death has played out.
+    // Feeds one reference step of movement and water facts to Vitals; respawns once death has played out (with
+    // foundation.Death.Screen 0).
     void StepVitals(const UFoundationProfile& Profile);
+    // Once per death, at the moment it happens: the message in chat, and with foundation.Death.Screen 1 the
+    // inventory and experience drops.
+    void HandleDeath();
+    // Vitals.Deaths as HandleDeath last saw it.
+    int32 HandledDeaths = 0;
     // One reference step of interaction, after movement and vitals, so the step's pose and death apply.
     void StepInteraction(FFoundationAuthority& Authority, bool bLatestStep, double NowSeconds);
     // Registers with the lab's authority, adopts its preset and returns to spawn after a lab reset.
@@ -115,6 +139,7 @@ private:
     // Reused per step: the collision provider's boxes near the player.
     TArray<FBox> StepCollision;
     bool bSimulate = true;
+    bool bScreenInput = false;
     bool bProbeCreated = false;
     bool bBodyInWater = false, bEyesInWater = false;
     int32 Perspective = 0;

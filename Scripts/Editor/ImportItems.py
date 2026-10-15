@@ -174,6 +174,10 @@ if assets.does_asset_exist(registry_path):
         arrays[size] = array
     if [t.get_editor_property("layer") for t in existing.get_editor_property("textures")] !=             [t["layer"] for t in data["textures"]] or dict(existing.get_editor_property("lang")) != data["lang"]:
         fail("DA_Items' texture layers or lang keys differ from the reference; move it away and reimport")
+    # Survival B1: the saplings' PlacesBlock follows the blocks reference, whose digest DA_Items does not hold.
+    if [str(item.get_editor_property("places_block")) for item in existing.get_editor_property("items")] != \
+            [item["places_block"] or "None" for item in data["items"]]:
+        fail("DA_Items' PlacesBlock (the saplings) differs from the blocks reference; move it away and reimport")
     check_layers(arrays)
     tables, predicates = loot_structs()
     if migrate2:

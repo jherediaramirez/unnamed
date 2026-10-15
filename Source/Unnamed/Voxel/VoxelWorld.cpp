@@ -1035,10 +1035,18 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
     const UVoxelWorldSubsystem* Streaming = GetStreaming();
     const FVoxelColumnPipeline* Pipeline = Streaming ? Streaming->GetPipeline() : nullptr;
     if (!Table || !Pipeline) return;
+    GatherColumns(Region, *Pipeline, *Table, ModelCollides, Authority.World, OriginCm, Out);
+}
+
+void AVoxelWorld::GatherColumns(const FBox& Region, const FVoxelColumnPipeline& Pipeline, const FVoxelBlockTable& Table,
+    TConstArrayView<bool> ModelCollides, const FFoundationBlockWorld& World, const FVector& OriginCm, TArray<FBox>& Out)
+{
     const FIntVector Low = FoundationGrid::CellAt(Region.Min, OriginCm);
     const FIntVector High = FoundationGrid::CellAt(Region.Max, OriginCm);
     const int32 LowZ = FMath::Max(Low.Z, VoxelConstants::MinZ), HighZ = FMath::Min(High.Z, VoxelConstants::MaxZ);
-    if (LowZ > HighZ) return;
+    // foundation.Blocks.Shapes: the cells just below and above the region count too, even past the height limits.
+    const bool bOuter = FoundationBlockFamilies::AreShapesEnabled();
+    if (LowZ > HighZ && !(bOuter && Low.Z - 1 <= VoxelConstants::MaxZ && High.Z + 1 >= VoxelConstants::MinZ)) return;
     constexpr int32 Size = VoxelConstants::ColumnSize;
     for (int32 ColumnY = FoundationGrid::FloorDivide(Low.Y, Size); ColumnY <= FoundationGrid::FloorDivide(High.Y, Size);
         ++ColumnY)
@@ -1047,12 +1055,13 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
         {
             const int32 LowX = FMath::Max(Low.X, ColumnX * Size), HighX = FMath::Min(High.X, ColumnX * Size + Size - 1);
             const int32 LowY = FMath::Max(Low.Y, ColumnY * Size), HighY = FMath::Min(High.Y, ColumnY * Size + Size - 1);
-            const FVoxelColumn* Column = Pipeline->FindColumn({ColumnX, ColumnY});
+            const FVoxelColumn* Column = Pipeline.FindColumn({ColumnX, ColumnY});
             if (!Column)
             {
                 // Not generated yet: solid, so nothing walks or falls into it.
-                Out.Add(FBox(FoundationGrid::CellMin({LowX, LowY, LowZ}, OriginCm),
-                    FoundationGrid::CellMin({HighX + 1, HighY + 1, HighZ + 1}, OriginCm)));
+                if (LowZ <= HighZ)
+                    Out.Add(FBox(FoundationGrid::CellMin({LowX, LowY, LowZ}, OriginCm),
+                        FoundationGrid::CellMin({HighX + 1, HighY + 1, HighZ + 1}, OriginCm)));
                 continue;
             }
             for (int32 Z = LowZ; Z <= HighZ; ++Z)
@@ -1060,13 +1069,13 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                     for (int32 X = LowX; X <= HighX; ++X)
                     {
                         const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
-                        const FVoxelStateInfo& Info = Table->Get(State);
+                        const FVoxelStateInfo& Info = Table.Get(State);
                         if (Info.Shape == EVoxelShape::Model)
                         {
                             // Model states collide with their facts boxes, moved where the facts move them (cactus,
                             // bamboo, lily pads, carpets); bSolid (blocks_motion) is for the heightmaps.
                             if (State < ModelCollides.Num() && ModelCollides.GetData()[State])
-                                Authority.World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                                World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
                             continue;
                         }
                         if (!Info.bSolid) continue;
@@ -1079,6 +1088,25 @@ void AVoxelWorld::GatherCollision(const FBox& Region, TArray<FBox>& Out) const
                         Out.Add(
                             FBox(Min + FVector(0, 0, Bottom * CellCm), Min + FVector(CellCm, CellCm, Top * CellCm)));
                     }
+            // foundation.Blocks.Shapes: the model states just below and above the region add the boxes that leave
+            // their cell into it (1.5-tall fences, walls and closed gates; the pitcher crop's lower half).
+            if (!bOuter) continue;
+            for (const int32 Z : {Low.Z - 1, High.Z + 1})
+            {
+                if (Z < VoxelConstants::MinZ || Z > VoxelConstants::MaxZ) continue;
+                for (int32 Y = LowY; Y <= HighY; ++Y)
+                    for (int32 X = LowX; X <= HighX; ++X)
+                    {
+                        const uint16 State = Column->GetState(X - ColumnX * Size, Y - ColumnY * Size, Z);
+                        if (Table.Get(State).Shape != EVoxelShape::Model || State >= ModelCollides.Num() ||
+                            !ModelCollides.GetData()[State])
+                            continue;
+                        const int32 Before = Out.Num();
+                        World.GetCollisionBoxes({X, Y, Z}, FFoundationBlockState{State}, Out);
+                        FoundationCollisionGather::KeepLeaving(Region, FoundationGrid::CellMin({X, Y, Z}, OriginCm).Z,
+                            FoundationGrid::CellMin({X, Y, Z + 1}, OriginCm).Z, Out, Before);
+                    }
+            }
         }
 }
 

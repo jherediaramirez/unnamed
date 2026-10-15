@@ -2,6 +2,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationMobAssets.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationRecipeAssets.h"
 #include "Foundation/FoundationTags.h"
@@ -69,6 +70,9 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.LootTables.Reset();
     Rules.LootPredicates.Reset();
     if (ItemAssets) ItemAssets->AddLoot(Rules);
+    // Entity loot (survival T6 20a), from DA_Mobs, resolved the same way.
+    Rules.EntityLootTables.Reset();
+    if (const UFoundationMobAssets* MobAssets = UFoundationMobAssets::LoadDefault()) MobAssets->AddLoot(Rules);
     // Crafting recipes (survival step 6), resolved against every item above; those naming an item that does not exist
     // yet wait for it.
     Rules.Recipes.Recipes.Reset();
@@ -131,6 +135,8 @@ void UFoundationInteractionSettings::AddBlockItems(
         // A wall block (wall_torch, the coral wall fans) has no item: it drops its standing block's, which that block
         // makes.
         if (WallBlocks.Contains(Block.Id) && Block.Item.IsNone()) continue;
+        // A block that drops its DA_Items item (the saplings) leaves that item to DA_Items.
+        if (Block.bDropsPlacingItem) continue;
         const FName Id = Block.Item.IsNone() && !Block.DropItem.IsNone() ? Block.DropItem : Block.Item;
         if (Id.IsNone() ||
             Items.ContainsByPredicate([Id](const FFoundationItemDefinition& Item) { return Item.Id == Id; }))

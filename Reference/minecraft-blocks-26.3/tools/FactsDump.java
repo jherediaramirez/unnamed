@@ -11,7 +11,14 @@ import net.minecraft.world.level.block.Block;
 // Dumps 26.3 creative tab contents and per-block hardness facts by running the game's own registries. With a
 // second argument (a file of block ids, one per line), also dumps per-state shapes and behaviour for those blocks
 // (block_state_facts.json) and the faces each of their states holds a torch on (block_support.json), measured
-// through public state methods only, and block_sounds.csv, each of those blocks' sound type.
+// through public state methods only, and block_sounds.csv, each of those blocks' sound type. Survival B1 added
+// block_use_sounds.csv (door, trapdoor, gate, button, plate and lever use events) and family_survival.json (the
+// survival probes over every imported block); plant_survival.json keeps the frozen base list (third argument).
+// shape_updates.json (B2) holds BlockState.updateShape answers for the connecting blocks (stairs, fences, walls, fence
+// gates, panes and bars): a subject state at a centre cell with given neighbours, updated toward every direction in the
+// order down, up, north, south, west, east, pass after pass until a pass changes nothing (at most 3 passes); each row
+// is that settled state. State ids are vanilla global state ids (Block.getId, as in block_states.json); see
+// dumpShapeUpdates for the sections.
 public class FactsDump {
     static String q(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
@@ -83,10 +90,16 @@ public class FactsDump {
             }
         }
         if (args.length > 1) {
+            // Third argument: the frozen survival base list (tools/survival_base_ids.txt), the subjects and candidates
+            // of plant_survival.json, so that file does not change when blocks are added.
+            if (args.length < 3) throw new IllegalArgumentException("usage: FactsDump <out> <ids> <survival_base_ids>");
             dumpStates(out, Path.of(args[1]));
             dumpSupport(out, Path.of(args[1]));
             dumpSounds(out, Path.of(args[1]));
-            dumpSurvival(out, Path.of(args[1]));
+            dumpUseSounds(out, Path.of(args[1]));
+            dumpSurvival(out, Path.of(args[2]));
+            dumpFamilySurvival(out, Path.of(args[1]));
+            dumpShapeUpdates(out, Path.of(args[1]));
         }
         System.out.println("FACTS DUMP OK");
         System.exit(0);
@@ -116,6 +129,81 @@ public class FactsDump {
             }
         }
         System.out.println("SOUND TYPES UNIFORM per block");
+    }
+
+    // The BlockSetType (doors, trapdoors, buttons, pressure plates) or WoodType (fence gates) a block is made of,
+    // found by name among the public values(): the block id without its family suffix, without the waxed and
+    // oxidation prefixes (the four copper stages share one set), heavy/light weighted plates being iron and gold.
+    // Doors expose their type publicly (DoorBlock.type()), which checks the rule; in 26.3 TrapDoorBlock, ButtonBlock,
+    // BasePressurePlateBlock/PressurePlateBlock/WeightedPressurePlateBlock and FenceGateBlock have no public type
+    // accessor (javap -public), so every other block is checked by its sound type against the set's. Either check
+    // failing throws.
+    static String material(String id, String suffix) {
+        String m = id.substring(0, id.length() - suffix.length());
+        for (String p : new String[] {"waxed_", "exposed_", "weathered_", "oxidized_"}) if (m.startsWith(p)) m = m.substring(p.length());
+        if (m.equals("heavy_weighted")) m = "iron";
+        if (m.equals("light_weighted")) m = "gold";
+        return m;
+    }
+
+    static net.minecraft.world.level.block.state.properties.BlockSetType setType(String id, String suffix) {
+        String m = material(id, suffix);
+        var found = net.minecraft.world.level.block.state.properties.BlockSetType.values()
+            .filter(t -> t.name().equals(m) || t.name().equals("minecraft:" + m)).toList();
+        if (found.size() != 1) throw new IllegalStateException(id + ": block set type " + m + " matches " + found.size());
+        return found.get(0);
+    }
+
+    // Per imported door, trapdoor, fence gate, button, pressure plate and lever: the events it plays when used, as
+    // paths in the minecraft namespace, from the public BlockSetType / WoodType accessors (the lever: its public
+    // SoundEvents constant). open/close for doors, trapdoors and gates; click_on/click_off for buttons, plates, lever.
+    static void dumpUseSounds(Path out, Path idsFile) throws Exception {
+        int rows = 0, doorChecks = 0, soundChecks = 0;
+        var soundMismatch = new java.util.ArrayList<String>();
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("block_use_sounds.csv")))) {
+            w.println("id,kind,set_type,open,close,click_on,click_off");
+            for (String line : Files.readAllLines(idsFile)) {
+                if (line.isBlank()) continue;
+                String id = line.trim();
+                Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+                String kind, type, open = "", close = "", on = "", off = "";
+                net.minecraft.world.level.block.SoundType expected = null;
+                if (b instanceof net.minecraft.world.level.block.DoorBlock door) {
+                    var t = setType(id, "_door");
+                    if (door.type() != t) throw new IllegalStateException(id + ": DoorBlock.type() is " + door.type().name() + ", not " + t.name());
+                    doorChecks++;
+                    kind = "door"; type = t.name(); open = sound(t.doorOpen()); close = sound(t.doorClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.TrapDoorBlock) {
+                    var t = setType(id, "_trapdoor");
+                    kind = "trapdoor"; type = t.name(); open = sound(t.trapdoorOpen()); close = sound(t.trapdoorClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.ButtonBlock) {
+                    var t = setType(id, "_button");
+                    kind = "button"; type = t.name(); on = sound(t.buttonClickOn()); off = sound(t.buttonClickOff()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.BasePressurePlateBlock) {
+                    var t = setType(id, "_pressure_plate");
+                    kind = "pressure_plate"; type = t.name(); on = sound(t.pressurePlateClickOn()); off = sound(t.pressurePlateClickOff()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.FenceGateBlock) {
+                    String m = material(id, "_fence_gate");
+                    var found = net.minecraft.world.level.block.state.properties.WoodType.values()
+                        .filter(t -> t.name().equals(m) || t.name().equals("minecraft:" + m)).toList();
+                    if (found.size() != 1) throw new IllegalStateException(id + ": wood type " + m + " matches " + found.size());
+                    var t = found.get(0);
+                    kind = "fence_gate"; type = t.name(); open = sound(t.fenceGateOpen()); close = sound(t.fenceGateClose()); expected = t.soundType();
+                } else if (b instanceof net.minecraft.world.level.block.LeverBlock) {
+                    kind = "lever"; type = ""; on = sound(net.minecraft.sounds.SoundEvents.LEVER_CLICK); off = on;
+                } else continue;
+                if (expected != null) {
+                    soundChecks++;
+                    if (b.defaultBlockState().getSoundType() != expected) soundMismatch.add(id);
+                }
+                w.println(id + "," + kind + "," + type + "," + open + "," + close + "," + on + "," + off);
+                rows++;
+            }
+        }
+        System.out.println("USE SOUNDS: rows " + rows + ", door types checked " + doorChecks + ", sound type checks " + soundChecks
+            + ", sound type differs from the set's: " + soundMismatch);
+        // The by-name match is only trusted when the block's sound type is its set's; any difference fails the dump.
+        if (!soundMismatch.isEmpty()) throw new IllegalStateException("sound type differs from the matched set's: " + soundMismatch);
     }
 
     static String boxes(net.minecraft.world.phys.shapes.VoxelShape shape, net.minecraft.world.phys.Vec3 shift) {
@@ -330,13 +418,47 @@ public class FactsDump {
             });
     }
 
-    // Plant survival matrix (plant_survival.json). Subjects: every state of every imported block, in ids order.
-    // Candidates: air, then the same states. For a subject S at the origin cell and a direction D, the set of
-    // candidates X for which S.canSurvive is true with X at the neighbour in direction D and air elsewhere (light 15).
-    // Phase A2: below only, water sources around the support cell. Phase A3: below only, light 0. Identical sets share
-    // a signature id, numbered in order of first appearance (0 = the empty set).
-    static void dumpSurvival(Path out, Path idsFile) throws Exception {
+    // Plant survival matrix (plant_survival.json). Subjects: every state of every block of the frozen base list
+    // (tools/survival_base_ids.txt), in its order. Candidates: air, then the same states. For a subject S at the origin
+    // cell and a direction D, the set of candidates X for which S.canSurvive is true with X at the neighbour in
+    // direction D and air elsewhere (light 15). Phase A2: below only, water sources around the support cell. Phase A3:
+    // below only, light 0. Identical sets share a signature id, numbered in order of first appearance (0 = the empty set).
+    static void dumpSurvival(Path out, Path baseIdsFile) throws Exception {
+        var ids = Files.readAllLines(baseIdsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        survivalMatrix(out.resolve("plant_survival.json"), ids, false, "PLANT SURVIVAL", "Per subject state S (every state of every imported block) and per probe, the set of candidate states X (air plus every state of every imported block) for which ");
+    }
+
+    // family_survival.json: the same probes over every imported block (the full ids list), subjects narrowed to the
+    // rule-bearing states (ruleBearing below), candidates air plus every imported state.
+    static void dumpFamilySurvival(Path out, Path idsFile) throws Exception {
         var ids = Files.readAllLines(idsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        survivalMatrix(out.resolve("family_survival.json"), ids, true, "FAMILY SURVIVAL", "Per subject state S (every rule-bearing state of every imported block: a state for which "
+            + "S.canSurvive is false in a world holding only S, or holding only S and a stone block at one of its six neighbours; "
+            + "every other state's row is null, and blocks with no rule-bearing state are absent) and per probe, the set of candidate "
+            + "states X (air plus every state of every imported block) for which ");
+    }
+
+    // A state with a survival rule: it fails alone (air on all sides), or next to a full stone cube on some side
+    // (farmland and dirt path under a solid block).
+    static boolean ruleBearing(net.minecraft.world.level.LevelReader level, net.minecraft.core.BlockPos at,
+            net.minecraft.world.level.block.state.BlockState s) {
+        var stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        survivalWorld.clear();
+        survivalLight = 15;
+        survivalWorld.put(at, s);
+        boolean rule = !s.canSurvive(level, at);
+        for (var d : net.minecraft.core.Direction.values()) {
+            if (rule) break;
+            survivalWorld.put(at.relative(d), stone);
+            rule = !s.canSurvive(level, at);
+            survivalWorld.remove(at.relative(d));
+        }
+        survivalWorld.clear();
+        return rule;
+    }
+
+    static void survivalMatrix(Path file, java.util.List<String> ids, boolean ruleOnly, String label, String notePrefix) throws Exception {
+        long started = System.nanoTime();
         var cands = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
         var blockOrder = new java.util.ArrayList<String>();
         var blockRanges = new java.util.ArrayList<int[]>();
@@ -369,8 +491,14 @@ public class FactsDump {
         for (int bi = 1; bi < blocks.size(); bi++) {
             int[] range = blockRanges.get(bi);
             StringBuilder rows = new StringBuilder();
+            boolean anyRule = false;
             for (int si = range[0]; si < range[1]; si++) {
                 var s = cands.get(si);
+                if (ruleOnly && !ruleBearing(level, P, s)) {
+                    rows.append(rows.length() > 0 ? "," : "").append("null");
+                    continue;
+                }
+                anyRule = true;
                 subjectCount++;
                 int[] row = new int[8];
                 for (int phase = 0; phase < 8; phase++) {
@@ -395,10 +523,14 @@ public class FactsDump {
                 for (int i = 0; i < 8; i++) rows.append(i > 0 ? "," : "").append(row[i]);
                 rows.append("]");
             }
-            subjects.append(subjects.length() > 0 ? ",\n " : "").append(q(blockOrder.get(bi))).append(":[").append(rows).append("]");
+            if (ruleOnly && bi % 100 == 0)
+                System.out.println(label + ": block " + bi + " of " + (blocks.size() - 1) + ", subjects " + subjectCount + ", seconds "
+                    + (System.nanoTime() - started) / 1_000_000_000.0);
+            if (!ruleOnly || anyRule)
+                subjects.append(subjects.length() > 0 ? ",\n " : "").append(q(blockOrder.get(bi))).append(":[").append(rows).append("]");
         }
-        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out.resolve("plant_survival.json")))) {
-            w.print("{\"note\":" + q("Per subject state S (every state of every imported block) and per probe, the set of candidate states X (air plus every state of every imported block) for which "
+        try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(file))) {
+            w.print("{\"note\":" + q(notePrefix
                 + "S.canSurvive(level, P) is true in a world holding only S at P and X at the probed neighbour cell, air elsewhere, "
                 + "block light and sky light 15. Rows are [west, east, north, south, down, up, down_water, down_dark]: the first six "
                 + "put X at P + that direction; down_water puts X below with water sources at the four horizontal neighbours of that "
@@ -431,6 +563,341 @@ public class FactsDump {
             }
             w.print("\n],\"subjects\":{\n " + subjects + "\n}}\n");
         }
-        System.out.println("PLANT SURVIVAL: candidates " + cands.size() + ", subjects " + subjectCount + ", signatures " + sigList.size());
+        System.out.println(label + ": candidates " + cands.size() + ", subjects " + subjectCount + ", signatures " + sigList.size()
+            + ", seconds " + (System.nanoTime() - started) / 1_000_000_000.0);
+    }
+
+    // shape_updates.json: vanilla BlockState.updateShape answers for the connecting blocks, in the survival probe world
+    // (survivalLevel, light 15). Subjects: every imported block whose class is StairBlock, FenceBlock, WallBlock,
+    // FenceGateBlock or IronBarsBlock (glass panes, stained panes, iron and copper bars), in ids order. A case puts
+    // the subject state S at P = (0, 64, 0) and its neighbours around it, air elsewhere, then settles S (settle). The
+    // neighbours themselves are never updated. Sections:
+    //   single_neighbour: one representative per kind (oak_fence, nether_brick_fence, cobblestone_wall, glass_pane,
+    //     iron_bars, oak_fence_gate, oak_stairs), default state, one neighbour = air or any imported state, per direction.
+    //   cross_family: every subject block's default state, one neighbour from the sample set, per horizontal direction.
+    //   wall_up: cobblestone_wall default with stone at some sides and a sample block above.
+    //   stairs: every straight dry oak_stairs state with one oak or cobblestone stairs neighbour per horizontal
+    //     direction; and with a straight dry same-half oak stair at P + facing or P - facing plus one at a side.
+    //   gates_in_wall: closed oak_fence_gate states facing north or east with a wall, stone or fence at their sides.
+    static final net.minecraft.core.Direction[] SETTLE_ORDER = {net.minecraft.core.Direction.DOWN, net.minecraft.core.Direction.UP,
+        net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.WEST,
+        net.minecraft.core.Direction.EAST};
+    static final net.minecraft.core.Direction[] HORIZONTAL_ORDER = {net.minecraft.core.Direction.NORTH,
+        net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.EAST};
+    static boolean settledInOnePass;
+
+    // Updates S toward each direction of SETTLE_ORDER with the neighbour state found there, pass after pass, until a
+    // pass changes nothing; settledInOnePass is true when the second pass (or the first) changed nothing.
+    static net.minecraft.world.level.block.state.BlockState settle(net.minecraft.world.level.LevelReader level,
+            net.minecraft.world.level.ScheduledTickAccess ticks, net.minecraft.core.BlockPos at,
+            net.minecraft.world.level.block.state.BlockState s) {
+        survivalWorld.put(at, s);
+        var random = net.minecraft.util.RandomSource.create(0L);
+        for (int pass = 0; pass < 3; pass++) {
+            boolean changed = false;
+            for (var d : SETTLE_ORDER) {
+                var n = at.relative(d);
+                var next = s.updateShape(level, ticks, at, d, n, level.getBlockState(n), random);
+                if (next != s) { changed = true; s = next; survivalWorld.put(at, s); }
+            }
+            if (!changed) { settledInOnePass = pass <= 1; return s; }
+        }
+        throw new IllegalStateException("updateShape did not settle in 3 passes: " + s);
+    }
+
+    // Runs of consecutive ids, [[first,last],...]; ids ascending.
+    static String ranges(java.util.List<Integer> ids) {
+        StringBuilder b = new StringBuilder("[");
+        for (int i = 0; i < ids.size(); ) {
+            int j = i;
+            while (j + 1 < ids.size() && ids.get(j + 1) == ids.get(j) + 1) j++;
+            b.append(i > 0 ? "," : "").append("[").append(ids.get(i)).append(",").append(ids.get(j)).append("]");
+            i = j + 1;
+        }
+        return b.append("]").toString();
+    }
+
+    // {"r":{"<result id>":[[first,last],...],...},"m":[[first,last],...]}: neighbour ids grouped by settled result,
+    // and the neighbour ids whose case needed more than one pass.
+    static String groups(int[] neighbourIds, int[] results, boolean[] onePass) {
+        Integer[] order = new Integer[neighbourIds.length];
+        for (int i = 0; i < order.length; i++) order[i] = i;
+        java.util.Arrays.sort(order, java.util.Comparator.comparingInt(i -> neighbourIds[i]));
+        var byResult = new java.util.TreeMap<Integer, java.util.List<Integer>>();
+        var multi = new java.util.ArrayList<Integer>();
+        for (int i : order) {
+            byResult.computeIfAbsent(results[i], k -> new java.util.ArrayList<>()).add(neighbourIds[i]);
+            if (!onePass[i]) multi.add(neighbourIds[i]);
+        }
+        StringBuilder b = new StringBuilder("{\"r\":{");
+        boolean first = true;
+        for (var e : byResult.entrySet()) {
+            b.append(first ? "" : ",").append("\"").append(e.getKey()).append("\":").append(ranges(e.getValue()));
+            first = false;
+        }
+        return b.append("},\"m\":").append(ranges(multi)).append("}").toString();
+    }
+
+    static net.minecraft.world.level.block.state.BlockState defaultOf(String id) {
+        Block b = BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(id));
+        if (b == net.minecraft.world.level.block.Blocks.AIR && !id.equals("air")) throw new IllegalStateException("unknown block " + id);
+        return b.defaultBlockState();
+    }
+
+    static void dumpShapeUpdates(Path out, Path idsFile) throws Exception {
+        long started = System.nanoTime();
+        var ids = Files.readAllLines(idsFile).stream().filter(s -> !s.isBlank()).map(String::trim).toList();
+        var P = new net.minecraft.core.BlockPos(0, 64, 0);
+        var level = survivalLevel();
+        var tickType = net.minecraft.world.level.ScheduledTickAccess.class;
+        var ticks = (net.minecraft.world.level.ScheduledTickAccess) java.lang.reflect.Proxy.newProxyInstance(tickType.getClassLoader(),
+            new Class<?>[] {tickType}, (proxy, method, a) -> switch (method.getName()) {
+                case "scheduleTick" -> null;
+                case "hashCode" -> System.identityHashCode(proxy);
+                case "equals" -> proxy == a[0];
+                case "toString" -> "no-op ticks";
+                default -> throw new UnsupportedOperationException(method.toString());
+            });
+        var FACING = net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+        var HALF = net.minecraft.world.level.block.state.properties.BlockStateProperties.HALF;
+        var SHAPE = net.minecraft.world.level.block.state.properties.BlockStateProperties.STAIRS_SHAPE;
+        var WATERLOGGED = net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
+        var OPEN = net.minecraft.world.level.block.state.properties.BlockStateProperties.OPEN;
+        var SLAB = net.minecraft.world.level.block.state.properties.BlockStateProperties.SLAB_TYPE;
+        var air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        // Candidates: air, then every state of every imported block.
+        var cands = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
+        cands.add(air);
+        var kinds = new java.util.LinkedHashMap<String, java.util.List<Block>>();
+        for (String k : new String[] {"stairs", "fence", "wall", "fence_gate", "bars"}) kinds.put(k, new java.util.ArrayList<>());
+        var tagMismatch = new java.util.ArrayList<String>();
+        for (String id : ids) {
+            Block b = defaultOf(id).getBlock();
+            cands.addAll(b.getStateDefinition().getPossibleStates());
+            String kind = b instanceof net.minecraft.world.level.block.StairBlock ? "stairs"
+                : b instanceof net.minecraft.world.level.block.FenceBlock ? "fence"
+                : b instanceof net.minecraft.world.level.block.WallBlock ? "wall"
+                : b instanceof net.minecraft.world.level.block.FenceGateBlock ? "fence_gate"
+                : b instanceof net.minecraft.world.level.block.IronBarsBlock ? "bars" : null;
+            if (kind != null) kinds.get(kind).add(b);
+            var holder = BuiltInRegistries.BLOCK.wrapAsHolder(b);
+            String tagKind = holder.is(net.minecraft.tags.BlockTags.STAIRS) ? "stairs" : holder.is(net.minecraft.tags.BlockTags.FENCES) ? "fence"
+                : holder.is(net.minecraft.tags.BlockTags.WALLS) ? "wall" : holder.is(net.minecraft.tags.BlockTags.FENCE_GATES) ? "fence_gate" : null;
+            if (!java.util.Objects.equals(tagKind, kind == null || kind.equals("bars") ? null : kind)) tagMismatch.add(id);
+        }
+        int subjectCount = 0;
+        long rows = 0;
+        StringBuilder w = new StringBuilder();
+        w.append("{\"format\":").append(q("BlockState.updateShape answers (vanilla 26.3). A case puts subject state S at the centre "
+            + "cell with the given neighbour states, air everywhere else (light 15), and calls S.updateShape toward each direction "
+            + "in direction_order with the state found there, replacing S with the answer as it goes, pass after pass until a "
+            + "pass changes nothing (at most 3 passes); the recorded result is that settled state. Neighbours are never updated. "
+            + "Every state id is a vanilla global state id (Block.getId, as in block_states.json; 0 = air). Subjects are the "
+            + "imported blocks by class: StairBlock, FenceBlock, WallBlock, FenceGateBlock, IronBarsBlock (panes and bars). "
+            + "Compact groups {\"r\":{\"<result id>\":[[first,last],...]},\"m\":[[first,last],...]} map each result to the runs "
+            + "of consecutive neighbour state ids that produce it (every id in a run was tested); m lists the neighbour ids "
+            + "whose case needed more than one pass. single_neighbour: per representative, its default state with one "
+            + "neighbour (air or any imported state) per direction, groups per direction. cross_family: per subject block, its "
+            + "default state with one neighbour from samples per horizontal direction, groups per direction. wall_up rows: "
+            + "[sides, above, result, one_pass]: cobblestone_wall default with stone at the listed sides and above at the cell "
+            + "above. stairs.single: per straight dry oak_stairs state, one oak_stairs or cobblestone_stairs neighbour per "
+            + "horizontal direction, groups. stairs.pairs rows: [subject, main_dir, main, side_dir, side, result, one_pass]: a "
+            + "straight dry same-half oak stair at the subject's facing side or its opposite (main) plus one at a side "
+            + "perpendicular to the facing. gates_in_wall rows: [subject, sides, neighbour, result, one_pass]: a closed "
+            + "oak_fence_gate state with the neighbour state at the listed sides."));
+        w.append(",\n\"direction_order\":[\"down\",\"up\",\"north\",\"south\",\"west\",\"east\"],\"max_passes\":3,\"subjects\":{");
+        boolean firstKind = true;
+        for (var e : kinds.entrySet()) {
+            w.append(firstKind ? "" : ",").append(q(e.getKey())).append(":[");
+            for (int i = 0; i < e.getValue().size(); i++)
+                w.append(i > 0 ? "," : "").append(q(BuiltInRegistries.BLOCK.getKey(e.getValue().get(i)).getPath()));
+            w.append("]");
+            firstKind = false;
+            subjectCount += e.getValue().size();
+        }
+        w.append("},\"tag_mismatches\":[");
+        for (int i = 0; i < tagMismatch.size(); i++) w.append(i > 0 ? "," : "").append(q(tagMismatch.get(i)));
+        w.append("],\n\"single_neighbour\":{");
+        // 1. Single neighbour, exhaustive, one representative per kind.
+        String[] reps = {"oak_fence", "nether_brick_fence", "cobblestone_wall", "glass_pane", "iron_bars", "oak_fence_gate", "oak_stairs"};
+        int[] candIds = new int[cands.size()];
+        for (int i = 0; i < candIds.length; i++) candIds[i] = Block.getId(cands.get(i));
+        for (int ri = 0; ri < reps.length; ri++) {
+            var s = defaultOf(reps[ri]);
+            w.append(ri > 0 ? ",\n " : "\n ").append(q(reps[ri])).append(":{\"state\":").append(Block.getId(s));
+            for (var d : SETTLE_ORDER) {
+                int[] res = new int[cands.size()];
+                boolean[] one = new boolean[cands.size()];
+                for (int ci = 0; ci < cands.size(); ci++) {
+                    survivalWorld.clear();
+                    survivalWorld.put(P.relative(d), cands.get(ci));
+                    res[ci] = Block.getId(settle(level, ticks, P, s));
+                    one[ci] = settledInOnePass;
+                    rows++;
+                }
+                w.append(",").append(q(d.getSerializedName())).append(":").append(groups(candIds, res, one));
+            }
+            w.append("}");
+        }
+        // 2. Cross-family sample.
+        var samples = new java.util.LinkedHashSet<net.minecraft.world.level.block.state.BlockState>();
+        samples.add(air);
+        samples.add(defaultOf("stone"));
+        samples.add(defaultOf("glass"));
+        samples.add(defaultOf("oak_leaves"));
+        samples.add(defaultOf("oak_slab").setValue(SLAB, net.minecraft.world.level.block.state.properties.SlabType.BOTTOM));
+        samples.add(defaultOf("oak_slab").setValue(SLAB, net.minecraft.world.level.block.state.properties.SlabType.TOP));
+        for (var list : kinds.values()) for (Block b : list) samples.add(b.defaultBlockState());
+        for (boolean open : new boolean[] {false, true})
+            for (var f : HORIZONTAL_ORDER) samples.add(defaultOf("oak_fence_gate").setValue(FACING, f).setValue(OPEN, open));
+        var sampleList = new java.util.ArrayList<>(samples);
+        int[] sampleIds = new int[sampleList.size()];
+        for (int i = 0; i < sampleIds.length; i++) sampleIds[i] = Block.getId(sampleList.get(i));
+        w.append("\n},\n\"cross_family\":{\"samples\":[");
+        for (int i = 0; i < sampleIds.length; i++) w.append(i > 0 ? "," : "").append(sampleIds[i]);
+        w.append("],\"subjects\":{");
+        boolean firstSubject = true;
+        for (String id : ids) {
+            Block b = defaultOf(id).getBlock();
+            boolean subject = false;
+            for (var list : kinds.values()) subject |= list.contains(b);
+            if (!subject) continue;
+            var s = b.defaultBlockState();
+            w.append(firstSubject ? "\n " : ",\n ").append(q(id)).append(":{\"state\":").append(Block.getId(s));
+            firstSubject = false;
+            for (var d : HORIZONTAL_ORDER) {
+                int[] res = new int[sampleList.size()];
+                boolean[] one = new boolean[sampleList.size()];
+                for (int si = 0; si < sampleList.size(); si++) {
+                    survivalWorld.clear();
+                    survivalWorld.put(P.relative(d), sampleList.get(si));
+                    res[si] = Block.getId(settle(level, ticks, P, s));
+                    one[si] = settledInOnePass;
+                    rows++;
+                }
+                w.append(",").append(q(d.getSerializedName())).append(":").append(groups(sampleIds, res, one));
+            }
+            w.append("}");
+        }
+        // 3. Walls' up / tall sides with a block above.
+        var wall = defaultOf("cobblestone_wall");
+        var stone = defaultOf("stone");
+        var above = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>(java.util.List.of(air, stone, defaultOf("torch"), wall,
+            defaultOf("oak_fence"), defaultOf("glass_pane"), defaultOf("oak_slab").setValue(SLAB, net.minecraft.world.level.block.state.properties.SlabType.BOTTOM),
+            defaultOf("oak_slab").setValue(SLAB, net.minecraft.world.level.block.state.properties.SlabType.TOP)));
+        if (ids.contains("white_carpet")) above.add(defaultOf("white_carpet"));
+        var N = net.minecraft.core.Direction.NORTH;
+        var sideSets = java.util.List.of(java.util.List.<net.minecraft.core.Direction>of(), java.util.List.of(N),
+            java.util.List.of(N, net.minecraft.core.Direction.SOUTH), java.util.List.of(N, net.minecraft.core.Direction.EAST));
+        w.append("\n}},\n\"wall_up\":[");
+        boolean firstRow = true;
+        for (var sides : sideSets) {
+            for (var up : above) {
+                survivalWorld.clear();
+                for (var d : sides) survivalWorld.put(P.relative(d), stone);
+                survivalWorld.put(P.above(), up);
+                int r = Block.getId(settle(level, ticks, P, wall));
+                rows++;
+                StringBuilder sd = new StringBuilder("[");
+                for (int i = 0; i < sides.size(); i++) sd.append(i > 0 ? "," : "").append(q(sides.get(i).getSerializedName()));
+                w.append(firstRow ? "\n " : ",\n ").append("[").append(sd).append("],").append(Block.getId(up)).append(",").append(r)
+                    .append(",").append(settledInOnePass).append("]");
+                firstRow = false;
+            }
+        }
+        // 4. Stairs shapes.
+        Block oakStairs = defaultOf("oak_stairs").getBlock();
+        var stairNeighbours = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>(oakStairs.getStateDefinition().getPossibleStates());
+        stairNeighbours.addAll(defaultOf("cobblestone_stairs").getBlock().getStateDefinition().getPossibleStates());
+        int[] stairIds = new int[stairNeighbours.size()];
+        for (int i = 0; i < stairIds.length; i++) stairIds[i] = Block.getId(stairNeighbours.get(i));
+        var straight = oakStairs.getStateDefinition().getPossibleStates().stream()
+            .filter(s -> s.getValue(SHAPE) == net.minecraft.world.level.block.state.properties.StairsShape.STRAIGHT && !s.getValue(WATERLOGGED)).toList();
+        int[] corner = new int[6]; // bottom subjects: outer/inner with straight dry same-half neighbours, with any neighbour; pairs outer/inner
+        w.append("\n],\n\"stairs\":{\"single\":{");
+        for (int si = 0; si < straight.size(); si++) {
+            var s = straight.get(si);
+            boolean bottom = s.getValue(HALF) == net.minecraft.world.level.block.state.properties.Half.BOTTOM;
+            w.append(si > 0 ? ",\n " : "\n ").append("\"").append(Block.getId(s)).append("\":{");
+            for (int di = 0; di < HORIZONTAL_ORDER.length; di++) {
+                var d = HORIZONTAL_ORDER[di];
+                int[] res = new int[stairNeighbours.size()];
+                boolean[] one = new boolean[stairNeighbours.size()];
+                for (int ni = 0; ni < stairNeighbours.size(); ni++) {
+                    var n = stairNeighbours.get(ni);
+                    survivalWorld.clear();
+                    survivalWorld.put(P.relative(d), n);
+                    var r = settle(level, ticks, P, s);
+                    res[ni] = Block.getId(r);
+                    one[ni] = settledInOnePass;
+                    rows++;
+                    if (!bottom) continue;
+                    String shape = r.getValue(SHAPE).getSerializedName();
+                    int k = shape.startsWith("outer") ? 0 : shape.startsWith("inner") ? 1 : -1;
+                    if (k < 0) continue;
+                    corner[2 + k]++;
+                    if (n.getValue(SHAPE) == net.minecraft.world.level.block.state.properties.StairsShape.STRAIGHT && !n.getValue(WATERLOGGED)
+                        && n.getValue(HALF) == s.getValue(HALF)) corner[k]++;
+                }
+                w.append(di > 0 ? "," : "").append(q(d.getSerializedName())).append(":").append(groups(stairIds, res, one));
+            }
+            w.append("}");
+        }
+        w.append("\n},\"pairs\":[");
+        firstRow = true;
+        for (var s : straight) {
+            var facing = s.getValue(FACING);
+            var sameHalf = straight.stream().filter(n -> n.getValue(HALF) == s.getValue(HALF)).toList();
+            for (var mainDir : new net.minecraft.core.Direction[] {facing, facing.getOpposite()})
+                for (var main : sameHalf)
+                    for (var sideDir : new net.minecraft.core.Direction[] {facing.getClockWise(), facing.getCounterClockWise()})
+                        for (var side : sameHalf) {
+                            survivalWorld.clear();
+                            survivalWorld.put(P.relative(mainDir), main);
+                            survivalWorld.put(P.relative(sideDir), side);
+                            var r = settle(level, ticks, P, s);
+                            rows++;
+                            String shape = r.getValue(SHAPE).getSerializedName();
+                            if (shape.startsWith("outer")) corner[4]++;
+                            if (shape.startsWith("inner")) corner[5]++;
+                            w.append(firstRow ? "\n " : ",\n ").append("[").append(Block.getId(s)).append(",").append(q(mainDir.getSerializedName()))
+                                .append(",").append(Block.getId(main)).append(",").append(q(sideDir.getSerializedName())).append(",")
+                                .append(Block.getId(side)).append(",").append(Block.getId(r)).append(",").append(settledInOnePass).append("]");
+                            firstRow = false;
+                        }
+        }
+        // 5. Gates in walls.
+        Block gate = defaultOf("oak_fence_gate").getBlock();
+        var gateNeighbours = java.util.List.of(wall, stone, defaultOf("oak_fence"));
+        w.append("\n]},\n\"gates_in_wall\":[");
+        firstRow = true;
+        for (var s : gate.getStateDefinition().getPossibleStates()) {
+            var facing = s.getValue(FACING);
+            if (s.getValue(OPEN) || (facing != N && facing != net.minecraft.core.Direction.EAST)) continue;
+            var cw = facing.getClockWise();
+            var ccw = facing.getCounterClockWise();
+            for (var sides : java.util.List.of(java.util.List.of(ccw), java.util.List.of(cw), java.util.List.of(ccw, cw)))
+                for (var n : gateNeighbours) {
+                    survivalWorld.clear();
+                    for (var d : sides) survivalWorld.put(P.relative(d), n);
+                    int r = Block.getId(settle(level, ticks, P, s));
+                    rows++;
+                    StringBuilder sd = new StringBuilder("[");
+                    for (int i = 0; i < sides.size(); i++) sd.append(i > 0 ? "," : "").append(q(sides.get(i).getSerializedName()));
+                    w.append(firstRow ? "\n " : ",\n ").append("[").append(Block.getId(s)).append(",").append(sd).append("],")
+                        .append(Block.getId(n)).append(",").append(r).append(",").append(settledInOnePass).append("]");
+                    firstRow = false;
+                }
+        }
+        w.append("\n]}\n");
+        survivalWorld.clear();
+        Files.writeString(out.resolve("shape_updates.json"), w.toString());
+        StringBuilder perKind = new StringBuilder();
+        for (var e : kinds.entrySet()) perKind.append(perKind.length() > 0 ? ", " : "").append(e.getKey()).append(" ").append(e.getValue().size());
+        System.out.println("SHAPE UPDATES STAIRS: bottom subjects with straight dry same-half neighbours: outer " + corner[0] + ", inner "
+            + corner[1] + "; with any neighbour state: outer " + corner[2] + ", inner " + corner[3] + "; pairs: outer " + corner[4]
+            + ", inner " + corner[5]);
+        System.out.println("SHAPE UPDATES KINDS: " + perKind + "; tag mismatches " + tagMismatch);
+        System.out.println("SHAPE UPDATES: subjects " + subjectCount + ", rows " + rows + ", seconds " + (System.nanoTime() - started) / 1_000_000_000.0);
     }
 }

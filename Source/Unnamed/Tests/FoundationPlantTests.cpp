@@ -6,6 +6,7 @@
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationTargeting.h"
+#include "HAL/IConsoleManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -84,7 +85,9 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
     const FFoundationBlockRegistry& Registry = W.R();
     const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::MakeTable(Registry);
     const FIntVector Cells[] = {{3, -7, 2}, {-11, 5, 0}, {0, 0, 1}, {17, 12, -4}};
-    int32 ModelStates = 0, Mismatches = 0, MovedBoxes = 0, Outside = 0, OffsetBlocks = 0;
+    int32 ModelStates = 0, Mismatches = 0, MovedBoxes = 0, Outside = 0, OffsetBlocks = 0, LeavesColumn = 0;
+    TMap<FName, int32> OutsideBlocks;
+    TSet<FName> OutsideFamilies;
     auto Fail = [&](const FString& Message)
     {
         if (++Mismatches <= 20) AddError(Message);
@@ -131,7 +134,16 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
                             Fail(Label + TEXT(" box differs"));
                         // Collision stays in its cell; a thick bamboo outline reaches 1/16 into the next one at
                         // the largest offsets.
-                        Outside += !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
+                        const bool bOutside =
+                            !(bCollision ? CellBox : CellBox.ExpandBy(PlantBlockCm / 16)).IsInside(Boxes[Box]);
+                        Outside += bOutside;
+                        // The gatherers' outer layers (foundation.Blocks.Shapes) read only the cells below and above:
+                        // every box stays inside its cell's column.
+                        const FBox Column(
+                            FVector(CellBox.Min.X, CellBox.Min.Y, -1e9), FVector(CellBox.Max.X, CellBox.Max.Y, 1e9));
+                        LeavesColumn += bCollision && !Column.IsInside(Boxes[Box]);
+                        if (bOutside) ++OutsideBlocks.FindOrAdd(Block.Id);
+                        if (bOutside && Block.bAppendedFamily) OutsideFamilies.Add(Block.Id);
                         MovedBoxes += bMoves && !Offset.IsNearlyZero();
                         Bounds += Boxes[Box];
                     }
@@ -144,9 +156,22 @@ bool FFoundationPlantShapesTest::RunTest(const FString& Parameters)
             }
         }
     }
-    TestEqual(TEXT("model states (S5's 949, the torch and four wall torches)"), ModelStates, 954);
+    TestEqual(TEXT("model states (block_states.json's 25,082, B1's families included)"), ModelStates, 25082);
     TestEqual(TEXT("moved boxes and their bounds that differ"), Mismatches, 0);
-    TestEqual(TEXT("collision boxes outside their cell, outline boxes beyond 1/16 of it"), Outside, 0);
+    // B1's fences, walls and fence gates collide 1.5 blocks tall (vanilla), and the pitcher crop's lower half
+    // reaches 1/16 below its cell: those leave the cell, vertically only (B2a's gather reads the cells below and above
+    // a region for them: Blocks.ShapesGather). Every other block stays inside.
+    TestEqual(TEXT("collision boxes leaving their cell's column"), LeavesColumn, 0);
+    for (const TPair<FName, int32>& Pair : OutsideBlocks)
+    {
+        const FString Id = Pair.Key.ToString();
+        if (!OutsideFamilies.Contains(Pair.Key) ||
+            (!Id.EndsWith(TEXT("_fence")) && !Id.EndsWith(TEXT("_wall")) && !Id.EndsWith(TEXT("_fence_gate")) &&
+                Id != TEXT("pitcher_crop")))
+            AddError(FString::Printf(TEXT("%s: %d boxes leave their cell"), *Id, Pair.Value));
+    }
+    AddInfo(FString::Printf(TEXT("%d blocks with boxes outside their cell"), OutsideBlocks.Num()));
+    TestEqual(TEXT("collision boxes outside their cell, outline boxes beyond 1/16 of it"), Outside, 127524);
     TestTrue(TEXT("boxes moved by an offset"), MovedBoxes > 0);
     // Bamboo at 256 cells: its outline leaves the cell by at most 1/16, its moved collision never.
     int32 BambooOutside = 0;
@@ -382,8 +407,9 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
         if (Block->bReplaceable != bFact && ++Mismatches <= 20)
             AddError(Id + TEXT(" replaceable differs from the facts"));
     }
-    TestEqual(TEXT("facts blocks (with the two torches)"), Blocks, 618);
-    TestEqual(TEXT("replaceable in the facts (water, lava, snow and 15 model blocks)"), Replaceable, 18);
+    TestEqual(TEXT("facts blocks (block_state_facts.json, B1's families included)"), Blocks, 928);
+    TestEqual(TEXT("replaceable in the facts (water, lava, snow and 17 model blocks with B1's fire and soul fire)"),
+        Replaceable, 20);
     TestEqual(TEXT("blocks whose flag differs from the facts"), Mismatches, 0);
     TestTrue(TEXT("air is replaceable"), W.World.GetBlock(FFoundationBlockState{}).bReplaceable);
     // A placed block replaces one snow layer, but snow does not (stacking layers is not built), and two layers stay.
@@ -396,6 +422,107 @@ bool FFoundationPlantReplaceableTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("snow does not"), CanBeReplaced(W.World, W.State(TEXT("snow[layers=1]")), Snow, Context, false));
     TestFalse(TEXT("stone does not replace two layers"),
         CanBeReplaced(W.World, W.State(TEXT("snow[layers=2]")), Stone, Context, false));
+    return true;
+}
+
+// foundation.Blocks.Shapes (survival B2a): the block world's gather also reads the cells just below and above a region
+// and keeps the boxes that leave them into it: a fence's 1.5-tall post above its cell, the pitcher crop's lower half
+// 1/16 below its cell. With the switch at 0 the gather is B1's: exactly the boxes of the region's own cells, in order.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationShapesGatherTest, "Unnamed.Foundation.Blocks.ShapesGather", FoundationPlantTests::PlantTestFlags)
+
+bool FFoundationShapesGatherTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationPlantTests;
+    IConsoleVariable* Shapes = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Blocks.Shapes"));
+    if (!TestNotNull(TEXT("foundation.Blocks.Shapes exists"), Shapes)) return false;
+    const int32 Saved = Shapes->GetInt();
+    FPlantWorld W;
+    const FIntVector Fence(2, 2, 1), Pitcher(6, 2, 2), Wall(9, 2, 1), Gate(12, 2, 1);
+    W.Put(Fence, TEXT("oak_fence"));
+    W.Put(Pitcher, TEXT("pitcher_crop[age=0,half=lower]"));
+    W.Put(Wall, TEXT("cobblestone_wall"));
+    W.Put(Gate, TEXT("oak_fence_gate[facing=north,in_wall=false,open=false,powered=false]"));
+    W.Put(FIntVector(12, 5, 1), TEXT("oak_fence_gate[facing=north,in_wall=false,open=true,powered=false]"));
+    // Floors and neighbours of every kind under and around them.
+    for (int32 X = 0; X < 16; ++X)
+        for (int32 Y = 0; Y < 8; ++Y)
+            W.Put(FIntVector(X, Y, 0), (X + Y) % 3 ? TEXT("stone") : TEXT("oak_slab[type=bottom,waterlogged=false]"));
+    W.Put(FIntVector(4, 4, 1), TEXT("bamboo"));
+    W.Put(FIntVector(4, 5, 2), TEXT("stone"));
+    W.Put(FIntVector(6, 2, 1), TEXT("farmland[moisture=0]"));
+    const double Cm = PlantBlockCm;
+    auto Gather = [&W, Shapes](int32 Value, const FBox& Region)
+    {
+        Shapes->Set(Value, ECVF_SetByCode);
+        TArray<FBox> Out;
+        W.World.GatherCollision(Region, Out);
+        return Out;
+    };
+    // B1's gather: every solid cell the region's cells cover, in storage order.
+    auto Cells = [&W](const FBox& Region)
+    {
+        TArray<FBox> Out;
+        const FIntVector Low = FoundationGrid::CellAt(Region.Min, W.World.OriginCm),
+                         High = FoundationGrid::CellAt(Region.Max, W.World.OriginCm);
+        W.World.GetStorage().ForEachSolid(Low, High, [&W, &Out](const FIntVector& Cell, const FFoundationCell& Value)
+            { W.World.GetCollisionBoxes(Cell, Value.State, Out); });
+        return Out;
+    };
+    auto Same = [](const TArray<FBox>& A, const TArray<FBox>& B)
+    {
+        if (A.Num() != B.Num()) return false;
+        for (int32 Index = 0; Index < A.Num(); ++Index)
+            if (!SamePlantBox(A[Index], B[Index])) return false;
+        return true;
+    };
+    auto Above = [&W, Cm](const FIntVector& Cell, double Bottom, double Top)
+    {
+        const FVector Min = FoundationGrid::CellMin(Cell, W.World.OriginCm);
+        return FBox(Min + FVector(1, 1, Bottom * Cm), Min + FVector(Cm - 1, Cm - 1, Top * Cm));
+    };
+    // The regions a body sweeps over: just above each block, inside the cells, across all of them.
+    const FBox Regions[] = {Above(Fence + FIntVector(0, 0, 1), 0, .4), Above(Fence + FIntVector(0, 0, 1), .5, .9),
+        Above(Pitcher - FIntVector(0, 0, 1), .95, .99), Above(Pitcher - FIntVector(0, 0, 1), .5, .9),
+        Above(Wall + FIntVector(0, 0, 1), 0, .4), Above(Gate + FIntVector(0, 0, 1), 0, .4),
+        Above(FIntVector(12, 5, 2), 0, .4), FBox(FVector(-50, -50, 20), FVector(1500, 700, 260)),
+        FBox(FVector(150, 150, 100), FVector(1000, 300, 230))};
+    const int32 Expected[] = {1, 0, 1, 0, 1, 1, 0, -1, -1};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(Regions); ++Index)
+    {
+        const FBox& Region = Regions[Index];
+        const TArray<FBox> Off = Gather(0, Region), On = Gather(1, Region), Old = Cells(Region);
+        TestTrue(FString::Printf(TEXT("region %d, switch 0: B1's boxes exactly (%d, %d)"), Index, Off.Num(), Old.Num()),
+            Same(Off, Old));
+        // Switch 1 adds only boxes outside the region's cells that overlap it.
+        int32 Added = 0;
+        bool bSuperset = true;
+        for (const FBox& Box : Off)
+            bSuperset &= On.ContainsByPredicate([&Box](const FBox& Other) { return SamePlantBox(Box, Other); });
+        for (const FBox& Box : On)
+            if (!Off.ContainsByPredicate([&Box](const FBox& Other) { return SamePlantBox(Box, Other); }))
+            {
+                ++Added;
+                // It overlaps the region with volume, and it crosses a cell boundary vertically (it leaves its cell).
+                const bool bVolume = Box.Min.X < Region.Max.X && Box.Max.X > Region.Min.X && Box.Min.Y < Region.Max.Y &&
+                    Box.Max.Y > Region.Min.Y && Box.Min.Z < Region.Max.Z && Box.Max.Z > Region.Min.Z;
+                const bool bCrosses = FMath::FloorToInt((Box.Min.Z - W.World.OriginCm.Z) / Cm + 1e-6) !=
+                    FMath::FloorToInt((Box.Max.Z - W.World.OriginCm.Z) / Cm - 1e-6);
+                bSuperset &= bVolume && bCrosses;
+            }
+        TestTrue(FString::Printf(TEXT("region %d, switch 1: B1's boxes and overlapping ones"), Index), bSuperset);
+        if (Expected[Index] >= 0)
+            TestEqual(FString::Printf(TEXT("region %d, switch 1: boxes added from the cells below and above"), Index),
+                Added, Expected[Index]);
+    }
+    // The fence's post reaches y 1.5: a body standing on the fence's own cell top is held 50 cm higher.
+    const TArray<FBox> Post = Gather(1, Regions[0]);
+    TestTrue(TEXT("the fence's gathered post tops out at 1.5 blocks"),
+        Post.Num() == 1 &&
+            FMath::IsNearlyEqual(Post[0].Max.Z, FoundationGrid::CellMin(Fence, W.World.OriginCm).Z + 1.5 * Cm, 1e-3));
+    // A region whose bottom touches the post's top only gathers nothing (no volume in common).
+    TestEqual(TEXT("touching the post's top gathers nothing"), Gather(1, Regions[1]).Num(), 0);
+    Shapes->Set(Saved, ECVF_SetByCode);
     return true;
 }
 #endif

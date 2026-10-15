@@ -17,6 +17,10 @@ ASSETS = "assets/minecraft/textures/"
 TAGS_INI = "Config/Tags/MinecraftItemTags.ini"
 # Declared natively in Source/Unnamed/Foundation/FoundationTags.cpp; no vanilla item tag may map onto them.
 NATIVE_TAGS = {"Item.Block"}
+# Survival B1: a sapling item places the sapling block of the same id once the blocks reference holds that block.
+BLOCK_MANIFEST = "Reference/minecraft-blocks-26.3/block_manifest.json"
+SAPLINGS = {wood + "_sapling" for wood in
+            ("oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak", "poplar")}
 
 
 def item_tag_name(vanilla):
@@ -87,6 +91,8 @@ def vector(values):
 
 def build(root):
     ref, items, models, textures, tags, lang = load(root)
+    manifest = json.loads((Path(root) / BLOCK_MANIFEST).read_text(encoding="utf-8"))
+    block_ids = {block["id"] for block in manifest["blocks"]}
     out_items = []
     for item in items["items"]:
         tool, weapon, attack, repair = item["tool"], item["weapon"], item["attack"], item["repair"]
@@ -131,6 +137,7 @@ def build(root):
             "swap_animation_scale": float(item["model"]["swap_animation_scale"]),
             "hand_animation_on_swap": bool(item["model"]["hand_animation_on_swap"]),
             "textures": list(item["textures"]),
+            "places_block": item["id"] if item["id"] in SAPLINGS and item["id"] in block_ids else "",
         })
     out_models = []
     for model in models["models"]:

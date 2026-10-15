@@ -1,6 +1,7 @@
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationBodyAnimInstance.h"
 #include "Foundation/FoundationController.h"
+#include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPanels.h"
@@ -31,6 +32,16 @@ namespace
         TEXT("Swimming: 0 walks through fluids as on land (vitals still count lava as water), 1 swims (water and lava "
              "drag, sinking, jump to rise, sneak to sink, jump out at walls; lava no longer counts as water)."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarFire(TEXT("foundation.Fire"), 1,
+        TEXT("Lava and burning (step 16): 0 lava does no damage, 1 lava hurts 4 at ticks 1, 11, 21 ... and sets the "
+             "player burning for 15 s, burning hurts 1 every second, water puts it out (needs foundation.Swim 1 to "
+             "tell lava from water)."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarSwimPose(TEXT("foundation.SwimPose"), 1,
+        TEXT("Swim pose (step 16): 0 the standing or crouching box in water, 1 sprinting with the eyes in water swims "
+             "in a 0.6 x 0.6 box with the eyes at 0.4, kept while sprinting in water; it stands up only where the "
+             "standing (else crouching) box fits."),
+        ECVF_Default);
     TAutoConsoleVariable<int32> CVarBody(TEXT("foundation.Body"), 1,
         TEXT("The player body (Better Steve) in the third-person views: 0 none (the hitbox outline as before), 1 "
              "shown in F5's back and front views, hidden in first person."),
@@ -43,6 +54,12 @@ namespace
     TAutoConsoleVariable<int32> CVarSpringArm(TEXT("foundation.View.SpringArm"), 0,
         TEXT("Third-person preview: 1 turns F5's back view into an over-the-shoulder spring arm (325 cm arm, 55 cm "
              "right, 30 cm up, smoothed, pulled in by the world's blocks); 0 vanilla's back view."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarDeathScreen(TEXT("foundation.Death.Screen"), 1,
+        TEXT("Death (step 11a): 1 death holds the death screen until its Respawn button (enabled 20 ticks after "
+             "death), drops every stack and min(7 x level, 100) experience as orbs, and respawns at the respawn point "
+             "when set; 0 respawns 20 ticks after death with nothing dropped, as before. The death message goes to "
+             "chat either way."),
         ECVF_Default);
 
     // The spring arm preview's shape and smoothing (foundation.View.SpringArm).
@@ -260,10 +277,23 @@ void AFoundationPawn::SetSimulationEnabled(bool bEnabled)
     LastIntent = {};
 }
 
+void AFoundationPawn::SetScreenInput(bool bScreen)
+{
+    if (bScreenInput == bScreen) return;
+    bScreenInput = bScreen;
+    // The keys are let go, as vanilla's screens release them: no sprint, no half-finished double tap.
+    Simulation.bSprinting = false;
+    Simulation.bHadForward = false;
+    Simulation.SprintTimer = 0;
+    Simulation.bHadJump = false;
+    Simulation.FlyTriggerTimer = 0;
+    LastIntent = {};
+}
+
 FVector AFoundationPawn::GetEyePosition() const
 {
     const auto* P = GetDefault<UFoundationProfile>();
-    return Simulation.Feet + FVector(0, 0, Simulation.bCrouched ? P->CrouchingEyesCm : P->StandingEyesCm);
+    return Simulation.Feet + FVector(0, 0, Simulation.GetPoseEyesCm(*P));
 }
 
 FFoundationTarget AFoundationPawn::TraceTarget() const
@@ -310,11 +340,59 @@ void AFoundationPawn::ApplyWorldOffset(const FVector& Offset, bool bWorldShift)
 
 void AFoundationPawn::Respawn()
 {
+    // A death not handled yet (a respawn in the same step) still drops and reaches the chat first.
+    HandleDeath();
     Vitals.Respawn();
     const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
-    Simulation.Reset(Lab.IsValid() ? Lab->GetSafeSpawn(Profile) : FVector::ZeroVector, Profile);
+    FVector Feet = Lab.IsValid() ? Lab->GetSafeSpawn(Profile) : FVector::ZeroVector;
+    // The respawn point (beds, step B7): the feet at the cell's bottom centre, from the block world's cm to world cm.
+    if (const FFoundationAuthority* Authority = GetAuthority())
+        if (const TOptional<FIntVector> Cell = Authority->GetRespawnPoint(Interaction.PlayerId))
+            Feet = (FVector(*Cell) + FVector(.5, .5, 0)) * UFoundationProfile::BlockCm + Authority->World.OriginCm;
+    Simulation.Reset(Feet, Profile);
     SetActorLocation(Simulation.Feet);
     ResetBody();
+}
+
+bool FoundationDeath::IsScreenEnabled()
+{
+    return CVarDeathScreen.GetValueOnAnyThread() != 0;
+}
+
+bool AFoundationPawn::IsDeathScreenActive() const
+{
+    return FoundationDeath::IsScreenEnabled() && Vitals.IsDead();
+}
+
+bool AFoundationPawn::RequestRespawn()
+{
+    // [survival.r6.death_screen] the buttons enable at the screen's tick 20.
+    if (!IsDeathScreenActive() || Vitals.DeathTicks < FFoundationVitals::RespawnTicks) return false;
+    Respawn();
+    return true;
+}
+
+void AFoundationPawn::HandleDeath()
+{
+    if (Vitals.Deaths == HandledDeaths) return;
+    const bool bDied = Vitals.Deaths > HandledDeaths && Vitals.IsDead();
+    HandledDeaths = Vitals.Deaths;
+    if (!bDied) return;
+    // Vanilla prints the death message to chat.
+    if (AFoundationController* FoundationController = Cast<AFoundationController>(GetController()))
+        FoundationController->AddChatText(Vitals.DeathMessage);
+    FFoundationAuthority* Authority = GetAuthority();
+    if (!FoundationDeath::IsScreenEnabled() || !Authority) return;
+    // Drops leave at the moment of death, not at the respawn [survival.r6.death_items, survival.r6.death_xp].
+    const FVector FeetLocalCm = Simulation.Feet - Authority->World.OriginCm;
+    const int32 Seed = int32(HashCombine(GetTypeHash(Interaction.PlayerId), GetTypeHash(Vitals.Deaths)));
+    Authority->DropInventoryOnDeath(Interaction.PlayerId, FeetLocalCm, Seed);
+    // Orbs follow foundation.Items.Xp as an ore's do; a spectator drops none. Provisional: they leave the feet with an
+    // ore drop's spread and speed.
+    if (Authority->Options.bExperienceOrbs && Vitals.Mode != EFoundationPlayerMode::Spectator)
+        if (const int32 Points = FoundationDeath::GetExperienceDrop(Vitals.Level))
+            Authority->SpawnExperience(
+                FeetLocalCm + FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5), Points, Seed ^ 0x5850);
 }
 
 void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
@@ -331,8 +409,11 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bBodyInWater = bBodyInWater = bSwim ? Lab->GetFluid(Body) == EFoundationFluid::Water : Lab->IsInWater(Body);
     Facts.bEyesInWater = bEyesInWater =
         bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
+    Facts.bBodyInLava = bSwim && CVarFire.GetValueOnGameThread() != 0 && Lab->GetFluid(Body) == EFoundationFluid::Lava;
     Vitals.Step(Facts);
-    if (Vitals.ShouldRespawn()) Respawn();
+    HandleDeath();
+    // With the death screen the player waits for its Respawn button (RequestRespawn); DeathTicks keeps counting.
+    if (!FoundationDeath::IsScreenEnabled() && Vitals.ShouldRespawn()) Respawn();
 }
 
 void AFoundationPawn::SyncInteraction(FFoundationAuthority& Authority)
@@ -366,6 +447,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
+    Authority.Options.bMobs = FoundationMobs::IsOn();
+    Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.
@@ -377,11 +460,19 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         Interaction.OpenedContainer = 0;
         const AFoundationController* PlayerController = Cast<AFoundationController>(GetController());
         UFoundationPanels* Panels = PlayerController ? PlayerController->GetPanels() : nullptr;
-        if (Panels && GetLab())
-            Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container);
-        else
+        // A furnace has no screen until step 8a2: it closes at once (nothing opens; the furnace still ticks).
+        if (!Panels || !GetLab() || !Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container))
             Interaction.ContainerClose(Authority, Vitals);
     }
+    // The authority closed the open container (its block broke, the player walked off; Codex review 12, finding 1):
+    // so does its screen. Death closes any survival screen (the simulation runs under it now).
+    else if (const AFoundationController* PlayerController = Cast<AFoundationController>(GetController()))
+        if (UFoundationPanels* Panels = PlayerController->GetPanels();
+            Panels && Panels->GetOpenContainer() != INDEX_NONE)
+            if (const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId); Vitals.IsDead() ||
+                (Player && Panels->GetOpenContainer() > 0 &&
+                    Player->OpenMenu.ContainerId != Panels->GetOpenContainer()))
+                Panels->Close();
     // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
     if (Interaction.bStopSprint)
     {
@@ -468,8 +559,10 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     };
     if (bSimulate)
     {
-        const FUnnamedInputIntent Request =
+        FUnnamedInputIntent Request =
             PlayerController->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->ConsumeIntent();
+        // An open survival screen zeroes the player's input; the simulation runs on (Codex review 12, finding 2).
+        if (bScreenInput) Request = {};
         // Mouse look uses the reference sensitivity curve and invert preferences.
         FRotator View = PlayerController->GetControlRotation();
         const double Gain = 8. * FMath::Pow(ReadNumber(TEXT("sensitivity"), .5) * .6 + .2, 3) * .15;
@@ -509,6 +602,7 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             StepCollision.Reset();
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
+            Eligibility.bSwimPose = CVarSwimPose.GetValueOnGameThread() != 0;
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;
@@ -523,6 +617,8 @@ void AFoundationPawn::Tick(float DeltaSeconds)
                 const double InteractionStart = FPlatformTime::Seconds();
                 StepInteraction(*Authority, Index == Due - 1, Now);
                 InteractionSeconds += FPlatformTime::Seconds() - InteractionStart;
+                // A death the step's interaction caused.
+                HandleDeath();
             }
         }
         SetActorLocation(Simulation.Feet);

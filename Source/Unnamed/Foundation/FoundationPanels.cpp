@@ -304,7 +304,9 @@ void UFoundationPanels::Close()
         AFoundationPawn* Pawn = SurvivalPawn.Get();
         AFoundationLab* Lab = Pawn ? Pawn->GetLab() : nullptr;
         if (Lab && Lab->GetAuthority()) Pawn->Interaction.ContainerClose(*Lab->GetAuthority(), Pawn->Vitals);
+        if (Pawn) Pawn->SetScreenInput(false);
         SurvivalPawn.Reset();
+        SurvivalContainer = INDEX_NONE;
     }
     bOpen = bTextOpen = bInventoryOpen = false;
     TextBox.Reset();
@@ -559,6 +561,13 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TSharedRef<const FFoundationBlockRegistry> Registry = Authority.World.GetRegistryRef();
     FHudCreativeItems Items = MakeScreenItems(Authority);
+    // foundation.Blocks.Families 0: the B1 family blocks' own items stay out of the grid. DA_Items' saplings stay, as
+    // before B1 (placing them is refused).
+    const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
+    for (const FFoundationItemDefinition& Item : Authority.Rules.Items)
+        if (!(ItemAssets && ItemAssets->FindItem(Item.Id)) &&
+            FoundationBlockFamilies::IsHidden(Registry->FindBlock(Item.PlacesBlock)))
+            Items.Remove(Item.Id);
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
@@ -626,16 +635,25 @@ void UFoundationPanels::OpenSurvivalInventory(AFoundationLab& Lab)
     OpenContainerScreen(Lab, EFoundationMenuKind::Inventory, FFoundationContainerMenu::PlayerContainer);
 }
 
-void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
+bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenuKind Kind, int32 ContainerId)
 {
     if (bOpen) Close();
     AFoundationController* Controller = GetFoundationController();
     AFoundationPawn* Pawn = Controller->GetFoundationPawn();
-    if (!Pawn || !Lab.GetAuthority()) return;
+    if (!Pawn || !Lab.GetAuthority()) return false;
     FFoundationAuthority& Authority = *Lab.GetAuthority();
     const TWeakObjectPtr<AFoundationLab> WeakLab = &Lab;
     const TWeakObjectPtr<AFoundationPawn> WeakPawn = Pawn;
     const TWeakObjectPtr<UFoundationPanels> WeakThis = this;
+    // A furnace's fuel slot takes fuel and the empty bucket (FFoundationContainerMenu::MayPlace): the drag needs it.
+    TSet<FName> FuelItems;
+    if (Kind == EFoundationMenuKind::Furnace)
+    {
+        const FFoundationCooking& Cooking = Authority.GetCooking();
+        for (int32 Item = 0; Item < Authority.Rules.Items.Num(); ++Item)
+            if (Cooking.IsFuel(Item) || Authority.Rules.Items[Item].Id == FName(TEXT("bucket")))
+                FuelItems.Add(Authority.Rules.Items[Item].Id);
+    }
     // clang-format off
     Survival = SNew(SHudContainerScreen)
         .Registry(Authority.World.GetRegistryRef())
@@ -643,6 +661,7 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         .RequestedGuiScale(MakeGuiScale(Controller))
         .Kind(Kind)
         .Items(MakeScreenItems(Authority))
+        .FuelItems(MoveTemp(FuelItems))
         .GetView([WeakLab, WeakPawn, ContainerId]
         {
             FHudContainerView View;
@@ -667,6 +686,14 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
             for (int32 Slot = 0; Slot < Menu.Num(); ++Slot)
                 View.Slots[Slot] = Stack(&Menu[Slot]);
             View.Carried = Stack(&Player->Inventory.Carried);
+            // An open furnace's flame and arrow (T1 step 8a2): its fuel left and cooking progress.
+            if (Player->OpenMenu.ContainerId == ContainerId && Player->OpenMenu.Kind == EFoundationMenuKind::Furnace)
+                if (const FFoundationBlockEntity* Furnace = A.BlockEntities.Find(Player->OpenMenu.Cell))
+                {
+                    View.bLit = Furnace->IsLit();
+                    View.LitFraction = float(Furnace->LitTime) / float(FMath::Max(Furnace->LitDuration, 1));
+                    View.CookFraction = Furnace->CookTotal > 0 ? float(Furnace->CookProgress) / Furnace->CookTotal : 0;
+                }
             return View;
         })
         .OnClick([WeakLab, WeakPawn, ContainerId](const FHudContainerClick& Click)
@@ -682,12 +709,15 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         });
     // clang-format on
     SurvivalPawn = Pawn;
+    SurvivalContainer = ContainerId;
     bOpen = true;
     // Opening ends what the player was doing (mining, eating), as the creative screen does.
     Controller->CancelActions();
     if (UUnnamedInputSubsystem* InputSubsystem = Controller->GetInputSubsystem())
         InputSubsystem->SetGameplayInputEnabled(false);
-    Pawn->SetSimulationEnabled(false);
+    // Java's survival screens do not pause the game: air, hunger, items, orbs and furnaces go on, the input zeroed
+    // (Codex review 12, finding 2). The creative screen still pauses (a known issue).
+    Pawn->SetScreenInput(true);
     Root = Survival;
     GEngine->GameViewport->AddViewportWidgetContent(Root.ToSharedRef(), 300);
     Controller->bShowMouseCursor = true;
@@ -695,9 +725,11 @@ void UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
     Mode.SetWidgetToFocus(Survival);
     Controller->SetInputMode(Mode);
     FSlateApplication::Get().SetKeyboardFocus(Survival);
-    Controller->GetHud()->LogEvent(
-        Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table") : TEXT("survival inventory"));
+    Controller->GetHud()->LogEvent(Kind == EFoundationMenuKind::Crafting ? TEXT("crafting table")
+            : Kind == EFoundationMenuKind::Furnace                       ? TEXT("furnace")
+                                                                         : TEXT("survival inventory"));
     bInventoryOpen = true;
+    return true;
 }
 
 void UFoundationPanels::OpenInventory()

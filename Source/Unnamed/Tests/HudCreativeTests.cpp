@@ -41,7 +41,7 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     FHudCreativeModel Model;
     FFoundationRules Rules;
     if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
-    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 86 items fill
+    // Empty category tabs hide (shouldDisplay); hotbar, search and inventory always show. DA_Items's 114 items fill
     // Tools & Utilities, Combat, Food & Drinks, Ingredients and Natural Blocks, so every tab shows here (spawn eggs:
     // the spawners).
     FHudCreativeModel Bare;
@@ -57,23 +57,27 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     {
         Model.SelectTab(FindTab(Model, TEXT("tools_and_utilities")));
         const TArray<FName>& Tools = Model.GetItems();
-        TestTrue(TEXT("tools: 28 tools and 3 buckets, wooden shovel first"),
-            Tools.Num() == 31 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
+        TestTrue(TEXT("tools: 28 tools and 4 buckets (the milk bucket since survival 20a), wooden shovel first"),
+            Tools.Num() == 32 && Tools[0] == TEXT("wooden_shovel") && Tools[1] == TEXT("wooden_pickaxe") &&
                 Tools[4] == TEXT("stone_shovel"));
         Model.SelectTab(FindTab(Model, TEXT("combat")));
-        // 26.3's combat tab keeps the snowball (index 68) after TNT (66).
-        TestTrue(TEXT("combat: swords, spears, axes, TNT, then the snowball"),
-            Model.GetItems().Num() == 23 && Model.GetItems()[0] == TEXT("wooden_sword") &&
+        // 26.3's combat tab keeps the snowball (index 68) after TNT (66), then the egg (69, survival 20a).
+        TestTrue(TEXT("combat: swords, spears, axes, TNT, the snowball, then the egg"),
+            Model.GetItems().Num() == 24 && Model.GetItems()[0] == TEXT("wooden_sword") &&
                 Model.GetItems()[3] == TEXT("iron_sword") && Model.GetItems()[7] == TEXT("wooden_spear") &&
-                Model.GetItems()[21] == TEXT("tnt") && Model.GetItems().Last() == TEXT("snowball"));
+                Model.GetItems()[21] == TEXT("tnt") && Model.GetItems()[22] == TEXT("snowball") &&
+                Model.GetItems().Last() == TEXT("egg"));
     }
-    // 26.3 order within a tab, skipping items that do not exist here (stairs, fences...).
+    // 26.3 order within a tab, skipping items that do not exist here. With B1's families the whole oak family is here:
+    // the first 13 of building_blocks' display list in Reference/minecraft-blocks-26.3/facts/creative_tabs.json.
     Model.SelectTab(FindTab(Model, TEXT("building_blocks")));
     const TArray<FName>& Items = Model.GetItems();
+    const TArray<FName> OakFamily = {TEXT("oak_log"), TEXT("oak_wood"), TEXT("stripped_oak_log"),
+        TEXT("stripped_oak_wood"), TEXT("oak_planks"), TEXT("oak_stairs"), TEXT("oak_slab"), TEXT("oak_fence"),
+        TEXT("oak_fence_gate"), TEXT("oak_door"), TEXT("oak_trapdoor"), TEXT("oak_pressure_plate"), TEXT("oak_button")};
     TestTrue(TEXT("building blocks start with the oak family"),
-        Items.Num() > 6 && Items[0] == TEXT("oak_log") && Items[1] == TEXT("oak_wood") &&
-            Items[2] == TEXT("stripped_oak_log") && Items[3] == TEXT("stripped_oak_wood") &&
-            Items[4] == TEXT("oak_planks") && Items[5] == TEXT("oak_slab"));
+        Items.Num() > OakFamily.Num() && TArray<FName>(Items.GetData(), OakFamily.Num()) == OakFamily &&
+            Items[OakFamily.Num()] == TEXT("spruce_log"));
     // Layout: tab and slot positions from the 26.3 screen.
     const FHudCreativeModel::FTab& Search = Model.GetTabs()[FindTab(Model, TEXT("search"))];
     const FHudCreativeModel::FTab& Inventory = Model.GetTabs()[FindTab(Model, TEXT("inventory"))];
@@ -97,8 +101,10 @@ bool FHudCreativeTabsTest::RunTest(const FString&)
     // Search: names and ids contain the text; "#" matches tags.
     Model.SelectTab(FindTab(Model, TEXT("search")));
     Model.SetSearch(TEXT("Stained Glass"));
-    TestTrue(
-        TEXT("16 stained glass"), Model.GetItems().Num() == 16 && Model.GetItems().Contains(TEXT("red_stained_glass")));
+    // The 16 stained glass blocks and, with B1, their 16 panes.
+    TestTrue(TEXT("16 stained glass and 16 panes"),
+        Model.GetItems().Num() == 32 && Model.GetItems().Contains(TEXT("red_stained_glass")) &&
+            Model.GetItems().Contains(TEXT("red_stained_glass_pane")));
     Model.SetSearch(TEXT("#logs"));
     TestTrue(
         TEXT("tag search"), Model.GetItems().Contains(TEXT("oak_log")) && !Model.GetItems().Contains(TEXT("stone")));

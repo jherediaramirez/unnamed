@@ -5,8 +5,11 @@
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationCommands.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
+#include "Hud/HudDrawList.h"
+#include "Hud/HudPresenter.h"
 #include "Voxel/VoxelWorld.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuBrowserHost.h"
@@ -27,6 +30,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/Layout/SBorder.h"
 #include "UnrealClient.h"
 
 namespace
@@ -88,7 +93,7 @@ UUnnamedInputSubsystem* AFoundationController::GetInputSubsystem() const
 bool AFoundationController::IsGameplay() const
 {
     return GetFoundationPawn() && !MenuHost->IsOpen() && !Panels->IsOpen() && !InputRouter->IsCapturing() &&
-        !Hud->IsLoadingScreenShown();
+        !Hud->IsLoadingScreenShown() && !GetFoundationPawn()->IsDeathScreenActive();
 }
 
 void AFoundationController::BeginPlay()
@@ -127,6 +132,9 @@ void AFoundationController::EndPlay(const EEndPlayReason::Type EndPlayReason)
         InputSubsystem->OnAction.RemoveAll(this);
         InputSubsystem->OnIntentReset.RemoveAll(this);
     }
+    if (DeathInput && GEngine && GEngine->GameViewport)
+        GEngine->GameViewport->RemoveViewportWidgetContent(DeathInput.ToSharedRef());
+    DeathInput.Reset();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -135,6 +143,7 @@ void AFoundationController::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     // One fixed order per frame: the loading screen, timing, pawn-driven updates, then the throttled HUD refresh.
     UpdateLoadingScreen();
+    UpdateDeathScreen();
     if (bPreloadPanels && !bPanelsPreloaded) bPanelsPreloaded = Panels->PreloadCreative();
     Hud->BeginFrame();
     if (AFoundationPawn* FoundationPawn = GetFoundationPawn())
@@ -227,6 +236,94 @@ void AFoundationController::UpdateLoadingScreen()
             FoundationPawn->SetSimulationEnabled(false);
         }
     }
+}
+
+void AFoundationController::UpdateDeathScreen()
+{
+    // Hardcore's variant ("Game Over!", Spectate World and a confirm before the title screen) is a known issue: there
+    // is no hardcore world yet. Under the pause menu or the loading screen the screen waits for them.
+    AFoundationPawn* FoundationPawn = GetFoundationPawn();
+    // Open screens don't pause the simulation, so the player can die in one: as vanilla, death closes it (the
+    // inventory, a container, the chat) and the death screen takes its place.
+    if (FoundationPawn && FoundationPawn->IsDeathScreenActive() && Panels->IsOpen() && !MenuHost->IsOpen())
+        Panels->Close();
+    const bool bActive = FoundationPawn && FoundationPawn->IsDeathScreenActive() && !MenuHost->IsOpen() &&
+        !Panels->IsOpen() && !Hud->IsLoadingScreenShown();
+    if (bActive == bDeathScreen) return;
+    bDeathScreen = bActive;
+    if (!bActive)
+    {
+        if (DeathInput && GEngine && GEngine->GameViewport)
+            GEngine->GameViewport->RemoveViewportWidgetContent(DeathInput.ToSharedRef());
+        DeathInput.Reset();
+        DeathHover = EHudDeathButton::None;
+        // Respawned (or the switch turned off): play resumes. A menu or panel that took over restores input itself
+        // when it closes.
+        if (FoundationPawn && !MenuHost->IsOpen() && !Panels->IsOpen() && !Hud->IsLoadingScreenShown())
+            ResumeFoundation();
+        return;
+    }
+    // As the panels take input (UFoundationPanels::Show), but the world and the pawn keep stepping: vanilla's death
+    // screen does not pause, and its buttons enable 20 ticks after death. Escape does nothing here (vanilla's
+    // shouldCloseOnEsc is false): the input router pauses only in gameplay.
+    CancelActions();
+    if (UUnnamedInputSubsystem* InputSubsystem = GetInputSubsystem())
+    {
+        InputSubsystem->SetGameplayInputEnabled(false);
+        InputSubsystem->ClearIntent();
+    }
+    bShowMouseCursor = true;
+    FInputModeUIOnly Mode;
+    if (GEngine && GEngine->GameViewport)
+    {
+        const TWeakObjectPtr<AFoundationController> WeakThis = this;
+        auto Handler = [WeakThis](bool bPress)
+        {
+            return FPointerEventHandler::CreateLambda(
+                [WeakThis, bPress](const FGeometry& Geometry, const FPointerEvent& Event)
+                {
+                    if (WeakThis.IsValid()) WeakThis->HandleDeathMouse(Geometry, Event, bPress);
+                    return FReply::Handled();
+                });
+        };
+        // clang-format off
+        DeathInput = SNew(SBorder)
+            .BorderImage(FCoreStyle::Get().GetBrush(TEXT("NoBorder")))
+            .Visibility(EVisibility::Visible)
+            .OnMouseButtonDown(Handler(true))
+            .OnMouseMove(Handler(false));
+        // clang-format on
+        GEngine->GameViewport->AddViewportWidgetContent(DeathInput.ToSharedRef(), 250);
+        Mode.SetWidgetToFocus(DeathInput);
+    }
+    SetInputMode(Mode);
+    Hud->LogEvent(TEXT("death screen"));
+}
+
+void AFoundationController::HandleDeathMouse(const FGeometry& Geometry, const FPointerEvent& Event, bool bPress)
+{
+    // Viewport pixels (the widget fills the viewport; Slate's DPI scale taken out, as SHudView draws) to the HUD's GUI
+    // pixels, then the same rectangles the HUD draws.
+    const int32 Scale = FMath::Max(1, Hud->GetPresenter() ? Hud->GetPresenter()->GetGuiScale() : 1);
+    const float SlateScale = FMath::Max(Geometry.GetAccumulatedLayoutTransform().GetScale(), .01f);
+    const FVector2f Pixels = FVector2f(Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition())) * SlateScale;
+    const FIntPoint Gui(FMath::FloorToInt32(Pixels.X / Scale), FMath::FloorToInt32(Pixels.Y / Scale));
+    FIntPoint Viewport;
+    GetViewportSize(Viewport.X, Viewport.Y);
+    DeathHover = HudDrawList::HitDeathButton(HudModel::GetLogicalSize(Viewport, Scale), Gui);
+    AFoundationPawn* FoundationPawn = GetFoundationPawn();
+    // A left press on an enabled button acts (vanilla buttons click on press); before tick 20 they are disabled.
+    if (!bPress || Event.GetEffectingButton() != EKeys::LeftMouseButton || !FoundationPawn ||
+        !FoundationDeath::AreButtonsEnabled(FoundationPawn->GetDeathTicks()))
+        return;
+    if (DeathHover == EHudDeathButton::Respawn && FoundationPawn->RequestRespawn())
+    {
+        Hud->LogEvent(TEXT("death screen: respawn"));
+        UpdateDeathScreen();
+    }
+    // Vanilla single player (not hardcore) returns to the title screen without a confirm.
+    else if (DeathHover == EHudDeathButton::TitleScreen)
+        ReturnToMenu();
 }
 
 void AFoundationController::SetupInputComponent()
@@ -381,8 +478,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
     static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
         TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped"),
         TEXT("picked up"), TEXT("eating"), TEXT("ate"), TEXT("stripped"), TEXT("took xp"), TEXT("filled"),
-        TEXT("emptied"), TEXT("extinguished"), TEXT("opened")};
-    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::ContainerOpened) + 1, "one name per event kind");
+        TEXT("emptied"), TEXT("extinguished"), TEXT("opened"), TEXT("mob sound")};
+    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::MobSound) + 1, "one name per event kind");
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;
@@ -396,8 +493,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
             Text += FString(TEXT(": ")) + LexToString(Event.Reason);
         else if (Event.Kind == EFoundationEventKind::Interacted || Event.Kind == EFoundationEventKind::ContainerOpened)
             Text += TEXT(" ") + Event.Interaction.ToString();
-        else if (Event.Kind == EFoundationEventKind::Eating)
-            continue; // Every fourth step of a meal: too chatty for the event log.
+        else if (Event.Kind == EFoundationEventKind::Eating || Event.Kind == EFoundationEventKind::MobSound)
+            continue; // Every fourth step of a meal, a mob's steps and calls: too chatty for the event log.
         else if (Event.Kind == EFoundationEventKind::Ate)
             Text = FString::Printf(TEXT("ate %s"), *Authority->Rules.GetItem(Event.Item).Id.ToString());
         else if (Event.Kind == EFoundationEventKind::PickedUp)
@@ -496,7 +593,12 @@ void AFoundationController::SubmitChat(const FString& Text)
             if (WeakPawn.IsValid()) WeakPawn->TeleportFeet(FeetCm);
         };
     }
-    if (AVoxelWorld* Voxels = AVoxelWorld::Find(GetWorld())) Context.Clock = &Voxels->GetClock();
+    if (AVoxelWorld* Voxels = AVoxelWorld::Find(GetWorld()))
+    {
+        Context.Clock = &Voxels->GetClock();
+        // The saved world's "Allow Cheats"; the dev world (no saved world) allows them.
+        if (const FUnnamedSavedWorld* Saved = Voxels->GetSavedWorld()) Context.bCommands = Saved->bCommands;
+    }
     for (TArray<FHudChatRun>& Runs : FoundationCommands::Run(Line, Context))
         Chat.Add(MoveTemp(Runs), Now);
     Hud->LogEvent(TEXT("command: ") + Line);

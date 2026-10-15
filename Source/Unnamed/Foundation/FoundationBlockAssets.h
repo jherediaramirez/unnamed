@@ -240,6 +240,11 @@ struct FFoundationBlockAsset
 
     UPROPERTY(EditAnywhere, Category = "Block")
     FVector3f ItemIconScale = FVector3f::OneVector;
+
+    // One of survival B1's family blocks (the reference manifest's added: "survival-B1"), appended after the blocks
+    // before them; foundation.Blocks.Families 0 hides it (FoundationBlockFamilies).
+    UPROPERTY(EditAnywhere, Category = "Block")
+    bool bAppendedFamily = false;
 };
 
 // A baked block model (Reference/minecraft-blocks-26.3/block_models.json): a range of quads.

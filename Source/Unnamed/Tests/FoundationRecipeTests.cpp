@@ -14,9 +14,14 @@ namespace
     // A items and the imported blocks' items): 272 shaped and 41 shapeless recipes resolve, 125 of them fit 2x2 as the
     // jar writes them (the step 6 record, from C:\dev\sandbox\inv6\proof.txt), and 4 more once vanilla's pattern shrink
     // drops their blank edge rows and columns (7 shaped recipes have them). A new item or block import changes these.
-    constexpr int32 RecipeResolvedShaped = 272;
-    constexpr int32 RecipeResolvedShapeless = 41;
-    constexpr int32 RecipeFit2x2 = 125 + 4;
+    // Survival B1 (all 887 block items): C:\dev\sandbox\b1-blocks\scripts\recipe_counts.py recomputes these from the
+    // reference (and the old 272/41/129 at 079fe3e).
+    // Survival 20a (the 18 mob drops appended to the item reference): the same script gives 518/56/166 (515/56/164
+    // before). Survival T1 8a2 (the 10 cooking outputs appended): the same script gives 531/69/180
+    // (C:\dev\sandbox\inv8a2\recipe_counts.txt).
+    constexpr int32 RecipeResolvedShaped = 531;
+    constexpr int32 RecipeResolvedShapeless = 69;
+    constexpr int32 RecipeFit2x2 = 180;
 
     const FFoundationRules& RecipeRules()
     {
@@ -182,7 +187,11 @@ bool FFoundationRecipeNegativeTest::RunTest(const FString&)
     TestTrue(TEXT("an empty grid makes nothing"), Makes({N, N, N, N}, 2).IsEmpty());
     const FFoundationRecipeResult Sticks = Makes({Planks, N, Planks, N}, 2);
     TestTrue(TEXT("two planks in a column make 4 sticks"), Sticks.Item == Stick && Sticks.Count == 4);
-    TestTrue(TEXT("two planks in a row make nothing"), Makes({Planks, Planks, N, N}, 2).IsEmpty());
+    // Vanilla 26.3's oak_pressure_plate (recipes.json) is two planks in a row; diagonal planks below match no recipe
+    // (C:\dev\sandbox\b1-blocks\scripts\recipe_counts.py's probes).
+    const FFoundationRecipeResult Plate = Makes({Planks, Planks, N, N}, 2);
+    TestTrue(TEXT("two planks in a row make an oak pressure plate"),
+        Plate.Item == Rules.FindItem(TEXT("oak_pressure_plate")) && Plate.Item != INDEX_NONE && Plate.Count == 1);
     TestTrue(TEXT("two planks diagonal make nothing"), Makes({Planks, N, N, Planks}, 2).IsEmpty());
     TestTrue(
         TEXT("planks with a gap row make nothing (3x3)"), Makes({Planks, N, N, N, N, N, Planks, N, N}, 3).IsEmpty());

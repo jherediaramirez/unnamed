@@ -217,7 +217,7 @@ bool FFoundationMiningTiersTest::RunTest(const FString&)
         return false;
     if (!TestEqual(TEXT("the hand and the 35 tools"), Tools.Num(), 36) ||
         !TestEqual(TEXT("the hand first"), Tools[0], FString(TEXT("hand"))) ||
-        !TestEqual(TEXT("618 imported blocks"), Rows.Num(), 618))
+        !TestEqual(TEXT("928 imported blocks (926 and the two fluids)"), Rows.Num(), 928))
         return false;
     FFoundationAuthority A;
     UFoundationInteractionSettings::Get().BuildRules(A.Rules);
@@ -314,20 +314,21 @@ bool FFoundationMiningTiersTest::RunTest(const FString&)
             }
         }
     }
-    TestEqual(TEXT("22,248 entries"), Entries, 22248);
+    TestEqual(TEXT("33,408 entries (928 blocks x 36)"), Entries, 33408);
     TestEqual(TEXT("block facts as the table"), FactErrors, 0);
     TestEqual(TEXT("steps as the table"), TickErrors, 0);
     TestEqual(TEXT("drops as the table"), DropErrors, 0);
     TestEqual(TEXT("the table as exact arithmetic"), ExactErrors, 0);
-    // Tallies of the hash-checked table: tripwires for a reference rebuild.
+    // Tallies of the hash-checked table's 928 imported rows (B1's families included): tripwires for a reference
+    // rebuild.
     TestEqual(TEXT("unbreakable entries (8 blocks x 36)"), Unbreakable, 288);
-    TestEqual(TEXT("instant entries"), Instant, 2672);
-    TestEqual(TEXT("progressive entries"), Progressive, 19288);
-    TestEqual(TEXT("their ticks"), TotalTicks, int64(3073507));
-    // Counted here from the data (exact arithmetic and the float hardness), pinned at items S5.
-    TestEqual(TEXT("whole-inverse entries"), WholeInverse, 17305);
-    TestEqual(TEXT("instant at d = 1 exactly"), ExactOne, 27);
-    TestEqual(TEXT("of which d is a hair under 1 in floats: instant within the tolerance"), HairInstant, 27);
+    TestEqual(TEXT("instant entries"), Instant, 3501);
+    TestEqual(TEXT("progressive entries"), Progressive, 29619);
+    TestEqual(TEXT("their ticks"), TotalTicks, int64(4116240));
+    // Counted here from the data (exact arithmetic and the float hardness), pinned at items S5, re-pinned with B1.
+    TestEqual(TEXT("whole-inverse entries"), WholeInverse, 26729);
+    TestEqual(TEXT("instant at d = 1 exactly"), ExactOne, 28);
+    TestEqual(TEXT("of which d is a hair under 1 in floats: instant within the tolerance"), HairInstant, 28);
     TestEqual(TEXT("no other instant entry has a float d under 1"), FloatUnder, HairInstant);
     const double Tolerance = A.Rules.CompletionTolerance;
     AddInfo(FString::Printf(TEXT("Whole-inverse entries: %d of %d progressive; worst |progress - 1| at their last step "
@@ -436,7 +437,7 @@ bool FFoundationMiningCreativeTest::RunTest(const FString&)
         TestEqual(Asset.Id.ToString() + TEXT(": breaks in creative unless a sword or a spear"), bBreaks,
             !Item.Tags.HasTagExact(Swords) && !Item.Tags.HasTagExact(Spears));
     }
-    TestEqual(TEXT("the flag copied for all 86"), Copied, 86);
+    TestEqual(TEXT("the flag copied for all 114"), Copied, 114);
     TestEqual(TEXT("7 swords and 7 spears break nothing in creative"), NoBreak, 14);
 
     // The control: in survival an iron pickaxe takes stone in 8 steps, returns its loot (cobblestone; loot step 2a) and
@@ -714,6 +715,37 @@ bool FFoundationMiningWearTest::RunTest(const FString&)
     TestTrue(TEXT("the interaction's write (the creative screen's) keeps the damage, here in the offhand"),
         C.P().Inventory.Offhand.Item == C.A.Rules.FindItem(TEXT("diamond_sword")) &&
             C.P().Inventory.Offhand.Damage == 1561);
+    return true;
+}
+
+// Codex review 15 #4: a planted sapling mined in survival drops one sapling, as vanilla's sapling loot tables do (their
+// tables wait in the items reference's loot_later.txt). The sapling items live in DA_Items, not on the block.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationMiningSaplingDropTest, "Unnamed.Foundation.Mining.SaplingDrop", MiningTestFlags)
+bool FFoundationMiningSaplingDropTest::RunTest(const FString& Parameters)
+{
+    FMiningLab L(false);
+    const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+    int32 Saplings = 0;
+    for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+    {
+        // The blocks that drop the DA_Items item placing them: exactly the 9 saplings.
+        const FName Id = Registry.GetBlockAt(Index).Id;
+        if (!Registry.GetBlockAt(Index).bDropsPlacingItem) continue;
+        ++Saplings;
+        if (!Id.ToString().EndsWith(TEXT("_sapling"))) AddError(Id.ToString() + TEXT(" drops its DA_Items item"));
+        L.Hold(NAME_None);
+        L.Put(Id);
+        const int32 Before = L.Count(Id);
+        FFoundationResult R;
+        const int32 Steps = MineSteps(L, 5, &R);
+        L.NextStep();
+        if (Steps != 0 || L.Count(Id) - Before != 1)
+            AddError(FString::Printf(TEXT("%s: mined in %d steps, %d dropped (expected at once, 1)"), *Id.ToString(),
+                Steps, L.Count(Id) - Before));
+    }
+    // The 9 of the items reference's ITEMS_REFERENCE_ITEMS (poplar among them).
+    TestEqual(TEXT("sapling blocks"), Saplings, 9);
     return true;
 }
 #endif

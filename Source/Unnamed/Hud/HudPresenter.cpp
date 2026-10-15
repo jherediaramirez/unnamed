@@ -5,6 +5,7 @@
 #include "Hud/HudView.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationController.h"
+#include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationPanels.h"
@@ -15,6 +16,7 @@
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 #include "Dom/JsonValue.h"
+#include "Misc/PackageName.h"
 #include "Engine/GameInstance.h"
 #include "Engine/Texture2D.h"
 #include "Widgets/Input/SButton.h"
@@ -79,6 +81,25 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
             Brush.DrawAs = ESlateBrushDrawType::Image;
             Brushes.Add(Item.Textures[0], Brush);
         }
+    // The death screen's vanilla buttons (step 11a), from ImportContainerGui.py (GuiRoot/Container).
+    for (const TCHAR* Id : {TEXT("gui/sprites/widget/button"), TEXT("gui/sprites/widget/button_highlighted"),
+             TEXT("gui/sprites/widget/button_disabled")})
+    {
+        const FSoftObjectPath Path = UUnnamedProjectSettings::GetGuiAssetPath(FString(TEXT("Container/")) + Id);
+        UTexture2D* Texture =
+            FPackageName::DoesPackageExist(Path.GetLongPackageName()) ? Cast<UTexture2D>(Path.TryLoad()) : nullptr;
+        if (!Texture)
+        {
+            UE_LOG(LogUnnamedHud, Warning, TEXT("Missing GUI sprite %s; run ImportContainerGui.py"), Id);
+            continue;
+        }
+        Textures.Add(Texture);
+        FSlateBrush Brush;
+        Brush.SetResourceObject(Texture);
+        Brush.ImageSize = FVector2D(200, 20);
+        Brush.DrawAs = ESlateBrushDrawType::Image;
+        Brushes.Add(Id, Brush);
+    }
     View->SetBrushes(MoveTemp(Brushes));
     UE_LOG(LogUnnamedHud, Display,
         TEXT("HUD_READY registry=%d textures=%d missing=%d glyphs=%d item_sprites=%d; resources from player vitals, "
@@ -194,8 +215,20 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     // The chat (step 15): the HUD stays up under the open chat, which shows every message.
     const bool bChatOn = FoundationChat::AreCommandsEnabled();
     const bool bChatOpen = bChatOn && Controller.GetPanels()->IsTextOpen();
-    const bool bVisible = (bGameplay || bChatOpen) && !Controller.GetHud()->bHideHud;
-    const bool bVisibilityChanged = Snapshot.bVisible != bVisible;
+    // The death screen (step 11a): the HUD stays drawn under it, its buttons enable 20 ticks after death and the
+    // hovered one follows the cursor (GUI pixels from the controller). The HUD's tick stops outside gameplay, so a
+    // change here redraws by itself.
+    const AFoundationPawn* DeathPawn = Controller.GetFoundationPawn();
+    const bool bDeath = DeathPawn && DeathPawn->IsDeathScreenActive();
+    const bool bDeathEnabled = bDeath && FoundationDeath::AreButtonsEnabled(DeathPawn->GetDeathTicks());
+    const EHudDeathButton DeathHover = bDeath ? Controller.GetDeathHover() : EHudDeathButton::None;
+    const bool bDeathChanged = bDeath != Snapshot.bDeathScreen || bDeathEnabled != Snapshot.bDeathButtonsEnabled ||
+        DeathHover != Snapshot.DeathHover;
+    // F1 hides the HUD, but an open chat or the death screen (screens) still draws: the chat's input line takes the
+    // typing; only the chat draws then.
+    const bool bHideHud = Controller.GetHud()->bHideHud;
+    const bool bVisible = bChatOpen || bDeath || (bGameplay && !bHideHud);
+    const bool bVisibilityChanged = Snapshot.bVisible != bVisible || Snapshot.bHideHud != bHideHud;
     // The lines are rebuilt only when the chat changes, opens or closes, or a closed chat's line fades (per 1/20 s).
     const FFoundationChat& Chat = Controller.GetChat();
     const int64 ChatStep = bChatOn && bVisible && !bChatOpen && (Chat.HasRecent(Now) || !ChatLines.IsEmpty())
@@ -211,7 +244,8 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         ChatRevision = Chat.GetRevision();
         LastChatStep = ChatStep;
     }
-    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged && !bChatChanged) return;
+    if (HudTick == LastSampleTick && Viewport == LastViewport && !bVisibilityChanged && !bChatChanged && !bDeathChanged)
+        return;
     LastSampleTick = HudTick;
     LastViewport = Viewport;
 
@@ -224,6 +258,12 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
         ApplyVitals(Snapshot, Pawn->Vitals, Pawn->TraceTarget());
     }
     Snapshot.bVisible = bVisible;
+    Snapshot.bHideHud = bHideHud;
+    Snapshot.bDeathScreen = bDeath;
+    Snapshot.bDeathButtonsEnabled = bDeathEnabled;
+    Snapshot.DeathHover = DeathHover;
+    Snapshot.DeathMessage = bDeath ? DeathPawn->GetDeathMessage() : FString();
+    Snapshot.DeathScore = bDeath ? DeathPawn->GetDeathScore() : 0;
     Snapshot.Chat = ChatLines;
     Snapshot.ChatInput = ChatInput;
     Snapshot.bChatOpen = bChatOpen;

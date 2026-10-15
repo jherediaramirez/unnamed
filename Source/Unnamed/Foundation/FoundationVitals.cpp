@@ -9,22 +9,32 @@ namespace
         const TCHAR* Name;
         bool bBypassesArmor, bBypassesInvulnerability, bScalesWithDifficulty;
         float Exhaustion;
-        const TCHAR* DeathMessage;
+        // The death message: its en_us.json key and 26.3 English template (step 11a; Unnamed.Foundation.Death.Messages
+        // pins each against Reference/minecraft-menu's en_us.json).
+        FFoundationVitals::FDeathText Death;
     };
 
     const FDamageRule& GetRule(EFoundationDamage Type)
     {
         static const FDamageRule Rules[] = {
-            {TEXT("generic"), true, false, false, 0.f, TEXT("Player died")},
-            {TEXT("mob"), false, false, true, .1f, TEXT("Player was slain by a mob")},
-            {TEXT("fall"), true, false, false, 0.f, TEXT("Player fell from a high place")},
-            {TEXT("drown"), true, false, false, 0.f, TEXT("Player drowned")},
-            {TEXT("starve"), true, false, false, 0.f, TEXT("Player starved to death")},
-            {TEXT("kill"), true, true, false, 0.f, TEXT("Player was killed")},
-            {TEXT("player"), false, false, false, .1f, TEXT("Slain by a player")},
+            {TEXT("generic"), true, false, false, 0.f, {TEXT("death.attack.generic"), TEXT("%1$s died")}},
+            {TEXT("mob"), false, false, true, .1f, {TEXT("death.attack.mob"), TEXT("%1$s was slain by %2$s")}},
+            {TEXT("fall"), true, false, false, 0.f, {TEXT("death.attack.fall"), TEXT("%1$s hit the ground too hard")}},
+            {TEXT("drown"), true, false, false, 0.f, {TEXT("death.attack.drown"), TEXT("%1$s drowned")}},
+            {TEXT("starve"), true, false, false, 0.f, {TEXT("death.attack.starve"), TEXT("%1$s starved to death")}},
+            {TEXT("kill"), true, true, false, 0.f, {TEXT("death.attack.genericKill"), TEXT("%1$s was killed")}},
+            {TEXT("player"), false, false, false, .1f, {TEXT("death.attack.player"), TEXT("%1$s was slain by %2$s")}},
+            {TEXT("lava"), false, false, false, .1f, {TEXT("death.attack.lava"), TEXT("%1$s tried to swim in lava")}},
+            {TEXT("onFire"), true, false, false, 0.f, {TEXT("death.attack.onFire"), TEXT("%1$s burned to death")}},
         };
         return Rules[int32(Type)];
     }
+
+    // minecraft.wiki "Death messages": a fall of more than 5 blocks reads "fell from a high place", a shorter one "hit
+    // the ground too hard". Provisional: exactly 5 blocks (the wiki leaves it open) counts as short.
+    constexpr double HighFallCm = 500;
+    const FFoundationVitals::FDeathText FellText = {
+        TEXT("death.fell.accident.generic"), TEXT("%1$s fell from a high place")};
 
     // Java's Math.round on a non-negative float.
     float RoundCm(double Cm)
@@ -65,6 +75,27 @@ void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
     {
         if (const int32 Damage = GetFallDamage(FallDistanceCm)) Hurt(EFoundationDamage::Fall, float(Damage));
         FallDistanceCm = 0;
+    }
+    if (IsDead()) return;
+
+    // Fire [hurt.lava_contact, hurt.lava_ignite, hurt.burning]: water puts it out; burning outside lava hurts 1
+    // every 20 ticks; lava ignites for at least 300 ticks and hurts 4 every tick, which the damage cooldown turns
+    // into hits at ticks 1, 11, 21 ... Creative and Spectator neither ignite nor take the damage.
+    if (Facts.bBodyInWater && FireTicks > 0)
+    {
+        FireTicks = 0;
+        ++Extinguishes;
+    }
+    if (FireTicks > 0)
+    {
+        if (FireTicks % BurnIntervalTicks == 0 && !Facts.bBodyInLava && Hurt(EFoundationDamage::OnFire, 1.f))
+            ++BurnHurts;
+        --FireTicks;
+    }
+    if (Facts.bBodyInLava && !IsDead() && !IsInvulnerable())
+    {
+        FireTicks = FMath::Max(FireTicks, LavaFireTicks);
+        if (Hurt(EFoundationDamage::Lava, 4.f)) ++LavaHurts;
     }
     if (IsDead()) return;
 
@@ -180,9 +211,33 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount)
         Health = 0;
         DeathTicks = 0;
         ++Deaths;
-        DeathMessage = Rule.DeathMessage;
+        // No attacker names yet: mob and player attacks read death.attack.generic until mobs (step 20c) pass one.
+        const FDeathText Text = GetDeathText(Type, FallDistanceCm);
+        DeathKey = Text.Key;
+        DeathMessage = FormatDeathMessage(Text, PlayerName, FString());
+        // The death screen's score: the experience points held at death, before the respawn clears them.
+        DeathScore = TotalExperience;
     }
     return true;
+}
+
+FFoundationVitals::FDeathText FFoundationVitals::GetCauseText(EFoundationDamage Type)
+{
+    return GetRule(Type).Death;
+}
+
+FFoundationVitals::FDeathText FFoundationVitals::GetDeathText(
+    EFoundationDamage Type, double FallDistanceCm, const FString& Attacker)
+{
+    if (Type == EFoundationDamage::Fall && FallDistanceCm > HighFallCm) return FellText;
+    if ((Type == EFoundationDamage::MobAttack || Type == EFoundationDamage::PlayerAttack) && Attacker.IsEmpty())
+        return GetRule(EFoundationDamage::Generic).Death;
+    return GetRule(Type).Death;
+}
+
+FString FFoundationVitals::FormatDeathMessage(const FDeathText& Text, const FString& Victim, const FString& Attacker)
+{
+    return FString(Text.Template).Replace(TEXT("%1$s"), *Victim).Replace(TEXT("%2$s"), *Attacker);
 }
 
 void FFoundationVitals::Heal(float Amount)
@@ -260,8 +315,13 @@ void FFoundationVitals::Respawn()
     Fresh.MainHandItem = MainHandItem;
     Fresh.DamageEvents = DamageEvents;
     Fresh.Deaths = Deaths;
+    Fresh.LavaHurts = LavaHurts;
+    Fresh.BurnHurts = BurnHurts;
+    Fresh.Extinguishes = Extinguishes;
     Fresh.LastDamage = LastDamage;
     Fresh.DeathMessage = DeathMessage;
+    Fresh.DeathKey = DeathKey;
+    Fresh.DeathScore = DeathScore;
     *this = MoveTemp(Fresh);
 }
 
@@ -313,8 +373,9 @@ FString FFoundationVitals::Describe() const
     static const TCHAR* Difficulties[] = {TEXT("Peaceful"), TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
     return FString::Printf(TEXT("%s %s regen=%d | health %.2f/%.0f absorption %.1f armor %d/%.0f | food %d "
                                 "saturation %.2f exhaustion %.3f | air %d/%d eyes-water=%d | XP L%d %.3f (%d) | "
-                                "attack %.2f of %.1f ticks%s"),
+                                "attack %.2f of %.1f ticks%s%s"),
         Modes[int32(Mode)], Difficulties[int32(Difficulty)], bNaturalRegeneration, Health, MaxHealth, Absorption, Armor,
         ArmorToughness, Food, Saturation, Exhaustion, Air, MaxAir, bEyesInWater, Level, Progress, TotalExperience,
-        GetAttackStrength(), GetAttackDelay(), IsDead() ? TEXT(" | DEAD") : TEXT(""));
+        GetAttackStrength(), GetAttackDelay(), IsOnFire() ? *FString::Printf(TEXT(" | fire %d"), FireTicks) : TEXT(""),
+        IsDead() ? TEXT(" | DEAD") : TEXT(""));
 }

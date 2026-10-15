@@ -233,7 +233,7 @@ bool FHudItemsTooltipsTest::RunTest(const FString&)
             for (const FHudTooltipLine& Line : Got)
                 AddInfo(FString::Printf(TEXT("  got \"%s\" %s"), *Line.Text, *Line.Color.ToHex()));
     }
-    TestEqual(TEXT("86 tooltips"), Checked, 86);
+    TestEqual(TEXT("114 tooltips"), Checked, 114);
 
     // With a player (the game's case): the base modifiers add its base values, in dark green after a space.
     auto Lines = [Items](const TCHAR* Id)

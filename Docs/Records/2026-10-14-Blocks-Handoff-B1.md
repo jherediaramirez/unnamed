@@ -28,7 +28,7 @@ Lane `feature/survival-blocks` (worktree `C:\dev\projects\Unnamed-blocks`). B0 (
 - All 302 family blocks plus the PM's 8 (cauldrons, fires, campfires); `poplar_sapling` joins `VegetationBlocks`, gated on the radius-8 hashes (plan 2.1, 2.8).
 - The chest stand-in box (plan 2.3).
 - Any Java 26.3 texture may stand in; every stand-in gets a row in `Docs/StandIns.md` (asset, jar path, where used, step).
-- B0: the sound events for doors, trapdoors, gates, buttons, plates, lever, hoe, shovel and planting are in `DA_Sounds` (events 193-250); which block plays which is B1's `block_use_sounds.csv` (plan 2A). `block.blast_furnace.fire_crackle` does not exist in 26.3.
+- B0: the sound events for doors, trapdoors, gates, buttons, plates, lever, hoe, shovel and planting are in `DA_Sounds` (events 193-250); which block plays which is B1's `block_use_sounds.csv` (plan 2A). The blast furnace's event is `block.blastfurnace.fire_crackle` (no underscore; B0 left it out under the misspelled name, B1 appended it as event 332).
 
 ## 4. The import pre-flight (Codex, CONFIRMED against the jar unless marked)
 

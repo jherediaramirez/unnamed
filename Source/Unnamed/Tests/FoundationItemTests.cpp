@@ -95,7 +95,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
     const TArray<TSharedPtr<FJsonValue>>& Items = Reference->GetArrayField(TEXT("items"));
-    if (!TestEqual(TEXT("86 items"), Assets->Items.Num(), 86) ||
+    if (!TestEqual(TEXT("114 items"), Assets->Items.Num(), 114) ||
         !TestEqual(TEXT("as many as items.json"), Assets->Items.Num(), Items.Num()))
         return false;
     TestEqual(TEXT("reference digest"), Assets->SourceSha256.Len(), 64);
@@ -213,7 +213,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                 Definition->DurabilityPerHit == Asset.DamagePerHit &&
                 Definition->DefaultMiningSpeed == Asset.DefaultMiningSpeed &&
                 Definition->MiningRules.Num() == Asset.Rules.Num() && Definition->Tags.Num() == Asset.ItemTags.Num() &&
-                Definition->PlacesBlock.IsNone() && Definition->DisplayName == Asset.DisplayName &&
+                Definition->PlacesBlock == Asset.PlacesBlock && Definition->DisplayName == Asset.DisplayName &&
                 !Asset.Textures.IsEmpty() && Definition->Sprite == Asset.Textures[0]);
         for (int32 Rule = 0; Rule < FMath::Min(Definition->MiningRules.Num(), Asset.Rules.Num()); ++Rule)
             TestTrue(What + FString::Printf(TEXT("definition rule %d"), Rule),
@@ -244,7 +244,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
     }
     // Models and textures for icons and held meshes.
     const TArray<TSharedPtr<FJsonValue>>& Models = ModelsJson->GetArrayField(TEXT("models"));
-    if (TestEqual(TEXT("93 models"), Assets->Models.Num(), Models.Num()))
+    if (TestEqual(TEXT("111 models"), Assets->Models.Num(), Models.Num()))
         for (int32 Index = 0; Index < Models.Num(); ++Index)
         {
             const TSharedPtr<FJsonObject> Json = Models[Index]->AsObject();
@@ -274,7 +274,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             }
         }
     const TArray<TSharedPtr<FJsonValue>>& Textures = TexturesJson->GetArrayField(TEXT("textures"));
-    if (TestEqual(TEXT("93 textures"), Assets->Textures.Num(), Textures.Num()))
+    if (TestEqual(TEXT("111 textures"), Assets->Textures.Num(), Textures.Num()))
         for (int32 Index = 0; Index < Textures.Num(); ++Index)
         {
             const TSharedPtr<FJsonObject> Json = Textures[Index]->AsObject();
@@ -300,7 +300,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TestEqual(TEXT("layer pixels of ") + Asset.Name.ToString(),
                 UFoundationBlockImport::HashLayer(Arrays[Array], Asset.Layer), Asset.RgbaSha256);
     }
-    TestTrue(TEXT("86 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 86 && Layers[1] == 7);
+    TestTrue(TEXT("114 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 114 && Layers[1] == 7);
     for (int32 Array = 0; Array < 2; ++Array)
         if (TestNotNull(Array ? TEXT("T_ItemTextures32") : TEXT("T_ItemTextures"), Arrays[Array]))
         {
@@ -320,16 +320,29 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
     if (TestNotNull(TEXT("lang.json"), Keys.Get()) && TestEqual(TEXT("6 lang keys"), Assets->Lang.Num(), 6))
         for (const TPair<FString, TSharedPtr<FJsonValue>>& Key : Keys->Values)
             TestEqual(TEXT("lang ") + Key.Key, Assets->Lang.FindRef(Key.Key), Key.Value->AsString());
-    // Ids: no 26.3 item shares an id with a block or a block item; only air and wheat share a block's id in 26.3
-    // without being that block's item, and neither is imported.
+    // Ids: no 26.3 item shares an id with a block item. Only the 9 saplings share a block's id: they are DA_Items items
+    // that place their own block (the blocks plan 2.6), and DA_Blocks gives that block no item. Air and wheat share a
+    // block's id in 26.3 without being that block's item, and neither is imported.
     const TSharedRef<const FFoundationBlockRegistry> Registry = FFoundationBlockRegistry::GetDefault();
     TArray<FFoundationItemDefinition> BlockItems;
     UFoundationInteractionSettings::AddBlockItems(*Registry, BlockItems);
+    int32 Saplings = 0;
     for (const FFoundationItemAsset& Asset : Assets->Items)
-        TestTrue(TEXT("no block or block item named ") + Asset.Id.ToString(),
-            !Registry->FindBlock(Asset.Id) &&
-                !BlockItems.ContainsByPredicate(
-                    [&Asset](const FFoundationItemDefinition& Item) { return Item.Id == Asset.Id; }));
+    {
+        const FFoundationBlockType* Block = Registry->FindBlock(Asset.Id);
+        const bool bSapling = Asset.Id.ToString().EndsWith(TEXT("_sapling"));
+        Saplings += bSapling;
+        TestTrue(TEXT("no block item named ") + Asset.Id.ToString(),
+            !BlockItems.ContainsByPredicate(
+                [&Asset](const FFoundationItemDefinition& Item) { return Item.Id == Asset.Id; }));
+        if (bSapling)
+            TestTrue(Asset.Id.ToString() + TEXT(" places its own block, which has no item"),
+                Asset.PlacesBlock == Asset.Id && Block && Block->Item.IsNone());
+        else
+            TestTrue(TEXT("no block named ") + Asset.Id.ToString() + TEXT(", and no placed block"),
+                !Block && Asset.PlacesBlock.IsNone());
+    }
+    TestEqual(TEXT("saplings in DA_Items (items.json's 9 saplings)"), Saplings, 9);
     TestEqual(TEXT("block items, then DA_Items, then project items"), Rules.Items.Num(),
         BlockItems.Num() + Assets->Items.Num() + UFoundationInteractionSettings::Get().Items.Num());
     if (Rules.Items.IsValidIndex(BlockItems.Num()))

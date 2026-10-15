@@ -1,6 +1,6 @@
 # Blocks
 
-The Playground's block vocabulary: every full-cube block and slab of Minecraft Java 26.3, plus powder snow and snow layers, plus the 83 blocks decoration places that are drawn from their own baked models, plus the torch and wall torch (616 blocks: 428 cubes, 101 slabs, powder snow, snow and 85 model blocks), plus air, static water and static lava. The registry has 619 blocks with air, 4,424 states and 690 textures. These blocks use the 26.3 protocol and state ids, faces, textures, tints, animation, mining facts and placement rules. Saves store `{id, properties}`, never numbers. The research is in [Minecraft block reference](MinecraftBlockReference.md). Verification, decisions and gaps are in the [blocks record](Records/2026-10-08-Blocks.md).
+The Playground's block vocabulary: every full-cube block and slab of Minecraft Java 26.3, plus powder snow and snow layers, plus the 83 blocks decoration places that are drawn from their own baked models, plus the torch and wall torch, plus the 310 survival family blocks of survival B1 (stairs, fences, doors, beds and the rest; see "Survival family blocks (B1)") (926 blocks: 428 cubes, 101 slabs, powder snow, snow and 395 model blocks), plus air, static water and static lava. The registry has 929 blocks with air, 28,552 states and 965 textures. These blocks use the 26.3 protocol and state ids, faces, textures, tints, animation, mining facts and placement rules. Saves store `{id, properties}`, never numbers. The research is in [Minecraft block reference](MinecraftBlockReference.md). Verification, decisions and gaps are in the [blocks record](Records/2026-10-08-Blocks.md).
 
 ## Data flow
 
@@ -15,9 +15,9 @@ The Playground's block vocabulary: every full-cube block and slab of Minecraft J
 `/Game/Blocks` (`UUnnamedProjectSettings::BlockRoot`; Python `ProjectPaths.block_asset()`) is always cooked. It holds:
 
 - `DA_Blocks` (`UFoundationBlockAssets`): blocks, states, faces, baked models, textures, creative tabs and the reference SHA-256.
-- `T_BlockTextures`: 946 layers at 16 x 16, the 945 block frames plus one white layer, with vanilla mipmaps (each texture's `mipmap_strategy` and `alpha_cutoff_bias`).
+- `T_BlockTextures`: 1,364 layers at 16 x 16, the 1,363 block frames plus one white layer, with vanilla mipmaps (each texture's `mipmap_strategy` and `alpha_cutoff_bias`).
 - `T_WaterFlowTextures`: 48 layers at 32 x 32, lava 16 and then water 32 (alphabetical; the array keeps its name).
-- `T_BlockIcons`: the GUI atlas: every block layer, then the 12 item sprites (`textures/item`) model blocks' icons use.
+- `T_BlockIcons`: the GUI atlas: every block layer, then the item sprites (`textures/item`) model blocks' icons use (117 sprite icons and 241 3D icons in all since B1).
 - The materials, and `Gui/` for the creative inventory art.
 
 `ImportBlocks.py` verifies an existing `DA_Blocks` and refuses to replace it when the reference changed. To reimport, move the old assets away deliberately.
@@ -33,7 +33,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 
 - **Block ids:** the vanilla names (`stone`, `oak_slab`, `water`). Protocol ids and state ids match 26.3 exactly. A state's id is the block's first state id plus its properties in mixed radix, last property fastest; air is 0.
 - **Saved form:** `FFoundationSavedState {Id, Properties}`, with `Save`/`Load` and `Parse`/`ToString` (`oak_log[axis=x]`). Numbers are never stored. An unknown block id fails to load. A missing property takes the default value. An unknown property or value keeps the default and adds a warning.
-- **Item ids:** item ids are the 26.3 item names, and a block's item has the block's id (the user's choice; the other items are in [Items](Items.md)). Each block whose vanilla item has its own id gets one: 601 block items with the vanilla name, stack size and GUI tint. `AddBlockItems` adds them to the rules. Powder snow has none, because its vanilla item is `powder_snow_bucket`; nor do the 13 model blocks whose vanilla item has another id (cocoa, sweet berry bush, cave vines, big dripleaf stem, the wall fans, the wall torch; kelp plant, cave vines plant and tall seagrass have none). The reference records each model block's `vanilla_item` for the inventory pass that adds those items. The `snow` item sits in Natural Blocks at index 19.
+- **Item ids:** item ids are the 26.3 item names, and a block's item has the block's id (the user's choice; the other items are in [Items](Items.md)). Each block whose vanilla item has its own id gets one: 887 block items with the vanilla name (601 before survival B1, which added 286), stack size and GUI tint. `AddBlockItems` adds them to the rules. Powder snow has none, because its vanilla item is `powder_snow_bucket`; nor do the 13 model blocks whose vanilla item has another id (cocoa, sweet berry bush, cave vines, big dripleaf stem, the wall fans, the wall torch; kelp plant, cave vines plant and tall seagrass have none). The reference records each model block's `vanilla_item` for the inventory pass that adds those items. The `snow` item sits in Natural Blocks at index 19.
 - **Project blocks:** `UFoundationInteractionSettings::Blocks` (empty by default) appends blocks after the imported ones, from protocol id 1286 and state id 35723. A project block whose id is already imported is skipped with a warning.
 - **Retired, never reused:** `dummy_block` and `dummy_block_item`. Blocks replaced them, and the loadout now starts with `stone`.
 
@@ -46,6 +46,114 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 - **Mining:** the 26.3 hardness and correct-tool facts plus `Block.Mineable.*` and `Block.IncorrectForTool.*` tags drive mining.
 - **Drops:** a broken block drops itself, and a double slab drops 2. This is a provisional rule, not loot tables.
 
+## Survival family blocks (B1)
+
+Survival B1 (track T5) brought in 310 blocks as data. They are in the manifest under `added: "survival-B1"`, which `DA_Blocks` keeps as the per-block `bAppendedFamily`. The registry is appended: no earlier id moves.
+
+| Group | Blocks |
+|---|---|
+| Stairs | 97 |
+| Fences, fence gates | 14, 13 |
+| Walls | 32 |
+| Panes and bars | 26 |
+| Doors, trapdoors | 22, 22 |
+| Buttons, pressure plates | 15, 17 |
+| Lever, ladder | 1, 1 |
+| Nether vines | 4 |
+| Beds | 16 |
+| Chests | 3 (`chest`, `trapped_chest`, `ender_chest`; stand-in box) |
+| Farmland, dirt path | 2 |
+| Crops, saplings | 8, 9 |
+| Cauldrons | 4 |
+| Fire, soul fire, campfire, soul campfire | 4 |
+
+- **Totals:** 926 blocks, 28,552 states, 4,852 baked models (most from stair shapes), 965 textures, 1,364 of 2,048 array layers (plus 48 flow layers). Texture codes: 966 of 1,024 used, 58 left. A later phase must widen the code field before it adds more blocks.
+- **Items:** 887 block items (286 new). The 9 sapling items (oak, spruce, birch, jungle, acacia, cherry, dark oak, pale oak, poplar) place their sapling block ([Items](Items.md)).
+- **Placement:** each B1 block places its default state only. Shapes, connections, the doors' two halves and use come in B2 to B7.
+- **Switch:** `foundation.Blocks.Families` (int, default 1; listed in [Breaking](Breaking.md)). 0 hides the B1 blocks' own items from the creative inventory and the B1 blocks from the Playground gallery tails, and refuses to place one (`UnknownBlock`); the 9 sapling items stay in the inventory, as before B1, and placing them is refused; recipes whose result is a B1 block's item craft nothing (`FFoundationAuthority::MakeContainerRules`). The cvar is in `FoundationBlockRegistry.cpp`, the placement guard in `FoundationAuthority.cpp` (`CheckPlacement`), the creative filter in `FoundationPanels.cpp`. The creative screen is cached, so flipping the cvar mid-session does not rebuild it: set it at launch.
+- **Chest stand-in:** the three chests draw a 14/16 box, [1,0,1] to [15,14,15], turned by `facing`. Left and right halves of a double chest draw two single boxes until T1's chest step. The faces are 16 x 16 tiles cropped (and flipped) from `textures/entity/chest/normal.png`, `trapped.png` and `ender.png` in the 26.3 client jar, stored in `Reference/minecraft-blocks-26.3/stand_ins/chest_<kind>_<face>.png` (`textures.json` `file` and `derived_from`). The item icon is the baked box. See [Stand-ins](StandIns.md).
+- **Plants:** `poplar_sapling` joined `VegetationBlocks` in `Source/UnnamedVoxel/Blocks/VoxelPlantSurvival.cpp`, so the voxel core's plant survival (see "Plants" above) covers it.
+- **Facts:** `facts/family_survival.json` holds the rule-bearing states of every imported block against air, and every state. `facts/plant_survival.json` stays frozen on `tools/survival_base_ids.txt`. `facts/block_use_sounds.csv` (90 rows) maps doors, trapdoors, gates, buttons, plates and the lever to their open, close and click events, for B3 and B5.
+- **Sounds:** the sound reference now has 332 events (3 new step and 3 new fall events appended: `cherry_sapling`, `ladder`, `weeping_vines`). `DA_Sounds` is appended: `ImportSounds.py` accepts the old block entries as an ordered subsequence. `DA_BreakAssets` was rebuilt from the extended reference. It has no append path, is self-contained and is looked up by id.
+- **Loot:** B1 blocks' loot tables are held back (`Reference/minecraft-items-26.3/tools/loot_later.txt`). Mining a B1 block drops itself, and since B2a a sapling drops its DA_Items sapling. That is wrong for panes without silk touch, crops, farmland and dirt path until their sessions.
+
+Known gaps:
+
+- Nothing connects and every B1 block places its default state (B2b).
+- Doors are one lower half.
+- Stems use their age-0 tint for every state (per-state tint in B6).
+- The water cauldron imports as one translucent block, because `water_still` has partial alpha: a known look issue. Lava and powder snow cauldrons are untinted.
+- Campfires draw no cooking items.
+- Fire and campfires are data only: no burning or damage until T3 and B6.
+- **uvlock for partial faces** (`bake_models.py`): when a face's UV is no transform of its canonical UV, the lock's
+  turn is applied after the face's own UV map; whole faces apply it the other way round. Measured over the 26.3 jar
+  (`C:\dev\sandbox\b2-blocks\proof\uvlock_orders.py`): the two orders agree on every stair and wall face, and differ
+  only on the undersides of fence side bars (y 90/180/270), the undersides of open fence gates, and pressed buttons
+  turned x=90. Not changed: it would rewrite accepted baked models, and there is no vanilla ground truth yet. B3 (the
+  buttons) checks it against a vanilla probe or screenshot if it matters.
+
+## Shapes and collision (B2a)
+
+Survival B2a (track T5) prepares B2b's connections and stair shapes and widens collision.
+
+- **Switch:** `foundation.Blocks.Shapes` (int, default 1; `FoundationBlockRegistry.cpp`,
+  `FoundationBlockFamilies::AreShapesEnabled`). 0 is B1's behaviour. B2b adds placement and the neighbour pass under
+  the same switch.
+- **Collision gather:** both gatherers (`FFoundationBlockWorld::GatherCollision`, `AVoxelWorld::GatherCollision` for
+  model states) also read the cells just below and above a region and keep only the boxes that leave their cell
+  vertically and overlap the region with volume (`FoundationCollisionGather::KeepLeaving`). That gives fences, walls and
+  closed gates their 1.5-block collision and the pitcher crop's lower half its 1/16 below the cell. Every box stays in
+  its cell's column (`Blocks.PlantShapes`), so the region's own cells and these two layers cover every box. With the
+  switch at 0 the gather is exactly B1's (`Blocks.ShapesGather`).
+- **Oracle:** `facts/shape_updates.json` in the blocks reference: `BlockState.updateShape` answers for the 182 stairs,
+  fences, walls, fence gates, panes and bars, measured by `FactsDump.java` through its public `LevelReader` proxy (see
+  the reference README, "Shape updates"). B2b's placement and neighbour results are tested against it.
+- **Model order frozen:** `tools/frozen_models.txt` lists the 4,867 accepted baked models; the build and the verifier
+  require them unchanged at their indices, and later appended blocks bake in batches (`APPENDED_BATCH_STARTS`), each
+  batch's item icons before the next batch, so no item-icon index moves.
+- **Panes:** a translucent block's model (the glass panes; the water cauldron) draws in the voxel world's translucent
+  section instead of the cutout model section, so stained panes keep their half-transparent pixels.
+- **Saplings drop themselves:** a block without an item of its own that a DA_Items item places (the 9 saplings) drops
+  that item (`FFoundationBlockRegistry::Build`'s `Items`, `bDropsPlacingItem`). B8's loot tables replace this.
+- **Hidden saplings pass:** with `foundation.Blocks.Families 0`, a sapling in the main hand passes the use on to the
+  offhand, as before B1.
+
+## Shapes and connections (B2b)
+
+Survival B2b (track T5): stairs, fences, walls, panes, bars and fence gates take their shapes from their neighbours,
+when placed and when a neighbour changes. Logic in `FoundationBlockFamilies.h/.cpp`, under `foundation.Blocks.Shapes`
+(0: B1's default-state placement and no neighbour pass).
+
+- **Families** (`FoundationBlockFamilies::GetFamily`, `EFoundationBlockFamily`): `#minecraft:stairs`, `fences`,
+  `walls`, `fence_gates`, and panes and bars (exactly `north`, `east`, `south`, `west`, `waterlogged`, without the fence
+  tag). Exactly the oracle's 182 subjects by class (`Shapes.Families`). No asset enum and no DA_Blocks change.
+- **Sturdy faces** (`GetSturdyFaces`, public for B3's buttons and doors): a face whose collision boxes, clipped to the
+  cell, cover it whole. Leaves and powder snow have none.
+- **Connections:** fences join sturdy faces, fences of their kind (wooden with wooden, nether brick with its own) and
+  gates whose bar points at them; walls join sturdy faces, walls, panes, bars and those gates; panes and bars join
+  sturdy faces, each other and walls. The pumpkins, the jack o'lantern and the melon never join. A wall side is tall
+  when the underside of the block above covers a 2-pixel strip from that edge past the centre, else low; the post shows
+  under a post-override block or a wall with its post, at an end, a corner or alone, and otherwise only when the block
+  above covers the centre while no two opposite sides are tall (minecraft.wiki, Wall).
+- **Stairs:** a perpendicular same-half stair in front turns the stair into an outer corner, one behind into an inner
+  corner, unless the side it turns toward holds a stair of the same facing and half (VALUES "Stair corners").
+- **Gates:** `in_wall` when a wall stands on either side across the facing (VALUES "Fence gates").
+- **Placement** (`FoundationBlockFamilies::GetStateForPlacement`, from `FoundationBlockPlacement::GetStateForPlacement`):
+  stairs face the player's horizontal look, the half by the slab rule; gates face the look (VALUES
+  `blocks.fence_gate_placement`); `waterlogged` in a water source; then the shape settles from the six neighbours as
+  the oracle settles a case.
+- **Neighbour pass** (`UpdateNeighbourShapes`, one line in `FFoundationAuthority::SettlePlants`, which every edit path
+  goes through): each family block among the 4 horizontal neighbours of the edited cell, and a wall below it, takes one
+  `updateShape` toward it. One ring, no cascade, unknown neighbours skipped (cells a rule reads beyond them, such as a
+  wall's above, read as air); it runs with `Options.bPlantRules` off too. It rings the edited cell only: cells
+  `SettlePlants` pops or writes afterwards (a popped plant, an upper half) get no ring of their own. No family block
+  reads those today; B3's door halves will.
+  World generation and the Playground gallery write states directly and never run it.
+- **Oracle:** the tests compare every row of `facts/shape_updates.json`: 1,199,226 single-neighbour rows, 141,960
+  cross-family rows, the 32 wall-up rows, the stair singles (16 outer and 16 inner bottom corners) and 512 pairs, and the
+  72 gates-in-wall rows.
+- **Voxel gather:** `AVoxelWorld::GatherColumns` is `GatherCollision`'s part over the streamed columns, callable with any
+  pipeline (`Unnamed.Voxel.World.ShapesGather`).
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -61,6 +169,7 @@ uv run --no-project --python 3.13 python -I Scripts/Editor/BlockImportData.py --
 | `Leaves` | leaves | `persistent=true`, `distance` from neighbouring logs and leaves |
 | `Snowy` | grass block, podzol, mycelium | `snowy` when a `#snow` block is above |
 | `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
+| families (B2b) | stairs, fences, walls, panes, bars, fence gates | facing, half, connections and shape (above, "Shapes and connections (B2b)") |
 
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
@@ -133,8 +242,8 @@ Built by `AFoundationPlayground::AddBlockGallery` and restored by every reset, l
 | Part | Where (cells) | Contents |
 |---|---|---|
 | Showcase | from (16, 14, 0), rows three cells apart, reading east | One row per acceptance shot. **Grass:** tint and overlay, snowy under a snow block. **Leaves:** cutout and tints. **Translucent:** glass, stained glass, tinted glass, ice. **Axis and facing:** oak log x/y/z, furnace each way, observer up. **Slabs:** bottom, top and double. **Water:** levels 0-8. **Animated:** sea lantern, magma, prismarine, crimson stem, command block, lit smoker. **Plants** (row 7, `PlantRow`): short grass, poppy, tall grass (both halves), pink petals, leaf litter, moss carpet, firefly bush, waterlogged sea pickles, seagrass, lily pad, bamboo, amethyst cluster. |
-| Registry gallery | from (-70, -22, 0), 24 columns, every other cell | Every block's default state in registry order, model blocks included (26 rows). |
-| State gallery | from (-200, -58, 0), 59 columns, every other cell | Every state in state-id order, as Minecraft's debug world, model states included (4,419 states, 75 rows). |
+| Registry gallery | from (-70, -22, 0), 24 columns, every other cell | Every block's default state in registry order, model blocks included (26 rows). With `foundation.Blocks.Families` 1 a tail follows on a fresh row: one default-state cell per B1 block, plus a sign. |
+| State gallery | from (-200, -58, 0), 59 columns, every other cell | Every state in state-id order, as Minecraft's debug world, model states included (4,419 states, 75 rows). With the switch at 1 a tail follows on a fresh row: one default-state cell per B1 block (only the default state), plus a sign. |
 
 ## Creative inventory
 
@@ -150,7 +259,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
 
 ## Budgets and known issues
 
-- **Texture codes:** face and quad codes hold a texture index in 10 bits: 691 of 1,024 are used (white included). The block array holds 946 of D3D12's 2,048 slices. Both are asserted by the reference verifier and `.Textures`. Phase 7's blocks must stay inside both, or widen the field.
+- **Texture codes:** face and quad codes hold a texture index in 10 bits: 966 of 1,024 are used (white included; 58 left). The block array holds 1,364 of D3D12's 2,048 slices (plus 48 flow layers). A later phase must widen the code field before more blocks come in. Both are asserted by the reference verifier and `.Textures`. Phase 7's blocks must stay inside both, or widen the field.
 - **Water against solids (Playground):** water instances draw every face, so a water face coplanar with a solid neighbour's face z-fights (the starter stone at (12, 6, 0) in the water station; S6b's re-save flipped which wins, about 70-260 pixels per shot). Held water around water-holding model states meets the same faces where it touches solids. Options for later: face-culled water meshes or a small water inset.
 - **Plants (S7):**
   - project blocks (`UFoundationInteractionSettings`) hold no plant: the survival table knows only the imported blocks;
@@ -159,7 +268,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
     - sturdy faces, until Q2's follow-up measures them: 20,931 answers (leaves, mud, soul sand, snow, powder snow and the model blocks as supports);
     - the mushrooms' light: 10,360 (the table reads no light; the dark probe agrees);
     - snow layers have no survival rule: 205,680 (main lane, with snow: generation places snow layers);
-    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad pops on a water source held in a block, such as a waterlogged slab or leaves (1,521); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
+    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad popped on a water source held in a block, such as a waterlogged slab or leaves (1,521, now 0: since use step 16a, Codex review 13 #1, every waterlogged state holds water; matrix run `Tests/Evidence/2026-10-15/Native-20261015-020856`); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
   - the mushrooms ignore light (S8);
   - a thick bamboo stalk's outline reaches 1/16 block into the next cell at its largest offsets, so a ray through that sliver alone misses it (targeting tests one cell at a time).
 - **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).
@@ -184,4 +293,5 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `.Models`: every baked quad and every model state's parts against the reference, with spot checks.
   - `.ModelMeshes`: the Playground's model meshes: 2,440 baked quads, 2,444 drawn (two triangles each: 16 exact repeats dropped, 20 added by the torch's flame cut), full-precision UVs, and every vertex's position, texture UV, shade face and own code.
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
+  - `Unnamed.Foundation.Shapes.*` (B2b): `.Families`, `.SingleNeighbour`, `.CrossFamily`, `.WallUp`, `.Stairs`, `.GatesInWall` against every row of `shape_updates.json`; `.Placement` (facing, half, corners, connections, `in_wall`, switch 0); `.Neighbours` (placing and mining through the authority, one ring, a wall under a new block, switch 0). `Unnamed.Voxel.World.ShapesGather`: the voxel gather's outer layers on a streamed column.
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

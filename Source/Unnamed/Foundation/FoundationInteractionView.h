@@ -10,6 +10,7 @@ class AFoundationPawn;
 struct FFoundationPreview;
 class FFoundationBreakEffects;
 class FFoundationExperienceOrbView;
+class FFoundationMobView;
 class FFoundationItemEntityView;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
@@ -146,10 +147,12 @@ public:
     FFoundationItemEntityView* GetItemEntityView() const { return ItemEntityView.Get(); }
     // The experience orbs' look (survival step 12; null before BeginPlay).
     FFoundationExperienceOrbView* GetExperienceOrbView() const { return ExperienceOrbView.Get(); }
+    FFoundationMobView* GetMobView() const { return MobView.Get(); }
 
 private:
     friend class FFoundationBreakEffects;
     friend class FFoundationExperienceOrbView;
+    friend class FFoundationMobView;
     friend class FFoundationItemEntityView;
     struct FSectionKey
     {
@@ -219,6 +222,8 @@ private:
     // ring and the cells above those: a change redraws the drawn fluid cells around it and below them (3 x 3 x 2).
     void RefreshFluidsAround(const FFoundationBlockWorld& World, const FIntVector& Cell);
     void HandleEvents(const FFoundationAuthority& Authority);
+    // Lava and burning sounds (step 16) from the local pawn's fire counters.
+    void PlayFireSounds(const AFoundationPawn* Pawn);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -323,7 +328,11 @@ private:
     bool bOutlineVisible = false, bPreviewVisible = false;
     double LastViewMs = 0;
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
+    // The fire counters last heard, and whose.
+    TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;
+    TSharedPtr<FFoundationMobView> MobView;
 };

@@ -2696,9 +2696,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelTreeSaplingTest, "Unnamed.Voxel.Trees.Sap
 
 bool FVoxelTreeSaplingTest::RunTest(const FString& Parameters)
 {
-    // Saplings are not in the block table (the block reference has none), so a tree placement's
-    // would_survive(<sapling>) tests the block below against supports_vegetation (minecraft.wiki, "Sapling"):
-    // oak_checked's filter passes over grass and dirt and refuses sand and stone. Mangrove's propagule is in the table
+    // The 9 saplings are in the block table since survival B1, so a tree placement's would_survive(<sapling>)
+    // compiles to the sapling's own rule, which equals supports_vegetation for the block below (minecraft.wiki,
+    // "Sapling"; Unnamed.Voxel.Plants.SaplingRule proves it): oak_checked's filter passes over grass and dirt and refuses sand and stone. Mangrove's propagule is in the table
     // (S7), so its filter compiles with the propagule's own rule (mangroves skip for their placers, not this filter).
     FTreeTestKit Kit;
     if (!Kit.Initialize(*this)) return true;

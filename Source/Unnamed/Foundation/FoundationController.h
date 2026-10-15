@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationChat.h"
+#include "Hud/HudModel.h"
 #include "FoundationController.generated.h"
 
 class AFoundationPawn;
@@ -34,8 +35,10 @@ public:
     AFoundationPawn* GetFoundationPawn() const;
     UUnnamedInputSubsystem* GetInputSubsystem() const;
 
-    // True while the possessed pawn plays: no menu, panel or binding capture in front of it.
+    // True while the possessed pawn plays: no menu, panel, binding capture or death screen in front of it.
     bool IsGameplay() const;
+    // The death screen's button under the cursor (step 11a), for the HUD's highlight; None off the screen.
+    EHudDeathButton GetDeathHover() const { return DeathHover; }
 
     // foundation.Load.Cover: the rendered frames the loading screen stays up once the world is ready (0 or 3).
     static int32 GetLoadCoverFrames(int32 Mode);
@@ -59,6 +62,8 @@ public:
     // other text shows as "<Player> text". Times are FPlatformTime seconds.
     void SubmitChat(const FString& Text);
     const FFoundationChat& GetChat() const { return Chat; }
+    // A game message in white, as vanilla's death messages (step 11a: the pawn adds one per death).
+    void AddChatText(const FString& Text) { Chat.AddText(Text, FoundationChat::White(), FPlatformTime::Seconds()); }
     void ClearChat() { Chat.Clear(); }
 
     // Typed action test double: hotbar tokens, break/use state, last result. The Foundation lab's
@@ -86,6 +91,11 @@ private:
     void UpdateLoadingScreen();
     // Logs the interaction authority's committed and rejected outcomes once each.
     void NoteInteraction(const AFoundationPawn& FoundationPawn);
+    // The death screen's input (step 11a, Tick; the HUD draws the screen): while the pawn's death screen is active,
+    // gameplay input is off, the cursor shows and a transparent viewport widget takes the mouse. Clicks hit-test the
+    // HUD's own button rectangles (HudDrawList::GetDeathButton). Leaving it (respawned) restores gameplay input.
+    void UpdateDeathScreen();
+    void HandleDeathMouse(const FGeometry& Geometry, const FPointerEvent& Event, bool bPress);
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UMenuBrowserHost> MenuHost;
@@ -118,4 +128,8 @@ private:
     // foundation.Panels.Preload, read at BeginPlay, and whether the creative screen's preload is done.
     bool bPreloadPanels = false;
     bool bPanelsPreloaded = false;
+    // The death screen: shown (input taken), its mouse widget (none without a game viewport) and the hovered button.
+    bool bDeathScreen = false;
+    TSharedPtr<SWidget> DeathInput;
+    EHudDeathButton DeathHover = EHudDeathButton::None;
 };

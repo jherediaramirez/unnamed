@@ -138,7 +138,7 @@ bool FFoundationItemsEatReferenceTest::RunTest(const FString&)
         TestEqual(Id + TEXT(" saturation"), Row->Saturation, float((*Food)->GetNumberField(TEXT("saturation"))));
         TestEqual(Id + TEXT(" ticks"), Row->ConsumeTicks, FMath::RoundToInt32(Seconds * 20));
     }
-    TestEqual(TEXT("six foods in items.json"), Rows, 6);
+    TestEqual(TEXT("19 foods in items.json (survival 20a added 11, T1 8a2 2)"), Rows, 19);
     TestEqual(TEXT("the table holds only them"), FoundationConsumables::GetReferenceTable().Num(), Rows);
     TestEqual(TEXT("the default time is 32 ticks"), FoundationConsumables::DefaultTicks, 32);
 

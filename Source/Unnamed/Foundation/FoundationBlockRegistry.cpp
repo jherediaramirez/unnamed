@@ -1,12 +1,26 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationItemAssets.h"
 #include "Foundation/FoundationPlantRules.h"
+#include "HAL/IConsoleManager.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
 
 namespace
 {
+    TAutoConsoleVariable<int32> CVarBlocksFamilies(TEXT("foundation.Blocks.Families"), 1,
+        TEXT("1: survival B1's block families (stairs, doors, beds, chests and the rest, DA_Blocks' bAppendedFamily) "
+             "are in the creative inventory and the Playground galleries' tails, and place their default state. 0: "
+             "they are absent and refuse placing, as before they were imported."),
+        ECVF_Default);
+
+    TAutoConsoleVariable<int32> CVarBlocksShapes(TEXT("foundation.Blocks.Shapes"), 1,
+        TEXT("1: survival B2's shapes: the collision gatherers also read the cells just below and above a region, "
+             "keeping the boxes that leave their cell into it (1.5-tall fences, walls and closed gates; the pitcher "
+             "crop's lower half). 0: B1's behaviour, each cell's boxes gathered only when the cell is in the region."),
+        ECVF_Default);
+
     const FBox FullShape(FVector::ZeroVector, FVector::OneVector);
     const FBox BottomSlabShape(FVector::ZeroVector, FVector(1, 1, .5));
     const FBox TopSlabShape(FVector(0, 0, .5), FVector::OneVector);
@@ -43,6 +57,21 @@ namespace
             Count *= FMath::Max(1, Property.Values.Num());
         return Count;
     }
+}
+
+bool FoundationBlockFamilies::AreEnabled()
+{
+    return CVarBlocksFamilies.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::IsHidden(const FFoundationBlockType* Block)
+{
+    return Block && Block->bAppendedFamily && !AreEnabled();
+}
+
+bool FoundationBlockFamilies::AreShapesEnabled()
+{
+    return CVarBlocksShapes.GetValueOnAnyThread() != 0;
 }
 
 FFoundationModelQuad FoundationBlockModels::Decode(int32 Code, const float* Vertices)
@@ -132,13 +161,13 @@ TSharedRef<const FFoundationBlockRegistry> FFoundationBlockRegistry::GetDefault(
                 TEXT("Block registry asset %s is missing: only air and project blocks exist. Run ImportBlocks.py."),
                 *UUnnamedProjectSettings::GetBlockAssetPath(TEXT("DA_Blocks")).ToString());
         if (Assets) const_cast<UFoundationBlockAssets*>(Assets)->AddToRoot();
-        Default = Build(Assets, UFoundationInteractionSettings::Get().Blocks);
+        Default = Build(Assets, UFoundationInteractionSettings::Get().Blocks, UFoundationItemAssets::LoadDefault());
     }
     return Default.ToSharedRef();
 }
 
-TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
-    const UFoundationBlockAssets* Assets, TArrayView<const FFoundationBlockDefinition> ProjectBlocks)
+TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(const UFoundationBlockAssets* Assets,
+    TArrayView<const FFoundationBlockDefinition> ProjectBlocks, const UFoundationItemAssets* Items)
 {
     TSharedRef<FFoundationBlockRegistry> Registry = MakeShared<FFoundationBlockRegistry>();
     Registry->Assets = Assets;
@@ -231,6 +260,7 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
             Block.OffsetMinVertical = Source.OffsetMinVertical;
             Block.bOutlineMovesWithOffset = Source.bOutlineMovesWithOffset;
             Block.bCollisionMovesWithOffset = Source.bCollisionMovesWithOffset;
+            Block.bAppendedFamily = Source.bAppendedFamily;
             NextProtocol = FMath::Max(NextProtocol, Source.ProtocolId + 1);
             NextState = FMath::Max(NextState, Source.MinStateId + States);
             const int32 TableOffset = Registry->Shapes.Num();
@@ -292,6 +322,17 @@ TSharedRef<FFoundationBlockRegistry> FFoundationBlockRegistry::Build(
         FFoundationBlockType& WallBlock = Registry->Blocks[*Wall];
         if (WallBlock.DropItem.IsNone()) WallBlock.DropItem = Standing.DropItem;
     }
+    // Blocks whose item lives in DA_Items (the 9 saplings: the blocks reference's ITEMS_REFERENCE_ITEMS) drop the item
+    // that places them, vanilla's sapling loot, while their loot tables wait in loot_later.txt (Codex review 15 #4).
+    // B8's loot tables replace this: a block with a table rolls it instead.
+    if (Items)
+        for (const FFoundationItemAsset& Item : Items->Items)
+            if (const int32* Index = Item.PlacesBlock.IsNone() ? nullptr : Registry->ById.Find(Item.PlacesBlock))
+                if (FFoundationBlockType& Block = Registry->Blocks[*Index]; Block.DropItem.IsNone())
+                {
+                    Block.DropItem = Item.Id;
+                    Block.bDropsPlacingItem = true;
+                }
     return Registry;
 }
 
@@ -354,7 +395,8 @@ bool FFoundationBlockRegistry::IsValidModelData(const FFoundationBlockAsset& Sou
     for (int32 State = 0; State < States; ++State)
     {
         int32 Parts, Alternatives, Model;
-        if (Source.StateShapes[State] != EFoundationBlockShape::Model || !Next(Parts) || Parts < 1) return false;
+        // Zero parts is a state vanilla draws nothing for (a wall with no post and no sides).
+        if (Source.StateShapes[State] != EFoundationBlockShape::Model || !Next(Parts) || Parts < 0) return false;
         for (int32 Part = 0; Part < Parts; ++Part)
         {
             if (!Next(Alternatives) || Alternatives < 1) return false;
@@ -621,8 +663,11 @@ FFoundationFluid FFoundationBlockRegistry::GetFluid(FFoundationBlockState State)
     const FFoundationBlockType& Block = GetBlock(State);
     if (!Block.IsFluid())
     {
-        // Waterlogged and always-water model states (kelp, seagrass) hold water: a source when the amount is 8.
-        const int32 Water = StateWater[Block.TableOffset + (IsKnown(State) ? State.Id - Block.MinStateId : 0)];
+        // Waterlogged and always-water model states (kelp, seagrass) hold water: a source when the amount is 8. The
+        // asset carries only model states' water; any other waterlogged state (a slab, a stair) holds a source too.
+        static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
+        int32 Water = StateWater[Block.TableOffset + (IsKnown(State) ? State.Id - Block.MinStateId : 0)];
+        if (Water == 0 && IsKnown(State) && GetValue(State, Waterlogged) == True) Water = 8;
         if (Water > 0)
         {
             Fluid.bWater = true;

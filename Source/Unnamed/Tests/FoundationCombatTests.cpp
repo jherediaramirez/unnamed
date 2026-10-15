@@ -184,7 +184,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCombatDamageTest, "Unnamed.Foundatio
 bool FFoundationCombatDamageTest::RunTest(const FString&)
 {
     TArray<FMeleeRow> Rows = ReadMeleeRows();
-    if (!TestEqual(TEXT("86 items in items.json"), Rows.Num(), 86)) return false;
+    if (!TestEqual(TEXT("114 items in items.json"), Rows.Num(), 114)) return false;
     FMeleeRow& Hand = Rows.AddDefaulted_GetRef();
     Hand.Id = TEXT("hand");
     FCombatLab L;
@@ -227,7 +227,9 @@ bool FFoundationCombatDamageTest::RunTest(const FString&)
         L.Stand();
     }
     TestEqual(TEXT("mismatches"), Mismatches, 0);
-    TestEqual(TEXT("full-charge ticks checked"), FullTicksChecked, 87);
+    // The 114 items and the bare hand (86 + 1 before survival 20a appended the mob drops, 104 + 1 before T1 8a2
+    // appended the cooking outputs).
+    TestEqual(TEXT("full-charge ticks checked"), FullTicksChecked, 115);
     AddInfo(FString::Printf(TEXT("%d attacks against the table"), Attacks));
 
     // Pins, from items.json's totals and the formula: the iron sword (6 at 1.6, 12.5 ticks), the netherite axe (10 at
@@ -490,7 +492,7 @@ bool FFoundationCombatShieldDisableTest::RunTest(const FString&)
     FFoundationRules Rules;
     UFoundationInteractionSettings::Get().BuildRules(Rules);
     const TArray<FMeleeRow> Rows = ReadMeleeRows();
-    if (!TestEqual(TEXT("86 items in items.json"), Rows.Num(), 86)) return false;
+    if (!TestEqual(TEXT("114 items in items.json"), Rows.Num(), 114)) return false;
     int32 Disablers = 0;
     for (const FMeleeRow& Row : Rows)
     {

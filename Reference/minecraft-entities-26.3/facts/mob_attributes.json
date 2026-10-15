@@ -1,0 +1,151 @@
+{
+ "source": {
+  "server_jar_sha1": "cc3964451a3b32a0488110d5e3e6ad8d75fe6a66"
+ },
+ "mobs": {
+  "cow": {
+   "health": 10.0,
+   "attributes": {
+    "max_health": 10.0,
+    "movement_speed": 0.20000000298023224,
+    "attack_damage": null,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": 10.0,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "pig": {
+   "health": 10.0,
+   "attributes": {
+    "max_health": 10.0,
+    "movement_speed": 0.25,
+    "attack_damage": null,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": 10.0,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "sheep": {
+   "health": 8.0,
+   "attributes": {
+    "max_health": 8.0,
+    "movement_speed": 0.23000000417232513,
+    "attack_damage": null,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": 10.0,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "chicken": {
+   "health": 4.0,
+   "attributes": {
+    "max_health": 4.0,
+    "movement_speed": 0.25,
+    "attack_damage": null,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": 10.0,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "zombie": {
+   "health": 20.0,
+   "attributes": {
+    "max_health": 20.0,
+    "movement_speed": 0.23000000417232513,
+    "attack_damage": 3.0,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 35.0,
+    "armor": 2.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": null,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "skeleton": {
+   "health": 20.0,
+   "attributes": {
+    "max_health": 20.0,
+    "movement_speed": 0.25,
+    "attack_damage": 2.0,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": null,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "creeper": {
+   "health": 20.0,
+   "attributes": {
+    "max_health": 20.0,
+    "movement_speed": 0.25,
+    "attack_damage": 2.0,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": null,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  },
+  "spider": {
+   "health": 16.0,
+   "attributes": {
+    "max_health": 16.0,
+    "movement_speed": 0.30000001192092896,
+    "attack_damage": 2.0,
+    "attack_knockback": 0.0,
+    "knockback_resistance": 0.0,
+    "follow_range": 16.0,
+    "armor": 0.0,
+    "step_height": 0.6,
+    "gravity": 0.08,
+    "safe_fall_distance": 3.0,
+    "tempt_range": null,
+    "scale": 1.0,
+    "jump_strength": 0.41999998688697815
+   }
+  }
+ }
+}

@@ -2808,6 +2808,818 @@
     "0000",
     "0000"
    ]
+  },
+  {
+   "name": "item/beef",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "deea9f36cc1171007ab69e928daea66582dfc5051de7ccd2e181af25285c45da",
+   "rgba_sha256": "4dbec994800b6178785e27c859eccccd0a37378a54d74ca25bee27f7082579c7",
+   "alpha": "cutout",
+   "opaque_pixels": 108,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0078",
+    "00fc",
+    "01fe",
+    "03fe",
+    "0ffe",
+    "1ffe",
+    "1ffe",
+    "3ffc",
+    "3ff8",
+    "3ff0",
+    "1fe0",
+    "0f80",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/bone",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "acc1fb127f3f1139e51e748ee8b259eebac8f1ad369b33bd9643246ee96ae62d",
+   "rgba_sha256": "ef3bd2bdeec4cf7b7d3e5c11822948c051ab415df72d4bcb47167d16b3e94661",
+   "alpha": "cutout",
+   "opaque_pixels": 68,
+   "mask": [
+    "0000",
+    "001c",
+    "003e",
+    "003f",
+    "003f",
+    "007e",
+    "00f0",
+    "01e0",
+    "03c0",
+    "0f80",
+    "3f00",
+    "7e00",
+    "7e00",
+    "3e00",
+    "0c00",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/carrot",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "a433ecc4dbc28cf1751299ea518df0a5dd4b34e714d3015c77b9d193ec4c8a24",
+   "rgba_sha256": "d6f077814741b0b83e16dd315a4c98daad69d17c8f67529dbdfccb45cfddc1e8",
+   "alpha": "cutout",
+   "opaque_pixels": 96,
+   "mask": [
+    "0000",
+    "01c0",
+    "00ec",
+    "07fc",
+    "03f8",
+    "03fc",
+    "07fe",
+    "07ff",
+    "0ffc",
+    "0ff4",
+    "1fc0",
+    "1f80",
+    "3e00",
+    "3c00",
+    "3000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/chicken",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "bd671cdb48d100ff5c88b93bac4dd537d1b40fd5b4c1c80c7f39f935a24badfd",
+   "rgba_sha256": "172fa3801b200cdb3a11c974fa21db4c9878b56ce91c3411e13c3ebc8d86521c",
+   "alpha": "cutout",
+   "opaque_pixels": 132,
+   "mask": [
+    "0000",
+    "0780",
+    "0fe0",
+    "0ff0",
+    "1ff8",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffc",
+    "3ffc",
+    "3ff8",
+    "3fe0",
+    "0fc0",
+    "0f00",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/cooked_chicken",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "5711fd7b41f75c7243671e9dfeec48a964b5325065f6e8d32d7606914937d46d",
+   "rgba_sha256": "8121ba9b06018866f7b145fd3bef1acfa09bc02c087008945fa0a79160c21e95",
+   "alpha": "cutout",
+   "opaque_pixels": 132,
+   "mask": [
+    "0000",
+    "0780",
+    "0fe0",
+    "0ff0",
+    "1ff8",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffc",
+    "3ffc",
+    "3ff8",
+    "3fe0",
+    "0fc0",
+    "0f00",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/cooked_mutton",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "223e60521903506895acda457b80ceb450e6386b6756947b1e216fb89bf3a92d",
+   "rgba_sha256": "67b25bed17b4308307bc4b5624f065138565cceae11d0b79b0c4add32daf0139",
+   "alpha": "cutout",
+   "opaque_pixels": 106,
+   "mask": [
+    "0000",
+    "0018",
+    "003c",
+    "003c",
+    "007c",
+    "007c",
+    "00fc",
+    "01fc",
+    "07f8",
+    "0ff8",
+    "1ff8",
+    "3ff8",
+    "3ff0",
+    "3ff0",
+    "3fe0",
+    "1f80"
+   ]
+  },
+  {
+   "name": "item/cooked_porkchop",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "375ac21a18e7439527c8f5db65b8afae13ae1cd4db2b0b07d42a269742f15f26",
+   "rgba_sha256": "dcc3009a5fae76176695ae45920ff0aaad30d011df107c60e79b9edb0014c7cc",
+   "alpha": "cutout",
+   "opaque_pixels": 102,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0078",
+    "00fc",
+    "01fe",
+    "03fe",
+    "07fe",
+    "0ffe",
+    "1ffc",
+    "3ffc",
+    "3ff8",
+    "1ff0",
+    "1fc0",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/egg",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "3bfccf5fcfe66933d591e944f6b08456c8083f5c3898b924da52bfebc41e6322",
+   "rgba_sha256": "b8535fd315b5e0a494dd40e35ebf8c4ef2962e6f54fdb61d8dd4a7afddc8ddd3",
+   "alpha": "cutout",
+   "opaque_pixels": 90,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "03c0",
+    "07e0",
+    "0ff0",
+    "0ff0",
+    "1ff8",
+    "1ff8",
+    "1ff8",
+    "1ff8",
+    "1ff8",
+    "0ff0",
+    "07e0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/feather",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "36e6f12de8ddabd5c1f58c2b99feb2be4f1a13a46a74525e68a06a3e7cf88cd1",
+   "rgba_sha256": "266fb5c5c487d65e62169564eb14e7c704d83c5024af80e6f3ba2fd7155954da",
+   "alpha": "cutout",
+   "opaque_pixels": 65,
+   "mask": [
+    "0000",
+    "0000",
+    "0008",
+    "000c",
+    "001c",
+    "003e",
+    "003c",
+    "00f8",
+    "02fc",
+    "07f8",
+    "07e0",
+    "1ff0",
+    "0fc0",
+    "3f80",
+    "0600",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/gunpowder",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "9551e2f663c9d7291991f9c922daf68ed26adb99de9c8ef5173f24f0c8693585",
+   "rgba_sha256": "621e43198b27525c374f286177adb50d8da86cf08b21762070747c155e553138",
+   "alpha": "cutout",
+   "opaque_pixels": 88,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0180",
+    "03c0",
+    "07e0",
+    "0ff0",
+    "1ff8",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "1ff8",
+    "0ff0",
+    "03c0",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/leather",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "0b1b32a23061afbd4771ececb9d1c1a1ba255b7591ffc3e55a2b3c5affc05577",
+   "rgba_sha256": "30822ffca848572a1d28ac8180da36d9c5b9014940d5398a6ad6235530240851",
+   "alpha": "cutout",
+   "opaque_pixels": 128,
+   "mask": [
+    "0000",
+    "03c0",
+    "37ec",
+    "3ffc",
+    "1ff8",
+    "1ff8",
+    "0ff0",
+    "0ff0",
+    "0ff0",
+    "0ff0",
+    "1ff8",
+    "1ff8",
+    "1ff8",
+    "3ffc",
+    "399c",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/milk_bucket",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "49d007b30e73847f66ce2d594ef137d82c3268f6903ed12740eccb4dee7986e9",
+   "rgba_sha256": "718a63554925e1fb63c5797cc6195a013aa00590a102cf84799efd3517ec9221",
+   "alpha": "cutout",
+   "opaque_pixels": 146,
+   "mask": [
+    "0000",
+    "07e0",
+    "1ff8",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "3ffc",
+    "1ff8",
+    "1ff8",
+    "0ff0",
+    "07e0",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/mutton",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "ad166756d1129abdea0e51bbd608fe4ea227730d9b4eff79878b9e47ec89b31c",
+   "rgba_sha256": "86d964a1aa4be8c2634153278edfe27097bf5075fab26aa2baad01ea456f3413",
+   "alpha": "cutout",
+   "opaque_pixels": 106,
+   "mask": [
+    "0000",
+    "0018",
+    "003c",
+    "003c",
+    "007c",
+    "007c",
+    "00fc",
+    "01fc",
+    "07f8",
+    "0ff8",
+    "1ff8",
+    "3ff8",
+    "3ff0",
+    "3ff0",
+    "3fe0",
+    "1f80"
+   ]
+  },
+  {
+   "name": "item/porkchop",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "cce5dcbdeb6d445d3024180bc88afa5d8ad22ea025947e8bf687ffcdbb0ec9ae",
+   "rgba_sha256": "21526d353cc08c45b728190e0ecb0ded0338ba5bfb8f587494d39e6de35d397e",
+   "alpha": "cutout",
+   "opaque_pixels": 117,
+   "mask": [
+    "0000",
+    "0000",
+    "0078",
+    "00fc",
+    "01fe",
+    "03fe",
+    "0ffe",
+    "1ffe",
+    "1ffe",
+    "3ffc",
+    "3ffc",
+    "3ff8",
+    "1ff0",
+    "1fc0",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/potato",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "d230597b0d91c857936370089ef7da12a8f0b4b3e84207b92c9b48e92798507f",
+   "rgba_sha256": "e3862fce0e9ed9f9ac3b8f55f1664a436fbfa48d9dad651a76a1a955e1018b2f",
+   "alpha": "cutout",
+   "opaque_pixels": 89,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "00f0",
+    "07f8",
+    "0ffc",
+    "1ffc",
+    "3ffc",
+    "3ffc",
+    "3ff8",
+    "3ff0",
+    "1fc0",
+    "0f00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/rotten_flesh",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "9168edab9a9063ee23340fedd2bbf31f85aed2bd42c3fedf527dba24629d48e8",
+   "rgba_sha256": "8564be185a6aab0c1b7eaa40338a4c00be65a92c2bc8063597d0b5e77f061299",
+   "alpha": "cutout",
+   "opaque_pixels": 119,
+   "mask": [
+    "0000",
+    "0030",
+    "00f0",
+    "01f8",
+    "03ff",
+    "03ff",
+    "07fe",
+    "0ffc",
+    "1ffc",
+    "3ffe",
+    "7ffc",
+    "7ff8",
+    "3ff0",
+    "1f80",
+    "0c00",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/spider_eye",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "d499849330581ec013e2b83e5c89e628f71ec2987d1363611a7810e4ec459a06",
+   "rgba_sha256": "d3e1c7ad174706f869049e7e11d5248f683cd4356eb690ce424d446fde371cb5",
+   "alpha": "cutout",
+   "opaque_pixels": 45,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "03c0",
+    "07e0",
+    "07e0",
+    "07e0",
+    "07e0",
+    "03f0",
+    "0070",
+    "00f0",
+    "00e0",
+    "0040",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/string",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "c7dac2dd79ae85bd35b2c933b17ac22256ec4cd79c1916b8ef0fc20642247957",
+   "rgba_sha256": "4eab05c5ab2b72c3266eca5e0d7f8be44b56797582d95080debb3cb74b0f07c7",
+   "alpha": "cutout",
+   "opaque_pixels": 75,
+   "mask": [
+    "0000",
+    "0020",
+    "0070",
+    "0050",
+    "0070",
+    "0838",
+    "180c",
+    "33c6",
+    "27f2",
+    "363a",
+    "1f1a",
+    "0ff6",
+    "03ec",
+    "00f8",
+    "0070",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/baked_potato",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "86733249e16a46d804270ce27b88f60270513e70e65336a3e59fa1fd5a12e275",
+   "rgba_sha256": "d8c86617bbca80e6e06b5724ca9f0fe59b70b7f2cc38da2c8eb6c9aff856dfd8",
+   "alpha": "cutout",
+   "opaque_pixels": 118,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "01f0",
+    "07f8",
+    "0ffc",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffc",
+    "1ff8",
+    "0fe0",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e99b08880e41cc4e0de8f29b3f9332b7e498aefe67dc540e06ec77990c2b1fee",
+   "rgba_sha256": "111b4c3932670f08646433088ceff9d444d3200d60eb485e0195a9955188b84c",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/charcoal",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "add27cf65866f5c0a6f2c5751182033bc7a59d0ea9ea5dfd7909d5d87443b1c8",
+   "rgba_sha256": "8287cc016551b5003f5faad2b82ab56c634682b73a99966209ba8f8f35e27f9f",
+   "alpha": "cutout",
+   "opaque_pixels": 139,
+   "mask": [
+    "0000",
+    "01c0",
+    "07e0",
+    "0ff0",
+    "1ff8",
+    "1ffc",
+    "1ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "3ffe",
+    "1ffc",
+    "0ff8",
+    "0780",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/copper_nugget",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e8df01be2948ff96884980d06211303ba058bc7e668a0b19a7d69dc6789c219c",
+   "rgba_sha256": "cb6b888458e9a7250ea2c34a55921ca380c5499f3a23f2f44aa1abd042ad9ebb",
+   "alpha": "cutout",
+   "opaque_pixels": 33,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "00c0",
+    "01e0",
+    "03e0",
+    "07e0",
+    "0fe0",
+    "0fc0",
+    "0700",
+    "0000",
+    "0000",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/dried_kelp",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "1c55c9ce599ad41b9682bb220ea7e025778eb76eb2ef0f74e2acccdc9b7d6729",
+   "rgba_sha256": "579880ff28260cde6393fdc774742e77abef47eee9e840cee12944160233c6a0",
+   "alpha": "cutout",
+   "opaque_pixels": 150,
+   "mask": [
+    "0000",
+    "0180",
+    "03e4",
+    "07fe",
+    "0fff",
+    "1fff",
+    "3fff",
+    "7fff",
+    "fffe",
+    "fffc",
+    "fff8",
+    "bff0",
+    "7fe0",
+    "3fc0",
+    "0f80",
+    "0300"
+   ]
+  },
+  {
+   "name": "item/green_dye",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "620a9b8b507a29447abad02c13107770f4b626399a741d80de11ffbe9158c889",
+   "rgba_sha256": "e02b078923850313fa511c718cee202bbdb273c26950dfb684a4494c2c09ab65",
+   "alpha": "cutout",
+   "opaque_pixels": 148,
+   "mask": [
+    "0000",
+    "0c00",
+    "1e00",
+    "3f00",
+    "7fc0",
+    "7fe0",
+    "3ff0",
+    "3ff8",
+    "7ffc",
+    "7ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "3ffc",
+    "0ff0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "item/iron_nugget",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "b652969782255d294f42b09fabb2bd4066e9366b86615e9e886bd603750d83a3",
+   "rgba_sha256": "b5f5fe3eff5b8d102bb65e9d8e42830a6087cb8f46572124388f240f48d9d352",
+   "alpha": "cutout",
+   "opaque_pixels": 34,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0300",
+    "07e0",
+    "0ff0",
+    "0ff0",
+    "0fe0",
+    "0700",
+    "0000",
+    "0000",
+    "0000",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/lime_dye",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "078eba60abd1550ddcaa0b94bd1f17974f3dd39d8374acccdb1875e00beec949",
+   "rgba_sha256": "b16ca9ef8f9b6b9d222bda7db6938f767590db0ef2b738353dd54c6cd4873f1c",
+   "alpha": "cutout",
+   "opaque_pixels": 131,
+   "mask": [
+    "0000",
+    "0000",
+    "0000",
+    "03c0",
+    "07e0",
+    "0fe0",
+    "1ff0",
+    "1ff8",
+    "3ffc",
+    "7ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "3ffc",
+    "0ff0",
+    "03c0"
+   ]
+  },
+  {
+   "name": "item/nether_brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "ff509e5985967a99b8ef92d528ae5fdbae96e7c4d2fdb094d76f153d5cd01c6d",
+   "rgba_sha256": "b05065e21ede05a4fc4fce9d185ca57dfb1a5875b7efdab306af03362e87a578",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/resin_brick",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "e7d73d5495b3357a0efd5971c932ac5f9e9aa369339190b8b14c6cac9ddbff3c",
+   "rgba_sha256": "3e064a9483daf3479a9e425e1afb4aaac1a13c20087fff3aebfaaf9afe8480be",
+   "alpha": "cutout",
+   "opaque_pixels": 135,
+   "mask": [
+    "0000",
+    "0000",
+    "0030",
+    "01f8",
+    "0ffc",
+    "7ffe",
+    "ffff",
+    "ffff",
+    "ffff",
+    "ffff",
+    "fffe",
+    "7ff8",
+    "3fc0",
+    "1e00",
+    "0000",
+    "0000"
+   ]
   }
  ]
 }

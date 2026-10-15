@@ -33,7 +33,10 @@ enum class EFoundationDamage : uint8
     Starve,
     Kill,
     // A player's melee hit: armor applies, no difficulty scaling (26.3 player_attack).
-    PlayerAttack
+    PlayerAttack,
+    // Lava contact (armor applies) and burning (bypasses armor), step 16.
+    Lava,
+    OnFire
 };
 
 // One reference tick of facts from movement and the lab world. Distances are centimeters.
@@ -43,6 +46,8 @@ struct FFoundationVitalsStep
     bool bGrounded = false, bSprinting = false;
     bool bJumped = false, bSprintJumped = false;
     bool bBodyInWater = false, bEyesInWater = false;
+    // The body touches lava (the pawn passes it only with foundation.Fire 1).
+    bool bBodyInLava = false;
 };
 
 // Session-only survival state on the 20 Hz reference tick: health, absorption, armor, food,
@@ -51,6 +56,9 @@ struct FFoundationVitalsStep
 struct UNNAMED_API FFoundationVitals
 {
     static constexpr int32 RespawnTicks = 20;
+    // Lava ignites for 15 s [hurt.lava_ignite]; burning hurts every 20 ticks [hurt.burning].
+    static constexpr int32 LavaFireTicks = 300;
+    static constexpr int32 BurnIntervalTicks = 20;
 
     // Lab configuration, kept across respawn. Armor, toughness and attack speed stand in for equipment.
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
@@ -67,11 +75,34 @@ struct UNNAMED_API FFoundationVitals
     int32 Age = 0;
     double FallDistanceCm = 0;
     bool bEyesInWater = false;
+    // Ticks left burning; lava sets at least LavaFireTicks, water clears it.
+    int32 FireTicks = 0;
     FName MainHandItem;
 
     // Session diagnostics, kept across respawn.
     int32 DamageEvents = 0, Deaths = 0;
-    FString LastDamage = TEXT("none"), DeathMessage;
+    // Fire diagnostics the view plays sounds from: lava hits taken, burning hits taken, fires put out by water.
+    int32 LavaHurts = 0, BurnHurts = 0, Extinguishes = 0;
+    // The last death (step 11a), kept across respawn: its message as vanilla's chat and death screen show it, the
+    // en_us.json key it came from, and the death screen's score (the experience points held at death).
+    FString LastDamage = TEXT("none"), DeathMessage, DeathKey;
+    int32 DeathScore = 0;
+
+    // A death message's en_us.json key and its 26.3 English template (%1$s the victim, %2$s the attacker).
+    struct FDeathText
+    {
+        const TCHAR* Key;
+        const TCHAR* Template;
+    };
+    // The name death messages give the local player until players have names.
+    static constexpr const TCHAR* PlayerName = TEXT("Player");
+    // A damage type's own death message, as the rules table holds it.
+    static FDeathText GetCauseText(EFoundationDamage Type);
+    // The message a death by Type shows: falls farther than 5 blocks use death.fell.accident.generic; mob and
+    // player attacks without an attacker name fall back to death.attack.generic.
+    static FDeathText GetDeathText(EFoundationDamage Type, double FallDistanceCm, const FString& Attacker = FString());
+    // Fills %1$s and %2$s (a plain string replace).
+    static FString FormatDeathMessage(const FDeathText& Text, const FString& Victim, const FString& Attacker);
 
     // One reference tick: timers, movement exhaustion and falls, air, then food.
     void Step(const FFoundationVitalsStep& Facts);
@@ -100,6 +131,7 @@ struct UNNAMED_API FFoundationVitals
     void Respawn();
 
     bool IsDead() const { return DeathTicks >= 0; }
+    bool IsOnFire() const { return FireTicks > 0; }
     // The first half of the 20-tick damage cooldown: a hit now deals only what exceeds the last one.
     bool IsInHurtWindow() const { return DamageCooldown > 10; }
     bool ShouldRespawn() const { return DeathTicks >= RespawnTicks; }

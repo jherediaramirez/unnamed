@@ -287,8 +287,8 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
         Good += bGood;
         Shared += Corners;
     }
-    TestEqual(TEXT("93 sprites extrude to closed meshes"), Good, 93);
-    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 93 sprites: %d"), Shared));
+    TestEqual(TEXT("121 sprites extrude to closed meshes"), Good, 121);
+    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 121 sprites: %d"), Shared));
 
     int32 Resolved = 0;
     for (const FFoundationItemAsset& Item : Assets->Items)
@@ -298,7 +298,7 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
         if (!bResolved) AddError(TEXT("no first-person model for ") + Item.Id.ToString());
         Resolved += bResolved;
     }
-    TestEqual(TEXT("86 items have a first-person model and transform"), Resolved, 86);
+    TestEqual(TEXT("114 items have a first-person model and transform"), Resolved, 114);
     FFoundationItemModelView Pickaxe, Spear, SpearGui;
     TestTrue(TEXT("iron pickaxe: its own model and sprite, item/generated's first person (handheld inherits it)"),
         Assets->FindModelView(TEXT("iron_pickaxe"), TEXT("firstperson_righthand"), Pickaxe) &&

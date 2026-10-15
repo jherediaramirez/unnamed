@@ -1,5 +1,13 @@
 {
  "item": {
+  "armadillo_food": {
+   "values": [
+    "minecraft:spider_eye"
+   ],
+   "resolved": [
+    "spider_eye"
+   ]
+  },
   "axes": {
    "values": [
     "minecraft:diamond_axe",
@@ -102,6 +110,29 @@
     "wooden_sword"
    ]
   },
+  "cat_collar_dyes": {
+   "values": [
+    "#minecraft:dyes"
+   ],
+   "resolved": [
+    "black_dye",
+    "blue_dye",
+    "brown_dye",
+    "cyan_dye",
+    "gray_dye",
+    "green_dye",
+    "light_blue_dye",
+    "light_gray_dye",
+    "lime_dye",
+    "magenta_dye",
+    "orange_dye",
+    "pink_dye",
+    "purple_dye",
+    "red_dye",
+    "white_dye",
+    "yellow_dye"
+   ]
+  },
   "chicken_food": {
    "values": [
     "minecraft:wheat_seeds",
@@ -158,6 +189,38 @@
     "copper_ingot"
    ]
   },
+  "decorated_pot_ingredients": {
+   "values": [
+    "minecraft:brick",
+    "#minecraft:decorated_pot_sherds"
+   ],
+   "resolved": [
+    "angler_pottery_sherd",
+    "archer_pottery_sherd",
+    "arms_up_pottery_sherd",
+    "blade_pottery_sherd",
+    "brewer_pottery_sherd",
+    "brick",
+    "burn_pottery_sherd",
+    "danger_pottery_sherd",
+    "explorer_pottery_sherd",
+    "flow_pottery_sherd",
+    "friend_pottery_sherd",
+    "guster_pottery_sherd",
+    "heart_pottery_sherd",
+    "heartbreak_pottery_sherd",
+    "howl_pottery_sherd",
+    "miner_pottery_sherd",
+    "mourner_pottery_sherd",
+    "plenty_pottery_sherd",
+    "prize_pottery_sherd",
+    "scrape_pottery_sherd",
+    "sheaf_pottery_sherd",
+    "shelter_pottery_sherd",
+    "skull_pottery_sherd",
+    "snort_pottery_sherd"
+   ]
+  },
   "diamond_tool_materials": {
    "values": [
     "minecraft:diamond"
@@ -186,6 +249,56 @@
    ],
    "resolved": [
     "amethyst_shard"
+   ]
+  },
+  "dyes": {
+   "values": [
+    "minecraft:white_dye",
+    "minecraft:orange_dye",
+    "minecraft:magenta_dye",
+    "minecraft:light_blue_dye",
+    "minecraft:yellow_dye",
+    "minecraft:lime_dye",
+    "minecraft:pink_dye",
+    "minecraft:gray_dye",
+    "minecraft:light_gray_dye",
+    "minecraft:cyan_dye",
+    "minecraft:purple_dye",
+    "minecraft:blue_dye",
+    "minecraft:brown_dye",
+    "minecraft:green_dye",
+    "minecraft:red_dye",
+    "minecraft:black_dye"
+   ],
+   "resolved": [
+    "black_dye",
+    "blue_dye",
+    "brown_dye",
+    "cyan_dye",
+    "gray_dye",
+    "green_dye",
+    "light_blue_dye",
+    "light_gray_dye",
+    "lime_dye",
+    "magenta_dye",
+    "orange_dye",
+    "pink_dye",
+    "purple_dye",
+    "red_dye",
+    "white_dye",
+    "yellow_dye"
+   ]
+  },
+  "eggs": {
+   "values": [
+    "minecraft:egg",
+    "minecraft:blue_egg",
+    "minecraft:brown_egg"
+   ],
+   "resolved": [
+    "blue_egg",
+    "brown_egg",
+    "egg"
    ]
   },
   "enchantable/durability": {
@@ -724,12 +837,43 @@
     "wheat"
    ]
   },
+  "ignored_by_piglin_babies": {
+   "values": [
+    "minecraft:leather"
+   ],
+   "resolved": [
+    "leather"
+   ]
+  },
   "iron_tool_materials": {
    "values": [
     "minecraft:iron_ingot"
    ],
    "resolved": [
     "iron_ingot"
+   ]
+  },
+  "loom_dyes": {
+   "values": [
+    "#minecraft:dyes"
+   ],
+   "resolved": [
+    "black_dye",
+    "blue_dye",
+    "brown_dye",
+    "cyan_dye",
+    "gray_dye",
+    "green_dye",
+    "light_blue_dye",
+    "light_gray_dye",
+    "lime_dye",
+    "magenta_dye",
+    "orange_dye",
+    "pink_dye",
+    "purple_dye",
+    "red_dye",
+    "white_dye",
+    "yellow_dye"
    ]
   },
   "meat": {
@@ -818,6 +962,28 @@
     "wooden_pickaxe"
    ]
   },
+  "pig_food": {
+   "values": [
+    "minecraft:carrot",
+    "minecraft:potato",
+    "minecraft:beetroot"
+   ],
+   "resolved": [
+    "beetroot",
+    "carrot",
+    "potato"
+   ]
+  },
+  "piglin_food": {
+   "values": [
+    "minecraft:porkchop",
+    "minecraft:cooked_porkchop"
+   ],
+   "resolved": [
+    "cooked_porkchop",
+    "porkchop"
+   ]
+  },
   "piglin_loved": {
    "values": [
     "#minecraft:gold_ores",
@@ -888,6 +1054,18 @@
     "golden_spear"
    ]
   },
+  "rabbit_food": {
+   "values": [
+    "minecraft:carrot",
+    "minecraft:golden_carrot",
+    "minecraft:dandelion"
+   ],
+   "resolved": [
+    "carrot",
+    "dandelion",
+    "golden_carrot"
+   ]
+  },
   "repairs_chain_armor": {
    "values": [
     "minecraft:iron_ingot"
@@ -926,6 +1104,14 @@
    ],
    "resolved": [
     "iron_ingot"
+   ]
+  },
+  "repairs_leather_armor": {
+   "values": [
+    "minecraft:leather"
+   ],
+   "resolved": [
+    "leather"
    ]
   },
   "repairs_netherite_armor": {
@@ -1101,6 +1287,29 @@
     "potato",
     "torchflower_seeds",
     "wheat_seeds"
+   ]
+  },
+  "wolf_collar_dyes": {
+   "values": [
+    "#minecraft:dyes"
+   ],
+   "resolved": [
+    "black_dye",
+    "blue_dye",
+    "brown_dye",
+    "cyan_dye",
+    "gray_dye",
+    "green_dye",
+    "light_blue_dye",
+    "light_gray_dye",
+    "lime_dye",
+    "magenta_dye",
+    "orange_dye",
+    "pink_dye",
+    "purple_dye",
+    "red_dye",
+    "white_dye",
+    "yellow_dye"
    ]
   },
   "wolf_food": {

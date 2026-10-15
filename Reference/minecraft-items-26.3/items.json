@@ -7753,6 +7753,1840 @@
    "textures": [
     "item/glow_berries"
    ]
+  },
+  {
+   "id": "string",
+   "protocol_id": 1062,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "String",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "redstone_blocks",
+     "index": 23
+    },
+    {
+     "tab": "search",
+     "index": 1175
+    },
+    {
+     "tab": "ingredients",
+     "index": 24
+    }
+   ],
+   "model": {
+    "definition": "items/string.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/string",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/string"
+   ]
+  },
+  {
+   "id": "feather",
+   "protocol_id": 1063,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Feather",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1670
+    },
+    {
+     "tab": "ingredients",
+     "index": 25
+    }
+   ],
+   "model": {
+    "definition": "items/feather.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/feather",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/feather"
+   ]
+  },
+  {
+   "id": "gunpowder",
+   "protocol_id": 1064,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Gunpowder",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1718
+    },
+    {
+     "tab": "ingredients",
+     "index": 82
+    }
+   ],
+   "model": {
+    "definition": "items/gunpowder.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/gunpowder",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/gunpowder"
+   ]
+  },
+  {
+   "id": "porkchop",
+   "protocol_id": 1097,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Porkchop",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 1.8000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "piglin_food",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1471
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 17
+    }
+   ],
+   "model": {
+    "definition": "items/porkchop.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/porkchop",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/porkchop"
+   ]
+  },
+  {
+   "id": "cooked_porkchop",
+   "protocol_id": 1098,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Porkchop",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 8,
+    "saturation": 12.8
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "piglin_food",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1472
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 18
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_porkchop.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_porkchop",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_porkchop"
+   ]
+  },
+  {
+   "id": "leather",
+   "protocol_id": 1133,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Leather",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "ignored_by_piglin_babies",
+    "repairs_leather_armor"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1671
+    },
+    {
+     "tab": "ingredients",
+     "index": 30
+    }
+   ],
+   "model": {
+    "definition": "items/leather.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/leather",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/leather"
+   ]
+  },
+  {
+   "id": "milk_bucket",
+   "protocol_id": 1134,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Milk Bucket",
+   "max_stack": 1,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": {
+    "animation": "drink",
+    "has_consume_particles": false,
+    "on_consume_effects": [
+     {
+      "type": "minecraft:clear_all_effects"
+     }
+    ],
+    "sound": "minecraft:entity.generic.drink"
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "use_remainder"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1236
+    },
+    {
+     "tab": "tools_and_utilities",
+     "index": 39
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 50
+    }
+   ],
+   "model": {
+    "definition": "items/milk_bucket.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/milk_bucket",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/milk_bucket"
+   ]
+  },
+  {
+   "id": "egg",
+   "protocol_id": 1148,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Egg",
+   "max_stack": 16,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "chicken/variant",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "eggs"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1403
+    },
+    {
+     "tab": "combat",
+     "index": 69
+    },
+    {
+     "tab": "ingredients",
+     "index": 27
+    }
+   ],
+   "model": {
+    "definition": "items/egg.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/egg",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/egg"
+   ]
+  },
+  {
+   "id": "bone",
+   "protocol_id": 1216,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Bone",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1669
+    },
+    {
+     "tab": "ingredients",
+     "index": 22
+    }
+   ],
+   "model": {
+    "definition": "items/bone.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/bone",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/bone"
+   ]
+  },
+  {
+   "id": "beef",
+   "protocol_id": 1260,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Beef",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 1.8000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1469
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 15
+    }
+   ],
+   "model": {
+    "definition": "items/beef.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/beef",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/beef"
+   ]
+  },
+  {
+   "id": "chicken",
+   "protocol_id": 1262,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Chicken",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 1.2
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 600,
+        "id": "minecraft:hunger",
+        "show_icon": true
+       }
+      ],
+      "probability": 0.3
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1475
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 21
+    }
+   ],
+   "model": {
+    "definition": "items/chicken.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/chicken",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/chicken"
+   ]
+  },
+  {
+   "id": "cooked_chicken",
+   "protocol_id": 1263,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Chicken",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 6,
+    "saturation": 7.2000003
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1476
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 22
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_chicken.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_chicken",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_chicken"
+   ]
+  },
+  {
+   "id": "rotten_flesh",
+   "protocol_id": 1264,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Rotten Flesh",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 4,
+    "saturation": 0.8
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 600,
+        "id": "minecraft:hunger",
+        "show_icon": true
+       }
+      ],
+      "probability": 0.8
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1489
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 35
+    }
+   ],
+   "model": {
+    "definition": "items/rotten_flesh.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/rotten_flesh",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/rotten_flesh"
+   ]
+  },
+  {
+   "id": "spider_eye",
+   "protocol_id": 1272,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Spider Eye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 3.2
+   },
+   "consumable": {
+    "on_consume_effects": [
+     {
+      "type": "minecraft:apply_effects",
+      "effects": [
+       {
+        "duration": 100,
+        "id": "minecraft:poison",
+        "show_icon": true
+       }
+      ]
+     }
+    ]
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "armadillo_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1490
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 36
+    },
+    {
+     "tab": "ingredients",
+     "index": 89
+    }
+   ],
+   "model": {
+    "definition": "items/spider_eye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/spider_eye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/spider_eye"
+   ]
+  },
+  {
+   "id": "carrot",
+   "protocol_id": 1378,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Carrot",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 3,
+    "saturation": 3.6000001
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "villager_food"
+   ],
+   "item_tags": [
+    "horse_food",
+    "pig_food",
+    "rabbit_food",
+    "villager_picks_up",
+    "villager_plantable_seeds"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1461
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 7
+    }
+   ],
+   "model": {
+    "definition": "items/carrot.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/carrot",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/carrot"
+   ]
+  },
+  {
+   "id": "potato",
+   "protocol_id": 1379,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Potato",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 1,
+    "saturation": 0.6
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects",
+    "villager_food"
+   ],
+   "item_tags": [
+    "pig_food",
+    "villager_picks_up",
+    "villager_plantable_seeds"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1463
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 9
+    }
+   ],
+   "model": {
+    "definition": "items/potato.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/potato",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/potato"
+   ]
+  },
+  {
+   "id": "mutton",
+   "protocol_id": 1415,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Raw Mutton",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 2,
+    "saturation": 1.2
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1473
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 19
+    }
+   ],
+   "model": {
+    "definition": "items/mutton.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/mutton",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/mutton"
+   ]
+  },
+  {
+   "id": "cooked_mutton",
+   "protocol_id": 1416,
+   "group": "mob_drop",
+   "material": null,
+   "kind": null,
+   "name": "Cooked Mutton",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 6,
+    "saturation": 9.6
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "meat",
+    "wolf_food"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1474
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 20
+    }
+   ],
+   "model": {
+    "definition": "items/cooked_mutton.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/cooked_mutton",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/cooked_mutton"
+   ]
+  },
+  {
+   "id": "charcoal",
+   "protocol_id": 1011,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Charcoal",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "coals",
+    "furnace_minecart_fuel"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1649
+    },
+    {
+     "tab": "ingredients",
+     "index": 1
+    }
+   ],
+   "model": {
+    "definition": "items/charcoal.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/charcoal",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/charcoal"
+   ]
+  },
+  {
+   "id": "brick",
+   "protocol_id": 1142,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "decorated_pot_ingredients"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1710
+    },
+    {
+     "tab": "ingredients",
+     "index": 72
+    }
+   ],
+   "model": {
+    "definition": "items/brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/brick"
+   ]
+  },
+  {
+   "id": "lime_dye",
+   "protocol_id": 1204,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Lime Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1698
+    },
+    {
+     "tab": "ingredients",
+     "index": 60
+    }
+   ],
+   "model": {
+    "definition": "items/lime_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/lime_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/lime_dye"
+   ]
+  },
+  {
+   "id": "green_dye",
+   "protocol_id": 1212,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Green Dye",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "dye",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "cat_collar_dyes",
+    "dyes",
+    "loom_dyes",
+    "wolf_collar_dyes"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1706
+    },
+    {
+     "tab": "ingredients",
+     "index": 68
+    }
+   ],
+   "model": {
+    "definition": "items/green_dye.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/green_dye",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/green_dye"
+   ]
+  },
+  {
+   "id": "dried_kelp",
+   "protocol_id": 1257,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Dried Kelp",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 1,
+    "saturation": 0.6
+   },
+   "consumable": {
+    "consume_seconds": 0.8
+   },
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1468
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 14
+    }
+   ],
+   "model": {
+    "definition": "items/dried_kelp.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/dried_kelp",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/dried_kelp"
+   ]
+  },
+  {
+   "id": "baked_potato",
+   "protocol_id": 1380,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Baked Potato",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": {
+    "nutrition": 5,
+    "saturation": 6.0
+   },
+   "consumable": {},
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "compostable",
+    "consumable",
+    "enchantments",
+    "food",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1464
+    },
+    {
+     "tab": "food_and_drinks",
+     "index": 10
+    }
+   ],
+   "model": {
+    "definition": "items/baked_potato.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/baked_potato",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/baked_potato"
+   ]
+  },
+  {
+   "id": "nether_brick",
+   "protocol_id": 1396,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Nether Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1711
+    },
+    {
+     "tab": "ingredients",
+     "index": 73
+    }
+   ],
+   "model": {
+    "definition": "items/nether_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/nether_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/nether_brick"
+   ]
+  },
+  {
+   "id": "resin_brick",
+   "protocol_id": 1397,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Resin Brick",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "provides_trim_material",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "trim_materials"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1712
+    },
+    {
+     "tab": "ingredients",
+     "index": 74
+    }
+   ],
+   "model": {
+    "definition": "items/resin_brick.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/resin_brick",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/resin_brick"
+   ]
+  },
+  {
+   "id": "iron_nugget",
+   "protocol_id": 1456,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Iron Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1659
+    },
+    {
+     "tab": "ingredients",
+     "index": 12
+    }
+   ],
+   "model": {
+    "definition": "items/iron_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/iron_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/iron_nugget"
+   ]
+  },
+  {
+   "id": "copper_nugget",
+   "protocol_id": 1457,
+   "group": "cooking_output",
+   "material": null,
+   "kind": null,
+   "name": "Copper Nugget",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "metal_nuggets"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1658
+    },
+    {
+     "tab": "ingredients",
+     "index": 11
+    }
+   ],
+   "model": {
+    "definition": "items/copper_nugget.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/copper_nugget",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/copper_nugget"
+   ]
   }
  ]
 }

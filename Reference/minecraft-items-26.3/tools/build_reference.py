@@ -66,10 +66,24 @@ TIER_A = {
              "dark_oak_sapling", "pale_oak_sapling", "poplar_sapling", "resin_clump", "amethyst_shard", "wheat_seeds",
              "flint", "snowball", "clay_ball", "book", "glowstone_dust", "cocoa_beans", "melon_slice", "gold_nugget",
              "prismarine_crystals", "sweet_berries", "glow_berries"],
+    # Survival T6 (mobs 20a): the items the vanilla mobs drop that no other group holds (arrow is another lane's).
+    "mob_drop": ["beef", "leather", "porkchop", "cooked_porkchop", "mutton", "cooked_mutton", "chicken",
+                 "cooked_chicken", "feather", "egg", "rotten_flesh", "bone", "gunpowder", "string", "spider_eye",
+                 "carrot", "potato", "milk_bucket"],
+    # Survival T1 (furnace 8a2): the cooking outputs whose inputs the game already has (logs, iron and copper tools,
+    # clay ball, netherrack, cactus, sea pickle, kelp, resin clump, potato) that no other group holds.
+    "cooking_output": ["charcoal", "iron_nugget", "copper_nugget", "brick", "nether_brick", "green_dye", "lime_dye",
+                       "dried_kelp", "resin_brick", "baked_potato"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
-# the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves.
-APPEND_LAST = ["drop"]
+# the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
+# groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
+APPEND_LAST = ["drop", "mob_drop", "cooking_output"]
+
+
+def append_rank(group):
+    """0 for the first build's groups, else 1 + the group's place in APPEND_LAST."""
+    return APPEND_LAST.index(group) + 1 if group in APPEND_LAST else 0
 # Component defaults when a component omits the field (minecraft.wiki "Data component format").
 TOOL_DEFAULTS = {"default_mining_speed": 1.0, "damage_per_block": 1, "can_destroy_blocks_in_creative": True}
 WEAPON_DEFAULTS = {"item_damage_per_attack": 1, "disable_blocking_for_seconds": 0.0}
@@ -87,6 +101,9 @@ LOOT_BLOCKS = ["coal_ore", "deepslate_coal_ore", "copper_ore", "deepslate_copper
                "deepslate_emerald_ore", "lapis_ore", "deepslate_lapis_ore", "redstone_ore", "deepslate_redstone_ore",
                "nether_quartz_ore", "nether_gold_ore"]
 LOOT_TABLE = "data/minecraft/loot_table/blocks/"
+# Imported blocks whose loot tables are held back (survival B1's 310 blocks): mining them drops themselves until their
+# sessions append their tables after every earlier one.
+LOOT_LATER = "tools/loot_later.txt"
 LOOT_PREDICATE = "data/minecraft/predicate/"
 LOOT_FORMAT = ("Each pool's single entry flattened into ordered candidates; the first candidate whose conditions all "
                "pass is taken; count is set_count's inclusive range; bonus and explosion_decay are kept for later "
@@ -512,9 +529,15 @@ def loot_predicate(name, data):
 
 
 def loot_blocks(src, block_manifest):
-    """LOOT_BLOCKS, then every other imported block (in block_manifest.json's order) with a loot table in the jar."""
+    """LOOT_BLOCKS, then every other imported block (in block_manifest.json's order) with a loot table in the jar,
+    except the blocks listed in tools/loot_later.txt (their tables wait for their own sessions, appended last)."""
+    later = set((ROOT / LOOT_LATER).read_text(encoding="utf-8").split())
+    unknown = sorted(later - {b["id"] for b in block_manifest["blocks"]})
+    if unknown:
+        raise ValueError(f"{LOOT_LATER} lists ids that are not blocks of block_manifest.json: {unknown}")
     return LOOT_BLOCKS + [b["id"] for b in block_manifest["blocks"]
-                          if b["id"] not in LOOT_BLOCKS and f"{LOOT_TABLE}{b['id']}.json" in src.names]
+                          if b["id"] not in LOOT_BLOCKS and b["id"] not in later and
+                          f"{LOOT_TABLE}{b['id']}.json" in src.names]
 
 
 def loot_names(node, names):
@@ -659,7 +682,7 @@ def derive(src, block_ref=BLOCK_REF):
     imported = {b["id"] for b in block_manifest["blocks"] + block_manifest["fluids"]}
 
     group_of = {item: group for group, items in TIER_A.items() for item in items}
-    tier_a = sorted(group_of, key=lambda i: (group_of[i] in APPEND_LAST, protocol[i]))
+    tier_a = sorted(group_of, key=lambda i: (append_rank(group_of[i]), protocol[i]))
     copies, models, textures = set(), {}, {}
     items, tool_tags = [], set()
     for item in tier_a:
@@ -814,13 +837,18 @@ def derive(src, block_ref=BLOCK_REF):
                   + " | ".join(text) + f" | {seconds(r['ticks'][s], r['drops'][s])} |")
 
     # Models and textures sorted by name, those first used by an APPEND_LAST group after the others.
-    early = [i for i in items if i["group"] not in APPEND_LAST]
-    early_models = {m["model"] for i in early for m in i["model"]["models"]}
-    early_textures = {t for i in early for t in i["textures"]}
-    textures_list = [textures[t] for t in sorted(textures, key=lambda t: (t not in early_textures, t))]
+    # A model or texture takes the rank of the first group (in build order) that uses it.
+    model_rank, texture_rank = {}, {}
+    for i in items:
+        rank = append_rank(i["group"])
+        for m in i["model"]["models"]:
+            model_rank[m["model"]] = min(rank, model_rank.get(m["model"], rank))
+        for t in i["textures"]:
+            texture_rank[t] = min(rank, texture_rank.get(t, rank))
+    textures_list = [textures[t] for t in sorted(textures, key=lambda t: (texture_rank[t], t))]
     generated = {
         "items.json": dumps({"minecraft_version": "26.3", "tier": "A", "items": items}),
-        "models.json": dumps({"models": [models[m] for m in sorted(models, key=lambda m: (m not in early_models, m))]}),
+        "models.json": dumps({"models": [models[m] for m in sorted(models, key=lambda m: (model_rank[m], m))]}),
         "textures.json": dumps({"textures": textures_list}),
         "tags.json": dumps(tags),
         "lang.json": dumps({"lang": "en_us", "keys": {key: lang[key] for key in sorted(lang_keys)}}),
