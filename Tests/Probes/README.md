@@ -45,3 +45,23 @@ every row. The record is `Docs/Records/2026-10-10-Torch-T3.md`.
 
 The native test `Unnamed.Foundation.Interact.Hinge` places every case through the game's rule and compares the lower
 half's state. The record is `Docs/Records/2026-10-15-Blocks-B3a.md`.
+
+## Button and lever placement and presses (blocks session B3b)
+
+- `SwitchPlacementProbe.java`: the door probe's in-process 26.3 server and connection-less `ServerPlayer`, with
+  `stone_button`, `oak_button` and `lever`:
+  - Part A: a click on each face of a stone block, yaw 0, 45, 90, 180, 270 and pitch -60, 0, 60 (270 cases);
+  - Part B: a click on a face that cannot hold the switch (an oak fence or a bottom oak slab beside the destination),
+    with stone at none, one, two or all five other neighbours, on the same look grid (7,650 cases): which attachment
+    vanilla falls back to;
+  - Part C: a wall switch used at given ticks (`BlockState.useWithoutItem`) and `powered` after each `ServerLevel.tick`
+    for 40 ticks (15 runs). Scheduled ticks only run once the chunks report entity ticking, so the probe force-loads
+    them and waits for that first.
+- `switch-placement-26.3.json`: the measured cases; its header documents the rows. SHA-256
+  `49780CFD193D026A9F7D2CB9817DFCA16E2D14803E8DB6235A94625E07D9F33E`.
+- `run-switch-placement-probe.ps1`: compiles and runs the probe (default work folder
+  `C:\dev\sandbox\b3b-blocks\probe\work`) and writes the JSON next to the script (about 30 s); check the hash after a
+  run.
+
+The native tests `Unnamed.Foundation.Interact.SwitchPlacement` (parts A and B) and `.Buttons` (part C) read it. The
+record is `Docs/Records/2026-10-15-Blocks-B3b.md`.

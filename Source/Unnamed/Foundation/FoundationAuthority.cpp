@@ -280,8 +280,9 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
                                                                                                          : nullptr;
 }
 
-void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
-    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result)
+void FFoundationAuthority::CommitBlockUse(const FFoundationPlayer& Player, const FIntVector& Cell,
+    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result,
+    float Volume, float Pitch)
 {
     if (!Algo::AllOf(
             Writes, [this](const TPair<FIntVector, FFoundationBlockState>& Write) { return World.IsKnown(Write.Key); }))
@@ -294,7 +295,7 @@ void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntV
         Before.Add(World.Get(Write.Key).State);
     World.SetMany(Writes);
     for (int32 Index = 0; Index < Writes.Num(); ++Index)
-        SettlePlants(Writes[Index].Key, Before[Index], Player);
+        SettlePlants(Writes[Index].Key, Before[Index], Player, false);
     Result.Outcome = EFoundationOutcome::Committed;
     Result.bInteracted = true;
     Result.Cell = Cell;
@@ -306,8 +307,44 @@ void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntV
     Event.Cell = Cell;
     Event.State = Result.State;
     Event.Interaction = Sound;
+    Event.Amount = Volume;
+    Event.Pitch = Pitch;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
+}
+
+void FFoundationAuthority::ScheduleBlockTick(
+    const FIntVector& Cell, FFoundationBlockState Expect, int32 Delay, EFoundationBlockTick Kind)
+{
+    // A cell keeps one tick per kind, the newest: a button broken and replaced, then pressed, is released by its own
+    // press, not the old one's (B3b review).
+    BlockTicks.RemoveAll([&Cell, Kind](const FBlockTick& Tick) { return Tick.Cell == Cell && Tick.Kind == Kind; });
+    BlockTicks.Add({Cell, Expect, FMath::Max(Delay, 1), Kind});
+}
+
+void FFoundationAuthority::StepBlockTicks()
+{
+    // Due ticks leave the list before they run, so a tick that schedules another (a button pressed again) keeps it.
+    TArray<FBlockTick, TInlineAllocator<8>> Due;
+    for (int32 Index = 0; Index < BlockTicks.Num();)
+        if (--BlockTicks[Index].Remaining <= 0)
+        {
+            Due.Add(BlockTicks[Index]);
+            BlockTicks.RemoveAt(Index);
+        }
+        else
+            ++Index;
+    for (const FBlockTick& Tick : Due)
+    {
+        // A cell nobody knows drops its tick (edits are not saved, so the cell comes back as generated).
+        if (!World.IsKnown(Tick.Cell) || World.Get(Tick.Cell).State != Tick.Expect) continue;
+        switch (Tick.Kind)
+        {
+        case EFoundationBlockTick::ButtonRelease:
+            FoundationBlockFamilies::ReleaseButton(*this, Tick.Cell);
+            break;
+        }
+    }
 }
 
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
@@ -429,6 +466,7 @@ void FFoundationAuthority::Reset()
     }
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
+    BlockTicks.Empty();
     Mobs.Empty();
     MobSpawnColumns.Empty();
     PathStart = 0;
@@ -444,6 +482,7 @@ void FFoundationAuthority::Step()
     // A use nobody continued last step has been let go (its owner stopped stepping it).
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
+    StepBlockTicks();
     StepItemEntities();
     StepMobs();
     StepMobSpawns();
@@ -2757,7 +2796,7 @@ FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cel
 }
 
 void FFoundationAuthority::SettlePlants(
-    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player)
+    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player, bool bWriteUpperHalf)
 {
     // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
     FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
@@ -2792,8 +2831,8 @@ void FFoundationAuthority::SettlePlants(
     // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
     FIntVector Upper;
     FFoundationBlockState UpperState;
-    if (FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) && Upper.Z > Cell.Z &&
-        World.IsKnown(Upper))
+    if (bWriteUpperHalf && FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) &&
+        Upper.Z > Cell.Z && World.IsKnown(Upper))
     {
         const FFoundationBlockState UpperBefore = World.Get(Upper).State;
         World.Set(Upper, UpperState);

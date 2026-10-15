@@ -90,8 +90,9 @@ Known gaps:
   turn is applied after the face's own UV map; whole faces apply it the other way round. Measured over the 26.3 jar
   (`C:\dev\sandbox\b2-blocks\proof\uvlock_orders.py`): the two orders agree on every stair and wall face, and differ
   only on the undersides of fence side bars (y 90/180/270), the undersides of open fence gates, and pressed buttons
-  turned x=90. Not changed: it would rewrite accepted baked models, and there is no vanilla ground truth yet. B3 (the
-  buttons) checks it against a vanilla probe or screenshot if it matters.
+  turned x=90. Not changed: it would rewrite accepted baked models, and there is no vanilla ground truth yet. B3b
+  measured the buttons (`C:\dev\sandbox\b3b-blocks\uvlock\uvlock_buttons.py`): only the 1 px edge strips of pressed
+  wall buttons differ, their texture sample shifted by about 1 px; left as is (SM-Blocks, no captures).
 
 ## Shapes and collision (B2a)
 
@@ -190,6 +191,39 @@ and doors and trapdoors place as before B3a). `foundation.Blocks.Shapes` 0 also 
   a fence beside a door's upper half joins it. A double-plant half that still pairs with its partner (a door opened,
   tall grass replaced by tall grass) keeps it: no `Popped` event, the same world.
 - **Collision:** from the states' facts (B1): an open gate has none, an open door's slab is on its hinge side.
+- **A block use writes no upper half** (Codex 28 #1): `CommitBlockUse` settles its cells with `SettlePlants(...,
+  bWriteUpperHalf = false)`, so using a lone lower door half (an old save) never overwrites the block above it.
+
+## Buttons and levers (B3b)
+
+Survival B3b (track T5), the same switch (`foundation.Blocks.Interact`; 0: no use, default-state placement). Logic in
+`FoundationBlockFamilies.h/.cpp`; no redstone (only the block's own `powered` flips).
+
+- **Families:** `Button` (`#minecraft:buttons`, 15) and `Lever` (id `lever`).
+- **Placement** (`GetStateForPlacement`), as measured by the headless probe `Tests/Probes/switch-placement-26.3.json`
+  (parts A and B, 7,920 `useOn` placements): the first of the click's looks (`GetClickLooks`: the direction into the
+  clicked block, then the nearest looks) where the switch survives. Up hangs it from the ceiling and down stands it on
+  the floor, both facing the player's horizontal look (pitch does not matter); a side puts it on that wall, facing away
+  from it. Nothing survives: no placement (`CannotSurvive`). Exact look ties follow `GetNearestLooks`' table, as the
+  torch's do.
+- **Survival** (`GetSurvival`): the face of the block it hangs on must be sturdy (`IsFaceSturdy`): the top of the block
+  below a floor switch, the underside above a ceiling one, the side behind a wall one. Checked against every state and
+  candidate of `facts/family_survival.json` (all six probes). Every snow layer's underside counts as sturdy, one layer
+  too (no collision; the facts' up probe). Losing the support pops it.
+- **Use:** the lever flips `powered` (play volume 0.3, pitch 0.6 on and 0.5 off; F 3561-3567). A released button is
+  pressed (play 1 and 1; the asset holds 0.3 and pitch 0.6 on, 0.5 off; F 3639-3729) and releases itself after 20
+  steps (stone, polished blackstone) or 30 (the 13 wooden buttons, `#minecraft:wooden_buttons`; F 5053-5069) with
+  `click_off`. Pressing a pressed button takes the click and changes nothing; its release does not move (the probe's
+  part C). Sounds: `block.{stone,wooden,cherry_wood,bamboo_wood,nether_wood}_button.click_on/off` and
+  `block.lever.click` (`facts/block_use_sounds.csv`).
+- **Events:** `BlockUsed` carries the play volume in `Amount` and the pitch in `Pitch` (0: the view rolls the door
+  pitch, 0.9 + 0.1U). A release has no player (`Player` 0).
+- **Block ticks** (`FFoundationAuthority::ScheduleBlockTick`, a general API for later steps: crops, saplings): a cell,
+  the exact state it expects, a delay in steps and a kind (`EFoundationBlockTick`). `Step` counts them down first; a due
+  tick runs only if the cell still holds that state, so a broken or replaced button drops its release. `Reset` clears
+  them. They are not saved (block edits are not saved yet; VoxelWorld.md "Edits").
+- **Arrow-held wooden buttons** wait for arrows (T2 19c; `survival.r9.arrow_button`).
+
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -207,6 +241,7 @@ and doors and trapdoors place as before B3a). `foundation.Blocks.Shapes` 0 also 
 | `WallAttached` | wall torch | `facing` away from its wall, which the torch item picks by look (below) |
 | families (B2b) | stairs, fences, walls, panes, bars, fence gates | facing, half, connections and shape (above, "Shapes and connections (B2b)") |
 | families (B3a) | doors, trapdoors | a door's two halves and hinge, a trapdoor's facing and half (above, "Doors, trapdoors and gates (B3a)") |
+| families (B3b) | buttons, the lever | face and facing from the click's looks where it survives (above, "Buttons and levers (B3b)") |
 
 **The torch** (torch sessions T2 and T3). The `torch` item (`PlacesWallBlock`, from the reference's standing-and-wall items) places `torch` or `wall_torch`, where a support holds it: `FFoundationBlockRegistry::GetTorchSupport` gives each state's faces from `facts/block_support.json`, which `FactsDump.java` measures with the torch's own `canSurvive` (leaves and powder snow hold none, every other full cube all five, an upside-down slab a floor torch, a bottom slab nothing).
 - **Placement by look** (`FoundationBlockPlacement::GetTorchState`), as measured black-box in 26.3 by probe P3 (`Tests/Probes/torch-placement-26.3.json`, 64,896 clicks): the directions nearest the look (`GetNearestLooks`), with the direction into the clicked block first unless the click replaces it (short grass). Up is skipped, down gives the floor torch if the cell below holds one, and a side gives the wall torch against the first side, in that order, that holds one; the first hit wins, and nothing holding places nothing (`CannotSurvive`). So a side or top click on a block that holds a torch always places on it, an underside click places by look, and a click on short grass chooses by look, not by the clicked face. The preview and the placement share the rule.
@@ -332,4 +367,5 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
   - `Unnamed.Hud.Creative.Tabs`, `.Clicks` and `.Authority`.
   - `Unnamed.Foundation.Shapes.*` (B2b): `.Families`, `.SingleNeighbour`, `.CrossFamily`, `.WallUp`, `.Stairs`, `.GatesInWall` against every row of `shape_updates.json`; `.Placement` (facing, half, corners, connections, `in_wall`, switch 0); `.Neighbours` (placing and mining through the authority, one ring, a wall under a new block, switch 0). `Unnamed.Voxel.World.ShapesGather`: the voxel gather's outer layers on a streamed column.
   - `Unnamed.Foundation.Interact.*` (B3a): `.Families` (tags, the iron exceptions, every csv sound), `.Switches` (the 57 rows of F 5071-5135, both halves in one command), `.Gates` (re-facing, collision), `.Placement` (facing, hinge samples, refusals, trapdoor half and facing, switch 0), `.Hand` (sneak, off hand, iron passes, the preview), `.Survival` (the rows and every candidate of `family_survival.json`), `.Hinge` (every probe case), `.Edits` (one item from either half, the ring, tall grass replaced).
+  - `Unnamed.Foundation.Interact.*` (B3b): `.Switches` gains the lever row (58 rows); `.Families` 15 buttons, the lever and their csv sounds; `.Buttons` (all 15 durations and the release event, the probe's part C runs, a pressed button's use, a broken button's dropped release, a replaced button released by its own press, `Reset`, the lever's volume and pitch, a door's pitch 0, switch 0, a popped wall button); `.SwitchSurvival` (every button and lever state against every candidate of `family_survival.json`); `.SwitchPlacement` (the probe's parts A and B, a lever and a refusal through the authority); `.R13` (R13's boxes for every door, trapdoor, gate, button and lever state, and its 8,352 connection rows, from `Source/Unnamed/Tests/BlockR13Oracles.json`, written by `Scripts/MakeR13Oracles.py`); `.LoneHalf` (Codex 28 #1).
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

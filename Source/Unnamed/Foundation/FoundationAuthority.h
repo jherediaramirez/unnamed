@@ -371,9 +371,17 @@ enum class EFoundationEventKind : uint8
     MobSound,
     // A piece went into an armor slot (survival step 19a): Item the piece, LocationCm the player's feet (world cm).
     Equipped,
-    // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed): Cell the used block,
-    // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound).
+    // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed; B3b: a button or lever,
+    // and a button's release, with no player): Cell the used block, State its new state, Interaction the sound event
+    // (FoundationBlockFamilies::GetUseSound), Amount its play volume and Pitch its pitch (0: the view's 0.9 + 0.1U).
     BlockUsed
+};
+
+// What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
+enum class EFoundationBlockTick : uint8
+{
+    // A pressed button unpowers (FoundationBlockFamilies::ReleaseButton).
+    ButtonRelease,
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -386,6 +394,8 @@ struct FFoundationEvent
     FFoundationBlockState State;
     int32 EntityId = 0;
     float Amount = 0;
+    // BlockUsed: the play pitch; 0 leaves it to the view (survival B3b).
+    float Pitch = 0;
     bool bCritical = false;
     // Hit events (items S7): the hit knocked the entity back; a sprint-knockback hit; a sweep's hit on a nearby entity.
     bool bKnockback = false, bSprintKnockback = false, bSweep = false;
@@ -527,10 +537,18 @@ public:
         const FFoundationAuthority& Authority, const FFoundationPlayer& Player, const FFoundationHit& Hit)>;
     void RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse = nullptr);
     // Writes a block use's states (survival B3a, FoundationBlockFamilies::Use: both door halves at once), each cell
-    // settled as an edit (survival, the neighbour shapes), and adds a BlockUsed event with Sound; Result is Committed
-    // and bInteracted, Cell the used block. A write to a cell nobody knows rejects it all (OutsideBounds), unwritten.
-    void CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
-        TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result);
+    // settled as an edit (survival, the neighbour shapes), and adds a BlockUsed event with Sound at Volume and Pitch
+    // (0: the view's door pitch); Result is Committed and bInteracted, Cell the used block. A write to a cell nobody
+    // knows rejects it all (OutsideBounds), unwritten.
+    void CommitBlockUse(const FFoundationPlayer& Player, const FIntVector& Cell,
+        TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result,
+        float Volume = 1.f, float Pitch = 0.f);
+    // Survival B3b: a cell's scheduled tick (vanilla's scheduleTick). After Delay steps (Step), Kind runs at Cell if
+    // the cell still holds Expect; otherwise (broken, replaced, used again into another state, or unknown) it is
+    // dropped. A new tick replaces the cell's pending tick of the same kind. Reset drops them all; they are not saved
+    // (block edits are not saved yet). The button's release uses it; crops and saplings can add kinds.
+    void ScheduleBlockTick(
+        const FIntVector& Cell, FFoundationBlockState Expect, int32 Delay, EFoundationBlockTick Kind);
     // Whether the block in Cell has a use handler.
     bool HasBlockUse(const FIntVector& Cell) const;
     // Whether Player's use on Hit would be the block's (previews show no placement for it): a handler, and its
@@ -664,6 +682,16 @@ private:
     void StepOpenMenus();
     // Each step: a furnace entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the rest tick.
     void StepFurnaces();
+    // ScheduleBlockTick's ticks, in schedule order; each step counts them down and runs the due ones.
+    struct FBlockTick
+    {
+        FIntVector Cell;
+        FFoundationBlockState Expect;
+        int32 Remaining = 0;
+        EFoundationBlockTick Kind = EFoundationBlockTick::ButtonRelease;
+    };
+    TArray<FBlockTick> BlockTicks;
+    void StepBlockTicks();
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
@@ -724,7 +752,10 @@ private:
     FFoundationBlockState TrimPlantFaces(const FIntVector& Cell, FFoundationBlockState State) const;
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
-    void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
+    // bWriteUpperHalf: a placement's lower half writes its upper half; a block use's writes never do (Codex 28 #1: a
+    // lone lower door half would overwrite the block above it).
+    void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player,
+        bool bWriteUpperHalf = true);
     // A block's loot for Tool, rolled before it goes: its table, else "drops itself" (a double slab is two).
     void RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State, const FFoundationItemDefinition& Tool,
         int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const;
