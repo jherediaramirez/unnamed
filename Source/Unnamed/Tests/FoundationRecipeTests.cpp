@@ -321,13 +321,25 @@ bool FFoundationRecipeCloseTest::RunTest(const FString&)
     TestTrue(TEXT("the grid and cursor are empty"),
         L.Inv().Carried.IsEmpty() &&
             !L.Inv().Craft.ContainsByPredicate([](const FFoundationItemInstance& S) { return !S.IsEmpty(); }));
-    // No room: the grid would be thrown (T2's), so the close is refused and nothing moves.
+    // No room, foundation.Items.Entities 0: the close is refused and nothing moves.
+    L.A.Options.bItemEntities = false;
     for (int32 Slot = 0; Slot < FFoundationInventory::FirstArmor; ++Slot)
         L.Inv().SetSlot(Slot, L.Inv().MakeStack(L.Item(TEXT("dirt")), 64));
     L.Inv().Craft[0] = L.Inv().MakeStack(L.Item(TEXT("oak_log")), 1);
     const FFoundationResult Refused = L.Close();
     TestTrue(TEXT("a grid without room waits for the throw"),
         Refused.Reason == EFoundationReason::DropDeferred && L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 1));
+    // At 1 (items fixes): the cursor and each grid stack that does not fit are thrown, one entity each.
+    L.A.Options.bItemEntities = true;
+    L.Inv().Craft[3] = L.Inv().MakeStack(L.Item(TEXT("oak_planks")), 2);
+    L.Inv().Carried = L.Inv().MakeStack(L.Item(TEXT("stone")), 4);
+    const TArray<FFoundationItemEntity>& Thrown = L.A.GetItemEntities();
+    TestTrue(TEXT("switch 1: a grid without room is thrown"),
+        L.Close().IsCommitted() && L.Inv().Carried.IsEmpty() &&
+            !L.Inv().Craft.ContainsByPredicate([](const FFoundationItemInstance& S) { return !S.IsEmpty(); }) &&
+            Thrown.Num() == 3 && Thrown[0].Item == L.Item(TEXT("stone")) && Thrown[0].Count == 4 &&
+            Thrown[1].Item == L.Item(TEXT("oak_log")) && Thrown[1].Count == 1 &&
+            Thrown[2].Item == L.Item(TEXT("oak_planks")) && Thrown[2].Count == 2 && Thrown[2].PickupDelay == 40);
     return true;
 }
 

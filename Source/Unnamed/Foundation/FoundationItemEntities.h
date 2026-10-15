@@ -75,6 +75,10 @@ namespace FoundationItemEntities
     // Items S8b, provisional (P3): each copy after the first is moved up to this far on each axis (half as far for a
     // flat sprite).
     constexpr double CopySpreadCm = 15;
+    // Items fixes (S8a-b), provisional: an item inside a solid block moves through blocks out of the cell its centre is
+    // in, toward the nearest unobstructed side, or up when every side is blocked, even over open space below
+    // (minecraft.wiki "Item (entity)", Behavior). The speed is an estimate (the wiki and the value report give none).
+    constexpr double PushOutCm = 10;
 
     // The box of an item standing at a world position (its bottom centre).
     UNNAMED_API FBox GetBox(const FVector& WorldCm);
@@ -89,8 +93,12 @@ namespace FoundationItemEntities
     // One step of motion against world boxes (cm): gravity, the move clipped as the player's is (vertical first), a
     // blocked axis stops, then the drag (and the ground friction sideways on the ground).
     UNNAMED_API void Move(FFoundationItemEntity& Entity, const FVector& OriginCm, const TArray<FBox>& Boxes);
+    // Whether a body's world box is inside one of Boxes (more than touching it).
+    UNNAMED_API bool IsInside(const FBox& Box, const TArray<FBox>& Boxes);
     // The step Move runs, shared with the experience orbs: gravity, then a push (an orb's attraction), the move of Box
-    // (the body's world box now) clipped against Boxes, a blocked axis stopping, then the drag and ground friction.
+    // (the body's world box now, standing on LocalCm) clipped against Boxes, a blocked axis stopping, then the drag and
+    // ground friction. A body inside a block is pushed out instead (PushOutCm); Boxes must then reach one block past
+    // its centre's cell.
     UNNAMED_API void MoveBox(FVector& LocalCm, FVector& PreviousLocalCm, FVector& VelocityCm, bool& bOnGround,
         const FBox& Box, const TArray<FBox>& Boxes, double GravityCm, const FVector& PushCm);
 }

@@ -536,6 +536,12 @@ private:
     void StepItemEntities();
     // Q and Ctrl+Q (items S8b): one item or the selected stack thrown from the eye along the look.
     void Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    // The throw Q and the container screens share (items S8b; items fixes): Count of Stack from 0.3 blocks below the
+    // eye along the look, pickup delay 40. False when nothing spawned.
+    bool Throw(const FFoundationPlayer& Player, const FFoundationItemInstance& Stack, int32 Count);
+    // The world and static boxes in Region for an entity's step; for a Body inside a block (items fixes, S8a-b), out
+    // to the neighbours of its centre's cell too.
+    void GatherEntityCollision(const FBox& Region, const FBox& Body, TArray<FBox>& Boxes);
     // Every MergeTicks of its age, an item takes in same-item stacks inside its merge box (items S8b).
     void MergeItemEntities();
     // Step 12: the orbs' motion toward the nearest player, despawn and merges, then every live player's pickups.

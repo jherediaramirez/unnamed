@@ -1,6 +1,7 @@
 #include "Misc/AutomationTest.h"
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
@@ -848,6 +849,19 @@ bool FFoundationItemEntityThrowTest::RunTest(const FString&)
         TestTrue(TEXT("creative: committed"), Throw(L, false).IsCommitted());
         TestTrue(TEXT("creative: one taken"), L.P().Inventory.Hotbar[0].Count == 9 && L.A.GetItemEntities().Num() == 1);
     }
+    {
+        // A dead player's Q is refused as every hand command is (Codex review 4, #5), and so is a stale command.
+        FEntityLab L(false);
+        MakeThrowLab(L, 10);
+        L.Facts([](FFoundationPlayerFacts& F) { F.bAlive = false; });
+        TestEqual(TEXT("dead: refused"), Throw(L, false).Reason, EFoundationReason::Dead);
+        L.Facts([](FFoundationPlayerFacts& F) { F.bAlive = true; });
+        FFoundationCommand Stale = L.Make(EFoundationCommandType::Drop);
+        L.P().Inventory.SetSlot(0, L.P().Inventory.MakeStack(L.LabItem(), 10));
+        TestEqual(TEXT("changed hand: refused"), L.Run(Stale).Reason, EFoundationReason::ItemChanged);
+        TestTrue(TEXT("dead, changed: nothing thrown"),
+            L.P().Inventory.Hotbar[0].Count == 10 && L.A.GetItemEntities().IsEmpty() && L.A.ItemsThrown == 0);
+    }
     return true;
 }
 
@@ -969,13 +983,21 @@ bool FFoundationItemEntityMergeTest::RunTest(const FString&)
             L.A.GetItemEntities().Num() == 1 && L.Find(Ids.Value) && L.Find(Ids.Value)->Count == 8);
     }
     {
-        // Up to the max stack: 40 + 40 is 64 + 16, and stays so.
+        // Only when the sum fits the max stack (minecraft.wiki "Item (entity)", Merging): 40 and 40 stay apart.
         FEntityLab L(false);
         SpawnPair(L, FVector(0, 0, 0), 40, FVector(30, 0, 0), 40);
         L.Steps(120);
         const TArray<FFoundationItemEntity>& Es = L.A.GetItemEntities();
-        TestTrue(TEXT("64 and 16"),
-            Es.Num() == 2 && Es[0].Count + Es[1].Count == 80 && FMath::Max(Es[0].Count, Es[1].Count) == 64);
+        TestTrue(
+            TEXT("40 and 40 stay"), Es.Num() == 2 && Es[0].Count == 40 && Es[1].Count == 40 && L.A.ItemsMerged == 0);
+    }
+    {
+        // 32 and 32 make exactly 64: merged.
+        FEntityLab L(false);
+        SpawnPair(L, FVector(0, 0, 0), 32, FVector(30, 0, 0), 32);
+        L.Steps(40);
+        TestTrue(
+            TEXT("32 and 32 make one 64"), L.A.GetItemEntities().Num() == 1 && L.A.GetItemEntities()[0].Count == 64);
     }
     {
         // Different damage never merges.
@@ -1009,9 +1031,9 @@ bool FFoundationItemEntityMergeTest::RunTest(const FString&)
         TestEqual(TEXT("frozen: not merged"), L.A.GetItemEntities().Num(), 2);
     }
     {
-        // A tie goes into the seeker (the first to reach a multiple of 40), which keeps the longer delay and the
-        // younger age: A (delay 0) seeks on its 40th step; B, spawned 10 steps later with delay 50, has age 30 and
-        // delay 20.
+        // On a tie the seeker (the first to reach a multiple of 40) moves into the other (minecraft.wiki), which keeps
+        // the longer delay and the younger age: A (delay 0) seeks on its 40th step; B, spawned 10 steps later with
+        // delay 50, has age 30 and delay 20, and stays where it lies.
         FEntityLab L(false);
         L.A.Options.bItemEntities = true;
         L.Stand(FVector(-1500, -1500, 0));
@@ -1019,8 +1041,9 @@ bool FFoundationItemEntityMergeTest::RunTest(const FString&)
         L.Steps(10);
         const int32 B = L.A.SpawnItem(L.LabItem(), 3, FVector(30, 0, 0), FVector::ZeroVector, 50);
         L.Steps(30);
-        const FFoundationItemEntity* Into = L.Find(A);
-        TestTrue(TEXT("tie: into the seeker"), Into && !L.Find(B) && Into->Count == 6);
+        const FFoundationItemEntity* Into = L.Find(B);
+        TestTrue(TEXT("tie: the seeker moves into the other"), Into && !L.Find(A) && Into->Count == 6);
+        TestTrue(TEXT("tie: at the other's place"), Into && Into->LocalCm.Equals(FVector(30, 0, 0), 1e-6));
         TestTrue(TEXT("tie: the longer delay, the younger age"), Into && Into->PickupDelay == 20 && Into->Age == 30);
     }
     {
@@ -1085,6 +1108,86 @@ bool FFoundationItemEntityDespawnTest::RunTest(const FString&)
         const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(0, 0, 0), FVector::ZeroVector, 0);
         L.Steps(6010);
         TestNotNull(TEXT("off: still present"), L.Find(Id));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityPushOutTest, "Unnamed.Foundation.Items.Entities.PushOut",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationItemEntityPushOutTest::RunTest(const FString&)
+{
+    using namespace ItemEntityTestsLocal;
+    // Items fixes (S8a-b; minecraft.wiki "Item (entity)", Behavior): a block placed over a resting drop pushes it out
+    // of one of the unobstructed sides, or out of the top when every side is blocked. The drop lies at (130, 40) in
+    // cell (1, 0, 0): its -X face is 30 cm away, -Y 40, +Y 60, +X 70.
+    struct FCase
+    {
+        const TCHAR* Name;
+        TArray<FIntVector> Walls;
+        // Where it must end: its box wholly in this cell.
+        FIntVector Out;
+    };
+    const TArray<FCase> Cases = {
+        {TEXT("nearest side (-X)"), {}, {0, 0, 0}},
+        {TEXT("-X walled: the next nearest (-Y)"), {{0, 0, 0}}, {1, -1, 0}},
+        {TEXT("every side walled: out of the top"), {{0, 0, 0}, {2, 0, 0}, {1, -1, 0}, {1, 1, 0}}, {1, 0, 1}},
+    };
+    // The lab's origin is 0, so cells are 100 cm from the world's zero.
+    const auto Check = [this](const TCHAR* Name, const FBox& Box, const FIntVector& Out)
+    {
+        const FBox Cell(FVector(Out) * 100 - FVector(.001), FVector(Out + FIntVector(1)) * 100 + FVector(.001));
+        TestTrue(*FString::Printf(TEXT("%s: out, in cell %s (box %s)"), Name, *Out.ToString(), *Box.ToString()),
+            Cell.IsInside(Box));
+    };
+    for (const FCase& Case : Cases)
+    {
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        for (const FIntVector& Wall : Case.Walls)
+            L.Put(Wall);
+        const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(130, 40, 0), FVector::ZeroVector, 0);
+        L.Steps(5);
+        TestTrue(*FString::Printf(TEXT("%s: resting first"), Case.Name),
+            L.Find(Id) && L.Find(Id)->bOnGround && L.Find(Id)->LocalCm.Equals(FVector(130, 40, 0), 1e-6));
+        L.Put({1, 0, 0});
+        L.Steps(30);
+        const FFoundationItemEntity* E = L.Find(Id);
+        if (!TestNotNull(*FString::Printf(TEXT("%s: still there"), Case.Name), E)) continue;
+        const FBox Box = FoundationItemEntities::GetBox(L.A.World.OriginCm + E->LocalCm);
+        TestTrue(*FString::Printf(TEXT("%s: lab origin 0"), Case.Name), L.A.World.OriginCm.IsZero());
+        Check(Case.Name, Box, Case.Out);
+        TestTrue(*FString::Printf(TEXT("%s: moving normally again"), Case.Name), E->bOnGround);
+    }
+    {
+        // A block placed over the drop's edge only (its centre stays clear, 2.5 cm in): out the short way (-X).
+        FEntityLab L(false);
+        L.A.Options.bItemEntities = true;
+        L.Stand(FVector(-1500, -1500, 0));
+        const int32 Id = L.A.SpawnItem(L.LabItem(), 1, FVector(190, 40, 0), FVector::ZeroVector, 0);
+        L.Steps(5);
+        L.Put({2, 0, 0});
+        L.Steps(30);
+        const FFoundationItemEntity* E = L.Find(Id);
+        if (TestNotNull(TEXT("edge: still there"), E))
+            Check(TEXT("edge: the short way (-X)"), FoundationItemEntities::GetBox(E->LocalCm), {1, 0, 0});
+    }
+    {
+        // The orbs share the motion: an orb at rest in cell (1, 0, 0) leaves by its nearest side too.
+        FEntityLab L(false);
+        L.Stand(FVector(-1500, -1500, 0));
+        if (!TestEqual(TEXT("orb: one spawned"), L.A.SpawnExperience(FVector(130, 40, 0), 1, 1), 1)) return false;
+        FFoundationExperienceOrb& Orb = const_cast<FFoundationExperienceOrb&>(L.A.GetExperienceOrbs()[0]);
+        Orb.LocalCm = Orb.PreviousLocalCm = FVector(130, 40, 0);
+        Orb.VelocityCm = FVector::ZeroVector;
+        L.Steps(5);
+        L.Put({1, 0, 0});
+        L.Steps(30);
+        if (!TestEqual(TEXT("orb: still there"), L.A.GetExperienceOrbs().Num(), 1)) return false;
+        const FFoundationExperienceOrb& After = L.A.GetExperienceOrbs()[0];
+        Check(TEXT("orb, nearest side (-X)"), FoundationExperienceOrbs::GetBox(L.A.World.OriginCm + After.LocalCm),
+            {0, 0, 0});
     }
     return true;
 }

@@ -311,16 +311,7 @@ void FFoundationAuthority::StepItemEntities()
             ++Index;
             continue;
         }
-        Boxes.Reset();
-        const FBox Region = GetStepRegion(Entity, Origin);
-        if (GatherCollision)
-            GatherCollision(Region, Boxes);
-        else
-        {
-            World.GatherCollision(Region, Boxes);
-            for (const FFoundationStatic& Static : Statics)
-                if (Static.Box.Intersect(Region)) Boxes.Add(Static.Box);
-        }
+        GatherEntityCollision(GetStepRegion(Entity, Origin), GetBox(Origin + Entity.LocalCm), Boxes);
         Move(Entity, Origin, Boxes);
         ++Entity.Age;
         if (Entity.PickupDelay > 0) --Entity.PickupDelay;
@@ -374,7 +365,8 @@ void FFoundationAuthority::StepItemEntities()
 
 void FFoundationAuthority::Drop(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
 {
-    using namespace FoundationItemEntities;
+    // Items fixes (Codex review 4, #5): a dead player or a changed hand is refused first, as every hand command.
+    if (!CheckHand(Player, Command, Result)) return;
     // foundation.Items.Entities 0: refused, as before items S8b.
     if (!Options.bItemEntities)
     {
@@ -389,19 +381,11 @@ void FFoundationAuthority::Drop(FFoundationPlayer& Player, const FFoundationComm
     }
     // Survival and creative alike take the thrown items from the stack (vanilla's creative Q does too).
     const int32 Count = Command.bWholeStack ? Stack.Count : 1;
-    const FFoundationPlayerFacts Facts = Player.bHasFacts ? Player.Facts : FFoundationPlayerFacts();
-    FRandomStream Random(int32(HashCombine(GetTypeHash(Player.Id), GetTypeHash(NextItemEntityId))));
-    const double Angle = Random.FRandRange(0, 2 * UE_PI), Spread = Random.FRand() * ThrowSpreadCm;
-    const FVector Velocity = Facts.Aim.GetSafeNormal() * ThrowSpeedCm +
-        FVector(FMath::Cos(Angle) * Spread, FMath::Sin(Angle) * Spread,
-            ThrowUpCm + (Random.FRand() - Random.FRand()) * ThrowSpreadUpCm);
-    if (!SpawnItem(Stack.Item, Count, Facts.EyeCm - FVector(0, 0, ThrowBelowEyeCm) - World.OriginCm, Velocity,
-            ThrowPickupDelay, Stack.Damage))
+    if (!Throw(Player, Stack, Count))
     {
         Reject(Result, EFoundationReason::NoSupply);
         return;
     }
-    ++ItemsThrown;
     if (Count >= Stack.Count)
     {
         Stack = {};
@@ -413,6 +397,41 @@ void FFoundationAuthority::Drop(FFoundationPlayer& Player, const FFoundationComm
         Player.Inventory.Touch(Stack);
     }
     Result.Outcome = EFoundationOutcome::Committed;
+}
+
+bool FFoundationAuthority::Throw(const FFoundationPlayer& Player, const FFoundationItemInstance& Stack, int32 Count)
+{
+    using namespace FoundationItemEntities;
+    const FFoundationPlayerFacts Facts = Player.bHasFacts ? Player.Facts : FFoundationPlayerFacts();
+    FRandomStream Random(int32(HashCombine(GetTypeHash(Player.Id), GetTypeHash(NextItemEntityId))));
+    const double Angle = Random.FRandRange(0, 2 * UE_PI), Spread = Random.FRand() * ThrowSpreadCm;
+    const FVector Velocity = Facts.Aim.GetSafeNormal() * ThrowSpeedCm +
+        FVector(FMath::Cos(Angle) * Spread, FMath::Sin(Angle) * Spread,
+            ThrowUpCm + (Random.FRand() - Random.FRand()) * ThrowSpreadUpCm);
+    if (!SpawnItem(Stack.Item, Count, Facts.EyeCm - FVector(0, 0, ThrowBelowEyeCm) - World.OriginCm, Velocity,
+            ThrowPickupDelay, Stack.Damage))
+        return false;
+    ++ItemsThrown;
+    return true;
+}
+
+void FFoundationAuthority::GatherEntityCollision(const FBox& Region, const FBox& Body, TArray<FBox>& Boxes)
+{
+    const auto Gather = [this, &Boxes](const FBox& Where)
+    {
+        Boxes.Reset();
+        if (GatherCollision)
+            GatherCollision(Where, Boxes);
+        else
+        {
+            World.GatherCollision(Where, Boxes);
+            for (const FFoundationStatic& Static : Statics)
+                if (Static.Box.Intersect(Where)) Boxes.Add(Static.Box);
+        }
+    };
+    Gather(Region);
+    // Inside a block: the neighbours of the centre's cell are at most two blocks from the centre.
+    if (FoundationItemEntities::IsInside(Body, Boxes)) Gather(Region + Body.ExpandBy(2 * UFoundationProfile::BlockCm));
 }
 
 void FFoundationAuthority::MergeItemEntities()
@@ -437,13 +456,14 @@ void FFoundationAuthority::MergeItemEntities()
         {
             FFoundationItemEntity& A = ItemEntities[Index];
             FFoundationItemEntity& B = ItemEntities[Other];
-            if (Other == Index || B.bFrozen || B.Item != A.Item || B.Damage != A.Damage || B.Count >= MaxStack ||
-                !Overlaps(Reach, GetBox(Origin + B.LocalCm)))
+            // Items fixes (Codex review 4, #2; wiki "Item (entity)", Merging): only when the sum fits one stack.
+            if (Other == Index || B.bFrozen || B.Item != A.Item || B.Damage != A.Damage ||
+                A.Count + B.Count > MaxStack || !Overlaps(Reach, GetBox(Origin + B.LocalCm)))
                 continue;
-            // Provisional (P3): the smaller stack moves into the larger (into the seeker on a tie); the result keeps
-            // the longer pickup delay and the younger age.
-            FFoundationItemEntity& Into = B.Count > A.Count ? B : A;
-            FFoundationItemEntity& From = B.Count > A.Count ? A : B;
+            // The smaller stack moves into the larger, and on a tie the seeker into the other (Codex review 4, #3;
+            // the wiki); provisional (P3): the result keeps the longer pickup delay and the younger age.
+            FFoundationItemEntity& Into = B.Count >= A.Count ? B : A;
+            FFoundationItemEntity& From = B.Count >= A.Count ? A : B;
             const int32 Moved = FMath::Min(From.Count, MaxStack - Into.Count);
             Into.Count += Moved;
             From.Count -= Moved;
@@ -537,16 +557,7 @@ void FFoundationAuthority::StepExperienceOrbs()
             ? GetAttraction(
                   Position, Target->Facts.FeetCm + FVector(0, 0, (Target->Facts.EyeCm.Z - Target->Facts.FeetCm.Z) * .5))
             : FVector::ZeroVector;
-        Boxes.Reset();
-        const FBox Region = GetStepRegion(Orb, Origin, Push);
-        if (GatherCollision)
-            GatherCollision(Region, Boxes);
-        else
-        {
-            World.GatherCollision(Region, Boxes);
-            for (const FFoundationStatic& Static : Statics)
-                if (Static.Box.Intersect(Region)) Boxes.Add(Static.Box);
-        }
+        GatherEntityCollision(GetStepRegion(Orb, Origin, Push), GetBox(Origin + Orb.LocalCm), Boxes);
         Move(Orb, Origin, Boxes, Push);
         ++Orb.Age;
         const bool bDespawn = Orb.Age >= DespawnAge;
@@ -911,7 +922,8 @@ FFoundationResult FFoundationAuthority::Execute(
     {
         // A container click or close ends an item use in progress, as a slot change does.
         CancelUse(*Player);
-        // The click runs on a copy, which commits only when it throws nothing: throwing waits for survival step 4.
+        // The click runs on a copy. What it throws (a click outside the window, Q over a slot) goes as Q's throw (items
+        // fixes); with foundation.Items.Entities 0 such a click is refused and nothing changes.
         FFoundationInventory Trial = Player->Inventory;
         const FFoundationContainerRules ClickRules = MakeContainerRules();
         FFoundationContainerMenu Menu(Trial, ClickRules, Vitals.Mode == EFoundationPlayerMode::Creative);
@@ -920,8 +932,10 @@ FFoundationResult FFoundationAuthority::Execute(
             : FFoundationClickResult{false};
         if (!Click.bValid)
             Reject(Result, EFoundationReason::InvalidSlot);
-        else if (!Click.Thrown.IsEmpty())
+        else if (!Click.Thrown.IsEmpty() && !Options.bItemEntities)
             Reject(Result, EFoundationReason::DropDeferred);
+        else if (!Click.Thrown.IsEmpty() && !Throw(*Player, Click.Thrown, Click.Thrown.Count))
+            Reject(Result, EFoundationReason::NoSupply);
         else
         {
             Player->Inventory = MoveTemp(Trial);
@@ -933,8 +947,8 @@ FFoundationResult FFoundationAuthority::Execute(
     {
         CancelUse(*Player);
         // The cursor stack, then the crafting grid's stacks in slot order (survival step 6), go back into the
-        // inventory; what would not fit would be thrown, which is T2's (refused DropDeferred until then). Each stack
-        // keeps its damage and identity (FFoundationInventory::Return).
+        // inventory; what does not fit goes as Q's throw (items fixes), or with foundation.Items.Entities 0 the close
+        // is refused. Each stack keeps its damage and identity (FFoundationInventory::Return).
         FFoundationInventory Trial = Player->Inventory;
         TArray<FFoundationItemInstance, TInlineAllocator<1 + FFoundationInventory::CraftSlots>> Returns{Trial.Carried};
         Returns.Append(Trial.Craft);
@@ -942,11 +956,20 @@ FFoundationResult FFoundationAuthority::Execute(
         for (FFoundationItemInstance& Stack : Trial.Craft)
             Stack = {};
         Trial.QuickCraft = {};
-        bool bLeftOver = false;
+        TArray<FFoundationItemInstance, TInlineAllocator<1 + FFoundationInventory::CraftSlots>> Left;
         for (const FFoundationItemInstance& Stack : Returns)
-            bLeftOver |= !Stack.IsEmpty() && !Trial.Return(Stack, Rules.Items[Stack.Item].MaxStack).IsEmpty();
-        if (bLeftOver)
+            if (!Stack.IsEmpty())
+                if (FFoundationItemInstance Rest = Trial.Return(Stack, Rules.Items[Stack.Item].MaxStack);
+                    !Rest.IsEmpty())
+                    Left.Add(Rest);
+        bool bThrown = true;
+        if (!Left.IsEmpty() && Options.bItemEntities)
+            for (const FFoundationItemInstance& Stack : Left)
+                bThrown &= Throw(*Player, Stack, Stack.Count);
+        if (!Left.IsEmpty() && !Options.bItemEntities)
             Reject(Result, EFoundationReason::DropDeferred);
+        else if (!bThrown)
+            Reject(Result, EFoundationReason::NoSupply);
         else
         {
             ++Trial.Revision;

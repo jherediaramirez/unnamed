@@ -382,10 +382,21 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
         L.Click(MainMenuSlot(4), 1, EFoundationClickType::Pickup).IsCommitted() && HoldsStack(I.Main[4], StoneItem, 1));
     TestEqual(TEXT("only the player's container exists"),
         L.Click(MainMenuSlot(4), 0, EFoundationClickType::Pickup, 1).Reason, EFoundationReason::InvalidSlot);
-    // A throw waits for survival step 4: refused, nothing changes.
+    // With foundation.Items.Entities 0 a throw is refused and nothing changes.
+    L.A.Options.bItemEntities = false;
     const FFoundationResult Thrown = L.Click(FFoundationContainerMenu::Outside, 0, EFoundationClickType::Pickup);
     TestTrue(TEXT("throw deferred, the cursor kept"),
         Thrown.Reason == EFoundationReason::DropDeferred && HoldsStack(I.Carried, StoneItem, 9));
+    // At 1 (items fixes) a right click outside throws one as Q's throw does: delay 40, the cursor keeps the rest.
+    L.A.Options.bItemEntities = true;
+    TestTrue(TEXT("switch 1: a right click outside throws one"),
+        L.Click(FFoundationContainerMenu::Outside, 1, EFoundationClickType::Pickup).IsCommitted() &&
+            HoldsStack(I.Carried, StoneItem, 8) && L.A.GetItemEntities().Num() == 1 &&
+            L.A.GetItemEntities()[0].Item == StoneItem && L.A.GetItemEntities()[0].Count == 1 &&
+            L.A.GetItemEntities()[0].PickupDelay == 40 && L.A.ItemsThrown == 1);
+    // Back to 0 for the cases below, which were written for it.
+    I.Carried.Count = 9;
+    L.A.Options.bItemEntities = false;
     // Closing puts the cursor stack back.
     TestTrue(TEXT("close returns the cursor, merging as a pickup does"),
         L.Close().IsCommitted() && I.Carried.IsEmpty() && HoldsStack(I.Main[4], StoneItem, 10) &&
@@ -398,11 +409,19 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
     TestTrue(TEXT("close keeps a worn tool's damage and identity"),
         L.Close().IsCommitted() && I.Carried.IsEmpty() && I.Hotbar[0].Item == Pickaxe && I.Hotbar[0].Damage == 100 &&
             I.Hotbar[0].InstanceId == PickaxeId);
-    // A cursor that does not fit would be thrown: refused, the cursor kept.
+    // A cursor that does not fit is thrown; with foundation.Items.Entities 0 the close is refused, the cursor kept.
     for (int32 Slot = 0; Slot < 36; ++Slot)
         I.SetSlot(Slot, I.MakeStack(Pickaxe, 1));
     I.Carried = I.MakeStack(StoneItem, 3);
     TestEqual(TEXT("close with no room is deferred"), L.Close().Reason, EFoundationReason::DropDeferred);
+    TestTrue(TEXT("switch 0: the cursor kept, nothing thrown"),
+        HoldsStack(I.Carried, StoneItem, 3) && L.A.GetItemEntities().Num() == 1);
+    L.A.Options.bItemEntities = true;
+    TestTrue(TEXT("switch 1: close with no room throws the cursor stack"),
+        L.Close().IsCommitted() && I.Carried.IsEmpty() && L.A.GetItemEntities().Num() == 2 &&
+            L.A.GetItemEntities()[1].Item == StoneItem && L.A.GetItemEntities()[1].Count == 3 &&
+            L.A.GetItemEntities()[1].PickupDelay == 40 && L.A.ItemsThrown == 2);
+    L.A.Options.bItemEntities = false;
     // The switch at 0: the main and armor slots are not there; the hotbar and offhand still click.
     L.A.Options.bFullInventory = false;
     I.Carried = {};
