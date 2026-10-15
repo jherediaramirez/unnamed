@@ -368,7 +368,12 @@ enum class EFoundationEventKind : uint8
     ContainerOpened,
     // A mob's sound (survival T6 20a): Interaction the sound event, LocationCm where (world cm), Amount the volume,
     // EntityId the mob.
-    MobSound
+    MobSound,
+    // A piece went into an armor slot (survival step 19a): Item the piece, LocationCm the player's feet (world cm).
+    Equipped,
+    // A block's hand use changed it (survival B3a: a door, trapdoor or gate opened or closed): Cell the used block,
+    // State its new state, Interaction the sound event (FoundationBlockFamilies::GetUseSound).
+    BlockUsed
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -521,6 +526,11 @@ public:
     using FBlockWouldUse = TFunction<bool(
         const FFoundationAuthority& Authority, const FFoundationPlayer& Player, const FFoundationHit& Hit)>;
     void RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse = nullptr);
+    // Writes a block use's states (survival B3a, FoundationBlockFamilies::Use: both door halves at once), each cell
+    // settled as an edit (survival, the neighbour shapes), and adds a BlockUsed event with Sound; Result is Committed
+    // and bInteracted, Cell the used block. A write to a cell nobody knows rejects it all (OutsideBounds), unwritten.
+    void CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
+        TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result);
     // Whether the block in Cell has a use handler.
     bool HasBlockUse(const FIntVector& Cell) const;
     // Whether Player's use on Hit would be the block's (previews show no placement for it): a handler, and its
@@ -533,8 +543,8 @@ public:
     FFoundationBlockEntities BlockEntities;
     // The generated cooking recipes and fuels, resolved against Rules.Items on first use.
     const FFoundationCooking& GetCooking() const;
-    // An open container closes past this distance from the player's eye to its block (Codex review 12, finding 1;
-    // provisional: minecraft.wiki, the interaction range plus 4 blocks).
+    // An open container closes at this distance past the interaction range, from the player's eye to its block's box
+    // (Codex review 12, finding 1; survival2.r23.container_rule: the range plus 4 blocks, measured to the box).
     double ContainerReachExtraCm = 400;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
@@ -591,6 +601,12 @@ public:
     int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
+    // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
+    void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
+    // The wear a player's hurts owe (FFoundationVitals::PendingArmorWear) on every worn piece that wears, with lab
+    // tool wear on and not in creative; a piece worn out breaks (a ToolBroke event). How many broke.
+    int32 WearArmor(int32 Player, int32 Amount, EFoundationPlayerMode Mode);
     // Mobs (survival T6 20a), oldest first; Reset clears them. SpawnMob adds one standing at a position (cm from the
     // block world's origin) facing Yaw: its id, or 0 with Options.bMobs off.
     const TArray<FFoundationMob>& GetMobs() const { return Mobs; }
@@ -694,6 +710,11 @@ private:
         FFoundationResult& Result);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
+    // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.
+    bool UseEquip(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
+        FFoundationResult& Result);
+    // An Equipped event for each armor slot that now holds a different piece than Before.
+    void AddEquipEvents(const FFoundationPlayer& Player, TConstArrayView<FFoundationItemInstance> Before);
     void UseItemContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // Ends a use in progress (nothing consumed); true when one was active.

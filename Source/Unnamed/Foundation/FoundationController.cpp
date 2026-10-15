@@ -478,8 +478,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
     static const TCHAR* Kinds[] = {TEXT("placed"), TEXT("broke"), TEXT("hit"), TEXT("whiff"), TEXT("rejected"),
         TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped"),
         TEXT("picked up"), TEXT("eating"), TEXT("ate"), TEXT("stripped"), TEXT("took xp"), TEXT("filled"),
-        TEXT("emptied"), TEXT("extinguished"), TEXT("opened"), TEXT("mob sound")};
-    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::MobSound) + 1, "one name per event kind");
+        TEXT("emptied"), TEXT("extinguished"), TEXT("opened"), TEXT("mob sound"), TEXT("equipped"), TEXT("used")};
+    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::BlockUsed) + 1, "one name per event kind");
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;
@@ -491,7 +491,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
                 Event.bCritical ? TEXT(" CRITICAL") : TEXT(""));
         else if (Event.Kind == EFoundationEventKind::Rejected)
             Text += FString(TEXT(": ")) + LexToString(Event.Reason);
-        else if (Event.Kind == EFoundationEventKind::Interacted || Event.Kind == EFoundationEventKind::ContainerOpened)
+        else if (Event.Kind == EFoundationEventKind::Interacted ||
+            Event.Kind == EFoundationEventKind::ContainerOpened || Event.Kind == EFoundationEventKind::BlockUsed)
             Text += TEXT(" ") + Event.Interaction.ToString();
         else if (Event.Kind == EFoundationEventKind::Eating || Event.Kind == EFoundationEventKind::MobSound)
             continue; // Every fourth step of a meal, a mob's steps and calls: too chatty for the event log.

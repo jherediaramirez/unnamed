@@ -3,6 +3,7 @@
 #include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationRecipes.h"
+#include "FoundationShiftCraftCases.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -278,15 +279,17 @@ bool FFoundationRecipeShiftTest::RunTest(const FString&)
     TestTrue(TEXT("20 logs: 80 planks, 64 in hotbar 8 and 16 in hotbar 7"),
         L.Holds(L.Inv().Hotbar[8], TEXT("oak_planks"), 64) && L.Holds(L.Inv().Hotbar[7], TEXT("oak_planks"), 16) &&
             L.Inv().Craft[0].IsEmpty());
-    // No room for a whole result: nothing is crafted.
+    // Room for 3 of 4 planks: 3 go in and 1 is thrown (survival2.r23.crafting_rules; Unnamed.Foundation.Recipes.
+    // ShiftCraftFit). The throw is T2's, so with item entities off the click is refused and nothing changes.
     FFoundationInventory& Full = L.Inv();
     for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
         if (Slot < FFoundationInventory::FirstArmor) Full.SetSlot(Slot, Full.MakeStack(L.Item(TEXT("dirt")), 64));
     Full.SetSlot(0, Full.MakeStack(L.Item(TEXT("oak_planks")), 61));
     Full.Craft[0] = Full.MakeStack(L.Item(TEXT("oak_log")), 2);
-    L.Click(Result, 0, EFoundationClickType::QuickMove);
-    TestTrue(TEXT("3 of room for 4 planks: no craft"),
-        L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 2) && L.Holds(L.Inv().Hotbar[0], TEXT("oak_planks"), 61));
+    const FFoundationResult Partial = L.Click(Result, 0, EFoundationClickType::QuickMove);
+    TestTrue(TEXT("3 of room for 4 planks, item entities off: refused, no craft"),
+        Partial.Reason == EFoundationReason::DropDeferred && L.Holds(L.Inv().Craft[0], TEXT("oak_log"), 2) &&
+            L.Holds(L.Inv().Hotbar[0], TEXT("oak_planks"), 61));
     // A number key crafts into an empty hotbar slot only.
     L.Inv().SetSlot(4, {});
     L.Click(Result, 4, EFoundationClickType::Swap);
@@ -303,6 +306,24 @@ bool FFoundationRecipeShiftTest::RunTest(const FString&)
     L.Click(1, 0, EFoundationClickType::QuickMove);
     TestTrue(TEXT("shift on the grid moves to the inventory"),
         L.Inv().Craft[0].IsEmpty() && L.Holds(L.Inv().Main[0], TEXT("oak_log"), 1));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationRecipeShiftFitTest, "Unnamed.Foundation.Recipes.ShiftCraftFit", RecipeTestFlags)
+
+bool FFoundationRecipeShiftFitTest::RunTest(const FString&)
+{
+    // The inventory's 2x2 result against R23's five cases (FoundationShiftCraftCases.h).
+    FoundationShiftCraft::Run<FRecipeLab>(
+        *this, TEXT("2x2"),
+        [](FRecipeLab& L)
+        {
+            // The authority applies foundation.Inventory.Full on the first command; the main grid needs it now.
+            L.Inv().bFull = true;
+            return FFoundationContainerMenu::PlayerContainer;
+        },
+        [](FRecipeLab& L) -> FFoundationItemInstance& { return L.Inv().Craft[0]; });
     return true;
 }
 

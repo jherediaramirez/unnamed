@@ -118,7 +118,7 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
         const FFoundationBlockType& Block = Registry.GetBlock(State);
         FVoxelStateInfo Info;
         Info.Block = uint16(Block.ProtocolId);
-        Info.LightEmission = uint8(FMath::Clamp(Block.LightEmission, 0, 15));
+        Info.LightEmission = uint8(FMath::Clamp(Registry.GetLightEmission(State), 0, 15));
         Info.bLeaves = Leaves.IsValid() && Block.Tags.HasTag(Leaves);
         Info.Tint = PackRgb(Block.Tint);
         Info.TintSource = GetTintSource(Block.Tint);
@@ -184,7 +184,6 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                 // draws in the translucent section, keeping its half-transparent pixels (Codex review 15 #2).
                 Info.Layer =
                     Block.Layer == EFoundationRenderLayer::Translucent ? EVoxelLayer::Translucent : EVoxelLayer::Model;
-                Info.LightEmission = uint8(FMath::Clamp(Registry.GetLightEmission(State), 0, 15));
                 Info.ModelParts = Table->AddModelParts(Parts);
                 Info.ModelPartCount = uint8(Parts.Num());
                 FoundationBlockOffsets::CopyTo(Block, Info);

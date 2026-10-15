@@ -60,12 +60,19 @@ struct UNNAMED_API FFoundationVitals
     static constexpr int32 LavaFireTicks = 300;
     static constexpr int32 BurnIntervalTicks = 20;
 
-    // Lab configuration, kept across respawn. Armor, toughness and attack speed stand in for equipment.
+    // Lab configuration, kept across respawn. Armor and toughness are the attributes' base values (0 for a player);
+    // the worn pieces add theirs (survival step 19a). Attack speed stands in for the held item's.
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
     EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
     bool bNaturalRegeneration = true;
     float MaxHealth = 20, ArmorToughness = 0, AttackSpeed = 4;
     int32 Armor = 0;
+    // The worn armor pieces' modifiers, set by the holder every step (FFoundationAuthority::GetWornArmor).
+    int32 WornArmor = 0;
+    float WornToughness = 0;
+    // Armor wear owed by the hurts since the holder last took it: each hurt armor applies to costs every worn piece
+    // max(1, floor(damage / 4)) (minecraft.wiki "Armor", Durability; provisional).
+    int32 PendingArmorWear = 0;
 
     // Player state, restored by Respawn().
     float Health = 20, Absorption = 0, Saturation = 5, Exhaustion = 0, Progress = 0, LastHurt = 0;
@@ -150,6 +157,10 @@ struct UNNAMED_API FFoundationVitals
     // The same clock sampled PartialTicks ahead; an attack evaluates at 0.5.
     float GetAttackStrength(float PartialTicks) const;
     int32 GetExperienceForNextLevel() const;
+    // The armor and armor_toughness attributes: base plus the worn pieces, within the attributes' ranges (0-30 and
+    // 0-20; minecraft.wiki "Attribute").
+    int32 GetArmor() const { return FMath::Clamp(Armor + WornArmor, 0, 30); }
+    float GetArmorToughness() const { return FMath::Clamp(ArmorToughness + WornToughness, 0.f, 20.f); }
     FString Describe() const;
 
     static float GetDamageAfterArmor(float Damage, int32 ArmorPoints, float Toughness);

@@ -11,7 +11,8 @@ namespace
              "inventory leaves them on the ground (items S8a); Q throws one item and Ctrl+Q the stack, nearby stacks "
              "merge "
              "and items despawn after 6,000 ticks (items S8b). 0: the loot goes straight to the inventory and a full "
-             "inventory refuses the break, Q is refused, as before. Drops already in the world stay until picked up."));
+             "inventory refuses the break, Q is refused, as before. Drops already in the world stay until picked up, "
+             "moving as before (out of a block placed over them too)."));
 }
 
 bool FoundationItemEntities::IsOn()
@@ -51,8 +52,10 @@ FBox FoundationItemEntities::GetStepRegion(const FFoundationItemEntity& Entity, 
 
 void FoundationItemEntities::Move(FFoundationItemEntity& Entity, const FVector& OriginCm, const TArray<FBox>& Boxes)
 {
+    // The push-out's speed draw is a pure function of the item and its age, so a replay moves the same.
     MoveBox(Entity.LocalCm, Entity.PreviousLocalCm, Entity.VelocityCm, Entity.bOnGround,
-        GetBox(OriginCm + Entity.LocalCm), Boxes, GravityCm, FVector::ZeroVector);
+        GetBox(OriginCm + Entity.LocalCm), Boxes, GravityCm, FVector::ZeroVector,
+        FRandomStream(int32(HashCombine(GetTypeHash(Entity.Id), GetTypeHash(Entity.Age)))).GetFraction());
 }
 
 bool FoundationItemEntities::IsInside(const FBox& Box, const TArray<FBox>& Boxes)
@@ -65,78 +68,64 @@ bool FoundationItemEntities::IsInside(const FBox& Box, const TArray<FBox>& Boxes
 
 namespace
 {
-    // Items fixes (S8a-b): one step out of a block, moving through blocks. While the body's centre is in a box, it
-    // heads for the nearest unobstructed side of the centre's cell (up when every side is blocked); once the centre is
-    // clear it keeps that heading until the body is.
-    void PushOut(FVector& LocalCm, FVector& Velocity, bool& bOnGround, const FBox& Box, const TArray<FBox>& Boxes)
+    // Survival step 19a (SURVIVAL-RUN2-FINDINGS, R23, survival2.r23.item_rules, traced by survival2.r23.item_pushout):
+    // a body overlapping a block heads out of the cell its centre is in, by the nearest of north (-Y), south (+Y),
+    // west (-X), east (+X) and up, in that order and strictly nearer to win, never down. A side whose neighbouring cell
+    // one box fills whole (a full block) is no way out, so a slab or fence beside it is one; up when none is. That
+    // axis gets 0.1 to 0.3 blocks per tick (Random), the other two keep 0.75 of theirs. This replaces the items fixes'
+    // provisional push-out, which went back and forth between two boxes (Codex review 11, finding 1; FX-a).
+    void PushOut(FVector& Velocity, const FBox& Box, const FVector& LocalCm, const TArray<FBox>& Boxes, double Random)
     {
         using namespace FoundationItemEntities;
         const double Block = UFoundationProfile::BlockCm;
         const FVector Center = Box.GetCenter();
-        const auto IsSolidAt = [&Boxes](const FVector& Point)
+        // Cells are counted from the block world's origin, where the box stands on LocalCm.
+        const FVector Origin = FVector(Center.X, Center.Y, Box.Min.Z) - LocalCm;
+        const FVector Local = Center - Origin;
+        const FVector CellMin(FMath::FloorToDouble(Local.X / Block) * Block,
+            FMath::FloorToDouble(Local.Y / Block) * Block, FMath::FloorToDouble(Local.Z / Block) * Block);
+        const auto IsFull = [&](const FIntVector& Side)
         {
+            const FVector Min = Origin + CellMin + FVector(Side) * Block;
+            const FBox Cell(Min + FVector(.01), Min + FVector(Block - .01));
             for (const FBox& Solid : Boxes)
-                if (Solid.IsInside(Point)) return true;
+                if (Solid.IsInsideOrOn(Cell.Min) && Solid.IsInsideOrOn(Cell.Max)) return true;
             return false;
         };
-        if (IsSolidAt(Center))
+        const FIntVector Sides[] = {{0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, 1}};
+        FIntVector Best(0, 0, 1);
+        double BestDistance = TNumericLimits<double>::Max();
+        for (const FIntVector& Side : Sides)
         {
-            // Cells are counted from the block world's origin, where the box stands on LocalCm.
-            const FVector Origin = FVector(Center.X, Center.Y, Box.Min.Z) - LocalCm;
-            const FVector Local = Center - Origin;
-            const FVector CellMin(FMath::FloorToDouble(Local.X / Block) * Block,
-                FMath::FloorToDouble(Local.Y / Block) * Block, FMath::FloorToDouble(Local.Z / Block) * Block);
-            const auto IsFree = [&](const FIntVector& Side)
+            const int32 Axis = Side.X != 0 ? 0 : Side.Y != 0 ? 1 : 2;
+            const double Distance = Side[Axis] < 0 ? Local[Axis] - CellMin[Axis] : CellMin[Axis] + Block - Local[Axis];
+            if (Distance < BestDistance && !IsFull(Side))
             {
-                const FVector Min = Origin + CellMin + FVector(Side) * Block;
-                return !IsInside(FBox(Min, Min + FVector(Block)), Boxes);
-            };
-            // The sides in a fixed order; the nearest free one wins (the first on a tie).
-            const FIntVector Sides[] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}};
-            FIntVector Best(0, 0, 1);
-            double BestDistance = TNumericLimits<double>::Max();
-            for (const FIntVector& Side : Sides)
-            {
-                const int32 Axis = Side.X != 0 ? 0 : 1;
-                const double Distance =
-                    Side[Axis] < 0 ? Local[Axis] - CellMin[Axis] : CellMin[Axis] + Block - Local[Axis];
-                if (Distance < BestDistance && IsFree(Side))
-                {
-                    BestDistance = Distance;
-                    Best = Side;
-                }
+                BestDistance = Distance;
+                Best = Side;
             }
-            Velocity = FVector(Best) * PushOutCm;
         }
-        else
-        {
-            // Clear at the centre but still overlapping (leaving after a push, or a block placed over its edge): out of
-            // the first box it is in by the shortest way, sideways or up (never down, as above).
-            for (const FBox& Solid : Boxes)
-                if (Solid.Intersect(Box.ExpandBy(-.01)))
-                {
-                    const double Depths[] = {Box.Max.X - Solid.Min.X, Solid.Max.X - Box.Min.X, Box.Max.Y - Solid.Min.Y,
-                        Solid.Max.Y - Box.Min.Y, Solid.Max.Z - Box.Min.Z};
-                    const FVector Ways[] = {{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, 1}};
-                    int32 Shortest = 0;
-                    for (int32 Way = 1; Way < 5; ++Way)
-                        Shortest = Depths[Way] < Depths[Shortest] ? Way : Shortest;
-                    Velocity = Ways[Shortest] * PushOutCm;
-                    break;
-                }
-        }
-        LocalCm += Velocity;
-        bOnGround = false;
+        const int32 Axis = Best.X != 0 ? 0 : Best.Y != 0 ? 1 : 2;
+        Velocity *= PushOutKeep;
+        Velocity[Axis] = Best[Axis] * (PushOutMinCm + Random * PushOutRangeCm);
     }
 }
 
 void FoundationItemEntities::MoveBox(FVector& LocalCm, FVector& PreviousLocalCm, FVector& Velocity, bool& bOnGround,
-    const FBox& Box, const TArray<FBox>& Boxes, double Gravity, const FVector& PushCm)
+    const FBox& Box, const TArray<FBox>& Boxes, double Gravity, const FVector& PushCm, double PushOutRandom,
+    bool bGravityInside)
 {
     PreviousLocalCm = LocalCm;
     if (IsInside(Box, Boxes))
     {
-        PushOut(LocalCm, Velocity, bOnGround, Box, Boxes);
+        // R23: the step still has gravity (an item's; an orb starting inside skips it) and drag around the push, and
+        // moves through blocks.
+        if (bGravityInside) Velocity.Z -= Gravity;
+        Velocity += PushCm;
+        PushOut(Velocity, Box, LocalCm, Boxes, PushOutRandom);
+        LocalCm += Velocity;
+        bOnGround = false;
+        Velocity *= Drag;
         return;
     }
     Velocity.Z -= Gravity;

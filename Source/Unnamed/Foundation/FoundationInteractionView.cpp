@@ -748,6 +748,12 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
                         TEXT("entity.player.burp"), Event.LocationCm, .5f, FMath::FRand() * .1f + .9f);
             }
             break;
+        case EFoundationEventKind::BlockUsed:
+            // A door, trapdoor or gate opened or closed (survival B3a): its set's event from the block, play volume 1
+            // and pitch 0.9 + 0.1U (SURVIVAL-FINDINGS, R5, survival.r5.play_calls); the asset's volume applies on top.
+            if (BreakEffects && !Event.Interaction.IsNone())
+                BreakEffects->PlayEvent(Event.Interaction, Cell.GetCenter(), 1.f, FMath::FRand() * .1f + .9f);
+            break;
         case EFoundationEventKind::Stripped:
             // Axe stripping (step 14): item.axe.strip from the block, volume 1 and pitch 1 (provisional until a vanilla
             // capture).
@@ -774,6 +780,12 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             if (BreakEffects)
                 BreakEffects->PlayEvent(TEXT("block.lava.extinguish"), Cell.GetCenter(), .5f,
                     2.6f + (FMath::FRand() - FMath::FRand()) * .8f);
+            break;
+        case EFoundationEventKind::Equipped:
+            // Armor (survival step 19a): the piece's equip_sound at the player, PLAYERS, volume 1 and pitch 1
+            // (SURVIVAL-FINDINGS, R5, survival.r5.play_calls, F 3616-3627). An event DA_Sounds lacks stays silent.
+            if (const FName Sound = Authority.Rules.GetItem(Event.Item).EquipSound; BreakEffects && !Sound.IsNone())
+                BreakEffects->PlayEvent(Sound, Event.LocationCm, 1.f, 1.f);
             break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
@@ -1324,11 +1336,9 @@ void UFoundationInteractionView::PlayFurnaceSounds(
     // A display callback plays its block's sound with chance 0.1, volume 1, pitch 1
     // (survival2.r15.exact_callback_chances, survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the
     // callback's scheduling, one on 1 tick in 50 of a 20 Hz clock for each lit block within the sound's 16-block reach
-    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre.
-    constexpr float TicksPerSecond = 20, DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
-    FurnaceSoundClock += DeltaTime;
-    const int32 Ticks = FMath::Min(FMath::FloorToInt32(FurnaceSoundClock * TicksPerSecond), 4);
-    FurnaceSoundClock = FMath::Min(FurnaceSoundClock - Ticks / TicksPerSecond, 1 / TicksPerSecond);
+    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre. Nothing rolls while paused.
+    constexpr float DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
+    const int32 Ticks = FoundationFurnace::StepAmbienceClock(FurnaceSoundClock, DeltaTime, Pawn->IsSimulationEnabled());
     if (Ticks <= 0) return;
     const FVector Listener = Pawn->GetActorLocation();
     for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())

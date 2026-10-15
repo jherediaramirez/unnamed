@@ -135,7 +135,8 @@ void UHudPresenter::ApplyVitals(FHudSnapshot& S, const FFoundationVitals& V, con
     S.Health = V.Health;
     S.MaxHealth = V.MaxHealth;
     S.Absorption = V.Absorption;
-    S.Armor = V.Armor;
+    // The armor attribute: the lab's base plus the worn pieces (survival step 19a).
+    S.Armor = V.GetArmor();
     S.Food = V.Food;
     S.Saturation = V.Saturation;
     S.Air = V.Air;

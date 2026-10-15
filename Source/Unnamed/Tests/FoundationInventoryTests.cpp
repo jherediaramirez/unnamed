@@ -85,6 +85,23 @@ namespace
             Command.ClickType = Type;
             return A.Execute(Player, Command, Vitals);
         }
+        FFoundationResult Use(EFoundationHand Hand = EFoundationHand::Main)
+        {
+            FFoundationCommand Command;
+            Command.SessionId = A.GetSessionId();
+            Command.Sequence = Sequence++;
+            Command.Type = EFoundationCommandType::UseItemStart;
+            Command.Hand = Hand;
+            Command.Item = Inv().GetHand(Hand).GetRef();
+            return A.Execute(Player, Command, Vitals);
+        }
+        int32 CountEquipped(int32 Item) const
+        {
+            return A.GetEvents()
+                .FilterByPredicate([Item](const FFoundationEvent& Event)
+                    { return Event.Kind == EFoundationEventKind::Equipped && Event.Item == Item; })
+                .Num();
+        }
         FFoundationResult Close()
         {
             FFoundationCommand Command;
@@ -417,6 +434,15 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
     TestTrue(TEXT("switch 0: the cursor kept, nothing thrown"),
         HoldsStack(I.Carried, StoneItem, 3) && L.A.GetItemEntities().Num() == 1);
     L.A.Options.bItemEntities = true;
+    // A dead player throws nothing from the screen either (Codex review 11, finding 2): a click outside and a close
+    // with leftovers are refused, the cursor kept.
+    L.A.FindPlayer(L.Player)->Facts.bAlive = false;
+    TestEqual(TEXT("dead: a click outside is refused"),
+        L.Click(FFoundationContainerMenu::Outside, 1, EFoundationClickType::Pickup).Reason, EFoundationReason::Dead);
+    TestEqual(TEXT("dead: a close with leftovers is refused"), L.Close().Reason, EFoundationReason::Dead);
+    TestTrue(TEXT("dead: the cursor kept, nothing thrown"),
+        HoldsStack(I.Carried, StoneItem, 3) && L.A.GetItemEntities().Num() == 1 && L.A.ItemsThrown == 1);
+    L.A.FindPlayer(L.Player)->Facts.bAlive = true;
     TestTrue(TEXT("switch 1: close with no room throws the cursor stack"),
         L.Close().IsCommitted() && I.Carried.IsEmpty() && L.A.GetItemEntities().Num() == 2 &&
             L.A.GetItemEntities()[1].Item == StoneItem && L.A.GetItemEntities()[1].Count == 3 &&
@@ -433,6 +459,133 @@ bool FFoundationInventoryAuthorityTest::RunTest(const FString&)
         TEXT("switch 0: the hotbar clicks"), L.Click(HotbarMenuSlot(1), 0, EFoundationClickType::Pickup).IsCommitted());
     IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Inventory.Full"));
     TestTrue(TEXT("foundation.Inventory.Full exists and ships at 1"), Variable && Variable->GetInt() == 1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationInventoryArmorTest, "Unnamed.Foundation.Inventory.Armor", InvTestFlags)
+
+bool FFoundationInventoryArmorTest::RunTest(const FString&)
+{
+    // Survival step 19a. DA_Items has no armor pieces until 19a2, so the test adds a chestplate and boots with
+    // diamond_chestplate's and iron_boots' 26.3 data (armor 8 and 2, toughness 2 and 0, durability 528 and 195).
+    FInventoryLab L;
+    const auto AddPiece = [&L](const TCHAR* Id, EFoundationEquipmentSlot Slot, int32 Armor, float Toughness,
+                              int32 Durability, const TCHAR* Sound)
+    {
+        FFoundationItemDefinition Piece;
+        Piece.Id = Id;
+        Piece.MaxStack = 1;
+        Piece.Equipment = Slot;
+        Piece.Armor = Armor;
+        Piece.ArmorToughness = Toughness;
+        Piece.MaxDurability = Durability;
+        Piece.EquipSound = Sound;
+        L.A.Rules.Items.Add(Piece);
+        return L.A.Rules.Items.Num() - 1;
+    };
+    const int32 Chest =
+        AddPiece(TEXT("lab_chestplate"), EFoundationEquipmentSlot::Chest, 8, 2, 528, TEXT("item.armor.equip_diamond"));
+    const int32 Boots =
+        AddPiece(TEXT("lab_boots"), EFoundationEquipmentSlot::Feet, 2, 0, 195, TEXT("item.armor.equip_iron"));
+    L.A.Options.bItemUse = true;
+    FFoundationInventory& I = L.Inv();
+    const auto Worn = [&L]
+    {
+        int32 Armor = 0;
+        float Toughness = 0;
+        L.A.GetWornArmor(L.Player, Armor, Toughness);
+        return TPair<int32, float>(Armor, Toughness);
+    };
+    TestTrue(TEXT("nothing worn: 0, 0"), Worn() == TPair<int32, float>(0, 0.f));
+
+    // carved_pumpkin wears on the head (its 26.3 equippable, by id until DA_Blocks has equippables), not swappable,
+    // with the default equip sound.
+    const int32 Pumpkin = L.A.Rules.FindItem(TEXT("carved_pumpkin"));
+    if (TestTrue(TEXT("carved_pumpkin exists"), Pumpkin != INDEX_NONE))
+    {
+        const FFoundationItemDefinition& Item = L.A.Rules.GetItem(Pumpkin);
+        TestTrue(TEXT("carved_pumpkin: head, not swappable, equip_generic"),
+            Item.Equipment == EFoundationEquipmentSlot::Head && !Item.bSwappable &&
+                Item.EquipSound == TEXT("item.armor.equip_generic") && Item.Armor == 0);
+        I.Hotbar[1] = I.MakeStack(Pumpkin, 1);
+        TestTrue(TEXT("carved_pumpkin: shift-click puts it on the head"),
+            L.Click(HotbarMenuSlot(1), 0, EFoundationClickType::QuickMove).IsCommitted() &&
+                HoldsStack(I.Armor[3], Pumpkin, 1) && L.CountEquipped(Pumpkin) == 1);
+        TestTrue(TEXT("carved_pumpkin: no armor points"), Worn() == TPair<int32, float>(0, 0.f));
+        I.Armor[3] = {};
+        I.Hotbar[0] = I.MakeStack(Pumpkin, 1);
+        I.Select(0);
+        TestEqual(TEXT("carved_pumpkin: a right click does not wear it"), L.Use().Outcome, EFoundationOutcome::Pass);
+        TestTrue(TEXT("carved_pumpkin: still in hand"), I.Armor[3].IsEmpty() && HoldsStack(I.Hotbar[0], Pumpkin, 1));
+    }
+
+    // Review 19a1: a spectator, the item-use switch at 0 and a stack of two wear nothing.
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    I.Hotbar[0].Count = 2;
+    I.Select(0);
+    TestEqual(TEXT("a stack of two: passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    L.Vitals.Mode = EFoundationPlayerMode::Spectator;
+    TestEqual(TEXT("spectator: passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    L.Vitals.Mode = EFoundationPlayerMode::Survival;
+    L.A.Options.bItemUse = false;
+    TestEqual(TEXT("item use off: passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    L.A.Options.bItemUse = true;
+    TestTrue(TEXT("none of those wore it or made an event"), I.Armor[2].IsEmpty() && L.CountEquipped(Chest) == 0);
+    // A right click wears the chestplate (the hand empties) with one Equipped event; the worn totals count it.
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    I.Select(0);
+    TestTrue(TEXT("use: worn"), L.Use().IsCommitted() && HoldsStack(I.Armor[2], Chest, 1) && I.Hotbar[0].IsEmpty());
+    TestEqual(TEXT("use: one Equipped event"), L.CountEquipped(Chest), 1);
+    TestTrue(TEXT("chestplate: armor 8, toughness 2"), Worn() == TPair<int32, float>(8, 2.f));
+    // The boots by shift-click; the totals add.
+    I.Hotbar[2] = I.MakeStack(Boots, 1);
+    TestTrue(TEXT("boots: shift-click to the feet"),
+        L.Click(HotbarMenuSlot(2), 0, EFoundationClickType::QuickMove).IsCommitted() &&
+            HoldsStack(I.Armor[0], Boots, 1));
+    TestTrue(TEXT("chestplate and boots: 10, 2"), Worn() == TPair<int32, float>(10, 2.f));
+    // A second chestplate swaps with the worn one; the worn one comes back to the hand, damage kept.
+    I.Armor[2].Damage = 40;
+    const int32 OldId = I.Armor[2].InstanceId;
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    TestTrue(TEXT("swap: committed, the old piece in hand with its damage"),
+        L.Use().IsCommitted() && I.Hotbar[0].InstanceId == OldId && I.Hotbar[0].Damage == 40 && I.Armor[2].Damage == 0);
+    TestEqual(TEXT("swap: a second Equipped event"), L.CountEquipped(Chest), 2);
+    // A piece outside its own slot counts nothing.
+    I.Armor[3] = I.MakeStack(Boots, 1);
+    TestTrue(TEXT("boots on the head: still 10, 2"), Worn() == TPair<int32, float>(10, 2.f));
+    I.Armor[3] = {};
+
+    // Wear (lab tool wear on, survival): every worn piece takes the amount; a piece worn out breaks.
+    L.A.Options.bToolWear = true;
+    TestEqual(TEXT("wear: none broke"), L.A.WearArmor(L.Player, 3, EFoundationPlayerMode::Survival), 0);
+    TestTrue(TEXT("wear: both pieces took 3"), I.Armor[2].Damage == 3 && I.Armor[0].Damage == 3);
+    TestEqual(TEXT("wear: creative wears nothing"), L.A.WearArmor(L.Player, 3, EFoundationPlayerMode::Creative), 0);
+    TestEqual(TEXT("wear: the boots break at 195"), L.A.WearArmor(L.Player, 192, EFoundationPlayerMode::Survival), 1);
+    TestTrue(TEXT("wear: the boots gone, the chestplate at 195"), I.Armor[0].IsEmpty() && I.Armor[2].Damage == 195);
+    L.A.Options.bToolWear = false;
+    TestEqual(
+        TEXT("wear: lab tool wear off wears nothing"), L.A.WearArmor(L.Player, 3, EFoundationPlayerMode::Survival), 0);
+    TestEqual(TEXT("wear off: unchanged"), I.Armor[2].Damage, 195);
+
+    // R19 (survival2.r19.equip): in creative an empty slot gets a copy and the hand keeps the piece; an occupied one
+    // swaps as in survival.
+    L.Vitals.Mode = EFoundationPlayerMode::Creative;
+    I.Armor[2] = {};
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    const int32 HeldId = I.Hotbar[0].InstanceId;
+    TestTrue(TEXT("creative, empty slot: a copy worn, the hand keeps its piece"),
+        L.Use().IsCommitted() && HoldsStack(I.Armor[2], Chest, 1) && I.Armor[2].InstanceId != HeldId &&
+            HoldsStack(I.Hotbar[0], Chest, 1) && I.Hotbar[0].InstanceId == HeldId);
+    const int32 CopyId = I.Armor[2].InstanceId;
+    TestTrue(TEXT("creative, occupied: swapped"),
+        L.Use().IsCommitted() && I.Armor[2].InstanceId == HeldId && I.Hotbar[0].InstanceId == CopyId);
+    L.Vitals.Mode = EFoundationPlayerMode::Survival;
+    // foundation.Inventory.Full 0 has no armor slots: nothing worn, and a right click does not wear.
+    L.A.Options.bFullInventory = false;
+    TestTrue(TEXT("switch 0: nothing worn"), Worn() == TPair<int32, float>(0, 0.f));
+    I.Hotbar[0] = I.MakeStack(Chest, 1);
+    TestEqual(TEXT("switch 0: a right click passes"), L.Use().Outcome, EFoundationOutcome::Pass);
     return true;
 }
 #endif

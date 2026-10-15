@@ -113,6 +113,14 @@ struct FFoundationMenuLayout
     bool IsMain(int32 Slot) const { return Slot >= FirstMain && Slot < GetMainEnd(); }
     bool IsHotbar(int32 Slot) const { return Slot >= FirstHotbar && Slot < GetHotbarEnd(); }
     bool IsOffhand(int32 Slot) const { return Offhand != INDEX_NONE && Slot == Offhand; }
+    // A slot's own cap before the item's stack size: an armor slot holds one item, as a furnace's fuel slot holds one
+    // empty bucket (bBucket: the stack is FuelBucketItem). The authority's GetSlotMax and the screen's drag preview
+    // share it (Codex review 22, finding 3).
+    static constexpr const TCHAR* FuelBucketItem = TEXT("bucket");
+    int32 GetSlotLimit(int32 Slot, bool bBucket) const
+    {
+        return IsArmor(Slot) || (FuelSlot != INDEX_NONE && Slot == FuelSlot && bBucket) ? 1 : 64;
+    }
     // A menu slot's Inventory number (0-40), or INDEX_NONE for the result, the grid or a slot the menu lacks.
     int32 ToInventorySlot(int32 MenuSlot) const;
     int32 ToMenuSlot(int32 InventorySlot) const;

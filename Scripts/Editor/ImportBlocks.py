@@ -174,6 +174,9 @@ for block in data["blocks"]:
                     "collision_moves_with_offset"):
             entry.set_editor_property(key, block[key])
         entry.set_editor_property("offset_kind", enum(unreal.FoundationOffsetKind, block["offset_kind"]))
+    elif "state_light" in block:
+        # A full cube or slab whose states differ in light (BlockImportData.cube_light_fields).
+        entry.set_editor_property("state_light", block["state_light"])
     block_assets.append(entry)
 
 model_assets = []

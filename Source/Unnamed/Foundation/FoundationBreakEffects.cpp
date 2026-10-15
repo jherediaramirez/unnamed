@@ -1069,10 +1069,11 @@ void FFoundationBreakEffects::PlaySound(
     Entry.Location = Location;
     Entry.bHit = bHit;
     Entry.bPlace = bPlace;
+    USoundWave* Wave = File.Wave.Get();
+    Entry.bLoaded = Wave != nullptr;
     SoundLog.Add(Entry);
     // Past the cap the oldest half goes in one RemoveAt, so the shift is amortised over many sounds.
     if (SoundLog.Num() > MaxSoundLog) SoundLog.RemoveAt(0, SoundLog.Num() / 2);
-    USoundWave* Wave = File.Wave.Get();
     if (!Wave || !World || !World->GetAudioDeviceRaw()) return;
     if (CVarSoundTrace.GetValueOnGameThread())
         UE_LOG(LogUnnamedFoundation, Display, TEXT("Sound trace: play %s (%s), frame %llu, t %.4f"),
@@ -1118,9 +1119,10 @@ void FFoundationBreakEffects::PlayEvent(FName EventName, const FVector& Location
     Entry.Volume = Play.Volume;
     Entry.Pitch = Play.Pitch;
     Entry.Location = Location;
+    USoundWave* Wave = File.Wave.Get();
+    Entry.bLoaded = Wave != nullptr;
     SoundLog.Add(Entry);
     if (SoundLog.Num() > MaxSoundLog) SoundLog.RemoveAt(0, SoundLog.Num() / 2);
-    USoundWave* Wave = File.Wave.Get();
     if (!Wave || !World || !World->GetAudioDeviceRaw()) return;
     if (CVarSoundTrace.GetValueOnGameThread())
         UE_LOG(LogUnnamedFoundation, Display, TEXT("Sound trace: play %s (%s), frame %llu, t %.4f"),

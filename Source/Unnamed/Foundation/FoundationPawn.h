@@ -31,11 +31,17 @@ public:
     FFoundationEligibility Eligibility;
     // Health, food, air, experience and attack recovery; stepped with the simulation.
     FFoundationVitals Vitals;
+    // The reference step whose orb pickup last changed the level, and the level it made (-1: none), so the level-up
+    // sound is timed by that step, not the frame's (Codex review 14, finding 2).
+    int64 LevelGainStep = -1;
+    int32 LevelGainLevel = -1;
     // Place/mine/attack intent and timing, in a lab with an interaction authority (the Playground).
     FFoundationInteraction Interaction;
     FVector GetEyePosition() const;
     FFoundationTarget TraceTarget() const;
     void SetSimulationEnabled(bool bEnabled);
+    // False while paused (the pause menu); a survival screen keeps it on (SetScreenInput).
+    bool IsSimulationEnabled() const { return bSimulate; }
     // A survival screen (the inventory, a container) is open: the simulation keeps running (vitals, item entities,
     // orbs, furnaces) with the player's movement and look input zeroed (Codex review 12, finding 2).
     void SetScreenInput(bool bScreen);

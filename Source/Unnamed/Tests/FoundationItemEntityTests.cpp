@@ -1118,27 +1118,29 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemEntityPushOutTest, "Unnamed.Foun
 bool FFoundationItemEntityPushOutTest::RunTest(const FString&)
 {
     using namespace ItemEntityTestsLocal;
-    // Items fixes (S8a-b; minecraft.wiki "Item (entity)", Behavior): a block placed over a resting drop pushes it out
-    // of one of the unobstructed sides, or out of the top when every side is blocked. The drop lies at (130, 40) in
-    // cell (1, 0, 0): its -X face is 30 cm away, -Y 40, +Y 60, +X 70.
+    // R23 (survival2.r23.item_rules): a block placed over a resting drop pushes it out of the cell its centre is in,
+    // by the nearest of north (-Y), south, west (-X), east and up whose neighbour is not a full block. The drop lies at
+    // (130, 40) in cell (1, 0, 0): its -X face is 30 cm away, -Y 40, +Y 60, +X 70, the top 87.5.
     struct FCase
     {
         const TCHAR* Name;
         TArray<FIntVector> Walls;
-        // Where it must end: its box wholly in this cell.
-        FIntVector Out;
+        // The way out: its box must end past that face of cell (1, 0, 0) (it keeps sliding, as vanilla's does).
+        FIntVector Way;
     };
     const TArray<FCase> Cases = {
-        {TEXT("nearest side (-X)"), {}, {0, 0, 0}},
-        {TEXT("-X walled: the next nearest (-Y)"), {{0, 0, 0}}, {1, -1, 0}},
-        {TEXT("every side walled: out of the top"), {{0, 0, 0}, {2, 0, 0}, {1, -1, 0}, {1, 1, 0}}, {1, 0, 1}},
+        {TEXT("nearest side (-X)"), {}, {-1, 0, 0}},
+        {TEXT("-X walled: the next nearest (-Y)"), {{0, 0, 0}}, {0, -1, 0}},
+        {TEXT("every side walled: out of the top"), {{0, 0, 0}, {2, 0, 0}, {1, -1, 0}, {1, 1, 0}}, {0, 0, 1}},
     };
     // The lab's origin is 0, so cells are 100 cm from the world's zero.
-    const auto Check = [this](const TCHAR* Name, const FBox& Box, const FIntVector& Out)
+    const auto Check = [this](const TCHAR* Name, const FBox& Box, const FIntVector& Way)
     {
-        const FBox Cell(FVector(Out) * 100 - FVector(.001), FVector(Out + FIntVector(1)) * 100 + FVector(.001));
-        TestTrue(*FString::Printf(TEXT("%s: out, in cell %s (box %s)"), Name, *Out.ToString(), *Box.ToString()),
-            Cell.IsInside(Box));
+        const bool bPast = Way.X < 0 ? Box.Max.X <= 100.001
+            : Way.Y < 0              ? Box.Max.Y <= .001
+            : Way.Z > 0              ? Box.Min.Z >= 99.999
+                                     : false;
+        TestTrue(*FString::Printf(TEXT("%s: out by %s (box %s)"), Name, *Way.ToString(), *Box.ToString()), bPast);
     };
     for (const FCase& Case : Cases)
     {
@@ -1157,11 +1159,12 @@ bool FFoundationItemEntityPushOutTest::RunTest(const FString&)
         if (!TestNotNull(*FString::Printf(TEXT("%s: still there"), Case.Name), E)) continue;
         const FBox Box = FoundationItemEntities::GetBox(L.A.World.OriginCm + E->LocalCm);
         TestTrue(*FString::Printf(TEXT("%s: lab origin 0"), Case.Name), L.A.World.OriginCm.IsZero());
-        Check(Case.Name, Box, Case.Out);
+        Check(Case.Name, Box, Case.Way);
         TestTrue(*FString::Printf(TEXT("%s: moving normally again"), Case.Name), E->bOnGround);
     }
     {
-        // A block placed over the drop's edge only (its centre stays clear, 2.5 cm in): out the short way (-X).
+        // A block placed over the drop's edge only (its centre stays in cell (1, 0, 0), 2.5 cm in): R23 heads out of
+        // the centre's cell, not out of the block, so north (-Y, 40 cm) beats west (90) and the full block east.
         FEntityLab L(false);
         L.A.Options.bItemEntities = true;
         L.Stand(FVector(-1500, -1500, 0));
@@ -1171,7 +1174,80 @@ bool FFoundationItemEntityPushOutTest::RunTest(const FString&)
         L.Steps(30);
         const FFoundationItemEntity* E = L.Find(Id);
         if (TestNotNull(TEXT("edge: still there"), E))
-            Check(TEXT("edge: the short way (-X)"), FoundationItemEntities::GetBox(E->LocalCm), {1, 0, 0});
+            Check(TEXT("edge: north (-Y)"), FoundationItemEntities::GetBox(E->LocalCm), {0, -1, 0});
+    }
+    // Partial boxes, on MoveBox directly (origin 0, no floor: vanilla's escape sinks and jitters on one, R23's traces):
+    // a drop at From inside the given boxes, at the slowest draw. Within 40 steps it must be clear of them, never back
+    // where it was while inside, its bottom never at the top of the cell (100) or above; with bOnlyOut, never in a box
+    // it was not in at the start.
+    const auto Settle = [this](const TCHAR* Name, const TArray<FBox>& Boxes, const FVector& From, bool bOnlyOut)
+    {
+        FVector Local = From, Previous = From, Velocity = FVector::ZeroVector;
+        bool bOnGround = true;
+        TSet<FVector> Seen;
+        int32 Returns = 0, Entered = 0;
+        double Highest = -1e9;
+        TArray<FBox> Start;
+        for (const FBox& Solid : Boxes)
+            if (Solid.Intersect(FoundationItemEntities::GetBox(From).ExpandBy(-.01))) Start.Add(Solid);
+        for (int32 Step = 0; Step < 40; ++Step)
+        {
+            const FBox Box = FoundationItemEntities::GetBox(Local);
+            for (const FBox& Solid : Boxes)
+                Entered += !Start.Contains(Solid) && Solid.Intersect(Box.ExpandBy(-.01));
+            Returns += Seen.Contains(Local) && FoundationItemEntities::IsInside(Box, Boxes);
+            Highest = FMath::Max(Highest, Box.Min.Z);
+            Seen.Add(Local);
+            FoundationItemEntities::MoveBox(Local, Previous, Velocity, bOnGround, Box, Boxes,
+                FoundationItemEntities::GravityCm, FVector::ZeroVector);
+        }
+        TestFalse(*FString::Printf(TEXT("%s: clear of every box (at %s)"), Name, *Local.ToString()),
+            FoundationItemEntities::IsInside(FoundationItemEntities::GetBox(Local), Boxes));
+        TestEqual(*FString::Printf(TEXT("%s: never back where it was while inside"), Name), Returns, 0);
+        TestTrue(*FString::Printf(TEXT("%s: not over the top (bottom at most %.2f)"), Name, Highest), Highest < 100);
+        if (bOnlyOut) TestEqual(*FString::Printf(TEXT("%s: into no other box"), Name), Entered, 0);
+    };
+    // Codex 11 #1: stone in cell 0, an up-facing amethyst cluster's box (3/16 to 13/16 across, 7/16 tall) in cell 1,
+    // a drop at x 105 between them. The provisional push-out went 105, 115, 105, ... for ever; R23 heads north out of
+    // the centre's cell.
+    Settle(TEXT("full block and cluster"),
+        {FBox(FVector(0, 0, 0), FVector(100)), FBox(FVector(118.75, 18.75, 0), FVector(181.25, 81.25, 43.75))},
+        FVector(105, 50, 0), true);
+    // FX-a: a block placed over a drop walled on every side but -X, where a bottom oak_slab stands. The slab is not a
+    // full block, so the drop leaves by that side, not over the top.
+    Settle(TEXT("slab beside"),
+        {FBox(FVector(100, 0, 0), FVector(200, 100, 100)), FBox(FVector(200, 0, 0), FVector(300, 100, 100)),
+            FBox(FVector(100, -100, 0), FVector(200, 0, 100)), FBox(FVector(100, 100, 0), FVector(200, 200, 100)),
+            FBox(FVector(0, 0, 0), FVector(100, 100, 50))},
+        FVector(130, 40, 0), false);
+    {
+        // R23's "center" trace (survival2.r23.item_pushout): an item centred in a full block, every side equally near,
+        // goes north first. Ticks 1 and 2 at a draw of 0.5 (0.2 blocks per tick): gravity, then the vertical keeps
+        // 0.75 (-0.03, then (-0.0294 - 0.04) x 0.75 = -0.05205 blocks), the move through the block, the drag 0.98.
+        const TArray<FBox> Block = {FBox(FVector(0), FVector(100))};
+        FVector Local(50, 50, 37.5), Previous = Local, Velocity = FVector::ZeroVector;
+        bool bOnGround = true;
+        const auto Tick = [&](bool bGravity)
+        {
+            FoundationItemEntities::MoveBox(Local, Previous, Velocity, bOnGround, FoundationItemEntities::GetBox(Local),
+                Block, FoundationItemEntities::GravityCm, FVector::ZeroVector, .5, bGravity);
+        };
+        Tick(true);
+        TestTrue(*FString::Printf(TEXT("trace tick 1: at (50, 30, 34.5) (%s)"), *Local.ToString()),
+            Local.Equals(FVector(50, 30, 34.5), 1e-6));
+        TestTrue(*FString::Printf(TEXT("trace tick 1: velocity (0, -19.6, -2.94) (%s)"), *Velocity.ToString()),
+            Velocity.Equals(FVector(0, -19.6, -2.94), 1e-6) && !bOnGround);
+        Tick(true);
+        TestTrue(*FString::Printf(TEXT("trace tick 2: z 29.295, vertical -5.1009 (%s, %s)"), *Local.ToString(),
+                     *Velocity.ToString()),
+            FMath::IsNearlyEqual(Local.Z, 29.295, 1e-6) && FMath::IsNearlyEqual(Velocity.Z, -5.1009, 1e-6) &&
+                FMath::IsNearlyEqual(Local.Y, 10, 1e-6));
+        // An orb starting inside skips gravity (survival2.r23.xp_rules).
+        Local = Previous = FVector(50, 50, 37.5);
+        Velocity = FVector::ZeroVector;
+        Tick(false);
+        TestTrue(*FString::Printf(TEXT("orb inside: no gravity (%s)"), *Velocity.ToString()),
+            Velocity.Equals(FVector(0, -19.6, 0), 1e-6));
     }
     {
         // The orbs share the motion: an orb at rest in cell (1, 0, 0) leaves by its nearest side too.
@@ -1187,7 +1263,7 @@ bool FFoundationItemEntityPushOutTest::RunTest(const FString&)
         if (!TestEqual(TEXT("orb: still there"), L.A.GetExperienceOrbs().Num(), 1)) return false;
         const FFoundationExperienceOrb& After = L.A.GetExperienceOrbs()[0];
         Check(TEXT("orb, nearest side (-X)"), FoundationExperienceOrbs::GetBox(L.A.World.OriginCm + After.LocalCm),
-            {0, 0, 0});
+            {-1, 0, 0});
     }
     return true;
 }

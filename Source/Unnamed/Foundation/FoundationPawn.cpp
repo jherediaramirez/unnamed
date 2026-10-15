@@ -452,9 +452,28 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bFire = CVarFire.GetValueOnGameThread() != 0;
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
+    // A level set outside the orb pickups (the lab panel, a reset) ends the last gain's timing (review 19a1).
+    if (Vitals.Level != LevelGainLevel) LevelGainStep = LevelGainLevel = -1;
+    // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
+    if (Vitals.PendingArmorWear > 0)
+    {
+        Authority.WearArmor(Interaction.PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
+        Vitals.PendingArmorWear = 0;
+    }
+    Authority.GetWornArmor(Interaction.PlayerId, Vitals.WornArmor, Vitals.WornToughness);
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.
-    if (const int32 Points = Authority.TakeExperience(Interaction.PlayerId)) Vitals.AddExperience(Points);
+    if (const int32 Points = Authority.TakeExperience(Interaction.PlayerId))
+    {
+        const int32 Before = Vitals.Level;
+        Vitals.AddExperience(Points);
+        const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId);
+        if (Vitals.Level != Before && Player)
+        {
+            LevelGainStep = Player->Facts.Step;
+            LevelGainLevel = Vitals.Level;
+        }
+    }
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.
     if (const int32 Container = Interaction.OpenedContainer)
