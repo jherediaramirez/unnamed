@@ -16,10 +16,12 @@ namespace
     // drops their blank edge rows and columns (7 shaped recipes have them). A new item or block import changes these.
     // Survival B1 (all 887 block items): C:\dev\sandbox\b1-blocks\scripts\recipe_counts.py recomputes these from the
     // reference (and the old 272/41/129 at 079fe3e).
-    // Survival 20a (the 18 mob drops appended to the item reference): the same script gives 518/56/166 (515/56/164 before).
-    constexpr int32 RecipeResolvedShaped = 518;
-    constexpr int32 RecipeResolvedShapeless = 56;
-    constexpr int32 RecipeFit2x2 = 166;
+    // Survival 20a (the 18 mob drops appended to the item reference): the same script gives 518/56/166 (515/56/164
+    // before). Survival T1 8a2 (the 10 cooking outputs appended): the same script gives 531/69/180
+    // (C:\dev\sandbox\inv8a2\recipe_counts.txt).
+    constexpr int32 RecipeResolvedShaped = 531;
+    constexpr int32 RecipeResolvedShapeless = 69;
+    constexpr int32 RecipeFit2x2 = 180;
 
     const FFoundationRules& RecipeRules()
     {

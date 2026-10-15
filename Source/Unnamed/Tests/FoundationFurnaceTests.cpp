@@ -183,18 +183,21 @@ bool FFoundationFurnaceDataTest::RunTest(const FString&)
     const FFoundationCooking& Cooking = L.A.GetCooking();
     AddInfo(FString::Printf(
         TEXT("cooking: %d recipes, %d fuels resolved"), Cooking.GetRecipeCount(), Cooking.GetFuelCount()));
-    // Today 78 of the 116 recipes and 233 of the 347 fuels: the project lacks charcoal, the raw meats, blaze rods,
-    // bricks, boats, signs and banners (DA_Items); more resolve as items are added.
-    TestTrue(TEXT("recipes resolve"), Cooking.GetRecipeCount() >= 78);
-    TestTrue(TEXT("fuels resolve"), Cooking.GetFuelCount() >= 233);
+    // Today 106 of the 116 recipes and 234 of the 347 fuels (8a2 appended charcoal, the nuggets, brick, nether
+    // brick, the two dyes, dried kelp, resin brick and baked potato; 20a the four meats): the project still lacks
+    // rabbit, fish, chorus fruit, armor, blaze rods, boats, signs and banners (DA_Items); more resolve as items are
+    // added. 106 and 234 are this test's own AddInfo at 8a2 (C:\dev\sandbox\inv8a2\items-tests-1.log): floors, so new
+    // items only raise them.
+    TestTrue(TEXT("recipes resolve"), Cooking.GetRecipeCount() >= 106);
+    TestTrue(TEXT("fuels resolve"), Cooking.GetFuelCount() >= 234);
     const struct
     {
         const TCHAR* Item;
         int32 Ticks;
     } Fuels[] = {{TEXT("coal"), 1600}, {TEXT("coal_block"), 16000}, {TEXT("lava_bucket"), 20000},
         {TEXT("dried_kelp_block"), 4001}, {TEXT("oak_log"), 300}, {TEXT("oak_planks"), 300}, {TEXT("oak_slab"), 150},
-        {TEXT("stick"), 100}, {TEXT("oak_sapling"), 100}, {TEXT("bamboo"), 50}, {TEXT("cobblestone"), 0},
-        {TEXT("bucket"), 0}};
+        {TEXT("stick"), 100}, {TEXT("oak_sapling"), 100}, {TEXT("bamboo"), 50}, {TEXT("charcoal"), 1600},
+        {TEXT("cobblestone"), 0}, {TEXT("bucket"), 0}};
     for (const auto& [Item, Ticks] : Fuels)
         TestEqual(FString::Printf(TEXT("%s burns"), Item), Cooking.GetBurnTicks(L.Item(Item)), Ticks);
     const struct
@@ -204,7 +207,9 @@ bool FFoundationFurnaceDataTest::RunTest(const FString&)
         float Xp;
     } Recipes[] = {{TEXT("raw_iron"), TEXT("iron_ingot"), .7f}, {TEXT("raw_gold"), TEXT("gold_ingot"), 1.f},
         {TEXT("cobblestone"), TEXT("stone"), .1f}, {TEXT("sand"), TEXT("glass"), .1f},
-        {TEXT("raw_copper"), TEXT("copper_ingot"), .7f}, {TEXT("stone"), TEXT("smooth_stone"), .1f}};
+        {TEXT("raw_copper"), TEXT("copper_ingot"), .7f}, {TEXT("stone"), TEXT("smooth_stone"), .1f},
+        {TEXT("oak_log"), TEXT("charcoal"), .15f}, {TEXT("clay_ball"), TEXT("brick"), .3f},
+        {TEXT("potato"), TEXT("baked_potato"), .35f}};
     for (const auto& [Input, Result, Xp] : Recipes)
     {
         const FFoundationCookingRecipe* Recipe =
@@ -402,15 +407,15 @@ bool FFoundationFurnaceMenuTest::RunTest(const FString&)
         TestTrue(
             TEXT("reopened: same slots"), L.Open() > 0 && L.Holds(L.A.GetOpenMenu(L.P())[0], TEXT("cobblestone"), 10));
     }
-    // Shift-click routing (survival.r3.shift_click, furnace rows): 8 items from main 9 (furnace slot 3). The oak log
-    // and beef rows wait for charcoal and the raw meats (the project lacks those items, so a log is fuel here).
+    // Shift-click routing (survival.r3.shift_click, furnace rows, SURVIVAL-FINDINGS F 3210-3218): 8 items from main 9
+    // (furnace slot 3). A log smelts (into charcoal, 8a2) as well as burns: the input wins.
     {
         const struct
         {
             const TCHAR* Item;
             int32 Slot;
-        } Routes[] = {{TEXT("coal"), 1}, {TEXT("oak_planks"), 1}, {TEXT("raw_iron"), 0}, {TEXT("cobblestone"), 0},
-            {TEXT("sand"), 0}, {TEXT("bucket"), 30}};
+        } Routes[] = {{TEXT("coal"), 1}, {TEXT("oak_log"), 0}, {TEXT("oak_planks"), 1}, {TEXT("raw_iron"), 0},
+            {TEXT("cobblestone"), 0}, {TEXT("sand"), 0}, {TEXT("beef"), 0}, {TEXT("bucket"), 30}};
         for (const auto& [ItemId, Slot] : Routes)
         {
             FFurnaceLab L;
@@ -421,6 +426,16 @@ bool FFoundationFurnaceMenuTest::RunTest(const FString&)
             TestTrue(FString::Printf(TEXT("%s x8 to slot %d"), ItemId, Slot), L.Holds(Menu[Slot], ItemId, 8));
             TestTrue(FString::Printf(TEXT("%s left main 9"), ItemId), Menu[3].IsEmpty());
         }
+    }
+    // A log smelts into charcoal over coal (8a2's items: survival.r3.recipes, 200 ticks).
+    {
+        FFurnaceLab L;
+        L.Load(TEXT("oak_log"), 1, TEXT("coal"), 1);
+        FoundationFurnace::OnInputChanged(L.F(), L.A.GetCooking(), EFoundationCookingKind::Smelting);
+        L.Steps(205);
+        TestTrue(TEXT("a log smelted into one charcoal"),
+            L.Holds(L.F().Items[FEntity::FurnaceResult], TEXT("charcoal"), 1) &&
+                L.F().Items[FEntity::FurnaceInput].IsEmpty());
     }
     // Putting another item in the input starts over; adding more of the same keeps the progress.
     {

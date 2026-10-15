@@ -49,13 +49,23 @@ def verify_hashes():
     return hashlib.sha256(sums).hexdigest()
 
 
+# Layers drawn over a mob's main layer, listed after the eight main models (20b: the sheep's wool, white; its undercoat
+# and the other colours come with shearing, 20e): (mob, layer, texture, texture asset name).
+LAYERS = [("sheep", "sheep#wool", "entity/sheep/sheep_wool.png", "T_Mob_SheepWool")]
+
+
+def texture_name(mob):
+    return "T_Mob_" + mob[0].upper() + mob[1:]
+
+
 def models():
     facts = json.loads((REF / "facts/entity_models.json").read_text(encoding="utf-8"))
     sizes = {t["name"]: (t["width"], t["height"])
              for t in json.loads((REF / "textures.json").read_text(encoding="utf-8"))["textures"]}
+    layers = [(mob, f"{mob}#main", texture, texture_name(mob)) for mob, texture in MOBS.items()] + LAYERS
     out = []
-    for mob, texture in MOBS.items():
-        layer = facts[f"{mob}#main"]
+    for mob, name, texture, asset in layers:
+        layer = facts[name]
         parts = []
         for part in layer["parts"]:
             faces = []
@@ -66,8 +76,8 @@ def models():
                     faces.append({"normal": face["n"], "positions": [v[:3] for v in face["v"]],
                                   "uvs": [v[3:5] for v in face["v"]]})
             parts.append({"path": part["path"], "pivot": part["pivot"], "rotation": part["rot"], "faces": faces})
-        out.append({"id": mob, "layer": f"{mob}#main", "texture": texture, "texture_size": sizes[texture],
-                    "parts": parts})
+        out.append({"id": mob, "layer": name, "texture": texture, "texture_asset": asset,
+                    "texture_size": sizes[texture], "parts": parts})
     return out
 
 

@@ -44,6 +44,9 @@ TConstArrayView<TPair<FName, FFoundationConsumable>> FoundationConsumables::GetR
         TPair<FName, FFoundationConsumable>(TEXT("potato"), FFoundationConsumable{1, .6f, DefaultTicks}),
         TPair<FName, FFoundationConsumable>(TEXT("mutton"), FFoundationConsumable{2, 1.2f, DefaultTicks}),
         TPair<FName, FFoundationConsumable>(TEXT("cooked_mutton"), FFoundationConsumable{6, 9.6f, DefaultTicks}),
+        // Survival T1 8a2: the cooking outputs that are food (dried kelp's consume_seconds 0.8 is 16 ticks).
+        TPair<FName, FFoundationConsumable>(TEXT("dried_kelp"), FFoundationConsumable{1, .6f, 16}),
+        TPair<FName, FFoundationConsumable>(TEXT("baked_potato"), FFoundationConsumable{5, 6.f, DefaultTicks}),
     };
     return Table;
 }

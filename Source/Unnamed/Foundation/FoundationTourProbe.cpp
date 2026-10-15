@@ -1849,5 +1849,108 @@ void UFoundationRuntimeProbe::AddTourCases()
             Controller->GetPanels()->Close();
             Pawn->Vitals.FireTicks = 0;
         });
+
+    // n. The furnace's screen (T1 step 8a2). As case l, the probe puts a furnace in a known air cell near the player
+    // and opens its menu as the block's use does, with raw iron cooking over coal mid-burn and iron ingots in the
+    // result, so the shot shows the flame and the arrow (survival.r3.sprites). The furnace ticks under the screen; the
+    // block, its entity and the inventory are put back after.
+    const TSharedRef<TOptional<TPair<FIntVector, FFoundationBlockState>>> SavedFurnace =
+        MakeShared<TOptional<TPair<FIntVector, FFoundationBlockState>>>();
+    AddCase(
+        TEXT("tour furnace"), .8,
+        [this, Lab, Authority, SavedInventory, SavedFurnace]
+        {
+            ResetPlayer({0, 0, 0});
+            FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+            if (!Player) return;
+            *SavedInventory = Player->Inventory;
+            SavedFurnace->Reset();
+            FFoundationBlockWorld& World = Authority().World;
+            const FVector Back = -FRotator(0, Controller->GetControlRotation().Yaw, 0).Vector();
+            const FVector Side = FVector::CrossProduct(FVector::UpVector, Back);
+            const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+            TOptional<FIntVector> FurnaceCell;
+            for (const FVector& Offset : {Back * 150, Back * 250, Side * 150, Side * -150})
+                if (const FIntVector Cell = FoundationGrid::CellAt(Feet + Offset, World.OriginCm);
+                    !FurnaceCell && World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == TEXT("air"))
+                    FurnaceCell = Cell;
+            const FFoundationBlockType* Furnace = World.FindBlock(TEXT("furnace"));
+            // A failed setup leaves no screen, so the check below records it.
+            if (!Furnace || !FurnaceCell) return;
+            const FFoundationBlockState Before = World.Get(*FurnaceCell).State;
+            World.Set(*FurnaceCell, Furnace->GetDefaultState());
+            FFoundationResult Opened;
+            Authority().OpenContainer(*Player, EFoundationMenuKind::Furnace, *FurnaceCell, TEXT("furnace"), Opened);
+            if (!Opened.IsCommitted())
+            {
+                World.Set(*FurnaceCell, Before);
+                return;
+            }
+            SavedFurnace->Emplace(*FurnaceCell, Before);
+            FFoundationBlockEntities& Store = Authority().BlockEntities;
+            FFoundationBlockEntity& Entity =
+                Store.FindOrAdd(*FurnaceCell, EFoundationBlockEntityKind::Furnace, TEXT("furnace"));
+            Entity.Items.SetNum(FFoundationBlockEntity::FurnaceSlots);
+            const TCHAR* Contents[] = {TEXT("raw_iron"), TEXT("coal"), TEXT("iron_ingot")};
+            const int32 Counts[] = {5, 7, 3};
+            for (int32 Slot = 0; Slot < FFoundationBlockEntity::FurnaceSlots; ++Slot)
+                if (const int32 Item = Authority().Rules.FindItem(Contents[Slot]); Item != INDEX_NONE)
+                    Entity.Items[Slot] = Store.MakeStack(Item, Counts[Slot]);
+            // Mid-burn: about half the coal's 1600 ticks left and 120 of the 200-tick cook done.
+            Entity.LitDuration = 1600;
+            Entity.LitTime = 900;
+            Entity.CookTotal = 200;
+            Entity.CookProgress = 120;
+            ++Player->Inventory.Revision;
+            Controller->GetPanels()->OpenContainerScreen(*Lab, EFoundationMenuKind::Furnace, Opened.OpenedContainer);
+            if (TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen())
+            {
+                Screen->GetModel().Reset();
+                Screen->SetMouse(FHudContainerModel::GetSlotPosition(
+                                     EFoundationMenuKind::Furnace, FFoundationBlockEntity::FurnaceResult) +
+                    FIntPoint(8, 8));
+            }
+            CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+        },
+        [this, Authority, SavedFurnace]
+        {
+            const TSharedPtr<SHudContainerScreen> Screen = Controller->GetPanels()->GetSurvivalScreen();
+            const FFoundationBlockEntity* Entity =
+                SavedFurnace->IsSet() ? Authority().BlockEntities.Find(SavedFurnace->GetValue().Key) : nullptr;
+            const FHudContainerView View = Screen.IsValid() ? Screen->GetCurrentView() : FHudContainerView();
+            Record(TEXT("tour furnace open"), SavedFurnace->IsSet() && Screen.IsValid() && Screen->HasArt(),
+                TEXT("a furnace placed in a known air cell opens its screen with its imported background "
+                     "(furnace.png)"));
+            Record(TEXT("tour furnace: flame and arrow"),
+                Entity && View.bLit && FHudContainerModel::GetFlameHeight(View.bLit, View.LitFraction) > 0 &&
+                    FHudContainerModel::GetArrowWidth(View.CookFraction) > 0,
+                FString::Printf(
+                    TEXT("the view shows the furnace lit (flame %d px of 14) and cooking (arrow %d px of 24)"),
+                    FHudContainerModel::GetFlameHeight(View.bLit, View.LitFraction),
+                    FHudContainerModel::GetArrowWidth(View.CookFraction)));
+            FScreenshotRequest::RequestScreenshot(
+                FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24e-furnace.png"), true, false);
+        });
+    AddCase(TEXT("tour flush 24e-furnace"), .4, [] {}, [] {});
+    AddCase(
+        TEXT("tour furnace close"), .3,
+        [this, Authority, SavedInventory, SavedFurnace]
+        {
+            Controller->GetPanels()->Close();
+            // Only a furnace this case placed is put back, with the inventory it saved.
+            if (!SavedFurnace->IsSet()) return;
+            Authority().BlockEntities.Remove(SavedFurnace->GetValue().Key);
+            if (Authority().World.IsKnown(SavedFurnace->GetValue().Key))
+                Authority().World.Set(SavedFurnace->GetValue().Key, SavedFurnace->GetValue().Value);
+            SavedFurnace->Reset();
+            if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
+            {
+                const int32 Revision = Player->Inventory.Revision;
+                Player->OpenMenu = {};
+                Player->Inventory = *SavedInventory;
+                Player->Inventory.Revision = Revision + 1;
+            }
+        },
+        [] {});
 #endif
 }

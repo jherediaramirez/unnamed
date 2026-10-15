@@ -1,9 +1,9 @@
 """Import the mobs (survival T6 20a) from Reference/minecraft-entities-26.3 under /Game/Entities (EntityRoot):
 
-- T_Mob_<id>: each mob's default texture (MobImportData.MOBS), a Java 26.3 stand-in (Docs/StandIns.md), sRGB,
+- T_Mob_<id>: each mob's default texture (MobImportData.MOBS), and each extra layer's (MobImportData.LAYERS), a Java 26.3 stand-in (Docs/StandIns.md), sRGB,
   uncompressed, nearest, one mip.
 - M_Mob: the mobs' cutout material. Its Skin parameter takes the texture (FFoundationMobView makes one instance per
-  mob); texels below alpha 0.1 are cut, as the entity cutout does; per-instance custom data 0 is the red overlay
+  mob layer); texels below alpha 0.1 are cut, as the entity cutout does; per-instance custom data 0 is the red overlay
   [hurt.overlay]: the colour mixed toward red by OverlayRed (provisional, until the look call).
 - DA_Mobs (UFoundationMobAssets): the models (parts and faces from facts/entity_models.json) and the entity loot
   tables flattened by MobImportData.py.
@@ -43,13 +43,9 @@ def enum_of(type_name, names):
     fail("%s has none of %s" % (type_name, names))
 
 
-def texture_name(mob):
-    return "T_Mob_" + mob[0].upper() + mob[1:]
-
-
-def import_texture(mob, relative, size):
+def import_texture(asset, relative, size):
     png = Data.REF / Data.TEXTURES / relative
-    path = ProjectPaths.entity_asset(texture_name(mob))
+    path = ProjectPaths.entity_asset(asset)
     folder, name = ProjectPaths.split(path)
     task = unreal.AssetImportTask()
     task.set_editor_property("filename", str(png))
@@ -174,8 +170,8 @@ def loot_struct(table):
 def main():
     digest = Data.verify_hashes()
     models = Data.models()
-    textures = {m["id"]: import_texture(m["id"], m["texture"], m["texture_size"]) for m in models}
-    material = build_material(textures["cow"])
+    textures = {m["layer"]: import_texture(m["texture_asset"], m["texture"], m["texture_size"]) for m in models}
+    material = build_material(textures["cow#main"])
     tables, left_out = Data.loot_tables()
     if assets.does_asset_exist(REGISTRY):
         registry = assets.load_asset(REGISTRY)
@@ -188,7 +184,7 @@ def main():
     if not registry:
         fail("could not create " + REGISTRY)
     registry.set_editor_property("source_sha256", digest)
-    registry.set_editor_property("models", [model_struct(m, textures[m["id"]]) for m in models])
+    registry.set_editor_property("models", [model_struct(m, textures[m["layer"]]) for m in models])
     registry.set_editor_property("material", material)
     registry.set_editor_property("loot_tables", [loot_struct(t) for t in tables])
     if not assets.save_loaded_asset(registry, False):

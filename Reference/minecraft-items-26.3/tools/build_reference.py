@@ -70,11 +70,15 @@ TIER_A = {
     "mob_drop": ["beef", "leather", "porkchop", "cooked_porkchop", "mutton", "cooked_mutton", "chicken",
                  "cooked_chicken", "feather", "egg", "rotten_flesh", "bone", "gunpowder", "string", "spider_eye",
                  "carrot", "potato", "milk_bucket"],
+    # Survival T1 (furnace 8a2): the cooking outputs whose inputs the game already has (logs, iron and copper tools,
+    # clay ball, netherrack, cactus, sea pickle, kelp, resin clump, potato) that no other group holds.
+    "cooking_output": ["charcoal", "iron_nugget", "copper_nugget", "brick", "nether_brick", "green_dye", "lime_dye",
+                       "dried_kelp", "resin_brick", "baked_potato"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
 # the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
 # groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
-APPEND_LAST = ["drop", "mob_drop"]
+APPEND_LAST = ["drop", "mob_drop", "cooking_output"]
 
 
 def append_rank(group):
