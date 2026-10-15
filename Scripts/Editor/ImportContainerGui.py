@@ -34,6 +34,9 @@ SOURCES = ["gui/container/inventory"] + ["gui/sprites/container/slot/" + name fo
             "gui/sprites/container/" + name + "/burn_progress")] + \
           ["gui/sprites/widget/" + name for name in ("button", "button_highlighted", "button_disabled")] + \
           ["gui/container/generic_54"]
+# From the HUD reference's jar textures: the pumpkin's camera overlay (survival 19a2).
+HUD_TEXTURES = ROOT / "Reference/minecraft-hud-26.3/assets/minecraft/textures"
+HUD_SOURCES = ["misc/pumpkinblur"]
 TAG = "SourceSha256"
 assets = unreal.EditorAssetLibrary
 SETTINGS = dict(compression_settings=unreal.TextureCompressionSettings.TC_EDITOR_ICON,
@@ -49,8 +52,8 @@ def fail(message):
 def main():
     tools = unreal.AssetToolsHelpers.get_asset_tools()
     created = verified = 0
-    for relative in SOURCES:
-        png = TEXTURES / (relative + ".png")
+    for relative, root in [(path, TEXTURES) for path in SOURCES] + [(path, HUD_TEXTURES) for path in HUD_SOURCES]:
+        png = root / (relative + ".png")
         if not png.is_file():
             fail("missing reference texture: " + str(png))
         digest = hashlib.sha256(png.read_bytes()).hexdigest()

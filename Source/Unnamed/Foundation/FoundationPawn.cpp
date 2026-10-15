@@ -384,14 +384,24 @@ void AFoundationPawn::HandleDeath()
     FFoundationAuthority* Authority = GetAuthority();
     if (!FoundationDeath::IsScreenEnabled() || !Authority) return;
     // Drops leave at the moment of death, not at the respawn [survival.r6.death_items, survival.r6.death_xp].
-    const FVector FeetLocalCm = Simulation.Feet - Authority->World.OriginCm;
-    const int32 Seed = int32(HashCombine(GetTypeHash(Interaction.PlayerId), GetTypeHash(Vitals.Deaths)));
-    Authority->DropInventoryOnDeath(Interaction.PlayerId, FeetLocalCm, Seed);
+    DropOnDeath(*Authority, Interaction.PlayerId, Vitals, Simulation.Feet - Authority->World.OriginCm,
+        int32(HashCombine(GetTypeHash(Interaction.PlayerId), GetTypeHash(Vitals.Deaths))));
+}
+
+void AFoundationPawn::DropOnDeath(
+    FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals, const FVector& FeetLocalCm, int32 Seed)
+{
+    if (Vitals.PendingArmorWear > 0)
+    {
+        Authority.WearArmor(PlayerId, Vitals.PendingArmorWear, Vitals.Mode);
+        Vitals.PendingArmorWear = 0;
+    }
+    Authority.DropInventoryOnDeath(PlayerId, FeetLocalCm, Seed);
     // Orbs follow foundation.Items.Xp as an ore's do; a spectator drops none. Provisional: they leave the feet with an
     // ore drop's spread and speed.
-    if (Authority->Options.bExperienceOrbs && Vitals.Mode != EFoundationPlayerMode::Spectator)
+    if (Authority.Options.bExperienceOrbs && Vitals.Mode != EFoundationPlayerMode::Spectator)
         if (const int32 Points = FoundationDeath::GetExperienceDrop(Vitals.Level))
-            Authority->SpawnExperience(
+            Authority.SpawnExperience(
                 FeetLocalCm + FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5), Points, Seed ^ 0x5850);
 }
 
@@ -453,8 +463,6 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.Options.bBarrel = FoundationBarrel::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
-    // A level set outside the orb pickups (the lab panel, a reset) ends the last gain's timing (review 19a1).
-    if (Vitals.Level != LevelGainLevel) LevelGainStep = LevelGainLevel = -1;
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)
     {
@@ -471,8 +479,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId);
         if (Vitals.Level != Before && Player)
         {
-            LevelGainStep = Player->Facts.Step;
-            LevelGainLevel = Vitals.Level;
+            if (LevelGains.Num() == MaxLevelGains) LevelGains.RemoveAt(0);
+            LevelGains.Add({Player->Facts.Step, Before, Vitals.Level, ++LevelGainSerial});
         }
     }
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);

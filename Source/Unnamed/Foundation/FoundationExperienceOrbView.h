@@ -53,5 +53,7 @@ private:
     int32 LastLevel = -1;
     // The local player's step when the last level-up sound played (-1: none yet).
     int64 LastLevelUpStep = -1;
+    // The last level gain judged (FFoundationLevelGain::Serial).
+    int32 LastGainSerial = 0;
     TArray<float> Data;
 };

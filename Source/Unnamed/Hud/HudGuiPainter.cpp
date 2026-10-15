@@ -50,11 +50,12 @@ void FHudGuiArt::LoadItemSprites()
     TSet<FString> Tried;
     for (const TPair<FName, FHudCreativeItem>& Item : Items)
         if (!Registry || !Registry->FindBlock(Item.Key))
-            if (const FString Id = ItemSprite(Item.Key, Items); !Brushes.Contains(Id) && !Tried.Contains(Id))
-            {
-                Tried.Add(Id);
-                LoadBlockGui(Id);
-            }
+            for (const FHudSpriteLayer& Layer : GetSpriteLayers(Item.Key))
+                if (!Brushes.Contains(Layer.Sprite) && !Tried.Contains(Layer.Sprite))
+                {
+                    Tried.Add(Layer.Sprite);
+                    LoadBlockGui(Layer.Sprite);
+                }
 }
 
 void FHudGuiArt::LoadHudSprites()
@@ -79,6 +80,20 @@ FString FHudGuiArt::ItemSprite(FName Item, const FHudCreativeItems& Items)
     if (Item == TEXT("compass")) return TEXT("item/compass_16");
     if (const FHudCreativeItem* Info = Items.Find(Item); Info && !Info->Sprite.IsEmpty()) return Info->Sprite;
     return TEXT("item/") + Item.ToString();
+}
+
+TArray<FHudSpriteLayer> FHudGuiArt::GetSpriteLayers(FName Item) const
+{
+    const FHudCreativeItem* Info = Items.Find(Item);
+    TArray<FHudSpriteLayer> Layers = {{ItemSprite(Item, Items), Info ? Info->SpriteTint : FLinearColor::White}};
+    if (Info && !Info->SpriteOverlay.IsEmpty()) Layers.Add({Info->SpriteOverlay, FLinearColor::White});
+    return Layers;
+}
+
+FHudTooltipLine FHudGuiArt::GetNameLine(FName Item) const
+{
+    const FHudCreativeItem* Info = Items.Find(Item);
+    return {ItemName(Item), HudTooltip::GetNameColor(Info ? Info->Rarity : NAME_None)};
 }
 
 FSlateBrush FHudGuiArt::MakeBrush(UTexture2D* Texture)
@@ -153,7 +168,8 @@ void FHudGuiPainter::Item(FName Item, FIntPoint Position) const
     if (!Art.Registry ||
         !HudBlockIcon::Paint(
             Elements, LayerId, Geometry, Art.Atlas, *Art.Registry, Item, FVector2f(Position), Units, Art.Tick))
-        Box(Art.Find(FHudGuiArt::ItemSprite(Item, Art.Items)), Position, {16, 16});
+        for (const FHudSpriteLayer& Layer : Art.GetSpriteLayers(Item))
+            Box(Art.Find(Layer.Sprite), Position, {16, 16}, FBox2f(FVector2f(0), FVector2f(1)), Layer.Color);
 }
 
 void FHudGuiPainter::Stack(const FHudCreativeStack& Stack, FIntPoint Position) const

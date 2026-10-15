@@ -4,8 +4,15 @@
   "attribute.modifier.equals.0": "%s %s",
   "attribute.modifier.plus.0": "+%s %s",
   "attribute.modifier.take.0": "-%s %s",
+  "attribute.name.armor": "Armor",
+  "attribute.name.armor_toughness": "Armor Toughness",
   "attribute.name.attack_damage": "Attack Damage",
   "attribute.name.attack_speed": "Attack Speed",
+  "attribute.name.knockback_resistance": "Knockback Resistance",
+  "item.modifiers.chest": "When on Chest:",
+  "item.modifiers.feet": "When on Feet:",
+  "item.modifiers.head": "When on Head:",
+  "item.modifiers.legs": "When on Legs:",
   "item.modifiers.mainhand": "When in Main Hand:"
  }
 }

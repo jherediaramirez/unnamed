@@ -133,6 +133,44 @@
     "yellow_dye"
    ]
   },
+  "cauldron_can_remove_dye": {
+   "values": [
+    "minecraft:leather_helmet",
+    "minecraft:leather_chestplate",
+    "minecraft:leather_leggings",
+    "minecraft:leather_boots",
+    "minecraft:leather_horse_armor",
+    "minecraft:wolf_armor"
+   ],
+   "resolved": [
+    "leather_boots",
+    "leather_chestplate",
+    "leather_helmet",
+    "leather_horse_armor",
+    "leather_leggings",
+    "wolf_armor"
+   ]
+  },
+  "chest_armor": {
+   "values": [
+    "minecraft:leather_chestplate",
+    "minecraft:copper_chestplate",
+    "minecraft:chainmail_chestplate",
+    "minecraft:golden_chestplate",
+    "minecraft:iron_chestplate",
+    "minecraft:diamond_chestplate",
+    "minecraft:netherite_chestplate"
+   ],
+   "resolved": [
+    "chainmail_chestplate",
+    "copper_chestplate",
+    "diamond_chestplate",
+    "golden_chestplate",
+    "iron_chestplate",
+    "leather_chestplate",
+    "netherite_chestplate"
+   ]
+  },
   "chicken_food": {
    "values": [
     "minecraft:wheat_seeds",
@@ -301,6 +339,59 @@
     "egg"
    ]
   },
+  "enchantable/armor": {
+   "values": [
+    "#minecraft:enchantable/foot_armor",
+    "#minecraft:enchantable/leg_armor",
+    "#minecraft:enchantable/chest_armor",
+    "#minecraft:enchantable/head_armor"
+   ],
+   "resolved": [
+    "chainmail_boots",
+    "chainmail_chestplate",
+    "chainmail_helmet",
+    "chainmail_leggings",
+    "copper_boots",
+    "copper_chestplate",
+    "copper_helmet",
+    "copper_leggings",
+    "diamond_boots",
+    "diamond_chestplate",
+    "diamond_helmet",
+    "diamond_leggings",
+    "golden_boots",
+    "golden_chestplate",
+    "golden_helmet",
+    "golden_leggings",
+    "iron_boots",
+    "iron_chestplate",
+    "iron_helmet",
+    "iron_leggings",
+    "leather_boots",
+    "leather_chestplate",
+    "leather_helmet",
+    "leather_leggings",
+    "netherite_boots",
+    "netherite_chestplate",
+    "netherite_helmet",
+    "netherite_leggings",
+    "turtle_helmet"
+   ]
+  },
+  "enchantable/chest_armor": {
+   "values": [
+    "#minecraft:chest_armor"
+   ],
+   "resolved": [
+    "chainmail_chestplate",
+    "copper_chestplate",
+    "diamond_chestplate",
+    "golden_chestplate",
+    "iron_chestplate",
+    "leather_chestplate",
+    "netherite_chestplate"
+   ]
+  },
   "enchantable/durability": {
    "values": [
     "#minecraft:foot_armor",
@@ -412,6 +503,57 @@
     "wooden_sword"
    ]
   },
+  "enchantable/equippable": {
+   "values": [
+    "#minecraft:foot_armor",
+    "#minecraft:leg_armor",
+    "#minecraft:chest_armor",
+    "#minecraft:head_armor",
+    "minecraft:elytra",
+    "#minecraft:skulls",
+    "minecraft:carved_pumpkin"
+   ],
+   "resolved": [
+    "carved_pumpkin",
+    "chainmail_boots",
+    "chainmail_chestplate",
+    "chainmail_helmet",
+    "chainmail_leggings",
+    "copper_boots",
+    "copper_chestplate",
+    "copper_helmet",
+    "copper_leggings",
+    "creeper_head",
+    "diamond_boots",
+    "diamond_chestplate",
+    "diamond_helmet",
+    "diamond_leggings",
+    "dragon_head",
+    "elytra",
+    "golden_boots",
+    "golden_chestplate",
+    "golden_helmet",
+    "golden_leggings",
+    "iron_boots",
+    "iron_chestplate",
+    "iron_helmet",
+    "iron_leggings",
+    "leather_boots",
+    "leather_chestplate",
+    "leather_helmet",
+    "leather_leggings",
+    "netherite_boots",
+    "netherite_chestplate",
+    "netherite_helmet",
+    "netherite_leggings",
+    "piglin_head",
+    "player_head",
+    "skeleton_skull",
+    "turtle_helmet",
+    "wither_skeleton_skull",
+    "zombie_head"
+   ]
+  },
   "enchantable/fire_aspect": {
    "values": [
     "#minecraft:enchantable/melee_weapon",
@@ -433,6 +575,49 @@
     "stone_sword",
     "wooden_spear",
     "wooden_sword"
+   ]
+  },
+  "enchantable/foot_armor": {
+   "values": [
+    "#minecraft:foot_armor"
+   ],
+   "resolved": [
+    "chainmail_boots",
+    "copper_boots",
+    "diamond_boots",
+    "golden_boots",
+    "iron_boots",
+    "leather_boots",
+    "netherite_boots"
+   ]
+  },
+  "enchantable/head_armor": {
+   "values": [
+    "#minecraft:head_armor"
+   ],
+   "resolved": [
+    "chainmail_helmet",
+    "copper_helmet",
+    "diamond_helmet",
+    "golden_helmet",
+    "iron_helmet",
+    "leather_helmet",
+    "netherite_helmet",
+    "turtle_helmet"
+   ]
+  },
+  "enchantable/leg_armor": {
+   "values": [
+    "#minecraft:leg_armor"
+   ],
+   "resolved": [
+    "chainmail_leggings",
+    "copper_leggings",
+    "diamond_leggings",
+    "golden_leggings",
+    "iron_leggings",
+    "leather_leggings",
+    "netherite_leggings"
    ]
   },
   "enchantable/lunge": {
@@ -724,6 +909,26 @@
     "wooden_sword"
    ]
   },
+  "foot_armor": {
+   "values": [
+    "minecraft:leather_boots",
+    "minecraft:copper_boots",
+    "minecraft:chainmail_boots",
+    "minecraft:golden_boots",
+    "minecraft:iron_boots",
+    "minecraft:diamond_boots",
+    "minecraft:netherite_boots"
+   ],
+   "resolved": [
+    "chainmail_boots",
+    "copper_boots",
+    "diamond_boots",
+    "golden_boots",
+    "iron_boots",
+    "leather_boots",
+    "netherite_boots"
+   ]
+  },
   "fox_food": {
    "values": [
     "minecraft:sweet_berries",
@@ -732,6 +937,22 @@
    "resolved": [
     "glow_berries",
     "sweet_berries"
+   ]
+  },
+  "freeze_immune_wearables": {
+   "values": [
+    "minecraft:leather_boots",
+    "minecraft:leather_leggings",
+    "minecraft:leather_chestplate",
+    "minecraft:leather_helmet",
+    "minecraft:leather_horse_armor"
+   ],
+   "resolved": [
+    "leather_boots",
+    "leather_chestplate",
+    "leather_helmet",
+    "leather_horse_armor",
+    "leather_leggings"
    ]
   },
   "furnace_fuel_bottom_takeable": {
@@ -795,6 +1016,28 @@
     "yellow_harness"
    ]
   },
+  "head_armor": {
+   "values": [
+    "minecraft:leather_helmet",
+    "minecraft:copper_helmet",
+    "minecraft:chainmail_helmet",
+    "minecraft:golden_helmet",
+    "minecraft:iron_helmet",
+    "minecraft:diamond_helmet",
+    "minecraft:netherite_helmet",
+    "minecraft:turtle_helmet"
+   ],
+   "resolved": [
+    "chainmail_helmet",
+    "copper_helmet",
+    "diamond_helmet",
+    "golden_helmet",
+    "iron_helmet",
+    "leather_helmet",
+    "netherite_helmet",
+    "turtle_helmet"
+   ]
+  },
   "hoes": {
    "values": [
     "minecraft:diamond_hoe",
@@ -851,6 +1094,26 @@
    ],
    "resolved": [
     "iron_ingot"
+   ]
+  },
+  "leg_armor": {
+   "values": [
+    "minecraft:leather_leggings",
+    "minecraft:copper_leggings",
+    "minecraft:chainmail_leggings",
+    "minecraft:golden_leggings",
+    "minecraft:iron_leggings",
+    "minecraft:diamond_leggings",
+    "minecraft:netherite_leggings"
+   ],
+   "resolved": [
+    "chainmail_leggings",
+    "copper_leggings",
+    "diamond_leggings",
+    "golden_leggings",
+    "iron_leggings",
+    "leather_leggings",
+    "netherite_leggings"
    ]
   },
   "loom_dyes": {
@@ -1054,6 +1317,20 @@
     "golden_spear"
    ]
   },
+  "piglin_safe_armor": {
+   "values": [
+    "minecraft:golden_helmet",
+    "minecraft:golden_chestplate",
+    "minecraft:golden_leggings",
+    "minecraft:golden_boots"
+   ],
+   "resolved": [
+    "golden_boots",
+    "golden_chestplate",
+    "golden_helmet",
+    "golden_leggings"
+   ]
+  },
   "rabbit_food": {
    "values": [
     "minecraft:carrot",
@@ -1120,6 +1397,14 @@
    ],
    "resolved": [
     "netherite_ingot"
+   ]
+  },
+  "repairs_turtle_helmet": {
+   "values": [
+    "minecraft:turtle_scute"
+   ],
+   "resolved": [
+    "turtle_scute"
    ]
   },
   "saplings": {
@@ -1250,6 +1535,45 @@
     "quartz",
     "redstone",
     "resin_brick"
+   ]
+  },
+  "trimmable_armor": {
+   "values": [
+    "#minecraft:foot_armor",
+    "#minecraft:leg_armor",
+    "#minecraft:chest_armor",
+    "#minecraft:head_armor"
+   ],
+   "resolved": [
+    "chainmail_boots",
+    "chainmail_chestplate",
+    "chainmail_helmet",
+    "chainmail_leggings",
+    "copper_boots",
+    "copper_chestplate",
+    "copper_helmet",
+    "copper_leggings",
+    "diamond_boots",
+    "diamond_chestplate",
+    "diamond_helmet",
+    "diamond_leggings",
+    "golden_boots",
+    "golden_chestplate",
+    "golden_helmet",
+    "golden_leggings",
+    "iron_boots",
+    "iron_chestplate",
+    "iron_helmet",
+    "iron_leggings",
+    "leather_boots",
+    "leather_chestplate",
+    "leather_helmet",
+    "leather_leggings",
+    "netherite_boots",
+    "netherite_chestplate",
+    "netherite_helmet",
+    "netherite_leggings",
+    "turtle_helmet"
    ]
   },
   "villager_picks_up": {

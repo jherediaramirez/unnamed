@@ -364,7 +364,7 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
         Paint.Stack(Carried, O + Mouse - FIntPoint(8, 8));
     else if (Hover != INDEX_NONE && Hover != FContainerScreenMenu::Outside && !View.Get(Hover).IsEmpty())
     {
-        TArray<FHudTooltipLine> Lines = {{Art.ItemName(View.Get(Hover).Item), HudTooltip::White}};
+        TArray<FHudTooltipLine> Lines = {Art.GetNameLine(View.Get(Hover).Item)};
         if (const FHudCreativeItem* Info = Art.Items.Find(View.Get(Hover).Item)) Lines.Append(Info->Details);
         Paint.Tooltip(Lines, O + Mouse);
     }

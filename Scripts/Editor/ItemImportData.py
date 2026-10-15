@@ -15,6 +15,8 @@ from BlockImportData import pascal, tag_name as block_tag_name  # noqa: E402
 REFERENCE = "Reference/minecraft-items-26.3"
 ASSETS = "assets/minecraft/textures/"
 TAGS_INI = "Config/Tags/MinecraftItemTags.ini"
+# The item components report the reference copies (the rarity: the tooltip name's colour).
+COMPONENT_REPORT = "reports/components/item"
 # Declared natively in Source/Unnamed/Foundation/FoundationTags.cpp; no vanilla item tag may map onto them.
 NATIVE_TAGS = {"Item.Block"}
 # Survival B1: a sapling item places the sapling block of the same id once the blocks reference holds that block.
@@ -85,6 +87,21 @@ def modifier(m):
             "amount": float(m["amount"]), "operation": m["operation"], "slot": m["slot"]}
 
 
+def argb(value):
+    """A tint's packed ARGB int (the dye's default -6265536) as [r, g, b, a] bytes, sRGB like the sprites."""
+    value &= 0xFFFFFFFF
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255, value >> 24]
+
+
+def layer_tints(case, layers):
+    """One colour per layer: the case's tint (a dye's default), white where it has none; empty when untinted."""
+    tints = case.get("tints") or []
+    if not tints:
+        return []
+    return [argb(tints[i]["default"]) if i < len(tints) and tints[i] else [255, 255, 255, 255]
+            for i in range(len(layers))]
+
+
 def vector(values):
     return [float(v) for v in values]
 
@@ -106,6 +123,9 @@ def build(root):
                           "speed": float(rule.get("speed", 0.0)),
                           "states_correct_for_drops": "correct_for_drops" in rule,
                           "correct_for_drops": bool(rule.get("correct_for_drops", False))})
+        armor, equip = item.get("armor"), item.get("equippable")
+        rarity = json.loads((ref / COMPONENT_REPORT / (item["id"] + ".json")).read_text(encoding="utf-8"))[
+            "components"].get("minecraft:rarity", "common")
         cases = []
         for case in item["model"]["models"]:
             when = case["when"]
@@ -119,7 +139,7 @@ def build(root):
             # No attribute modifiers: the player's own base attack damage 1 and attack speed 4.
             "attack_damage": float(attack["damage"]) if attack else 1.0,
             "attacks_per_second": float(attack["speed"]) if attack else 4.0,
-            "modifiers": [modifier(m) for m in (attack or {}).get("modifiers", [])],
+            "modifiers": [modifier(m) for m in (attack or armor or {}).get("modifiers", [])],
             "tool": tool is not None,
             "default_mining_speed": float(tool["default_mining_speed"]) if tool else 1.0,
             "rules": rules,
@@ -138,6 +158,15 @@ def build(root):
             "hand_animation_on_swap": bool(item["model"]["hand_animation_on_swap"]),
             "textures": list(item["textures"]),
             "places_block": item["id"] if item["id"] in SAPLINGS and item["id"] in block_ids else "",
+            # Armor (survival step 19a2): the equippable component and the summed armor attributes.
+            "equipment_slot": equip["slot"] if equip else "",
+            "swappable": bool(equip["swappable"]) if equip else True,
+            "equip_sound": equip["equip_sound"].removeprefix("minecraft:") if equip else "",
+            "armor": float(armor["armor"]) if armor else 0.0,
+            "armor_toughness": float(armor["toughness"]) if armor else 0.0,
+            "knockback_resistance": float(armor["knockback_resistance"]) if armor else 0.0,
+            "layer_tints": layer_tints(item["model"]["models"][0], item["textures"]),
+            "rarity": rarity,
         })
     out_models = []
     for model in models["models"]:

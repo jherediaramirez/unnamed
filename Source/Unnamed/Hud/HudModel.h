@@ -66,8 +66,11 @@ struct FHudItemView
 {
     EHudItemIcon Icon = EHudItemIcon::Token;
     FLinearColor Tint = FLinearColor::White;
-    // The sprite's id ("item/iron_pickaxe"), drawn untinted at 16 x 16.
+    // The sprite's id ("item/iron_pickaxe"), drawn at 16 x 16 multiplied by SpriteTint, then SpriteOverlay (when set)
+    // over it untinted (the leather pieces).
     FName Sprite;
+    FName SpriteOverlay;
+    FLinearColor SpriteTint = FLinearColor::White;
     int32 Damage = 0, MaxDamage = 0;
     bool bInfinite = false;
     // The block a block item places, drawn as its 3D item model; animated textures repaint every tick.
@@ -139,6 +142,9 @@ struct FHudSnapshot
     // overlay (fire_1's frame index) while burning outside Creative/Spectator.
     bool bDamageTint = false, bOnFire = false;
     int32 FireFrame = 0;
+    // The worn head piece's camera overlay texture ("misc/pumpkinblur"), drawn over the whole view in first person;
+    // None: nothing.
+    FName CameraOverlay;
 
     bool CanHurt() const { return Mode == EHudMode::Survival || Mode == EHudMode::Adventure; }
     bool HasExperience() const { return CanHurt(); }
@@ -150,7 +156,7 @@ struct FHudSnapshot
             bRegeneration, bDamageCooldown, bLivingTarget, bTargetAlive, bTargetInRange, bSpectatorTarget,
             bDebugCrosshair3D, bFirstPerson, bVisible, bMainHandLeft, SelectedSlot, OffhandCount, Counts, ItemViews,
             OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, CaretIndex, bCaretVisible, bHideHud,
-            bDeathScreen, bDeathButtonsEnabled, DeathScore, DeathHover, bDamageTint, bOnFire, FireFrame);
+            bDeathScreen, bDeathButtonsEnabled, DeathScore, DeathHover, bDamageTint, bOnFire, FireFrame, CameraOverlay);
     }
     // Hand-written because a defaulted == compares FStrings ignoring case (a case-only edit of the typed line would
     // not redraw): the strings compare case-sensitively, everything else through GetFields. A new member must be

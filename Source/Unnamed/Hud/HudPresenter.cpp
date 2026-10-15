@@ -70,23 +70,46 @@ TSharedRef<SWidget> UHudPresenter::CreateView()
     // The items' GUI sprites (ImportItems.py, ItemRoot/Gui), by sprite id ("item/iron_pickaxe").
     if (const UFoundationItemAssets* Items = UFoundationItemAssets::LoadDefault())
         for (const FFoundationItemAsset& Item : Items->Items)
-        {
-            if (Item.Textures.IsEmpty() || Brushes.Contains(Item.Textures[0])) continue;
-            UTexture2D* Texture = Cast<UTexture2D>(
-                UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Item.Textures[0].ToString()).TryLoad());
-            if (!Texture)
+            // The first texture, and the second (the leather pieces' overlay layer).
+            for (int32 Layer = 0; Layer < FMath::Min(Item.Textures.Num(), 2); ++Layer)
             {
-                ++MissingTextures;
-                UE_LOG(LogUnnamedHud, Error, TEXT("Missing item sprite: %s"), *Item.Textures[0].ToString());
-                continue;
+                const FName Sprite = Item.Textures[Layer];
+                if (Brushes.Contains(Sprite)) continue;
+                UTexture2D* Texture = Cast<UTexture2D>(
+                    UUnnamedProjectSettings::GetItemAssetPath(TEXT("Gui/") + Sprite.ToString()).TryLoad());
+                if (!Texture)
+                {
+                    // Only the first layer is drawn for every item; a missing overlay just draws nothing.
+                    if (Layer > 0) continue;
+                    ++MissingTextures;
+                    UE_LOG(LogUnnamedHud, Error, TEXT("Missing item sprite: %s"), *Sprite.ToString());
+                    continue;
+                }
+                ItemSprites.Add(Texture);
+                FSlateBrush Brush;
+                Brush.SetResourceObject(Texture);
+                Brush.ImageSize = FVector2D(16, 16);
+                Brush.DrawAs = ESlateBrushDrawType::Image;
+                Brushes.Add(Sprite, Brush);
             }
-            ItemSprites.Add(Texture);
+    // The camera overlay of a worn head piece (ImportContainerGui.py, GuiRoot/Container/misc/pumpkinblur).
+    {
+        const FSoftObjectPath Path =
+            UUnnamedProjectSettings::GetGuiAssetPath(TEXT("Container/") + FString(TEXT("misc/pumpkinblur")));
+        UTexture2D* Texture =
+            FPackageName::DoesPackageExist(Path.GetLongPackageName()) ? Cast<UTexture2D>(Path.TryLoad()) : nullptr;
+        if (Texture)
+        {
+            CameraOverlays.Add(Texture);
             FSlateBrush Brush;
             Brush.SetResourceObject(Texture);
-            Brush.ImageSize = FVector2D(16, 16);
+            Brush.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
             Brush.DrawAs = ESlateBrushDrawType::Image;
-            Brushes.Add(Item.Textures[0], Brush);
+            Brushes.Add(TEXT("misc/pumpkinblur"), Brush);
         }
+        else
+            UE_LOG(LogUnnamedHud, Warning, TEXT("Missing GUI sprite misc/pumpkinblur; run ImportContainerGui.py"));
+    }
     // The death screen's vanilla buttons (step 11a), from ImportContainerGui.py (GuiRoot/Container).
     for (const TCHAR* Id : {TEXT("gui/sprites/widget/button"), TEXT("gui/sprites/widget/button_highlighted"),
              TEXT("gui/sprites/widget/button_disabled")})
@@ -181,6 +204,11 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
             : !Item.Sprite.IsNone()           ? EHudItemIcon::Sprite
                                               : EHudItemIcon::Token;
         Out.Sprite = Out.Icon == EHudItemIcon::Sprite ? Item.Sprite : NAME_None;
+        if (Out.Icon == EHudItemIcon::Sprite)
+        {
+            Out.SpriteOverlay = Item.SpriteOverlay;
+            Out.SpriteTint = FLinearColor(Item.SpriteTint);
+        }
         Out.Tint = Item.IconColor;
         if (Out.Icon == EHudItemIcon::Block && Blocks && Blocks->FindBlock(Item.PlacesBlock))
         {
@@ -200,6 +228,13 @@ void UHudPresenter::ApplyInventory(FHudSnapshot& S, const FFoundationInventory& 
     S.OffhandView = View(Inventory.Offhand, S.OffhandCount);
     const FFoundationItemInstance& Held = Inventory.GetHand(EFoundationHand::Main);
     S.ItemName = Held.IsEmpty() ? FString() : Rules.GetItem(Held.Item).DisplayName;
+    // The head slot's camera overlay (the pumpkin blur); only a piece made for the head, in the head slot, shows it.
+    S.CameraOverlay = NAME_None;
+    constexpr int32 HeadIndex = 3;
+    if (Inventory.Armor.IsValidIndex(HeadIndex) && !Inventory.Armor[HeadIndex].IsEmpty())
+        if (const FFoundationItemDefinition& Worn = Rules.GetItem(Inventory.Armor[HeadIndex].Item);
+            Worn.Equipment == EFoundationEquipmentSlot::Head)
+            S.CameraOverlay = Worn.CameraOverlay;
 }
 
 void UHudPresenter::ResetPreview()

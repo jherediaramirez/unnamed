@@ -222,6 +222,18 @@ bool FFoundationMobPathTest::RunTest(const FString&)
         TestFalse(TEXT("ceiling: the 1.4 mob's partial path stops before it"),
             W.Touches(Path, FIntVector(2, -99, -99), FIntVector(99, 99, 99)));
     }
+    {
+        // 11. Codex review 23 #1: bottom slabs at head height over a one-high corridor. Their tops (1.5) are too high
+        // to jump to, so the search must keep looking down and walk under them. Mutation: break on the rise rejection.
+        FMobPathWorld W;
+        W.Box(FIntVector(2, -10, 1), FIntVector(3, 10, 1), .5f);
+        TArray<FIntVector> Path;
+        TestTrue(
+            TEXT("slab ceiling: a 0.9 mob walks under it"), W.Find(FIntVector(0, 0, 0), FIntVector(5, 0, 0), .9, Path));
+        TestTrue(TEXT("slab ceiling: through the corridor at z 0"), Path.Contains(FIntVector(2, 0, 0)));
+        TestFalse(TEXT("slab ceiling: never on the slabs' tops"),
+            W.Touches(Path, FIntVector(-99, -99, 1), FIntVector(99, 99, 99)));
+    }
     return true;
 }
 #endif

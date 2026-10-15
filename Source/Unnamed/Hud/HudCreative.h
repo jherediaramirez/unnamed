@@ -40,6 +40,11 @@ struct FHudCreativeItem
     TArray<FString> Tags;
     // The flat sprite of an item that is not a block, its first texture ("block/oak_sapling"); empty: "item/<id>".
     FString Sprite;
+    // A second sprite drawn over Sprite untinted (the leather pieces); empty: none. SpriteTint multiplies Sprite.
+    FString SpriteOverlay;
+    FLinearColor SpriteTint = FLinearColor::White;
+    // The tooltip name's colour class (HudTooltip::GetNameColor): "uncommon" yellow; None: white.
+    FName Rarity;
 };
 
 using FHudCreativeItems = TMap<FName, FHudCreativeItem>;
@@ -201,7 +206,11 @@ namespace HudTooltip
     // Named chat colours (minecraft.wiki "Formatting codes"): the line colours tooltips use.
     inline const FColor White = FColor(0xFF, 0xFF, 0xFF), Gray = FColor(0xAA, 0xAA, 0xAA),
                         DarkGreen = FColor(0x00, 0xAA, 0x00), Blue = FColor(0x55, 0x55, 0xFF),
-                        Red = FColor(0xFF, 0x55, 0x55);
+                        Red = FColor(0xFF, 0x55, 0x55), Yellow = FColor(0xFF, 0xFF, 0x55),
+                        Aqua = FColor(0x55, 0xFF, 0xFF), LightPurple = FColor(0xFF, 0x55, 0xFF);
+    // The item name's colour for its rarity (minecraft.wiki "Rarity"): common white, uncommon yellow (the chainmail
+    // pieces), rare aqua, epic light purple; None or unknown: white.
+    UNNAMED_API FColor GetNameColor(FName Rarity);
     // The player's base attack damage and attack speed, which its base modifiers add to (minecraft.wiki
     // "Attribute"; the item reference's attack totals).
     constexpr double BaseAttackDamage = 1, BaseAttackSpeed = 4;

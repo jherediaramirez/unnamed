@@ -11,6 +11,14 @@ class UHudAssets;
 class UTexture2D;
 struct FGeometry;
 
+// One flat sprite of an item's GUI icon and the colour that multiplies it.
+struct FHudSpriteLayer
+{
+    FString Sprite;
+    FLinearColor Color = FLinearColor::White;
+    bool operator==(const FHudSpriteLayer& Other) const = default;
+};
+
 // The brushes and item facts a native container screen draws with (the creative and survival inventories): GUI
 // textures by their reference path ("gui/container/inventory"), item sprites, the block icon atlas, the HUD's font
 // and tooltip sprites.
@@ -46,6 +54,11 @@ struct UNNAMED_API FHudGuiArt
     // The sprite of an item that is not an imported block: the tab icons and the 26.3 items (DA_Items), by the
     // item's first texture where it is known (the saplings' "block/oak_sapling").
     static FString ItemSprite(FName Item, const FHudCreativeItems& Items);
+    // The sprite layers of an item that is not a block, bottom first: its sprite times its tint, then its overlay
+    // (when it has one) untinted.
+    TArray<FHudSpriteLayer> GetSpriteLayers(FName Item) const;
+    // The tooltip's first line: the item's name in its rarity's colour.
+    FHudTooltipLine GetNameLine(FName Item) const;
     static FSlateBrush MakeBrush(UTexture2D* Texture);
 };
 
