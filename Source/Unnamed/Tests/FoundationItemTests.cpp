@@ -95,7 +95,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
     const TArray<TSharedPtr<FJsonValue>>& Items = Reference->GetArrayField(TEXT("items"));
-    if (!TestEqual(TEXT("143 items"), Assets->Items.Num(), 143) ||
+    if (!TestEqual(TEXT("144 items"), Assets->Items.Num(), 144) ||
         !TestEqual(TEXT("as many as items.json"), Assets->Items.Num(), Items.Num()))
         return false;
     TestEqual(TEXT("reference digest"), Assets->SourceSha256.Len(), 64);
@@ -115,6 +115,14 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
         TestTrue(TEXT("leather boots: feet, 1, the dye default and the overlay"),
             B.Equipment == EFoundationEquipmentSlot::Feet && B.Armor == 1 && B.SpriteTint == FColor(160, 101, 64) &&
                 B.SpriteOverlay == TEXT("item/leather_boots_overlay"));
+        // Codex review 31 #4: 26.3's damage_resistant #minecraft:is_fire on the netherite pieces only.
+        TestFalse(TEXT("diamond chestplate: not fire resistant"), C.bFireResistant);
+        for (const TCHAR* Piece : {TEXT("helmet"), TEXT("chestplate"), TEXT("leggings"), TEXT("boots")})
+        {
+            const int32 Netherite = Rules.FindItem(FName(FString(TEXT("netherite_")) + Piece));
+            TestTrue(FString::Printf(TEXT("netherite %s: fire resistant"), Piece),
+                Netherite != INDEX_NONE && Rules.Items[Netherite].bFireResistant);
+        }
     }
     for (int32 Index = 0; Index < Items.Num(); ++Index)
     {
@@ -204,12 +212,17 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             {
                 // A plain model and the select's fallback cover every context: no list.
                 const TSharedPtr<FJsonObject> When = ObjectOr(Cases[Case]->AsObject(), TEXT("when"));
-                TArray<FString> Contexts = Strings(When, TEXT("is"));
-                if (When && Contexts.IsEmpty() && StringOr(When, TEXT("is")) != TEXT("fallback"))
+                // A using_item condition's case (the shield, T2 19b): no contexts, UsingItem 1 for [true], 0 for
+                // [false]; every other case -1.
+                const bool bUsing = When && StringOr(When, TEXT("property")) == TEXT("using_item");
+                int32 Using = -1;
+                if (bUsing) Using = When->GetArrayField(TEXT("is"))[0]->AsBool() ? 1 : 0;
+                TArray<FString> Contexts = bUsing ? TArray<FString>() : Strings(When, TEXT("is"));
+                if (!bUsing && When && Contexts.IsEmpty() && StringOr(When, TEXT("is")) != TEXT("fallback"))
                     Contexts.Add(StringOr(When, TEXT("is")));
                 TestTrue(What + FString::Printf(TEXT("model case %d"), Case),
                     Asset.Models[Case].Model.ToString() == Cases[Case]->AsObject()->GetStringField(TEXT("model")) &&
-                        Names(Asset.Models[Case].Contexts) == Contexts);
+                        Names(Asset.Models[Case].Contexts) == Contexts && Asset.Models[Case].UsingItem == Using);
             }
         bool bHandAnimation = false;
         Model->TryGetBoolField(TEXT("hand_animation_on_swap"), bHandAnimation);
@@ -250,7 +263,9 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                 Definition->DefaultMiningSpeed == Asset.DefaultMiningSpeed &&
                 Definition->MiningRules.Num() == Asset.Rules.Num() && Definition->Tags.Num() == Asset.ItemTags.Num() &&
                 Definition->PlacesBlock == Asset.PlacesBlock && Definition->DisplayName == Asset.DisplayName &&
-                !Asset.Textures.IsEmpty() && Definition->Sprite == Asset.Textures[0]);
+                // A special model's item (the shield) has no layers: its stand-in GUI sprite.
+                Definition->Sprite == (Asset.Textures.IsEmpty() ? Asset.GuiSprite : Asset.Textures[0]) &&
+                !Definition->Sprite.IsNone());
         for (int32 Rule = 0; Rule < FMath::Min(Definition->MiningRules.Num(), Asset.Rules.Num()); ++Rule)
             TestTrue(What + FString::Printf(TEXT("definition rule %d"), Rule),
                 Definition->MiningRules[Rule].Speed == Asset.Rules[Rule].Speed &&
@@ -288,7 +303,8 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             const TSharedPtr<FJsonObject> Display = Json->GetObjectField(TEXT("display"));
             TestTrue(TEXT("model ") + Asset.Name.ToString(),
                 Asset.Name.ToString() == Json->GetStringField(TEXT("id")) &&
-                    Asset.Parent.ToString() == StringOr(Json, TEXT("parent")) &&
+                    // A root model (the shield's two, T2 19b) has no parent: None.
+                    (Asset.Parent.IsNone() ? FString() : Asset.Parent.ToString()) == StringOr(Json, TEXT("parent")) &&
                     Asset.GuiLight.ToString() == StringOr(Json, TEXT("gui_light")) &&
                     Names(Asset.Layers) == Strings(Json, TEXT("layers")) &&
                     Asset.Display.Num() == Display->Values.Num());

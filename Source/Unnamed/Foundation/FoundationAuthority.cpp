@@ -10,6 +10,7 @@
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationStripping.h"
 #include "HAL/IConsoleManager.h"
+#include "Sky/VoxelTimeline.h"
 
 namespace
 {
@@ -138,6 +139,16 @@ namespace
             Inventory.QuickCraft = {};
             ++Inventory.Revision;
         }
+    }
+
+    // A block's 26.3 loot table, unless foundation.Loot.AllBlocks 0 leaves only items S5b's ore tables (RollBlockDrops
+    // and SettlePlants' PopOtherHalf must agree: a two-half block drops once).
+    const FFoundationLootTable* FindAuthorityLootTable(const TMap<FName, FFoundationLootTable>& Tables, FName Block)
+    {
+        const FFoundationLootTable* Table = Tables.Find(Block);
+        return Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0
+            ? nullptr
+            : Table;
     }
 }
 
@@ -366,8 +377,9 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
                                                                                                          : nullptr;
 }
 
-void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntVector& Cell,
-    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result)
+void FFoundationAuthority::CommitBlockUse(const FFoundationPlayer& Player, const FIntVector& Cell,
+    TConstArrayView<TPair<FIntVector, FFoundationBlockState>> Writes, FName Sound, FFoundationResult& Result,
+    float Volume, float Pitch)
 {
     if (!Algo::AllOf(
             Writes, [this](const TPair<FIntVector, FFoundationBlockState>& Write) { return World.IsKnown(Write.Key); }))
@@ -380,7 +392,7 @@ void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntV
         Before.Add(World.Get(Write.Key).State);
     World.SetMany(Writes);
     for (int32 Index = 0; Index < Writes.Num(); ++Index)
-        SettlePlants(Writes[Index].Key, Before[Index], Player);
+        SettlePlants(Writes[Index].Key, Before[Index], Player, false);
     Result.Outcome = EFoundationOutcome::Committed;
     Result.bInteracted = true;
     Result.Cell = Cell;
@@ -392,8 +404,44 @@ void FFoundationAuthority::CommitBlockUse(FFoundationPlayer& Player, const FIntV
     Event.Cell = Cell;
     Event.State = Result.State;
     Event.Interaction = Sound;
+    Event.Amount = Volume;
+    Event.Pitch = Pitch;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
+}
+
+void FFoundationAuthority::ScheduleBlockTick(
+    const FIntVector& Cell, FFoundationBlockState Expect, int32 Delay, EFoundationBlockTick Kind)
+{
+    // A cell keeps one tick per kind, the newest: a button broken and replaced, then pressed, is released by its own
+    // press, not the old one's (B3b review).
+    BlockTicks.RemoveAll([&Cell, Kind](const FBlockTick& Tick) { return Tick.Cell == Cell && Tick.Kind == Kind; });
+    BlockTicks.Add({Cell, Expect, FMath::Max(Delay, 1), Kind});
+}
+
+void FFoundationAuthority::StepBlockTicks()
+{
+    // Due ticks leave the list before they run, so a tick that schedules another (a button pressed again) keeps it.
+    TArray<FBlockTick, TInlineAllocator<8>> Due;
+    for (int32 Index = 0; Index < BlockTicks.Num();)
+        if (--BlockTicks[Index].Remaining <= 0)
+        {
+            Due.Add(BlockTicks[Index]);
+            BlockTicks.RemoveAt(Index);
+        }
+        else
+            ++Index;
+    for (const FBlockTick& Tick : Due)
+    {
+        // A cell nobody knows drops its tick (edits are not saved, so the cell comes back as generated).
+        if (!World.IsKnown(Tick.Cell) || World.Get(Tick.Cell).State != Tick.Expect) continue;
+        switch (Tick.Kind)
+        {
+        case EFoundationBlockTick::ButtonRelease:
+            FoundationBlockFamilies::ReleaseButton(*this, Tick.Cell);
+            break;
+        }
+    }
 }
 
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
@@ -490,6 +538,11 @@ FFoundationInventory FFoundationAuthority::MakeLoadout()
     return Inventory;
 }
 
+void FFoundationAuthority::ResetInventory(int32 PlayerId)
+{
+    if (FFoundationPlayer* Player = FindPlayer(PlayerId)) Player->Inventory = MakeLoadout();
+}
+
 void FFoundationAuthority::Reset()
 {
     ++SessionId;
@@ -503,6 +556,8 @@ void FFoundationAuthority::Reset()
         Player.Inventory = MakeLoadout();
         Player.Mining = {};
         Player.Use = {};
+        Player.BlockingDisabledItem = INDEX_NONE;
+        Player.BlockingDisabledUntilStep = 0;
         Player.LastPlacementStep = MIN_int64;
         Player.Results.Empty();
         Player.ResultOrder.Empty();
@@ -519,6 +574,7 @@ void FFoundationAuthority::Reset()
     }
     ItemEntities.Empty();
     ExperienceOrbs.Empty();
+    BlockTicks.Empty();
     Mobs.Empty();
     MobSpawnColumns.Empty();
     MobCycleStep = 0;
@@ -535,6 +591,7 @@ void FFoundationAuthority::Step()
     // A use nobody continued last step has been let go (its owner stopped stepping it).
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
+    StepBlockTicks();
     StepItemEntities();
     StepMobs();
     StepMobSpawns();
@@ -1044,6 +1101,12 @@ int32 FFoundationAuthority::TakeExperience(int32 PlayerId)
     return Points;
 }
 
+TArray<FFoundationMobHit> FFoundationAuthority::TakeMobHits(int32 PlayerId)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    return Player ? MoveTemp(Player->MobHits) : TArray<FFoundationMobHit>();
+}
+
 namespace
 {
     // FFoundationInventory::Armor's order, vanilla's slots 36-39: feet, legs, chest, head.
@@ -1077,7 +1140,7 @@ void FFoundationAuthority::GetWornArmor(int32 PlayerId, int32& OutArmor, float& 
         }
 }
 
-int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode)
+int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationPlayerMode Mode, int32 FireAmount)
 {
     FFoundationPlayer* Player = FindPlayer(PlayerId);
     if (!Player || Amount <= 0 || !Options.bToolWear || !Options.bFullInventory ||
@@ -1090,8 +1153,9 @@ int32 FFoundationAuthority::WearArmor(int32 PlayerId, int32 Amount, EFoundationP
         FFoundationItemInstance Stack = Inventory.Armor[Index];
         if (Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item)) continue;
         const FFoundationItemDefinition& Item = Rules.Items[Stack.Item];
-        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0) continue;
-        Stack.Damage += Amount;
+        const int32 Wear = Item.bFireResistant ? Amount - FMath::Clamp(FireAmount, 0, Amount) : Amount;
+        if (Item.Equipment != ArmorOrder[Index] || Item.MaxDurability <= 0 || Wear <= 0) continue;
+        Stack.Damage += Wear;
         const bool bBroke = Stack.Damage >= Item.MaxDurability;
         Inventory.SetSlot(FFoundationInventory::FirstArmor + Index, bBroke ? FFoundationItemInstance{} : Stack);
         if (!bBroke) continue;
@@ -1267,7 +1331,8 @@ void FFoundationAuthority::StepExperienceOrbs()
     // #1). Scan removes what merges and says whether the seeker itself went.
     const auto Scan = [this, &Origin](int32& Index, bool bReward)
     {
-        // The reward searches where the XP was awarded: a new orb's position before its first move (review 19a2).
+        // The reward searches at the moment the XP was awarded: the new orb's position and the other orbs' before this
+        // step's moves (review 19a2; Codex review 31, finding 3).
         const FVector SeekerCm =
             Origin + (bReward ? ExperienceOrbs[Index].PreviousLocalCm : ExperienceOrbs[Index].LocalCm);
         const FBox Reach = bReward ? FBox::BuildAABB(SeekerCm, FVector(RewardSearchCm * .5)) : GetMergeBox(SeekerCm);
@@ -1276,7 +1341,7 @@ void FFoundationAuthority::StepExperienceOrbs()
             const FFoundationExperienceOrb& Seeking = ExperienceOrbs[Index];
             const FFoundationExperienceOrb& Found = ExperienceOrbs[Other];
             if (Other == Index || Found.bFrozen || Found.Value != Seeking.Value ||
-                !Overlaps(Reach, GetBox(Origin + Found.LocalCm)) ||
+                !Overlaps(Reach, GetBox(Origin + (bReward ? Found.PreviousLocalCm : Found.LocalCm))) ||
                 // Only the reward's search rolls; a scan needs ids a multiple of MergeIdPeriod apart.
                 !(bReward ? CanMerge(Seeking, Found) : (Seeking.Id - Found.Id) % MergeIdPeriod == 0))
                 continue;
@@ -1451,9 +1516,16 @@ void FFoundationAuthority::StepMobs()
                 const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Hand);
                 return Stack.IsEmpty() || !Rules.Items.IsValidIndex(Stack.Item) ? FName() : Rules.Items[Stack.Item].Id;
             };
-            Near.Add({Player.Id, Player.Facts.EyeCm, Player.Facts.FeetCm, ItemId(EFoundationHand::Main),
-                ItemId(EFoundationHand::Off)});
+            FFoundationMobPlayer& Seen = Near.Add_GetRef({Player.Id, Player.Facts.EyeCm, Player.Facts.FeetCm,
+                ItemId(EFoundationHand::Main), ItemId(EFoundationHand::Off)});
+            Seen.WidthCm = Player.Facts.WidthCm;
+            Seen.HeightCm = Player.Facts.HeightCm;
+            Seen.bTargetable =
+                Player.Facts.Mode == EFoundationPlayerMode::Survival || Player.Facts.Mode == EFoundationPlayerMode::Adventure;
         }
+    // Hits are taken by the player's owner after each step; ones nobody took are dropped.
+    for (FFoundationPlayer& Player : Players)
+        Player.MobHits.Reset();
     // The cells A* reads this step, shared by its searches (at most PathsPerStep).
     TMap<FIntVector, FFoundationPathCell> PathCells;
     const auto Query = [this, &PathCells](const FIntVector& Cell)
@@ -1491,8 +1563,10 @@ void FFoundationAuthority::StepMobs()
             Mobs.RemoveAt(Index);
             continue;
         }
+        if (IsMonster(Mob.Type)) StepMonster(Mob, Near);
         Think(Mob, Origin, Near, Mob.Type == EFoundationMobType::Sheep && Mob.GrazeTicks == 0 && CanGraze(Mob));
         if (Mob.bEatNow) EatGrass(Mob);
+        StepSunBurn(Mob);
         // The budget goes first to the mobs after the one that planned last when it ran out (PathStart; 0: none
         // waited), then, after the loop, to the others.
         if (Mob.bNeedPath && Paths < PathsPerStep && Mob.Id > PathStart)
@@ -1613,6 +1687,101 @@ void FFoundationAuthority::StepMobHazards(FFoundationMob& Mob)
     Mob.HurtTime = HurtTicks;
     AddMobSound(Mob, Mob.IsAlive() ? TEXT("hurt") : TEXT("death"), GetKind(Mob.Type).Volume);
     if (!Mob.IsAlive()) DropMobLoot(Mob);
+}
+
+void FFoundationAuthority::StepMonster(FFoundationMob& Mob, TConstArrayView<FFoundationMobPlayer> Near)
+{
+    using namespace FoundationMobs;
+    ThinkHostile(Mob, World.OriginCm, Near,
+        [this](const FVector& From, const FVector& To) { return HasMobLineOfSight(From, To); });
+    if (!Mob.bAttackNow) return;
+    // [mobs.base_attributes] the attack_damage attribute; the player's owner applies difficulty, armor and the
+    // knockback (FFoundationVitals::Hurt).
+    const FFoundationMobKind& Kind = GetKind(Mob.Type);
+    if (FFoundationPlayer* Player = FindPlayer(Mob.Target))
+    {
+        Player->MobHits.Add({Mob.Id, Kind.AttackDamage, Kind.Name, World.OriginCm + Mob.LocalCm});
+        ++MobMeleeHits;
+    }
+}
+
+void FFoundationAuthority::StepSunBurn(FFoundationMob& Mob)
+{
+    using namespace FoundationMobs;
+    // [survival.r10.idle_and_sun S 5457] the zombie (no helmet yet) catches fire for 8 s in daylight; with
+    // foundation.Fire, as lava's fire. The light at its eyes is the proxy: the open sky's (VoxelSky::OpenSkyLight of
+    // the day's sky_light_level) where it sees the sky; elsewhere nothing reaches 0.5 without block light (20c2).
+    if (Mob.Type != EFoundationMobType::Zombie || !Mob.IsAlive() || !Options.bFire) return;
+    float SkyLevel = SkyLightProxy;
+    bool bBurns = false;
+    if (GetSkyFacts) GetSkyFacts(SkyLevel, bBurns);
+    if (!bBurns) return;
+    const float Brightness = GetBrightness(VoxelSky::OpenSkyLight(SkyLevel));
+    if (Brightness <= .5f || !RollSunBurn(Mob, Brightness)) return;
+    const FVector Eye = Mob.LocalCm + FVector(0, 0, GetKind(Mob.Type).EyeCm);
+    const FIntVector EyeCell(
+        FoundationGrid::FloorToCell(Eye.X), FoundationGrid::FloorToCell(Eye.Y), FoundationGrid::FloorToCell(Eye.Z));
+    if (!IsSkyVisible(EyeCell) || IsMobInFluid(GetBox(Mob.Type, World.OriginCm + Mob.LocalCm), false)) return;
+    Mob.Health.FireTicks = FMath::Max(Mob.Health.FireTicks, SunBurnTicks);
+    ++MobSunBurns;
+}
+
+void FFoundationAuthority::GatherMobBoxes(const FBox& Region, TArray<FBox>& Out)
+{
+    if (GatherCollision)
+        GatherCollision(Region, Out);
+    else
+    {
+        World.GatherCollision(Region, Out);
+        for (const FFoundationStatic& Static : Statics)
+            if (Static.Box.Intersect(Region)) Out.Add(Static.Box);
+    }
+}
+
+bool FFoundationAuthority::HasMobLineOfSight(const FVector& FromCm, const FVector& ToCm)
+{
+    // The cells the segment crosses, in order (a grid walk), each tested against the boxes in it.
+    const double Block = UFoundationProfile::BlockCm;
+    const FVector From = (FromCm - World.OriginCm) / Block, To = (ToCm - World.OriginCm) / Block;
+    FIntVector Cell(FMath::FloorToInt32(From.X), FMath::FloorToInt32(From.Y), FMath::FloorToInt32(From.Z));
+    const FIntVector End(FMath::FloorToInt32(To.X), FMath::FloorToInt32(To.Y), FMath::FloorToInt32(To.Z));
+    int32 Step[3];
+    double Next[3], Delta[3];
+    for (int32 Axis = 0; Axis < 3; ++Axis)
+    {
+        const double D = To[Axis] - From[Axis];
+        Step[Axis] = D > 0 ? 1 : D < 0 ? -1 : 0;
+        Delta[Axis] = Step[Axis] ? 1 / FMath::Abs(D) : MAX_dbl;
+        Next[Axis] = Step[Axis] > 0 ? (Cell[Axis] + 1 - From[Axis]) / D
+            : Step[Axis] < 0        ? (Cell[Axis] - From[Axis]) / D
+                                    : MAX_dbl;
+    }
+    TArray<FBox>& Boxes = PathBoxes;
+    for (int32 Guard = 0; Guard < 1024; ++Guard)
+    {
+        const FVector Bottom = World.OriginCm + FVector(Cell) * Block;
+        Boxes.Reset();
+        GatherMobBoxes(FBox(Bottom, Bottom + FVector(Block)), Boxes);
+        for (const FBox& Box : Boxes)
+            if (FMath::LineBoxIntersection(Box, FromCm, ToCm, ToCm - FromCm)) return false;
+        if (Cell == End) return true;
+        const int32 Axis = Next[0] <= Next[1] ? (Next[0] <= Next[2] ? 0 : 2) : (Next[1] <= Next[2] ? 1 : 2);
+        if (Next[Axis] > 1) return true;
+        Cell[Axis] += Step[Axis];
+        Next[Axis] += Delta[Axis];
+    }
+    return true;
+}
+
+bool FFoundationAuthority::IsSkyVisible(const FIntVector& Cell)
+{
+    for (FIntVector Above = Cell; Above.Z <= World.BoundsMax.Z; ++Above.Z)
+    {
+        if (!World.IsKnown(Above) || World.Get(Above).State.IsAir()) continue;
+        const FFoundationPathCell Path = GetPathCell(Above);
+        if (Path.bAvoid || Path.Solid > 0) return false;
+    }
+    return true;
 }
 
 void FFoundationAuthority::StepMobSpawns()
@@ -2639,6 +2808,28 @@ void FFoundationAuthority::UseItemStart(FFoundationPlayer& Player, const FFounda
     if (UseBucket(Player, Command, Vitals.Mode, Result)) return;
     if (UseEquip(Player, Command, Vitals.Mode, Result)) return;
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    // 26.3's blocks_attacks (the shield, survival step 19b): the use raises it until released; it blocks from its
+    // delay on (IsBlocking). Held up as long as the use lasts: 72000 ticks, the bow's and the shield's use duration
+    // (minecraft.wiki "Shield"; provisional). An axe-disabled shield passes to the next hand.
+    if (Options.bItemUse && !Stack.IsEmpty() && Rules.GetItem(Stack.Item).BlocksAttacks.bValid)
+    {
+        if (Player.BlockingDisabledItem == Stack.Item && Player.Facts.Step < Player.BlockingDisabledUntilStep)
+        {
+            Result.Outcome = EFoundationOutcome::Pass;
+            return;
+        }
+        CancelUse(Player);
+        Player.Use.bActive = Player.Use.bBlocks = true;
+        Player.Use.Hand = Command.Hand;
+        Player.Use.InstanceId = Stack.InstanceId;
+        Player.Use.Item = Stack.Item;
+        Player.Use.Ticks = 0;
+        Player.Use.Duration = FoundationItemUse::BlockingUseTicks;
+        Player.Use.LastStep = Player.Facts.Step;
+        Result.Outcome = EFoundationOutcome::Committed;
+        Result.UseDuration = Player.Use.Duration;
+        return;
+    }
     const FFoundationConsumable Food =
         Stack.IsEmpty() ? FFoundationConsumable{} : Rules.GetItem(Stack.Item).GetConsumable();
     // Without the switch or a consumable the use passes to the next hand, as before.
@@ -2706,6 +2897,8 @@ void FFoundationAuthority::UseItemContinue(
     Use.LastStep = Player.Facts.Step;
     Result.UseTicks = ++Use.Ticks;
     Result.Outcome = EFoundationOutcome::Committed;
+    // A raised shield only counts its ticks (IsBlocking reads them).
+    if (Use.bBlocks) return;
     FFoundationEvent Event;
     Event.Player = Player.Id;
     Event.Item = Use.Item;
@@ -2734,6 +2927,82 @@ void FFoundationAuthority::UseItemContinue(
     Event.Kind = EFoundationEventKind::Ate;
     Event.Amount = float(Food.Nutrition);
     AddEvent(Event);
+}
+
+bool FFoundationAuthority::IsBlocking(int32 PlayerId) const
+{
+    const FFoundationPlayer* Player = FindPlayer(PlayerId);
+    if (!Player || !Player->Use.bActive || !Player->Use.bBlocks || !Rules.Items.IsValidIndex(Player->Use.Item))
+        return false;
+    const FFoundationBlocksAttacks& Blocks = Rules.Items[Player->Use.Item].BlocksAttacks;
+    const bool bDisabled =
+        Player->BlockingDisabledItem == Player->Use.Item && Player->Facts.Step < Player->BlockingDisabledUntilStep;
+    return Blocks.bValid && Player->Use.Ticks >= Blocks.DelayTicks && !bDisabled;
+}
+
+bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals, const FFoundationAttack& Attack)
+{
+    FFoundationPlayer* Player = FindPlayer(PlayerId);
+    // Only hits with a source can be blocked: a mob's or a player's attack. Every damage type in 26.3's
+    // #minecraft:bypasses_shield (data/minecraft/tags/damage_type/bypasses_shield.json: #bypasses_armor, cactus,
+    // campfire, in_fire, lava, ...) reaches the player some other way, without a source.
+    const bool bBlockable =
+        Attack.Type == EFoundationDamage::MobAttack || Attack.Type == EFoundationDamage::PlayerAttack;
+    if (!Player || !bBlockable || !IsBlocking(PlayerId) || Vitals.IsDead() || !(Attack.Amount > 0.f))
+        return Vitals.Hurt(Attack.Type, Attack.Amount);
+    // The default damage reduction's horizontal_blocking_angle (90): the angle between the look and the direction to
+    // the source, both horizontal (minecraft.wiki "Data component format/blocks_attacks"; the edge counts,
+    // provisional).
+    const FFoundationItemDefinition& Shield = Rules.Items[Player->Use.Item];
+    const FFoundationBlocksAttacks& Blocks = Shield.BlocksAttacks;
+    const FVector2D Look = FVector2D(Player->Facts.Aim).GetSafeNormal();
+    const FVector2D ToSource = FVector2D(Attack.SourceCm - Player->Facts.FeetCm).GetSafeNormal();
+    const double Angle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(Look | ToSource, -1.0, 1.0)));
+    // Looking straight up or down, or a source at the feet, leaves no horizontal direction: not blocked (provisional).
+    if (Look.IsZero() || ToSource.IsZero() || Angle > Blocks.AngleDegrees + 1e-4)
+        return Vitals.Hurt(Attack.Type, Attack.Amount);
+    const float Blocked = FMath::Clamp(Blocks.Base + Blocks.Factor * Attack.Amount, 0.f, Attack.Amount);
+    ++AttacksBlocked;
+    FFoundationEvent Event;
+    Event.Player = Player->Id;
+    Event.Item = Player->Use.Item;
+    Event.LocationCm = Player->Facts.FeetCm;
+    Event.Step = Player->Facts.Step;
+    Event.Kind = EFoundationEventKind::Blocked;
+    Event.Interaction = Blocks.BlockSound;
+    Event.Amount = Blocked;
+    AddEvent(Event);
+    // item_damage: from the threshold on, base + factor x damage, floored (the shield's 1 + floor(damage) from 3;
+    // minecraft.wiki "Shield", provisional), under lab tool wear and not in creative.
+    if (Attack.Amount >= Blocks.ItemDamageThreshold && Options.bToolWear &&
+        Vitals.Mode != EFoundationPlayerMode::Creative && Shield.MaxDurability > 0)
+    {
+        const int32 Wear = FMath::FloorToInt32(Blocks.ItemDamageBase + Blocks.ItemDamageFactor * Attack.Amount);
+        if (Wear > 0 && Player->Inventory.Wear(Player->Use.Hand, Wear, Shield.MaxDurability))
+        {
+            FFoundationEvent Broke = Event;
+            Broke.Kind = EFoundationEventKind::ToolBroke;
+            Broke.Interaction = NAME_None;
+            AddEvent(Broke);
+            CancelUse(*Player);
+        }
+    }
+    // The attacker's weapon disables it: round(seconds x disable_cooldown_scale x 20) ticks (the value report's
+    // "Axe disable": the axes' 5 s, 100 ticks); the use ends and a new one passes until the cooldown is over.
+    if (Player->Use.bActive && Attack.DisableBlockingSeconds > 0.f && Blocks.DisableCooldownScale > 0.f)
+    {
+        const int32 Ticks = FMath::RoundToInt32(Attack.DisableBlockingSeconds * Blocks.DisableCooldownScale * 20.f);
+        Player->BlockingDisabledItem = Player->Use.Item;
+        Player->BlockingDisabledUntilStep = Player->Facts.Step + Ticks;
+        FFoundationEvent Disabled = Event;
+        Disabled.Kind = EFoundationEventKind::BlockingDisabled;
+        Disabled.Interaction = Blocks.DisabledSound;
+        Disabled.Amount = float(Ticks);
+        AddEvent(Disabled);
+        CancelUse(*Player);
+    }
+    const float Rest = Attack.Amount - Blocked;
+    return Rest > 0.f && Vitals.Hurt(Attack.Type, Rest);
 }
 
 bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)
@@ -2884,10 +3153,8 @@ void FFoundationAuthority::RollBlockDrops(const FIntVector& Cell, FFoundationBlo
     const FFoundationItemDefinition& Tool, int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const
 {
     const FFoundationBlockType& Definition = World.GetBlock(State);
-    const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
     // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
-    if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
-        Table = nullptr;
+    const FFoundationLootTable* Table = FindAuthorityLootTable(Rules.LootTables, Definition.Id);
     if (Table)
     {
         FRandomStream Random(RandomSeed);
@@ -3102,14 +3369,16 @@ FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cel
 }
 
 void FFoundationAuthority::SettlePlants(
-    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player)
+    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player, bool bWriteUpperHalf)
 {
     // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
     FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
     if (!Options.bPlantRules) return;
-    // Pops drop nothing until item entities exist (scout H, Q4).
     TArray<FIntVector, TInlineAllocator<8>> Changed = {Cell};
-    auto Pop = [this, &Player, &Changed](const FIntVector& At)
+    // A pop drops what an empty hand breaking that block alone drops (survival B4a; Options.bItemEntities), rolled
+    // before it goes so a double plant's other half is still in place. bRoll false: a door's other half under the
+    // "drops itself" rule, so the unit drops once (PopOtherHalf).
+    auto Pop = [this, &Player, &Changed](const FIntVector& At, bool bRoll = true)
     {
         FFoundationEvent Event;
         Event.Kind = EFoundationEventKind::Popped;
@@ -3117,7 +3386,11 @@ void FFoundationAuthority::SettlePlants(
         Event.Cell = At;
         Event.State = World.Get(At).State;
         Event.Step = Player.Facts.Step;
+        TArray<FFoundationLootDrop> Drops;
+        if (Options.bItemEntities && bRoll)
+            RollBlockDrops(At, Event.State, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, At, Pops), Drops);
         World.Set(At, World.GetRegistry().GetRemainder(Event.State));
+        if (!Drops.IsEmpty()) SpawnDrops(At, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, At, Pops));
         Changed.Add(At);
         ++Pops;
         AddEvent(Event);
@@ -3131,14 +3404,18 @@ void FFoundationAuthority::SettlePlants(
         if (FoundationPlantRules::GetOtherHalf(World, At, Old, Other, Ignored) && World.IsKnown(Other) &&
             FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State) &&
             !FoundationPlantRules::IsOtherHalf(World.GetRegistry(), World.Get(At).State, World.Get(Other).State))
-            Pop(Other);
+        {
+            // A 26.3 loot table drops a two-half block from its lower half alone (match_block half=lower), so both
+            // halves roll; a block without one drops itself from whichever half rolls first.
+            Pop(Other, FindAuthorityLootTable(Rules.LootTables, World.GetBlock(World.Get(Other).State).Id) != nullptr);
+        }
     };
     PopOtherHalf(Cell, Before);
     // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
     FIntVector Upper;
     FFoundationBlockState UpperState;
-    if (FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) && Upper.Z > Cell.Z &&
-        World.IsKnown(Upper))
+    if (bWriteUpperHalf && FoundationPlantRules::GetOtherHalf(World, Cell, World.Get(Cell).State, Upper, UpperState) &&
+        Upper.Z > Cell.Z && World.IsKnown(Upper))
     {
         const FFoundationBlockState UpperBefore = World.Get(Upper).State;
         World.Set(Upper, UpperState);
@@ -3370,13 +3647,19 @@ void FFoundationAuthority::SettleAfterFluid(const FIntVector& Cell, FFoundationB
     static const FFoundationPlayer Nobody;
     if (bWashedAway)
     {
-        // The fluid already holds the cell; the block pops with no drop, as every pop until item entities exist (plan
-        // Q7).
+        // The fluid already holds the cell; the block drops what an empty hand breaking it drops, as a pop does
+        // (survival B4a, SM-Blocks' Q1; Options.bItemEntities).
         FFoundationEvent Event;
         Event.Kind = EFoundationEventKind::Popped;
         Event.Player = Nobody.Id;
         Event.Cell = Cell;
         Event.State = Before;
+        if (Options.bItemEntities)
+        {
+            TArray<FFoundationLootDrop> Drops;
+            RollBlockDrops(Cell, Before, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Pops), Drops);
+            if (!Drops.IsEmpty()) SpawnDrops(Cell, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Pops));
+        }
         ++Pops;
         AddEvent(Event);
     }

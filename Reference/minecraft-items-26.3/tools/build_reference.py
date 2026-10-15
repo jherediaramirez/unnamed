@@ -77,11 +77,13 @@ TIER_A = {
     # Survival T2 (armor 19a2): the wearable armor pieces (not elytra, animal armor or trimmed variants).
     "armor": [f"{m}_{p}" for m in ("leather", "chainmail", "iron", "golden", "diamond", "netherite", "copper")
               for p in ("helmet", "chestplate", "leggings", "boots")] + ["turtle_helmet"],
+    # Survival T2 (shield 19b): the shield, whose definition is a using_item condition between two special models.
+    "shield": ["shield"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
 # the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
 # groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
-APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor"]
+APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor", "shield"]
 
 
 def append_rank(group):
@@ -95,6 +97,14 @@ BASE_ATTACK = {"attack_damage": 1.0, "attack_speed": 4.0}
 DEFINITION_ROOT = {"swap_animation_scale": 1.0, "hand_animation_on_swap": True}
 # The equippable component's defaults when it omits a field (minecraft.wiki "Data component format").
 EQUIPPABLE_DEFAULTS = {"equip_sound": "minecraft:item.armor.equip_generic", "asset_id": None, "swappable": True}
+# The blocks_attacks component's defaults when it omits a field (minecraft.wiki "Data component format/blocks_attacks").
+BLOCKS_ATTACKS_DEFAULTS = {"block_delay_seconds": 0.0, "disable_cooldown_scale": 1.0,
+                           "damage_reductions": [{"base": 0.0, "factor": 1.0, "horizontal_blocking_angle": 90.0}],
+                           "item_damage": {"threshold": 0.0, "base": 0.0, "factor": 1.5}, "bypassed_by": None,
+                           "block_sound": None, "disabled_sound": None}
+DAMAGE_REDUCTION_DEFAULTS = {"horizontal_blocking_angle": 90.0}
+# The shield's special model renders this entity texture (no pattern); the record names it and the build copies it.
+SHIELD_TEXTURE = "entity/shield/shield_base_nopattern"
 # The armor pieces' attribute modifiers, summed per attribute into the record's "armor" field.
 ARMOR_ATTRIBUTES = {"armor": "armor", "armor_toughness": "toughness", "knockback_resistance": "knockback_resistance"}
 # Attribute modifier operations in the order of their lang key suffix (attribute.modifier.plus.0 is add_value).
@@ -181,25 +191,32 @@ class Tags:
         return self.resolve(bare(selector[1:])) if selector.startswith("#") else {bare(selector)}
 
 
-def model_refs(node, when=None):
-    """Every `model` leaf of an item model definition, with the display contexts it is selected for."""
+def model_refs(node, when=None, special=False):
+    """Every `model` leaf of an item model definition, with the display contexts it is selected for. With `special`
+    (the shield group only, so no earlier record or index entry changes), a `condition` selects on its property
+    (on_false first) and a `special` leaf yields its base model and the special model's type."""
     kind = bare(node.get("type", ""))
     if kind == "model":
         yield {"model": bare(node["model"]), "when": when, "tints": node.get("tints")}
     elif kind == "select":
         for case in node["cases"]:
             cases = case["when"] if isinstance(case["when"], list) else [case["when"]]
-            yield from model_refs(case["model"], {"property": bare(node["property"]), "is": cases})
+            yield from model_refs(case["model"], {"property": bare(node["property"]), "is": cases}, special)
         if "fallback" in node:
-            yield from model_refs(node["fallback"], {"property": bare(node["property"]), "is": "fallback"})
+            yield from model_refs(node["fallback"], {"property": bare(node["property"]), "is": "fallback"}, special)
+    elif special and kind == "condition":
+        for value, branch in ((False, "on_false"), (True, "on_true")):
+            yield from model_refs(node[branch], {"property": bare(node["property"]), "is": [value]}, special)
+    elif special and kind == "special":
+        yield {"model": bare(node["base"]), "when": when, "tints": None, "special": bare(node["model"]["type"])}
     else:
         for value in node.values():
             if isinstance(value, dict):
-                yield from model_refs(value, when)
+                yield from model_refs(value, when, special)
             elif isinstance(value, list):
                 for entry in value:
                     if isinstance(entry, dict):
-                        yield from model_refs(entry, when)
+                        yield from model_refs(entry, when, special)
 
 
 def model_chain(src, model):
@@ -294,6 +311,17 @@ def equippable(components):
     if value is None:
         return None
     return {"slot": value["slot"], **{k: value.get(k, v) for k, v in EQUIPPABLE_DEFAULTS.items()}}
+
+
+def blocks_attacks(components):
+    """The blocks_attacks component with every omitted field at its default; None without one."""
+    value = components.get("minecraft:blocks_attacks")
+    if value is None:
+        return None
+    out = {k: value.get(k, v) for k, v in BLOCKS_ATTACKS_DEFAULTS.items()}
+    out["damage_reductions"] = [{**DAMAGE_REDUCTION_DEFAULTS, **r} for r in out["damage_reductions"]]
+    out["item_damage"] = {**BLOCKS_ATTACKS_DEFAULTS["item_damage"], **value.get("item_damage", {})}
+    return out
 
 
 def trim_fallback(refs):
@@ -731,8 +759,10 @@ def derive(src, block_ref=BLOCK_REF):
         definition_name = f"{ASSETS}items/{item}.json"
         definition = src.jar_json(definition_name)
         copies.add(definition_name)
-        refs = trim_fallback(list(model_refs(definition["model"])))
-        if bare(definition["model"]["type"]) not in ("model", "select") or not refs:
+        shield = group_of[item] == "shield"
+        refs = trim_fallback(list(model_refs(definition["model"], special=shield)))
+        kinds = ("model", "select") + (("condition",) if shield else ())
+        if bare(definition["model"]["type"]) not in kinds or not refs:
             raise SystemExit(f"{item}: Tier A definitions are a model or a display-context select")
         item_textures = []
         for ref in refs:
@@ -763,6 +793,15 @@ def derive(src, block_ref=BLOCK_REF):
         extra = {} if equip is None else {"equippable": equip}
         if group_of[item] == "armor":
             extra["armor"] = armor_totals(c, equip["slot"])
+        # The shield (19b): its special model (type, entity texture, the definition's transformation) and the
+        # blocks_attacks component; only its record has them.
+        if shield:
+            if {r.get("special") for r in refs} != {"shield"}:
+                raise SystemExit(f"{item}: expected the shield special model in every case")
+            extra["special"] = {"type": "shield", "texture": SHIELD_TEXTURE,
+                                "transformation": definition["model"].get("transformation")}
+            extra["blocks_attacks"] = blocks_attacks(c)
+            copies.add(f"{ASSETS}textures/{SHIELD_TEXTURE}.png")
         items.append({
             "id": item, "protocol_id": protocol[item], "group": group_of[item],
             "material": item[:-len(kind) - 1] if kind else None, "kind": kind,

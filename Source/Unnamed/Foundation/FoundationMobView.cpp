@@ -227,6 +227,15 @@ FVector FFoundationMobView::GetPartAnimation(
         if (Part == Legs[Leg]) return FVector(GetLegPitch(Leg, Position, Speed), 0, 0);
     for (int32 Leg = 0; Leg < UE_ARRAY_COUNT(BipedLegs); ++Leg)
         if (Part == BipedLegs[Leg]) return FVector(GetBipedLegPitch(Leg, Position, Speed), 0, 0);
+    // Provisional (minecraft.wiki "Zombie": it holds its arms out in front; no measured pose): the zombie's arms point
+    // straight ahead and dip by ZombieArmDip over the swing after a hit.
+    if (Mob.Type == EFoundationMobType::Zombie && (Part == TEXT("right_arm") || Part == TEXT("left_arm")))
+    {
+        const float Swing = Mob.AttackSwing < AttackSwingTicks
+            ? FMath::Sin((float(Mob.AttackSwing) + float(Alpha)) / float(AttackSwingTicks) * UE_PI)
+            : 0.f;
+        return FVector(-UE_HALF_PI + Swing * ZombieArmDip, 0, 0);
+    }
     if (Part == TEXT("right_wing") || Part == TEXT("left_wing"))
     {
         const float Roll = GetWingRoll(FMath::Lerp(Mob.PreviousFlap, Mob.Flap, float(Alpha)),

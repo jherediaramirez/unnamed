@@ -24,6 +24,8 @@ namespace
         FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
         FGameplayTag Doors = FGameplayTag::RequestGameplayTag(TEXT("Block.Doors"), false);
         FGameplayTag Trapdoors = FGameplayTag::RequestGameplayTag(TEXT("Block.Trapdoors"), false);
+        FGameplayTag Buttons = FGameplayTag::RequestGameplayTag(TEXT("Block.Buttons"), false);
+        FGameplayTag WoodenButtons = FGameplayTag::RequestGameplayTag(TEXT("Block.WoodenButtons"), false);
     };
 
     const FFamilyTags& GetTags()
@@ -330,6 +332,8 @@ EFoundationBlockFamily FoundationBlockFamilies::GetFamily(const FFoundationBlock
     if (HasTag(Block, Tags.FenceGates)) return EFoundationBlockFamily::FenceGate;
     if (HasTag(Block, Tags.Doors)) return EFoundationBlockFamily::Door;
     if (HasTag(Block, Tags.Trapdoors)) return EFoundationBlockFamily::Trapdoor;
+    if (HasTag(Block, Tags.Buttons)) return EFoundationBlockFamily::Button;
+    if (Block.Id == TEXT("lever")) return EFoundationBlockFamily::Lever;
     // Panes and bars: exactly north, east, south, west and waterlogged, as a fence without the tag.
     if (Block.Properties.Num() == 5)
     {
@@ -354,6 +358,9 @@ bool FoundationBlockFamilies::IsFaceSturdy(
     // Full cubes that support nothing (measured: shape_updates.json, single_neighbour): leaves and powder snow.
     const FFoundationBlockType& Block = Registry.GetBlock(State);
     if (State.IsAir() || HasTag(Block, GetTags().Leaves) || Block.Id == TEXT("powder_snow")) return false;
+    // Every snow layer's underside holds a ceiling button or lever, one layer too, which has no collision
+    // (family_survival.json's up probe, survival B3b).
+    if (Block.Id == TEXT("snow") && Face == EFoundationFace::Down) return true;
     FRects Rects;
     GetFaceRects(Registry, State, Face, Rects);
     return !Rects.IsEmpty() && Covers(Rects, {0, 0, 1, 1});
@@ -446,6 +453,23 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
             State = Registry.WithValue(
                 State, TEXT("half"), Context.ClickedFace == EFoundationFace::Up ? TEXT("bottom") : TEXT("top"));
     }
+    // A button or lever on the first of the click's looks where it survives (the probe's parts A and B).
+    if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+    {
+        const FFoundationBlockState Standing =
+            Registry.WithValue(Registry.WithValue(State, TEXT("face"), TEXT("floor")), TEXT("facing"), SideName(Look));
+        for (const EFoundationFace Toward : FoundationBlockPlacement::GetClickLooks(Context))
+        {
+            const FFoundationBlockState Attached = Toward == EFoundationFace::Down ? Standing
+                : Toward == EFoundationFace::Up
+                ? Registry.WithValue(Standing, TEXT("face"), TEXT("ceiling"))
+                : Registry.WithValue(Registry.WithValue(State, TEXT("face"), TEXT("wall")), TEXT("facing"),
+                      SideName(FoundationBlockPlacement::GetOpposite(Toward)));
+            if (GetSurvival(World, Context.Destination, Attached) == EFoundationFamilySurvival::Survives)
+                return Attached;
+        }
+        return Standing;
+    }
     if (Block.FindProperty(TEXT("waterlogged")) != INDEX_NONE)
     {
         const FFoundationFluid Fluid = Registry.GetFluid(World.Get(Context.Destination).State);
@@ -490,7 +514,9 @@ bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Bl
 {
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::IsOn();
     const EFoundationBlockFamily Family = GetFamily(Block);
-    if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor) return IsInteractOn();
+    if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
+        Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+        return IsInteractOn();
     return Family != EFoundationBlockFamily::None;
 }
 
@@ -502,6 +528,8 @@ bool FoundationBlockFamilies::IsUsable(const FFoundationBlockType& Block)
     case EFoundationBlockFamily::Trapdoor:
         return Block.Id != TEXT("iron_door") && Block.Id != TEXT("iron_trapdoor");
     case EFoundationBlockFamily::FenceGate:
+    case EFoundationBlockFamily::Button:
+    case EFoundationBlockFamily::Lever:
         return true;
     default:
         return false;
@@ -516,6 +544,31 @@ bool FoundationBlockFamilies::Use(
     const FFoundationBlockState State = World.Get(Hit.Cell).State;
     const FFoundationBlockType& Block = Registry.GetBlock(State);
     if (!IsUsable(Block)) return false;
+    const EFoundationBlockFamily Family = GetFamily(Block);
+    if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+    {
+        const bool bPowered = Registry.GetValue(State, TEXT("powered")) != TEXT("true");
+        // A pressed button takes the click and changes nothing; its release stays where it was (the probe's part C).
+        if (Family == EFoundationBlockFamily::Button && !bPowered)
+        {
+            Result.Outcome = EFoundationOutcome::Committed;
+            Result.bInteracted = true;
+            Result.Cell = Hit.Cell;
+            Result.State = State;
+            return true;
+        }
+        const TPair<FIntVector, FFoundationBlockState> Write(
+            Hit.Cell, Registry.WithValue(State, TEXT("powered"), OpenValueName(bPowered)));
+        // The lever's play call is volume 0.3, pitch 0.6 on and 0.5 off; a button's is 1 and 1, its asset holding 0.3
+        // and the pitch (F 3561-3567, 3639-3729).
+        const bool bLever = Family == EFoundationBlockFamily::Lever;
+        Authority.CommitBlockUse(Player, Hit.Cell, MakeArrayView(&Write, 1), GetUseSound(Block, bPowered), Result,
+            bLever ? .3f : 1.f, bLever ? (bPowered ? .6f : .5f) : 1.f);
+        if (!bLever && Result.IsCommitted())
+            Authority.ScheduleBlockTick(
+                Hit.Cell, Write.Value, GetButtonTicks(Block), EFoundationBlockTick::ButtonRelease);
+        return true;
+    }
     const bool bOpen = Registry.GetValue(State, TEXT("open")) != TEXT("true");
     FFoundationBlockState Used = Registry.WithValue(State, TEXT("open"), OpenValueName(bOpen));
     TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<2>> Writes;
@@ -549,15 +602,44 @@ bool FoundationBlockFamilies::Use(
     return true;
 }
 
+void FoundationBlockFamilies::ReleaseButton(FFoundationAuthority& Authority, const FIntVector& Cell)
+{
+    const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
+    const FFoundationBlockState State = Authority.World.Get(Cell).State;
+    const TPair<FIntVector, FFoundationBlockState> Write(
+        Cell, Registry.WithValue(State, TEXT("powered"), TEXT("false")));
+    // No player releases it: its event (and any pop it causes) carries the default player, id 0, step 0.
+    static const FFoundationPlayer Nobody;
+    FFoundationResult Released;
+    Authority.CommitBlockUse(
+        Nobody, Cell, MakeArrayView(&Write, 1), GetUseSound(Registry.GetBlock(State), false), Released, 1.f, 1.f);
+}
+
+int32 FoundationBlockFamilies::GetButtonTicks(const FFoundationBlockType& Block)
+{
+    if (GetFamily(Block) != EFoundationBlockFamily::Button) return 0;
+    return HasTag(Block, GetTags().WoodenButtons) ? 30 : 20;
+}
+
 FName FoundationBlockFamilies::GetUseSound(const FFoundationBlockType& Block, bool bOpen)
 {
     const EFoundationBlockFamily Family = GetFamily(Block);
+    if (Family == EFoundationBlockFamily::Lever) return TEXT("block.lever.click");
+    const FString Id = Block.Id.ToString();
+    if (Family == EFoundationBlockFamily::Button)
+    {
+        const TCHAR* Set = !HasTag(Block, GetTags().WoodenButtons)              ? TEXT("stone")
+            : Id.StartsWith(TEXT("cherry_"))                                    ? TEXT("cherry_wood")
+            : Id.StartsWith(TEXT("bamboo_"))                                    ? TEXT("bamboo_wood")
+            : Id.StartsWith(TEXT("crimson_")) || Id.StartsWith(TEXT("warped_")) ? TEXT("nether_wood")
+                                                                                : TEXT("wooden");
+        return FName(FString::Printf(TEXT("block.%s_button.%s"), Set, bOpen ? TEXT("click_on") : TEXT("click_off")));
+    }
     const TCHAR* Kind = Family == EFoundationBlockFamily::Door ? TEXT("door")
         : Family == EFoundationBlockFamily::Trapdoor           ? TEXT("trapdoor")
         : Family == EFoundationBlockFamily::FenceGate          ? TEXT("fence_gate")
                                                                : nullptr;
     if (!Kind) return NAME_None;
-    const FString Id = Block.Id.ToString();
     // The set types' sounds; the other woods share wooden_door, wooden_trapdoor and fence_gate.
     const TCHAR* Set = Id.Contains(TEXT("copper"))                          ? TEXT("copper_")
         : Id.StartsWith(TEXT("iron_"))                                      ? TEXT("iron_")
@@ -573,8 +655,22 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
     const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
-    if (!IsInteractOn() || GetStateFamily(Registry, State) != EFoundationBlockFamily::Door)
-        return EFoundationFamilySurvival::NoRule;
+    const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
+    if (!IsInteractOn()) return EFoundationFamilySurvival::NoRule;
+    // A button or lever: the face of the block it hangs on, sturdy (family_survival.json).
+    if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+    {
+        const FName Face = Registry.GetValue(State, TEXT("face"));
+        const EFoundationFace Toward = Face == TEXT("floor") ? EFoundationFace::Down
+            : Face == TEXT("ceiling")                        ? EFoundationFace::Up
+                                      : FoundationBlockPlacement::GetOpposite(GetFacing(Registry, State));
+        const FIntVector Support = Cell + FoundationGrid::FaceOffset(Toward);
+        if (!World.IsKnown(Support)) return EFoundationFamilySurvival::Unknown;
+        return IsFaceSturdy(Registry, World.Get(Support).State, FoundationBlockPlacement::GetOpposite(Toward))
+            ? EFoundationFamilySurvival::Survives
+            : EFoundationFamilySurvival::Fails;
+    }
+    if (Family != EFoundationBlockFamily::Door) return EFoundationFamilySurvival::NoRule;
     const FIntVector Below = Cell - FIntVector(0, 0, 1);
     if (!World.IsKnown(Below)) return EFoundationFamilySurvival::Unknown;
     const FFoundationBlockState Support = World.Get(Below).State;

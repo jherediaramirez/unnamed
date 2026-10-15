@@ -436,14 +436,16 @@ FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Auth
             Result = UseTarget(Authority, Vitals, Hand);
             if (Result.Outcome != EFoundationOutcome::Pass) return Result;
         }
-        // Only a hand holding a consumable, a bucket (step 17) or a swappable piece to wear (step 19a) asks the
-        // authority, so other items send nothing new.
+        // Only a hand holding a consumable, a bucket (step 17), a swappable piece to wear (step 19a) or a shield (step
+        // 19b) asks the authority, so other items send nothing new.
         const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
         const FFoundationItemInstance* Stack = Player ? &Player->Inventory.GetHand(Hand) : nullptr;
         if (!bItemUse || !Stack || Stack->IsEmpty()) continue;
         const FFoundationItemDefinition& Item = Authority.Rules.GetItem(Stack->Item);
         const bool bWearable = Item.Equipment != EFoundationEquipmentSlot::None && Item.bSwappable;
-        if (!Item.GetConsumable().IsValid() && !FoundationBucket::IsBucket(Item.Id) && !bWearable) continue;
+        if (!Item.GetConsumable().IsValid() && !FoundationBucket::IsBucket(Item.Id) && !bWearable &&
+            !Item.BlocksAttacks.bValid)
+            continue;
         Result = Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemStart, Hand));
         // A bucket's use is instant: only a use with a duration is held.
         if (Result.IsCommitted() && Result.UseDuration > 0)

@@ -375,8 +375,9 @@ bool FFoundationBarrelOpenStateTest::RunTest(const FString&)
         TestFalse(TEXT("broken: menu closed"), L.P().OpenMenu.IsOpen());
         TestEqual(TEXT("broken: no close sound"), L.TakeUsed().Num(), 0);
     }
-    // B3a's doors keep their sound unchanged: their BlockUsed (CommitBlockUse, a trapdoor opened) has Amount 0, so the
-    // view plays it at the cell's centre at volume 1, as before step 9.
+    // B3a's doors keep their sound unchanged: their BlockUsed (CommitBlockUse, a trapdoor opened) has no place and,
+    // since B3b, Amount the play volume 1 (CommitBlockUse's default), so the view plays it at the cell's centre at
+    // volume 1.
     {
         FBarrelLab L;
         const FIntVector Cell(3, 3, 1);
@@ -388,8 +389,8 @@ bool FFoundationBarrelOpenStateTest::RunTest(const FString&)
         FFoundationResult Result;
         L.A.CommitBlockUse(L.P(), Cell, MakeArrayView(&Write, 1), TEXT("block.wooden_trapdoor.open"), Result);
         const TArray<FFoundationEvent> Used = L.TakeUsed();
-        TestTrue(TEXT("trapdoor: one BlockUsed with no volume or place"),
-            Used.Num() == 1 && Used[0].Amount == 0 && Used[0].LocationCm.IsZero());
+        TestTrue(TEXT("trapdoor: one BlockUsed at volume 1 with no place"),
+            Used.Num() == 1 && Used[0].Amount == 1 && Used[0].LocationCm.IsZero());
     }
     return true;
 }
