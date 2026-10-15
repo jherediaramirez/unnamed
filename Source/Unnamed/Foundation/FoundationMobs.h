@@ -240,6 +240,24 @@ namespace FoundationMobs
     // One axis of a member's offset from the pack's column (cells, -PackSpreadCells to PackSpreadCells).
     UNNAMED_API int32 RollPackOffset(FRandomStream& Random);
 
+    // The creature cycle (survival T6 20b2b). [survival2.r20 population runs] creatures are considered on game ticks
+    // that are multiples of CreatureCycleTicks, over the spawnable chunks (289 for one player: 17 x 17), with the
+    // global cap floor(CreatureBaseCap x eligible / CapChunks); a pack can overshoot it. [survival.r10.spawning_rules,
+    // S 5472] eligible chunks within SpawnRadiusColumns of a player; per chunk up to GroupRounds group rounds of
+    // ceil(U x MaxRoundAttempts) attempts; no spawn nearer than MinPlayerDistanceCells to a player or farther than
+    // MaxPlayerDistanceCells from every player; at most ClusterMax spawned per chunk (all eight mobs' cluster limit,
+    // Codex 02 B). Provisional (provisional-values.md): the phase (the authority's steps since reset, not a saved
+    // game time), each attempt's offset from the round's start column (RollPackOffset), the feet on the top
+    // motion-blocking block, the local per-player cap (BaseCap per player over its own 17 x 17), flat-grass only
+    // measurements.
+    constexpr int32 CreatureCycleTicks = 400, CreatureBaseCap = 10, CapChunks = 289, SpawnRadiusColumns = 8;
+    constexpr int32 GroupRounds = 3, MaxRoundAttempts = 4, ClusterMax = 4;
+    constexpr double MinPlayerDistanceCells = 24, MaxPlayerDistanceCells = 128;
+    // The four farm animals are the creature category (the hostiles are 20c's monsters).
+    UNNAMED_API bool IsCreature(EFoundationMobType Type);
+    // floor(CreatureBaseCap x EligibleColumns / CapChunks).
+    UNNAMED_API int32 GetCreatureCap(int32 EligibleColumns);
+
     // The box of a mob standing at a world position (its bottom centre).
     UNNAMED_API FBox GetBox(EFoundationMobType Type, const FVector& WorldCm);
     // The world region one step's motion can touch, the step-up included.

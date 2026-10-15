@@ -783,6 +783,31 @@ bool FFoundationMobGrazeTest::RunTest(const FString&)
     L.Steps(36);
     TestEqual(TEXT("the short grass is eaten"), BlockAt(L, Tuft), FName(TEXT("air")));
     TestEqual(TEXT("the block below stays"), BlockAt(L, Grass), FName(TEXT("grass_block")));
+    // Codex review 23 #2: the whole edible_for_sheep tag. A fern on grass is eaten and the grass block stays; dry grass
+    // on sand (no grass block) is still food. Mutation: only short_grass counts.
+    const FIntVector Fern = SetBlock(L, Tuft, TEXT("fern"));
+    L.Steps(4);
+    L.A.FindMob(Id)->GrazeTicks = 40;
+    L.Steps(36);
+    TestEqual(TEXT("the fern is eaten"), BlockAt(L, Fern), FName(TEXT("air")));
+    TestEqual(TEXT("the grass block under the fern stays"), BlockAt(L, Grass), FName(TEXT("grass_block")));
+    SetBlock(L, Grass, TEXT("sand"));
+    for (const TCHAR* Dry : {TEXT("short_dry_grass"), TEXT("tall_dry_grass")})
+    {
+        SetBlock(L, Tuft, Dry);
+        L.Steps(4);
+        const int32 Before = L.A.MobGrazes;
+        L.A.FindMob(Id)->GrazeTicks = 40;
+        L.Steps(36);
+        TestEqual(FString::Printf(TEXT("%s on sand is eaten"), Dry), BlockAt(L, Tuft), FName(TEXT("air")));
+        TestEqual(FString::Printf(TEXT("%s: one more graze"), Dry), L.A.MobGrazes, Before + 1);
+        TestEqual(TEXT("the sand stays"), BlockAt(L, Grass), FName(TEXT("sand")));
+    }
+    const int32 Grazes = L.A.MobGrazes;
+    L.Steps(4);
+    L.A.FindMob(Id)->GrazeTicks = 40;
+    L.Steps(36);
+    TestEqual(TEXT("bare sand is no food"), L.A.MobGrazes, Grazes);
     return true;
 }
 // Codex review 19 #3 [movement.knockback_resistance V:512; survival2.r20.mob_physics: 0.4 up from rest]: a grounded
@@ -958,10 +983,10 @@ namespace MobTestsLocal
 {
     // A lab of columns -2..1 on each axis (cells -32..31) whose blocks are a grass floor (cells z 0) over the statics'
     // floor, with plains everywhere.
-    void MakeGrassLab(FMobLab& L, uint64 Seed, const TCHAR* Top = TEXT("grass_block"))
+    void MakeGrassLab(FMobLab& L, uint64 Seed, const TCHAR* Top = TEXT("grass_block"), int32 Half = 32)
     {
-        L.A.World.BoundsMin = FIntVector(-32, -32, 0);
-        L.A.World.BoundsMax = FIntVector(31, 31, 15);
+        L.A.World.BoundsMin = FIntVector(-Half, -Half, 0);
+        L.A.World.BoundsMax = FIntVector(Half - 1, Half - 1, 15);
         const FFoundationBlockType* Block = L.A.World.FindBlock(Top);
         for (int32 Y = L.A.World.BoundsMin.Y; Y <= L.A.World.BoundsMax.Y; ++Y)
             for (int32 X = L.A.World.BoundsMin.X; X <= L.A.World.BoundsMax.X; ++X)
@@ -1147,6 +1172,140 @@ bool FFoundationMobLedgeTest::RunTest(const FString&)
     TestFalse(TEXT("navigation done"), Done.bMoving);
     TestEqual(TEXT("on the ledge"), Done.LocalCm.Z, 100., 1.);
     TestTrue(TEXT("near the corner"), FVector2D(Done.LocalCm.X - 450, Done.LocalCm.Y - 550).Size() < 100);
+    return true;
+}
+
+namespace MobTestsLocal
+{
+    // A 192 x 192 grass lab (columns -6..5) with the chunk-generation packs off, for the creature cycle; the player
+    // stands at cell (-2, 0).
+    TUniquePtr<FMobLab> MakeCycleLab(uint64 Seed)
+    {
+        TUniquePtr<FMobLab> L = MakeUnique<FMobLab>();
+        MakeGrassLab(*L, Seed, TEXT("grass_block"), 96);
+        if (FFoundationBiomeSpawns* Plains = L->A.Rules.BiomeSpawns.Find(TEXT("minecraft:plains"))) Plains->Chance = 0;
+        return L;
+    }
+
+    // Steps, recording each mob as it spawned (Age 0).
+    void StepRecording(FMobLab& L, int32 Count)
+    {
+        for (int32 Step = 0; Step < Count; ++Step)
+        {
+            L.Steps(1);
+            for (const FFoundationMob& Mob : L.A.GetMobs())
+                if (Mob.Age == 0) L.Spawned.Add(Mob);
+        }
+    }
+
+    int32 CountCreatures(const FMobLab& L)
+    {
+        int32 Count = 0;
+        for (const FFoundationMob& Mob : L.A.GetMobs())
+            Count += Mob.IsAlive() && FoundationMobs::IsCreature(Mob.Type) ? 1 : 0;
+        return Count;
+    }
+}
+
+// Survival T6 20b2b, the creature cycle [survival2.r20 population runs; survival.r10.spawning_rules S 5472; Codex 02
+// A, B]: the cap floor(10 x eligible / 289); nothing before step 400, a cycle at 400 that fills the lab to the cap (a
+// column's packs can overshoot by at most ClusterMax - 1), none at 800 while at the cap; every spawn at least 24 blocks
+// from the player; at most 4 a column; the same seed, the same mobs; foundation.Mobs.Spawn 0, none. Mutations: no
+// minimum distance; no cluster limit; cycle every 399; the cap from 10 x eligible / 288.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobCycleTest, "Unnamed.Foundation.Mobs.Cycle",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobCycleTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobs;
+    TestEqual(TEXT("cap over 289 columns"), GetCreatureCap(289), 10);
+    TestEqual(TEXT("cap over 288 columns"), GetCreatureCap(288), 9);
+    TestEqual(TEXT("cap over 144 columns"), GetCreatureCap(144), 4);
+    TestEqual(TEXT("cap over 578 columns (two players apart)"), GetCreatureCap(578), 20);
+    TestEqual(TEXT("cap over none"), GetCreatureCap(0), 0);
+
+    TUniquePtr<FMobLab> L = MakeCycleLab(1);
+    StepRecording(*L, CreatureCycleTicks - 1);
+    TestEqual(TEXT("no cycle before step 400"), L->A.MobCycles, 0);
+    TestEqual(TEXT("no mob before step 400"), L->A.GetMobs().Num(), 0);
+    StepRecording(*L, 1);
+    TestEqual(TEXT("a cycle at step 400"), L->A.MobCycles, 1);
+    TestEqual(TEXT("289 eligible columns (the lab's storage counts every column loaded)"), L->A.MobCycleEligible, 289);
+    TestEqual(TEXT("cap 10"), L->A.MobCycleCap, 10);
+    const int32 First = CountCreatures(*L);
+    TestTrue(*FString::Printf(TEXT("filled to the cap 10 (overshoot under 4): %d"), First),
+        First >= 10 && First <= 10 + ClusterMax - 1);
+    TestEqual(TEXT("all from the cycle"), L->A.MobsCycleSpawned, First);
+    const FVector Player(-2, 0, 0);
+    double Nearest = TNumericLimits<double>::Max();
+    for (const FFoundationMob& Mob : L->Spawned)
+        Nearest = FMath::Min(Nearest, FVector::Dist(Mob.LocalCm / 100, Player));
+    TestTrue(*FString::Printf(TEXT("every spawn at least 24 blocks away (nearest %.2f)"), Nearest), Nearest >= 24);
+    const FString Mobs = DescribeMobs(*L);
+    StepRecording(*L, CreatureCycleTicks);
+    TestEqual(TEXT("at the cap at step 800: no cycle"), L->A.MobCycles, 1);
+    TestEqual(TEXT("at the cap: no new mob"), L->A.GetMobs().Num(), First);
+    {
+        TUniquePtr<FMobLab> Again = MakeCycleLab(1);
+        StepRecording(*Again, CreatureCycleTicks);
+        TestEqual(TEXT("the same seed, the same mobs"), DescribeMobs(*Again), Mobs);
+        TUniquePtr<FMobLab> Other = MakeCycleLab(2);
+        StepRecording(*Other, CreatureCycleTicks);
+        TestNotEqual(TEXT("another seed, other mobs"), DescribeMobs(*Other), Mobs);
+        TUniquePtr<FMobLab> Off = MakeCycleLab(1);
+        Off->A.Options.bMobSpawn = false;
+        Off->Steps(CreatureCycleTicks);
+        TestEqual(TEXT("foundation.Mobs.Spawn 0: no cycle"), Off->A.MobCycles, 0);
+        TestEqual(TEXT("foundation.Mobs.Spawn 0: no mob"), Off->A.GetMobs().Num(), 0);
+    }
+    {
+        // One column's rounds: never more than ClusterMax; the limit is reached; none nearer than 24 blocks or
+        // farther than 128 from every player.
+        TUniquePtr<FMobLab> C = MakeCycleLab(3);
+        const FVector Far[] = {FVector(-40, -40, 0)};
+        int32 Most = 0, Total = 0;
+        for (int32 Cycle = 0; Cycle < 200; ++Cycle)
+        {
+            const int32 Spawned = C->A.SpawnCycleColumn(FIntPoint(3, 3), Far, Cycle);
+            Most = FMath::Max(Most, Spawned);
+            Total += Spawned;
+        }
+        TestEqual(TEXT("a column spawns at most 4, and reaches 4"), Most, ClusterMax);
+        TestTrue(TEXT("columns spawn"), Total > 0);
+        const FVector Inside[] = {FVector(56, 56, 0)};
+        const FVector Away[] = {FVector(56 + 200, 56, 0)};
+        int32 Near = 0, Distant = 0;
+        for (int32 Cycle = 0; Cycle < 50; ++Cycle)
+        {
+            Near += C->A.SpawnCycleColumn(FIntPoint(3, 3), Inside, Cycle);
+            Distant += C->A.SpawnCycleColumn(FIntPoint(3, 3), Away, Cycle);
+        }
+        TestEqual(TEXT("a player in the column: none within 24 blocks"), Near, 0);
+        TestEqual(TEXT("a player 200 blocks away: none beyond 128"), Distant, 0);
+    }
+    return true;
+}
+
+// A sanity band, not a gate: a plains lab over 12000 steps (30 cycles) against R20's plains_day creature arrivals
+// (sheep 7, chicken 1, besides horses and a donkey we do not build). Logged; it only checks the cap holds.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobCycleLongRunTest, "Unnamed.Foundation.Mobs.CycleLongRun",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobCycleLongRunTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    TUniquePtr<FMobLab> L = MakeCycleLab(7);
+    const double Start = FPlatformTime::Seconds();
+    StepRecording(*L, 12000);
+    int32 ByType[int32(EFoundationMobType::Count)] = {};
+    for (const FFoundationMob& Mob : L->Spawned)
+        ++ByType[int32(Mob.Type)];
+    AddInfo(FString::Printf(TEXT("12000 steps in %.1f s: cycles %d, arrivals cow %d pig %d sheep %d chicken %d; "
+                                 "R20 plains_day sheep 7 chicken 1"),
+        FPlatformTime::Seconds() - Start, L->A.MobCycles, ByType[0], ByType[1], ByType[2], ByType[3]));
+    TestTrue(TEXT("arrivals"), L->Spawned.Num() > 0);
+    TestTrue(TEXT("the cap holds (10, overshoot under 4)"), CountCreatures(*L) <= 10 + FoundationMobs::ClusterMax - 1);
     return true;
 }
 #endif

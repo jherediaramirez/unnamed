@@ -74,11 +74,14 @@ TIER_A = {
     # clay ball, netherrack, cactus, sea pickle, kelp, resin clump, potato) that no other group holds.
     "cooking_output": ["charcoal", "iron_nugget", "copper_nugget", "brick", "nether_brick", "green_dye", "lime_dye",
                        "dried_kelp", "resin_brick", "baked_potato"],
+    # Survival T2 (armor 19a2): the wearable armor pieces (not elytra, animal armor or trimmed variants).
+    "armor": [f"{m}_{p}" for m in ("leather", "chainmail", "iron", "golden", "diamond", "netherite", "copper")
+              for p in ("helmet", "chestplate", "leggings", "boots")] + ["turtle_helmet"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
 # the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
 # groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
-APPEND_LAST = ["drop", "mob_drop", "cooking_output"]
+APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor"]
 
 
 def append_rank(group):
@@ -90,6 +93,10 @@ WEAPON_DEFAULTS = {"item_damage_per_attack": 1, "disable_blocking_for_seconds": 
 # The player's base attack damage and attack speed; an item's base_attack_* modifiers add to them.
 BASE_ATTACK = {"attack_damage": 1.0, "attack_speed": 4.0}
 DEFINITION_ROOT = {"swap_animation_scale": 1.0, "hand_animation_on_swap": True}
+# The equippable component's defaults when it omits a field (minecraft.wiki "Data component format").
+EQUIPPABLE_DEFAULTS = {"equip_sound": "minecraft:item.armor.equip_generic", "asset_id": None, "swappable": True}
+# The armor pieces' attribute modifiers, summed per attribute into the record's "armor" field.
+ARMOR_ATTRIBUTES = {"armor": "armor", "armor_toughness": "toughness", "knockback_resistance": "knockback_resistance"}
 # Attribute modifier operations in the order of their lang key suffix (attribute.modifier.plus.0 is add_value).
 OPERATIONS = ["add_value", "add_multiplied_base", "add_multiplied_total"]
 # tools/ItemFacts.java's output: written after the build, hashed but not derived.
@@ -268,6 +275,40 @@ def attack_totals(components):
     if len(modifiers) != 2:
         raise SystemExit(f"unexpected attribute modifiers: {modifiers}")
     return {"damage": totals["attack_damage"], "speed": totals["attack_speed"], "modifiers": modifiers}
+
+
+def armor_totals(components, slot):
+    """An armor piece's armor, toughness and knockback resistance: its add_value modifiers in its own slot, summed."""
+    modifiers = components.get("minecraft:attribute_modifiers", [])
+    totals = dict.fromkeys(ARMOR_ATTRIBUTES.values(), 0.0)
+    for m in modifiers:
+        attribute = bare(m["type"])
+        if attribute not in ARMOR_ATTRIBUTES or m["operation"] != "add_value" or m["slot"] != slot:
+            raise SystemExit(f"unexpected armor modifiers: {modifiers}")
+        totals[ARMOR_ATTRIBUTES[attribute]] = round(totals[ARMOR_ATTRIBUTES[attribute]] + m["amount"], 6)
+    return {**totals, "modifiers": modifiers}
+
+
+def equippable(components):
+    value = components.get("minecraft:equippable")
+    if value is None:
+        return None
+    return {"slot": value["slot"], **{k: value.get(k, v) for k, v in EQUIPPABLE_DEFAULTS.items()}}
+
+
+def trim_fallback(refs):
+    """An armor definition selects its model on the trim material: only the fallback (untrimmed) model is kept."""
+    if all(r["when"] and r["when"]["property"] == "trim_material" for r in refs):
+        return [r for r in refs if r["when"]["is"] == "fallback"]
+    return refs
+
+
+def model_entry(ref):
+    """A model case of the item record; "tints" (one per layer, data order) only when the definition has them."""
+    entry = {"model": ref["model"], "when": ref["when"]}
+    if ref["tints"]:
+        entry["tints"] = ref["tints"]
+    return entry
 
 
 def break_ticks(speed, hardness, drops):
@@ -690,7 +731,7 @@ def derive(src, block_ref=BLOCK_REF):
         definition_name = f"{ASSETS}items/{item}.json"
         definition = src.jar_json(definition_name)
         copies.add(definition_name)
-        refs = list(model_refs(definition["model"]))
+        refs = trim_fallback(list(model_refs(definition["model"])))
         if bare(definition["model"]["type"]) not in ("model", "select") or not refs:
             raise SystemExit(f"{item}: Tier A definitions are a model or a display-context select")
         item_textures = []
@@ -716,6 +757,12 @@ def derive(src, block_ref=BLOCK_REF):
             weapon = {k: weapon.get(k, v) for k, v in WEAPON_DEFAULTS.items()}
         repair = c.get("minecraft:repairable", {}).get("items")
         kind = next((k for k in TOOL_KINDS + ["spear"] if item.endswith("_" + k)), None)
+        equip = equippable(c)
+        # Armor pieces: their modifiers are armor attributes, not the attack ones; "armor" and "equippable" are only
+        # on the records that have them, so every earlier record stays byte-identical.
+        extra = {} if equip is None else {"equippable": equip}
+        if group_of[item] == "armor":
+            extra["armor"] = armor_totals(c, equip["slot"])
         items.append({
             "id": item, "protocol_id": protocol[item], "group": group_of[item],
             "material": item[:-len(kind) - 1] if kind else None, "kind": kind,
@@ -723,24 +770,27 @@ def derive(src, block_ref=BLOCK_REF):
             "max_stack": c["minecraft:max_stack_size"], "max_damage": c.get("minecraft:max_damage"),
             "enchantability": c.get("minecraft:enchantable", {}).get("value"),
             "repair": None if repair is None else {"items": repair, "resolved": sorted(item_tags.members(repair))},
-            "attack": attack_totals(c), "tool": tool, "weapon": weapon,
+            "attack": None if group_of[item] == "armor" else attack_totals(c), "tool": tool, "weapon": weapon,
             "food": c.get("minecraft:food"), "consumable": c.get("minecraft:consumable"),
             "components": sorted(bare(k) for k in c),
             "item_tags": sorted(t for t in item_tags.all if item in item_tags.resolve(t)),
             "creative": [{"tab": bare(tab["id"]), "index": index} for tab in tabs
                          for index, entry in enumerate(tab["display"]) if entry == "minecraft:" + item],
             "model": {"definition": f"items/{item}.json", "type": bare(definition["model"]["type"]),
-                      "models": [{"model": r["model"], "when": r["when"]} for r in refs],
+                      "models": [model_entry(r) for r in refs],
                       **{k: definition.get(k, v) for k, v in DEFINITION_ROOT.items()}},
             "textures": item_textures,
+            **extra,
         })
-    if any(r["tints"] for item in items for r in model_refs(src.jar_json(f"{ASSETS}items/{item['id']}.json")["model"])):
-        raise SystemExit("Tier A has no tinted layers; add tint handling before importing tinted items")
+    # Tints: only the leather pieces' dye tint (a per-layer colour with a default) is handled.
+    if any(t is not None and bare(t.get("type", "")) != "dye" for item in items for m in item["model"]["models"]
+           for t in m.get("tints", [])):
+        raise SystemExit("only dye tints are handled; add tint handling before importing other tinted items")
     # The tooltip text the items' attribute modifiers need, verbatim from en_us.json: each slot's header ("When in
     # Main Hand:"), each attribute's name, and each operation's equals, plus and take forms.
     lang_keys = set()
     for item in items:
-        for modifier in (item["attack"] or {}).get("modifiers", []):
+        for modifier in (item["attack"] or item.get("armor") or {}).get("modifiers", []):
             operation = OPERATIONS.index(modifier["operation"])
             lang_keys |= {f"item.modifiers.{modifier['slot']}", f"attribute.name.{bare(modifier['type'])}"}
             lang_keys |= {f"attribute.modifier.{form}.{operation}" for form in ("equals", "plus", "take")}

@@ -246,6 +246,9 @@ private:
     UMaterialInterface* GetLayerMaterial(const FFoundationBlockType* Type) const;
     // A sprite's extruded mesh at HeldModelBlockCm per model block, built on first use; null without an opacity mask.
     UStaticMesh* GetItemMesh(const struct FFoundationItemTextureAsset& Texture);
+    // The held model's mesh: its first layer times the item's tint, and its second layer (when it has one, the same
+    // size) untinted over it; a plain one-layer model is GetItemMesh(Texture).
+    UStaticMesh* GetItemMesh(const struct FFoundationItemModelView& Model);
     // M_HeldItem with the 16 or 32 pixel sprite array, made on first use; null before CreateItemMaterials.py ran.
     UMaterialInterface* GetItemMaterial(const class UFoundationItemAssets& Items, bool b32);
     // A new M_HeldItem instance on the 16 or 32 pixel sprite array (logged and null when either is missing).

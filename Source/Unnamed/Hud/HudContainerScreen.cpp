@@ -9,6 +9,8 @@ namespace
     const FLinearColor ContainerTitleColor = FLinearColor(FColor(0x40, 0x40, 0x40));
     const TCHAR* ContainerBackground = TEXT("gui/container/inventory");
     const TCHAR* CraftingBackground = TEXT("gui/container/crafting_table");
+    // The barrel's (T1 step 9): ContainerScreen's generic_54.png, its top 3 rows and its player part.
+    const TCHAR* BarrelBackground = TEXT("gui/container/generic_54");
     // The furnace's, the smoker's and the blast furnace's own background, flame, arrow and title (T1 steps 8a2, 8b;
     // the same geometry, survival.r3.sprites).
     struct FFurnaceArt
@@ -93,7 +95,7 @@ SHudContainerScreen::FFrame SHudContainerScreen::GetFrame(const FGeometry& Geome
     Frame.Units = float(Frame.Scale) / SlateScale;
     // leftPos/topPos: centred in the scaled screen with integer division.
     Frame.Origin = FIntPoint((int32(Pixels.X) / Frame.Scale - FHudContainerModel::Width) / 2,
-        (int32(Pixels.Y) / Frame.Scale - FHudContainerModel::Height) / 2);
+        (int32(Pixels.Y) / Frame.Scale - FHudContainerModel::GetHeight(Model.Kind)) / 2);
     return Frame;
 }
 
@@ -240,6 +242,7 @@ const TCHAR* SHudContainerScreen::GetBackground() const
 {
     return Model.Kind == EFoundationMenuKind::Crafting ? CraftingBackground
         : IsFurnaceMenu(Model.Kind)                    ? GetFurnaceArt(Model.Kind).Background
+        : Model.Kind == EFoundationMenuKind::Barrel    ? BarrelBackground
                                                        : ContainerBackground;
 }
 
@@ -260,18 +263,40 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) / Frame.Units;
     Paint.Box(&Art.Solid, {0, 0}, FIntPoint(int32(Pixels.X) + 1, int32(Pixels.Y) + 1), Whole,
         FLinearColor(.0627f, .0627f, .0627f, .784f));
-    Paint.Box(Art.Find(GetBackground()), O, {FHudContainerModel::Width, FHudContainerModel::Height},
-        FBox2f(FVector2f(0), FVector2f(FHudContainerModel::Width / 256.f, FHudContainerModel::Height / 256.f)));
+    const bool bBarrel = Model.Kind == EFoundationMenuKind::Barrel;
+    if (bBarrel)
+    {
+        // ContainerScreen.renderBg: the title and the 3 rows (71 high), then the player part from y 126 (96 high).
+        using M = FHudContainerModel;
+        Paint.Box(Art.Find(GetBackground()), O, {M::Width, M::BarrelTopHeight},
+            FBox2f(FVector2f(0), FVector2f(M::Width / 256.f, M::BarrelTopHeight / 256.f)));
+        Paint.Box(Art.Find(GetBackground()), O + FIntPoint(0, M::BarrelTopHeight), {M::Width, M::BarrelPlayerHeight},
+            FBox2f(FVector2f(0, M::BarrelPlayerTextureY / 256.f),
+                FVector2f(M::Width / 256.f, (M::BarrelPlayerTextureY + M::BarrelPlayerHeight) / 256.f)));
+    }
+    else
+        Paint.Box(Art.Find(GetBackground()), O, {FHudContainerModel::Width, FHudContainerModel::Height},
+            FBox2f(FVector2f(0), FVector2f(FHudContainerModel::Width / 256.f, FHudContainerModel::Height / 256.f)));
     // The recipe-book button (inert until the recipe book exists) and the labels: the inventory screen's "Crafting"
     // over its 2x2; the crafting table's title and "Inventory" over the player's rows; the furnace's title centred.
     const bool bCrafting = Model.Kind == EFoundationMenuKind::Crafting;
     const bool bFurnace = IsFurnaceMenu(Model.Kind);
     const FFurnaceArt& Furnace = GetFurnaceArt(Model.Kind);
-    Paint.Box(Art.Find(FHudContainerModel::IsInRecipeButton(Model.Kind, Mouse) ? ContainerRecipeButtonHot
-                                                                               : ContainerRecipeButton),
-        O + FHudContainerModel::GetRecipeButton(Model.Kind),
-        {FHudContainerModel::RecipeButtonWidth, FHudContainerModel::RecipeButtonHeight});
-    if (bCrafting)
+    if (FHudContainerModel::HasRecipeButton(Model.Kind))
+        Paint.Box(Art.Find(FHudContainerModel::IsInRecipeButton(Model.Kind, Mouse) ? ContainerRecipeButtonHot
+                                                                                   : ContainerRecipeButton),
+            O + FHudContainerModel::GetRecipeButton(Model.Kind),
+            {FHudContainerModel::RecipeButtonWidth, FHudContainerModel::RecipeButtonHeight});
+    if (bBarrel)
+    {
+        Paint.Text(TEXT("Barrel"),
+            O + FIntPoint(FHudContainerModel::InventoryLabelX, FHudContainerModel::FurnaceTitleY), ContainerTitleColor,
+            false);
+        Paint.Text(TEXT("Inventory"),
+            O + FIntPoint(FHudContainerModel::InventoryLabelX, FHudContainerModel::BarrelInventoryLabelY),
+            ContainerTitleColor, false);
+    }
+    else if (bCrafting)
     {
         Paint.Text(TEXT("Crafting"),
             O + FIntPoint(FHudContainerModel::CraftingTitleX, FHudContainerModel::CraftingTitleY), ContainerTitleColor,
@@ -326,7 +351,7 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
         if (bHighlight) Paint.Box(Art.Find(ContainerHighlightBack), At - FIntPoint(4, 4), {24, 24});
         if (Stack.IsEmpty())
         {
-            if (const TCHAR* Silhouette = bCrafting || bFurnace ? nullptr : GetContainerSilhouette(Slot))
+            if (const TCHAR* Silhouette = bCrafting || bFurnace || bBarrel ? nullptr : GetContainerSilhouette(Slot))
                 Paint.Box(Art.Find(Silhouette), At, {16, 16});
         }
         else
@@ -339,7 +364,7 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
         Paint.Stack(Carried, O + Mouse - FIntPoint(8, 8));
     else if (Hover != INDEX_NONE && Hover != FContainerScreenMenu::Outside && !View.Get(Hover).IsEmpty())
     {
-        TArray<FHudTooltipLine> Lines = {{Art.ItemName(View.Get(Hover).Item), HudTooltip::White}};
+        TArray<FHudTooltipLine> Lines = {Art.GetNameLine(View.Get(Hover).Item)};
         if (const FHudCreativeItem* Info = Art.Items.Find(View.Get(Hover).Item)) Lines.Append(Info->Details);
         Paint.Tooltip(Lines, O + Mouse);
     }

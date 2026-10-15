@@ -154,13 +154,15 @@ void UFoundationInteractionSettings::AddBlockItems(
         Item.PlacesWallBlock = Block.ItemWallBlock;
         Item.IconColor = Block.Color;
         // 26.3's data gives one block item an equippable: carved_pumpkin, head, not swappable, no equip_sound (so
-        // the component's default, item.armor.equip_generic; minecraft.wiki "Data component format"). Set here by id
-        // until DA_Blocks carries equippables (survival step 19a; Codex review 5a, finding 2).
+        // the component's default, item.armor.equip_generic; minecraft.wiki "Data component format") and the camera
+        // overlay misc/pumpkinblur (19a2). Set here by id until DA_Blocks carries equippables (survival step 19a;
+        // Codex review 5a, finding 2).
         if (Id == TEXT("carved_pumpkin"))
         {
             Item.Equipment = EFoundationEquipmentSlot::Head;
             Item.bSwappable = false;
             Item.EquipSound = TEXT("item.armor.equip_generic");
+            Item.CameraOverlay = TEXT("misc/pumpkinblur");
         }
         Items.Add(Item);
     }

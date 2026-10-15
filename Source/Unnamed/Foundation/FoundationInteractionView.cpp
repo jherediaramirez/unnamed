@@ -751,10 +751,12 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
         case EFoundationEventKind::BlockUsed:
             // A door, trapdoor or gate opened or closed (survival B3a): its set's event from the block, play volume 1
             // and pitch 0.9 + 0.1U (SURVIVAL-FINDINGS, R5, survival.r5.play_calls); the asset's volume applies on top.
-            // A button or lever (B3b) carries its own volume and pitch.
+            // A button or lever (B3b) carries its own volume and pitch; a barrel's open or close (T1 step 9) its own
+            // volume (0.5) and place (its facing face's centre, LocationCm). Pitch 0: 0.9 + 0.1U.
             if (BreakEffects && !Event.Interaction.IsNone())
-                BreakEffects->PlayEvent(Event.Interaction, Cell.GetCenter(), Event.Amount,
-                    Event.Pitch > 0 ? Event.Pitch : FMath::FRand() * .1f + .9f);
+                BreakEffects->PlayEvent(Event.Interaction,
+                    Event.LocationCm.IsZero() ? Cell.GetCenter() : Event.LocationCm,
+                    Event.Amount > 0 ? Event.Amount : 1.f, Event.Pitch > 0 ? Event.Pitch : FMath::FRand() * .1f + .9f);
             break;
         case EFoundationEventKind::Stripped:
             // Axe stripping (step 14): item.axe.strip from the block, volume 1 and pitch 1 (provisional until a vanilla
@@ -1191,7 +1193,7 @@ void UFoundationInteractionView::SetHeldItem(FName Id)
     if (Items && Items->FindModelView(Id, TEXT("firstperson_righthand"), Model))
     {
         const FFoundationItemTextureAsset& Texture = *Model.Texture;
-        UStaticMesh* Cached = GetItemMesh(Texture);
+        UStaticMesh* Cached = GetItemMesh(Model);
         Material = Cached ? GetItemMaterial(*Items, Texture.Width == 32) : nullptr;
         if (Material)
         {
@@ -1243,6 +1245,35 @@ UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemTextur
     if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
         Cached = FoundationItemMesh::BuildMesh(this,
             FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque), Texture.Layer, HeldModelBlockCm);
+    return Cached;
+}
+
+UStaticMesh* UFoundationInteractionView::GetItemMesh(const FFoundationItemModelView& Model)
+{
+    const FFoundationItemTextureAsset& Texture = *Model.Texture;
+    const bool bOverlay =
+        Model.Overlay && Model.Overlay->Width == Texture.Width && Model.Overlay->Height == Texture.Height;
+    if (!bOverlay && Model.Tint == FColor::White) return GetItemMesh(Texture);
+    // Several layers and a tint make a mesh of their own, by the layers' names and the tint.
+    const FName Key(Texture.Name.ToString() + (bOverlay ? TEXT("+") + Model.Overlay->Name.ToString() : FString()) +
+        TEXT("#") + Model.Tint.ToHex());
+    TObjectPtr<UStaticMesh>& Cached = ItemMeshes.FindOrAdd(Key);
+    TArray<bool> Opaque;
+    if (!Cached && FoundationItemMesh::ReadMask(Texture, Opaque))
+    {
+        TArray<FFoundationItemMeshLayer, TInlineAllocator<2>> Layers;
+        FFoundationItemMeshLayer& Base = Layers.AddDefaulted_GetRef();
+        Base.Quads = FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque);
+        Base.Layer = Texture.Layer;
+        Base.Tint = Model.Tint;
+        if (bOverlay && FoundationItemMesh::ReadMask(*Model.Overlay, Opaque))
+        {
+            FFoundationItemMeshLayer& Top = Layers.AddDefaulted_GetRef();
+            Top.Quads = FoundationItemMesh::BuildQuads(Texture.Width, Texture.Height, Opaque, .001f);
+            Top.Layer = Model.Overlay->Layer;
+        }
+        Cached = FoundationItemMesh::BuildMesh(this, Layers, HeldModelBlockCm);
+    }
     return Cached;
 }
 
