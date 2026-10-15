@@ -99,6 +99,9 @@ struct FFoundationBlockType
     bool bOutlineMovesWithOffset = false;
     bool bCollisionMovesWithOffset = false;
 
+    // One of survival B1's family blocks (FFoundationBlockAsset), behind foundation.Blocks.Families.
+    bool bAppendedFamily = false;
+
     bool IsAir() const { return ProtocolId == 0; }
     bool IsWater() const { return Id == TEXT("water"); }
     // Still lava: no flow and no damage yet.
@@ -119,6 +122,15 @@ private:
     // First entry of this block's states in the registry's shape and face tables.
     int32 TableOffset = 0;
 };
+
+// The switch foundation.Blocks.Families (survival B1): 0 hides the family blocks (bAppendedFamily) as before they were
+// imported: absent from the creative inventory and the Playground galleries' tails, and refused on placing.
+namespace FoundationBlockFamilies
+{
+    UNNAMED_API bool AreEnabled();
+    // True for a family block while the switch is 0; false for every other block, and for null.
+    UNNAMED_API bool IsHidden(const FFoundationBlockType* Block);
+}
 
 // Face codes: what one face of a state shows. Six per state in EFoundationFace order, then an overlay code.
 // The same codes feed the instanced cubes now and a chunk mesher later, so they never depend on the mesh.

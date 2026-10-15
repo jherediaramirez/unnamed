@@ -107,6 +107,78 @@ MODEL_GROUPS = {
     # The torch (torch session T2): the floor and wall blocks of the torch item. build_reference.py appends their
     # textures and models after the groups above (APPENDED_BLOCKS), so no earlier index moves.
     "torch": "torch wall_torch",
+    # Survival B1 (track T5): the 302 family blocks and the cauldrons and fires, appended after the torch the same
+    # way (build_reference.py's APPENDED_BLOCKS, in this order). Their entries carry added: "survival-B1".
+    "stairs": "white_wool_stairs orange_wool_stairs magenta_wool_stairs light_blue_wool_stairs yellow_wool_stairs "
+               "lime_wool_stairs pink_wool_stairs gray_wool_stairs light_gray_wool_stairs cyan_wool_stairs "
+               "purple_wool_stairs blue_wool_stairs brown_wool_stairs green_wool_stairs red_wool_stairs "
+               "black_wool_stairs oak_stairs cobblestone_stairs brick_stairs stone_brick_stairs mud_brick_stairs "
+               "resin_brick_stairs nether_brick_stairs sandstone_stairs spruce_stairs birch_stairs jungle_stairs "
+               "quartz_stairs acacia_stairs cherry_stairs dark_oak_stairs pale_oak_stairs mangrove_stairs "
+               "poplar_stairs bamboo_stairs bamboo_mosaic_stairs prismarine_stairs prismarine_brick_stairs "
+               "dark_prismarine_stairs red_sandstone_stairs purpur_stairs white_concrete_stairs "
+               "orange_concrete_stairs magenta_concrete_stairs light_blue_concrete_stairs yellow_concrete_stairs "
+               "lime_concrete_stairs pink_concrete_stairs gray_concrete_stairs light_gray_concrete_stairs "
+               "cyan_concrete_stairs purple_concrete_stairs blue_concrete_stairs brown_concrete_stairs "
+               "green_concrete_stairs red_concrete_stairs black_concrete_stairs polished_granite_stairs "
+               "smooth_red_sandstone_stairs mossy_stone_brick_stairs polished_diorite_stairs "
+               "mossy_cobblestone_stairs end_stone_brick_stairs stone_stairs smooth_sandstone_stairs "
+               "smooth_quartz_stairs granite_stairs andesite_stairs red_nether_brick_stairs "
+               "polished_andesite_stairs diorite_stairs crimson_stairs warped_stairs blackstone_stairs "
+               "polished_blackstone_brick_stairs polished_blackstone_stairs tuff_stairs polished_tuff_stairs "
+               "tuff_brick_stairs sulfur_stairs polished_sulfur_stairs sulfur_brick_stairs cinnabar_stairs "
+               "polished_cinnabar_stairs cinnabar_brick_stairs cut_copper_stairs exposed_cut_copper_stairs "
+               "weathered_cut_copper_stairs oxidized_cut_copper_stairs waxed_cut_copper_stairs "
+               "waxed_exposed_cut_copper_stairs waxed_weathered_cut_copper_stairs waxed_oxidized_cut_copper_stairs "
+               "cobbled_deepslate_stairs polished_deepslate_stairs deepslate_tile_stairs deepslate_brick_stairs",
+    "fences": "oak_fence nether_brick_fence spruce_fence birch_fence jungle_fence acacia_fence cherry_fence "
+               "dark_oak_fence pale_oak_fence mangrove_fence poplar_fence bamboo_fence crimson_fence warped_fence",
+    "fence_gates": "oak_fence_gate spruce_fence_gate birch_fence_gate jungle_fence_gate acacia_fence_gate "
+                    "cherry_fence_gate dark_oak_fence_gate pale_oak_fence_gate mangrove_fence_gate "
+                    "poplar_fence_gate bamboo_fence_gate crimson_fence_gate warped_fence_gate",
+    "walls": "resin_brick_wall cobblestone_wall mossy_cobblestone_wall brick_wall prismarine_wall "
+              "red_sandstone_wall mossy_stone_brick_wall granite_wall stone_brick_wall mud_brick_wall "
+              "nether_brick_wall andesite_wall red_nether_brick_wall sandstone_wall end_stone_brick_wall "
+              "diorite_wall blackstone_wall polished_blackstone_brick_wall polished_blackstone_wall tuff_wall "
+              "polished_tuff_wall tuff_brick_wall sulfur_wall polished_sulfur_wall sulfur_brick_wall cinnabar_wall "
+              "polished_cinnabar_wall cinnabar_brick_wall cobbled_deepslate_wall polished_deepslate_wall "
+              "deepslate_tile_wall deepslate_brick_wall",
+    "panes": "iron_bars copper_bars exposed_copper_bars weathered_copper_bars oxidized_copper_bars "
+              "waxed_copper_bars waxed_exposed_copper_bars waxed_weathered_copper_bars waxed_oxidized_copper_bars "
+              "glass_pane white_stained_glass_pane orange_stained_glass_pane magenta_stained_glass_pane "
+              "light_blue_stained_glass_pane yellow_stained_glass_pane lime_stained_glass_pane "
+              "pink_stained_glass_pane gray_stained_glass_pane light_gray_stained_glass_pane "
+              "cyan_stained_glass_pane purple_stained_glass_pane blue_stained_glass_pane brown_stained_glass_pane "
+              "green_stained_glass_pane red_stained_glass_pane black_stained_glass_pane",
+    "doors": "oak_door iron_door spruce_door birch_door jungle_door acacia_door cherry_door dark_oak_door "
+              "pale_oak_door mangrove_door poplar_door bamboo_door crimson_door warped_door copper_door "
+              "exposed_copper_door weathered_copper_door oxidized_copper_door waxed_copper_door "
+              "waxed_exposed_copper_door waxed_weathered_copper_door waxed_oxidized_copper_door",
+    "trapdoors": "oak_trapdoor spruce_trapdoor birch_trapdoor jungle_trapdoor acacia_trapdoor cherry_trapdoor "
+                  "dark_oak_trapdoor pale_oak_trapdoor mangrove_trapdoor poplar_trapdoor bamboo_trapdoor "
+                  "iron_trapdoor crimson_trapdoor warped_trapdoor copper_trapdoor exposed_copper_trapdoor "
+                  "weathered_copper_trapdoor oxidized_copper_trapdoor waxed_copper_trapdoor "
+                  "waxed_exposed_copper_trapdoor waxed_weathered_copper_trapdoor waxed_oxidized_copper_trapdoor",
+    "buttons": "stone_button oak_button spruce_button birch_button jungle_button acacia_button cherry_button "
+                "dark_oak_button pale_oak_button mangrove_button poplar_button bamboo_button crimson_button "
+                "warped_button polished_blackstone_button",
+    "lever": "lever",
+    "plates": "stone_pressure_plate oak_pressure_plate spruce_pressure_plate birch_pressure_plate "
+               "jungle_pressure_plate acacia_pressure_plate cherry_pressure_plate dark_oak_pressure_plate "
+               "pale_oak_pressure_plate mangrove_pressure_plate poplar_pressure_plate bamboo_pressure_plate "
+               "light_weighted_pressure_plate heavy_weighted_pressure_plate crimson_pressure_plate "
+               "warped_pressure_plate polished_blackstone_pressure_plate",
+    "ladder": "ladder",
+    "nether_vines": "weeping_vines weeping_vines_plant twisting_vines twisting_vines_plant",
+    "beds": "white_bed orange_bed magenta_bed light_blue_bed yellow_bed lime_bed pink_bed gray_bed light_gray_bed "
+             "cyan_bed purple_bed blue_bed brown_bed green_bed red_bed black_bed",
+    "chests": "chest ender_chest trapped_chest",
+    "farmland_path": "farmland dirt_path",
+    "crops": "wheat pumpkin_stem melon_stem carrots potatoes torchflower_crop pitcher_crop beetroots",
+    "saplings": "oak_sapling spruce_sapling birch_sapling jungle_sapling acacia_sapling cherry_sapling "
+                 "dark_oak_sapling pale_oak_sapling poplar_sapling",
+    "cauldrons_fire": "cauldron water_cauldron lava_cauldron powder_snow_cauldron fire soul_fire campfire "
+                       "soul_campfire",
 }
 
 
@@ -128,6 +200,38 @@ def model_textures(model, seen=None):
 
     faces = [face for e in elements or [] for face in e["faces"].values()]
     return [resolve(face["texture"]) for face in faces], any("tintindex" in face for face in faces)
+
+
+# Survival B1's groups: their entries get added: "survival-B1" (the importer's appended-family flag). The chests'
+# blockstates name only a particle model (the chest is drawn by its block entity), so they carry stand_in: true and
+# no textures; build_reference.py supplies the stand-in box and its tiles.
+B1_GROUPS = ("stairs", "fences", "fence_gates", "walls", "panes", "doors", "trapdoors", "buttons", "lever", "plates",
+             "ladder", "nether_vines", "beds", "chests", "farmland_path", "crops", "saplings", "cauldrons_fire")
+B1_STAND_INS = {"chest", "trapped_chest", "ender_chest"}
+b1_added = set()
+
+
+def when_keys(when):
+    """Property names a multipart condition tests, OR/AND lists included."""
+    keys = set()
+    for k, v in when.items():
+        if k in ("OR", "AND"):
+            for sub in v:
+                keys |= when_keys(sub)
+        else:
+            keys.add(k)
+    return keys
+
+
+def model_force_translucent(model):
+    """Whether a block model or one of its parents marks a texture force_translucent."""
+    name = model
+    while name:
+        raw = jar.read(f"assets/minecraft/models/{name.removeprefix('minecraft:')}.json")
+        if b"force_translucent" in raw:
+            return True
+        name = json.loads(raw).get("parent")
+    return False
 
 
 def blockstate_models(data):
@@ -159,6 +263,13 @@ for group, ids in MODEL_GROUPS.items():
         classes = {alpha_of(t) for t in names}
         props = sorted({k.split("=")[0] for key in data.get("variants", {}) for k in key.split(",") if k} |
                        {k for p in data.get("multipart", []) for k in p.get("when", {}) if k not in ("OR", "AND")})
+        if group in B1_GROUPS:
+            b1_added.add(bid)
+            # B1 only (earlier entries keep their rules): conditions inside OR/AND count, and a block whose models
+            # (parents included) mark a texture force_translucent is translucent, as the 17 panes are.
+            props = sorted(set(props) | {k for p in data.get("multipart", []) for k in when_keys(p.get("when", {}))})
+            if any(model_force_translucent(m) for m in set(blockstate_models(data))):
+                force_translucent.add(bid)
         assets[bid] = {"id": bid, "shape": "model", "template": group, "faces": "",
                        "textures": ";".join(names), "state_props": ",".join(props),
                        "random_rotation": str(any(isinstance(v, list) and len(v) > 1 for v in
@@ -172,7 +283,7 @@ blocks = []
 for bid, a in assets.items():
     r = registry[bid]
     faces = {k: tex_name(v) for k, v in (p.split("=", 1) for p in a["faces"].split(";"))} if a["faces"] else {}
-    all_tex = [tex_name(t) for t in a["textures"].split(";")]
+    all_tex = [tex_name(t) for t in a["textures"].split(";")] if a["textures"] else []
     loc = locations.get(bid, {})
     layer = "translucent" if bid in force_translucent else a["render_layer"]
     blocks.append({
@@ -197,6 +308,10 @@ for bid, a in assets.items():
         "dimension": loc.get("dimension"),
         "y_range": ORE_Y.get(bid) or loc.get("y_range"),
     })
+    if bid in B1_STAND_INS:
+        blocks[-1]["stand_in"] = True
+    if bid in b1_added:
+        blocks[-1]["added"] = "survival-B1"
 blocks.sort(key=lambda b: b["protocol_id"])
 
 # Fluids: water, and still lava for the aquifers (phase 4; its textures join the research copies here).

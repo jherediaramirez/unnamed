@@ -22,7 +22,7 @@ No switch: data only. Nothing plays the new events until a step calls `PlayEvent
   - T2, 15: experience pickup, level up, 8 armor equips, shield block and break, arrow shoot, hit, hit player.
   - T3, 11: the four bucket events, `entity.generic.drink`, `entity.generic.extinguish_fire`, `block.fire.extinguish`, `block.lava.pop`, `block.lava.ambient`, `entity.generic.burn`, `block.lava.extinguish`.
   - T6, 48: the 46 listed (cow, pig, sheep, chicken, zombie, spider, creeper, skeleton, player attacks, generic hurt, death, falls, explode, shear, milk) and the optional `entity.generic.splash` and `entity.generic.swim` (burn and drink came with T3).
-- **Left out:** `block.blast_furnace.fire_crackle` (T1 step 8b). 26.3's `sounds.json` has no entry for it, so the blast furnace is silent in vanilla; T1's hook stays silent (SM-Blocks' decision).
+- **Left out:** `block.blast_furnace.fire_crackle` (T1 step 8b), a misspelled name: 26.3's event is `block.blastfurnace.fire_crackle` (files `block/blastfurnace/blastfurnace1`-`5`), so the blast furnace is not silent in vanilla. *Correction (survival B1, 2026-10-14, review 7-T5-B0 finding 1):* B1 appended it as event 332.
 - Lines added to the batch file after the deadline go into a small second batch at the end of the program.
 
 ## 3. Checks

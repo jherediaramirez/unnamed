@@ -46,6 +46,33 @@ bool FoundationTargeting::IntersectBox(const FBox& Box, const FVector& Origin, c
     return true;
 }
 
+namespace
+{
+    // A fluid source's box in a cell (world cm): a water or lava source, or a waterlogged block. Its surface is 8/9 of
+    // the cell, the whole cell under the same fluid (FFoundationFluid::GetHeight).
+    bool GetSourceBox(
+        const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State, FBox& Out)
+    {
+        static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
+        const FFoundationBlockRegistry& Registry = World.GetRegistry();
+        if (State.IsAir()) return false;
+        FFoundationFluid Fluid = Registry.GetFluid(State);
+        if (!Fluid.bSource && Registry.GetValue(State, Waterlogged) == True)
+        {
+            Fluid.bWater = Fluid.bSource = true;
+            Fluid.Amount = 8;
+        }
+        if (!Fluid.bSource || (!Fluid.bWater && !Fluid.bLava)) return false;
+        const FIntVector Above = Cell + FIntVector(0, 0, 1);
+        const FFoundationFluid Over =
+            World.IsKnown(Above) ? Registry.GetFluid(World.Get(Above).State) : FFoundationFluid{};
+        const bool bSameAbove = (Fluid.bWater && Over.bWater) || (Fluid.bLava && Over.bLava);
+        Out = FoundationGrid::CellBox(Cell, World.OriginCm);
+        Out.Max.Z = Out.Min.Z + (Out.Max.Z - Out.Min.Z) * Fluid.GetHeight(bSameAbove);
+        return true;
+    }
+}
+
 FFoundationHit FoundationTargeting::Resolve(const FFoundationRay& Ray, const FFoundationBlockWorld& World,
     TConstArrayView<FFoundationStatic> Statics, TConstArrayView<FFoundationEntityShape> Entities)
 {
@@ -81,28 +108,44 @@ FFoundationHit FoundationTargeting::Resolve(const FFoundationRay& Ray, const FFo
             const FFoundationCell Value = World.Get(Cell);
             // Water has no outline, a slab only its half and a plant its boxes: the ray continues through the rest.
             Outlines.Reset();
+            double CellDistance = TNumericLimits<double>::Max();
+            EFoundationFace CellFace = EFoundationFace::None;
             if (!Value.State.IsAir() && World.GetOutlineBoxes(Cell, Value.State, Outlines))
-            {
-                double CellDistance = TNumericLimits<double>::Max();
-                EFoundationFace CellFace = EFoundationFace::None;
                 for (const FBox& Outline : Outlines)
                     if (IntersectBox(Outline, Ray.Eye, Direction, Limit, Distance, Face) && Distance < CellDistance)
                     {
                         CellDistance = Distance;
                         CellFace = Face;
                     }
-                if (CellFace != EFoundationFace::None)
+            FBox Source;
+            if (Ray.bFluidSources && GetSourceBox(World, Cell, Value.State, Source))
+            {
+                if (Source.IsInsideOrOn(Ray.Eye))
                 {
-                    // Outline boxes stay inside their cells, so the first hit in traversal order is the nearest.
-                    // The exception: a thick bamboo stalk's outline reaches 1/16 into the next cell at its largest
-                    // offsets, and a ray through that sliver alone misses it.
-                    Best.Kind = EFoundationHitKind::Block;
-                    Best.Cell = Cell;
-                    Best.Face = CellFace;
-                    Best.DistanceCm = BestDistance = CellDistance;
-                    Best.Revision = Value.Revision;
-                    break;
+                    // The eye in the fluid: hit where it is, through the face the ray leaves its dominant axis by.
+                    const int32 Main = FMath::Abs(Direction.X) >= FMath::Abs(Direction.Y)
+                        ? (FMath::Abs(Direction.X) >= FMath::Abs(Direction.Z) ? 0 : 2)
+                        : (FMath::Abs(Direction.Y) >= FMath::Abs(Direction.Z) ? 1 : 2);
+                    CellDistance = 0;
+                    CellFace = FoundationGrid::FaceFromAxis(Main, Direction[Main] < 0);
                 }
+                else if (IntersectBox(Source, Ray.Eye, Direction, Limit, Distance, Face) && Distance < CellDistance)
+                {
+                    CellDistance = Distance;
+                    CellFace = Face;
+                }
+            }
+            if (CellFace != EFoundationFace::None)
+            {
+                // Outline boxes stay inside their cells, so the first hit in traversal order is the nearest.
+                // The exception: a thick bamboo stalk's outline reaches 1/16 into the next cell at its largest
+                // offsets, and a ray through that sliver alone misses it.
+                Best.Kind = EFoundationHitKind::Block;
+                Best.Cell = Cell;
+                Best.Face = CellFace;
+                Best.DistanceCm = BestDistance = CellDistance;
+                Best.Revision = Value.Revision;
+                break;
             }
         }
         const int32 Axis = Next[0] <= Next[1] ? (Next[0] <= Next[2] ? 0 : 2) : (Next[1] <= Next[2] ? 1 : 2);

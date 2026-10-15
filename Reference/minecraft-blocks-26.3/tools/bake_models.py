@@ -13,7 +13,9 @@ rotation with rescale). Conventions this baker fixes, each our own reading of th
   it each face's cullface and shade direction.
 - uvlock keeps every face's texture aligned with the world. A face's UV in model space is one of the 8 transforms of
   the canonical UV (build_reference.canonical_uv, transform_uv); after the blockstate rotation it shows the same
-  transform of the canonical UV of its final direction. Faces of rotated elements never use it.
+  transform of the canonical UV of its final direction. Faces of rotated elements never use it. A face UV that is no
+  such transform (fence and wall bars, stairs, buttons: blocks session B1) turns its UV rectangle with the face: the
+  transform taking the face's canonical UV in model space to that of its final direction applies to its UV.
 - Random variant lists bake every entry (all equal weight in the 83 blocks); multipart states are the sum of their
   parts. A state is therefore a list of parts, each a list of alternatives, each a baked model index.
 """
@@ -68,6 +70,18 @@ class Baker:
     def bake_variant(self, variant, tints=frozenset()):
         """One blockstate model reference (model, x, y, uvlock) as a baked model index. Face tintindex values outside
         tints (the block's registered tint indices) are dropped to -1: such faces render untinted."""
+        return self.register(*self.variant_quads(variant, tints))
+
+    def register(self, ao, quads):
+        """A baked model's index, equal models sharing one."""
+        key = json.dumps([ao, quads], sort_keys=True)
+        if key not in self.index:
+            self.index[key] = len(self.baked)
+            self.baked.append({"ao": ao, "quads": quads})
+        return self.index[key]
+
+    def variant_quads(self, variant, tints=frozenset()):
+        """(ambient occlusion, quads) of one blockstate model reference, not registered."""
         r = self.ref
         texture, elements, ao, _ = self.model_info(variant["model"])
         xr, yr, uvlock = variant.get("x", 0), variant.get("y", 0), variant.get("uvlock", False)
@@ -98,8 +112,17 @@ class Baker:
                     canon = [r.canonical_uv(face_dir, p) for p in local]
                     code = next((c for c in range(8) if all(abs(a - b) < 1e-6 for p, q in zip(uv, canon)
                                                            for a, b in zip(p, r.transform_uv(c, *q)))), None)
-                    assert code is not None, (variant, face_dir, "uvlock needs a whole-face mapping")
-                    uv = [r.transform_uv(code, *r.canonical_uv(world, p)) for p in verts]
+                    if code is not None:
+                        uv = [r.transform_uv(code, *r.canonical_uv(world, p)) for p in verts]
+                    else:
+                        # A UV that is no transform of the canonical one (fence and wall bars, stairs, buttons:
+                        # blocks session B1): the UV rectangle turns with the face, i.e. the one transform taking the
+                        # canonical UV of the model-space face to that of its final direction applies to its UV.
+                        frame = next((c for c in range(8) if all(
+                            abs(a - b) < 1e-6 for p, q in zip(verts, canon)
+                            for a, b in zip(r.canonical_uv(world, p), r.transform_uv(c, *q)))), None)
+                        assert frame is not None, (variant, face_dir, "no uvlock frame")
+                        uv = [r.transform_uv(frame, *p) for p in uv]
                 # Faces of a flat element along its own thin axis have no area (the mangrove propagule's): skipped.
                 a, b, c = verts[0], verts[1], verts[2]
                 u, v = [b[i] - a[i] for i in range(3)], [c[i] - a[i] for i in range(3)]
@@ -120,11 +143,7 @@ class Baker:
                     "shade": turn(override) if override else facing,
                     "light": element.get("light_emission", 0),
                 })
-        key = json.dumps([ao, quads], sort_keys=True)
-        if key not in self.index:
-            self.index[key] = len(self.baked)
-            self.baked.append({"ao": ao, "quads": quads})
-        return self.index[key]
+        return ao, quads
 
     def bake_state(self, blockstate, props, tints=frozenset()):
         """A state's parts: each a list of alternative baked models (one unless the blockstate lists several)."""
@@ -151,3 +170,25 @@ class Baker:
         gui = self.model_info(model)[3] or {}
         return index, {"rotation": gui.get("rotation", [0, 0, 0]), "translation": gui.get("translation", [0, 0, 0]),
                        "scale": gui.get("scale", [1, 1, 1])}
+
+    def bake_composite(self, parts, tints=frozenset()):
+        """A `minecraft:composite` item (the beds: head, and foot translated one block south) as one baked model: the
+        union of its sub-models' quads, each moved by its transformation's translation (in blocks; rotations and
+        scale are identity here), drawn at the one gui display transform its sub-models share."""
+        quads, aos, guis = [], set(), set()
+        for model, transformation in parts:
+            transformation = transformation or {}
+            assert transformation.get("left_rotation", [0, 0, 0, 1]) == [0, 0, 0, 1], transformation
+            assert transformation.get("right_rotation", [0, 0, 0, 1]) == [0, 0, 0, 1], transformation
+            assert transformation.get("scale", [1, 1, 1]) == [1, 1, 1], transformation
+            shift = transformation.get("translation", [0, 0, 0])
+            ao, sub = self.variant_quads({"model": model}, tints)
+            aos.add(ao)
+            guis.add(json.dumps(self.model_info(model)[3] or {}, sort_keys=True))
+            for quad in sub:
+                quads.append(dict(quad, v=[[round(c + s, 6) for c, s in zip(p, shift)] for p in quad["v"]]))
+        assert len(aos) == 1 and len(guis) == 1, (parts, aos, guis)
+        gui = json.loads(guis.pop())
+        return self.register(aos.pop(), quads), {
+            "rotation": gui.get("rotation", [0, 0, 0]), "translation": gui.get("translation", [0, 0, 0]),
+            "scale": gui.get("scale", [1, 1, 1])}

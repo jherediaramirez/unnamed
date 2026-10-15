@@ -2,9 +2,9 @@
 
 As of 2026-10-08. Source of truth: vanilla Java **26.3** (`%APPDATA%\ModrinthApp\meta\versions\26.3\26.3.jar`, plus the official server jar SHA-1 `33680f5f…05f4c` for Mojang's data-generator reports). This sheet is the input for the block/texture import and the research base for the chunk loader. Only water gets behavior; every other block here just needs the correct ID, textures and render flags.
 
-**In scope:** {{N_TOTAL}} blocks ({{N_CUBE}} full cubes, powder snow among them, + {{N_SLAB}} slabs + snow layers + {{N_MODEL}} model blocks) out of {{N_REGISTRY}} registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Stairs, fences, chests, tools and items are excluded. Render layers: {{LAYERS}}.
+**In scope:** {{N_TOTAL}} blocks ({{N_CUBE}} full cubes, powder snow among them, + {{N_SLAB}} slabs + snow layers + {{N_MODEL}} model blocks) out of {{N_REGISTRY}} registered blocks, plus water and lava; powder snow and snow layers were added in phase 5 for the world generator. A block counts as a full cube when every model it can show is made only of `[0,0,0]→[16,16,16]` boxes. Tools and items are excluded. Render layers: {{LAYERS}}.
 
-**Model blocks:** {{N_MODEL}} blocks are drawn from their own baked models rather than as cubes or slabs: plants, flowers, crosses, seagrass, flowerbeds, carpets, multiface and custom models. See `Reference/minecraft-blocks-26.3/README.md` ("Baked models", "Shapes and offsets") for details.
+**Model blocks:** {{N_MODEL}} blocks are drawn from their own baked models rather than as cubes or slabs: plants, flowers, crosses, seagrass, flowerbeds, carpets, multiface and custom models, the torch, and the survival B1 families (stairs, fences, fence gates, walls, panes, doors, trapdoors, buttons, the lever, pressure plates, the ladder, nether vines, beds, chests, farmland and dirt path, crops, saplings, cauldrons and fires). The chests are drawn by a block entity in vanilla, so they get a stand-in box. See `Reference/minecraft-blocks-26.3/README.md` ("Baked models", "Family blocks (B1)", "Chest stand-in", "Shapes and offsets") for details.
 
 ## Files
 
@@ -145,9 +145,9 @@ Per scheduled tick (`FlowingFluid.tick`):
 ### Cube-like blocks left out
 
 - **Inner geometry:** slime_block, honey_block, beacon, cactus, spawner, trial_spawner and vault (a full box plus extra elements).
-- **Mixed shapes:** snow layers, dirt_path and farmland (15/16 tall).
+- **Mixed shapes:** snow layers, dirt_path and farmland (15/16 tall; both later joined as model blocks in survival B1).
 - **Functional cubes with state-dependent shapes:** piston, sticky_piston, chiseled_bookshelf.
-- **Entity-rendered:** chests, shulker boxes.
+- **Entity-rendered:** chests (later joined as model blocks with a stand-in box in survival B1), shulker boxes.
 
 See `research\edge_cases.txt` for the full list. The three mushroom blocks *are* included: they are cubes whose six faces switch between the cap/stem texture and `mushroom_block_inside` depending on the `up/down/north/south/east/west` properties.
 

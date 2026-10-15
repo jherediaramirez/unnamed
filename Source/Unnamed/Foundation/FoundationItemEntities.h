@@ -30,13 +30,13 @@ struct FFoundationItemEntity
 // The item entities' rules. Sourced: minecraft.wiki "Item (entity)" (the box, the block-drop pickup delay, the pickup
 // box, vanishing below the world) and "Entity", Motion table (items: gravity 0.04 blocks per tick squared, drag 0.98
 // on both axes, terminal velocity 1.96, which puts the acceleration before the drag). Provisional until probe P3
-// measures a 26.3 client: the tick order beyond that, the ground friction, the spawn spread and speed, and the look.
+// measures a 26.3 client: the tick order beyond that, the spawn spread and speed, and the look.
 namespace FoundationItemEntities
 {
     // foundation.Items.Entities: 1 (the default) breaks drop into the world; 0 returns them straight to the inventory.
     UNNAMED_API bool IsOn();
 
-    // Sourced.
+    // Sourced (the box's 0.25-block width also [items.merge_boundary_stationary]).
     constexpr double BoxCm = 25;
     constexpr int32 BlockDropPickupDelay = 10;
     // The player's box grown by 1 block sideways and 0.5 up and down.
@@ -62,11 +62,14 @@ namespace FoundationItemEntities
     // separate uniform draw).
     constexpr double ThrowBelowEyeCm = 30, ThrowSpeedCm = 30, ThrowUpCm = 10, ThrowSpreadCm = 2, ThrowSpreadUpCm = 10;
 
-    // Provisional: on the ground the horizontal drag is also scaled by the block's friction, the wiki's default 0.6
-    // ("Entity", the living-entity footnote; items are not stated, and ice is not modelled).
+    // Sourced [items.ground_friction, items.physics]: on the ground the horizontal drag is also scaled by the block's
+    // friction; stone keeps about 0.588 of the speed per tick, 0.6 x 0.98 (ice and blue ice are not modelled). The
+    // report's downward ground bounce (x -0.5 after the collision) acts on a vertical speed the landing has already
+    // zeroed, so it has no step of its own here.
     constexpr double GroundFriction = .6;
     // Provisional (facts section 2, "commonly cited"): a block drop spawns at the cell's centre, lowered by half its
-    // box, moved up to 0.25 blocks on each axis, at up to 0.1 blocks per tick sideways and 0.2 up.
+    // box, moved up to 0.25 blocks on each axis, at up to 0.1 blocks per tick sideways and 0.2 up. The report's random
+    // scatter [items.drop.random_scatter: 0.5 x U sideways, 0.2 up] is a player's drop mode, not a block's.
     constexpr double SpawnSpreadCm = 25, SpawnSidewaysCm = 10, SpawnUpCm = 20;
 
     // The look, provisional (P3: spin period, bob height): the bob is BobCm x sin(age / BobTicks + phase) + BobCm, the
