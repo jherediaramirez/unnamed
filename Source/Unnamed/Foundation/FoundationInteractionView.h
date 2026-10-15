@@ -10,6 +10,7 @@ class AFoundationPawn;
 struct FFoundationPreview;
 class FFoundationBreakEffects;
 class FFoundationExperienceOrbView;
+class FFoundationMobView;
 class FFoundationItemEntityView;
 class UInstancedStaticMeshComponent;
 class ULineBatchComponent;
@@ -146,10 +147,12 @@ public:
     FFoundationItemEntityView* GetItemEntityView() const { return ItemEntityView.Get(); }
     // The experience orbs' look (survival step 12; null before BeginPlay).
     FFoundationExperienceOrbView* GetExperienceOrbView() const { return ExperienceOrbView.Get(); }
+    FFoundationMobView* GetMobView() const { return MobView.Get(); }
 
 private:
     friend class FFoundationBreakEffects;
     friend class FFoundationExperienceOrbView;
+    friend class FFoundationMobView;
     friend class FFoundationItemEntityView;
     struct FSectionKey
     {
@@ -331,4 +334,5 @@ private:
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;
+    TSharedPtr<FFoundationMobView> MobView;
 };

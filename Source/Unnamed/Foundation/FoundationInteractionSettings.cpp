@@ -2,6 +2,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationMobAssets.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationRecipeAssets.h"
 #include "Foundation/FoundationTags.h"
@@ -69,6 +70,9 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     Rules.LootTables.Reset();
     Rules.LootPredicates.Reset();
     if (ItemAssets) ItemAssets->AddLoot(Rules);
+    // Entity loot (survival T6 20a), from DA_Mobs, resolved the same way.
+    Rules.EntityLootTables.Reset();
+    if (const UFoundationMobAssets* MobAssets = UFoundationMobAssets::LoadDefault()) MobAssets->AddLoot(Rules);
     // Crafting recipes (survival step 6), resolved against every item above; those naming an item that does not exist
     // yet wait for it.
     Rules.Recipes.Recipes.Reset();

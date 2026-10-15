@@ -91,19 +91,30 @@ else:
 # 5. Counts and spot values (scout F's appendix A, and the break-time formula's worked cases).
 items = {i["id"]: i for i in load("items.json")["items"]}
 index = load("item_index.json")["items"]
-check(len(items) == 86 and sum(i["group"] == "tool" for i in items.values()) == 35 and
-      sum(i["group"] == "spear" for i in items.values()) == 7 and sum(i["group"] == "drop" for i in items.values()) == 23,
-      "expected 86 items: 35 tools, 7 spears, 23 drop items")
-# APPEND_LAST: the drop items, and the models and textures only they use, follow the 63 items, 70 models and 70
-# textures of the build before loot step 2b.
+check(len(items) == 104 and sum(i["group"] == "tool" for i in items.values()) == 35 and
+      sum(i["group"] == "spear" for i in items.values()) == 7 and sum(i["group"] == "drop" for i in items.values()) == 23 and
+      sum(i["group"] == "mob_drop" for i in items.values()) == 18,
+      "expected 104 items: 35 tools, 7 spears, 23 drop items, 18 mob drop items")
+# APPEND_LAST: the drop items, then the mob drop items (survival T6 20a), and the models and textures only each group
+# uses, follow the earlier ones: 63 items, 70 models and 70 textures before loot step 2b; 86 items, 93 models and 93
+# textures before 20a. Each group is in APPEND_LAST order, not interleaved by protocol id.
 groups = [i["group"] for i in items.values()]
-late_models = [m["id"] for m in load("models.json")["models"]][70:]
-late_textures = [t["name"] for t in load("textures.json")["textures"]][70:]
-check(groups[63:] == ["drop"] * 23 and "drop" not in groups[:63] and len(late_models) == 23 and
-      len(late_textures) == 23 and
-      not {m["model"] for i in list(items.values())[:63] for m in i["model"]["models"]} & set(late_models) and
-      not {t for i in list(items.values())[:63] for t in i["textures"]} & set(late_textures),
-      "drop items, models and textures are not appended last")
+model_ids = [m["id"] for m in load("models.json")["models"]]
+texture_names = [t["name"] for t in load("textures.json")["textures"]]
+first63, first86 = list(items.values())[:63], list(items.values())[:86]
+models_of = lambda group: {m["model"] for i in group for m in i["model"]["models"]}
+textures_of = lambda group: {t for i in group for t in i["textures"]}
+late_models, late_textures = model_ids[70:93], texture_names[70:93]
+mob_models, mob_textures = model_ids[93:], texture_names[93:]
+check(groups[63:86] == ["drop"] * 23 and groups[86:] == ["mob_drop"] * 18 and
+      "drop" not in groups[:63] and "mob_drop" not in groups[:86] and
+      len(late_models) == 23 and len(late_textures) == 23 and
+      not models_of(first63) & set(late_models) and not textures_of(first63) & set(late_textures) and
+      set(mob_models) == models_of(items.values()) - models_of(first86) and
+      set(mob_textures) == textures_of(items.values()) - textures_of(first86) and
+      len(model_ids) == len(set(model_ids)) == len(models_of(items.values())) and
+      len(texture_names) == len(set(texture_names)) == len(textures_of(items.values())),
+      "drop and mob drop items, models and textures are not appended last")
 check([items[i]["textures"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] ==
       [[f"block/{i}"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] and
       items["snowball"]["max_stack"] == 16 and items["flint"]["max_stack"] == 64, "drop item spot values")

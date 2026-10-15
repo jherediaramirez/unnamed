@@ -85,6 +85,9 @@ private:
     void AddSwimCases();
     // -FoundationSuite=body: the player body and the spring arm preview, with shots (FoundationBodyProbe.cpp).
     void AddBodyCases();
+    // -FoundationSuite=mobs: a summoned cow walking, hit and dying into its drops, and the foundation.Mobs control
+    // pair, with shots (FoundationMobsProbe.cpp).
+    void AddMobCases();
     // The chat commands (step 15), in the interaction and views suites (FoundationCommandsProbe.cpp).
     void AddCommandsCases();
     // The death screen (step 11a) and its switch-0 control, in the interaction suite (FoundationDeathProbe.cpp).

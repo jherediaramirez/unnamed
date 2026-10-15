@@ -208,7 +208,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bSwim = Suite == TEXT("swim");
     // And the player body in the third-person views, with the spring arm preview (FoundationBodyProbe.cpp).
     const bool bBody = Suite == TEXT("body");
-    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody)
+    // And the mobs' captures (survival T6 20a, FoundationMobsProbe.cpp).
+    const bool bMobs = Suite == TEXT("mobs");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody && !bMobs)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -217,7 +219,7 @@ void UFoundationRuntimeProbe::BeginPlay()
             {
                 Record(TEXT("known -FoundationSuite"), false,
                     FString::Printf(
-                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body or all"), *Suite));
+                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body, mobs or all"), *Suite));
             });
     }
     if (bMovement) AddMovementCases();
@@ -227,6 +229,7 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bPause) AddPauseCases();
     if (bSwim) AddSwimCases();
     if (bBody) AddBodyCases();
+    if (bMobs) AddMobCases();
     if (bInteraction || bViews) AddCommandsCases();
     if (bInteraction) AddDeathCases();
     if (Suite == TEXT("all") || bPause) AddPauseMenuCases();

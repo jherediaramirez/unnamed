@@ -11448,6 +11448,1951 @@
     "firstperson_righthand": "item/generated",
     "fixed": "item/generated"
    }
+  },
+  {
+   "id": "item/beef",
+   "parent": "item/generated",
+   "chain": [
+    "item/beef",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/beef"
+   },
+   "layers": [
+    "item/beef"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bone",
+   "parent": "item/handheld",
+   "chain": [
+    "item/bone",
+    "item/handheld",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bone"
+   },
+   "layers": [
+    "item/bone"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "head": {
+     "rotation": [
+      0,
+      0,
+      -45
+     ],
+     "translation": [
+      0,
+      -4.5,
+      -6.5
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -55
+     ],
+     "translation": [
+      0,
+      4.0,
+      0.5
+     ],
+     "scale": [
+      0.85,
+      0.85,
+      0.85
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "head": "item/bone",
+    "thirdperson_righthand": "item/handheld",
+    "thirdperson_lefthand": "item/handheld",
+    "firstperson_righthand": "item/handheld",
+    "firstperson_lefthand": "item/handheld",
+    "ground": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/carrot",
+   "parent": "item/generated",
+   "chain": [
+    "item/carrot",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/carrot"
+   },
+   "layers": [
+    "item/carrot"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/chicken",
+   "parent": "item/generated",
+   "chain": [
+    "item/chicken",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/chicken"
+   },
+   "layers": [
+    "item/chicken"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cooked_chicken",
+   "parent": "item/generated",
+   "chain": [
+    "item/cooked_chicken",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/cooked_chicken"
+   },
+   "layers": [
+    "item/cooked_chicken"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cooked_mutton",
+   "parent": "item/generated",
+   "chain": [
+    "item/cooked_mutton",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/cooked_mutton"
+   },
+   "layers": [
+    "item/cooked_mutton"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/cooked_porkchop",
+   "parent": "item/generated",
+   "chain": [
+    "item/cooked_porkchop",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/cooked_porkchop"
+   },
+   "layers": [
+    "item/cooked_porkchop"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/egg",
+   "parent": "item/generated",
+   "chain": [
+    "item/egg",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/egg"
+   },
+   "layers": [
+    "item/egg"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/feather",
+   "parent": "item/generated",
+   "chain": [
+    "item/feather",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/feather"
+   },
+   "layers": [
+    "item/feather"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "head": {
+     "rotation": [
+      0,
+      0,
+      45
+     ],
+     "translation": [
+      -1,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "head": "item/feather",
+    "ground": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/gunpowder",
+   "parent": "item/generated",
+   "chain": [
+    "item/gunpowder",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/gunpowder"
+   },
+   "layers": [
+    "item/gunpowder"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/leather",
+   "parent": "item/generated",
+   "chain": [
+    "item/leather",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/leather"
+   },
+   "layers": [
+    "item/leather"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/milk_bucket",
+   "parent": "item/generated",
+   "chain": [
+    "item/milk_bucket",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/milk_bucket"
+   },
+   "layers": [
+    "item/milk_bucket"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/mutton",
+   "parent": "item/generated",
+   "chain": [
+    "item/mutton",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/mutton"
+   },
+   "layers": [
+    "item/mutton"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/porkchop",
+   "parent": "item/generated",
+   "chain": [
+    "item/porkchop",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/porkchop"
+   },
+   "layers": [
+    "item/porkchop"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/potato",
+   "parent": "item/generated",
+   "chain": [
+    "item/potato",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/potato"
+   },
+   "layers": [
+    "item/potato"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/rotten_flesh",
+   "parent": "item/generated",
+   "chain": [
+    "item/rotten_flesh",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/rotten_flesh"
+   },
+   "layers": [
+    "item/rotten_flesh"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/spider_eye",
+   "parent": "item/generated",
+   "chain": [
+    "item/spider_eye",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/spider_eye"
+   },
+   "layers": [
+    "item/spider_eye"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/string",
+   "parent": "item/generated",
+   "chain": [
+    "item/string",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/string"
+   },
+   "layers": [
+    "item/string"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
   }
  ]
 }
