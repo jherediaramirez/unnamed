@@ -50,13 +50,21 @@ public:
     static constexpr int32 BarrelTopHeight = 71;
     static constexpr int32 BarrelPlayerTextureY = 126;
     static constexpr int32 BarrelPlayerHeight = 96;
-    // The screen's height: the barrel's 168, else 166.
+    // A chest's screen is the barrel's (T1 step 18-chest); a double chest's (6 rows, value-swaps.md "generic_54"):
+    // 176 x 222, its slots from 8,18, the main grid from 8,139, the hotbar at y 197, "Inventory" at 8,128; the
+    // texture's top 125 high (the title and 6 rows), then the same player part.
+    static constexpr int32 LargeChestHeight = 222;
+    static constexpr int32 LargeChestPlayerY = 139;
+    static constexpr int32 LargeChestHotbarY = 197;
+    static constexpr int32 LargeChestInventoryLabelY = 128;
+    static constexpr int32 LargeChestTopHeight = 125;
+    // The screen's height: the barrel's and chest's 168, the double chest's 222, else 166.
     static int32 GetHeight(EFoundationMenuKind Kind)
     {
-        return Kind == EFoundationMenuKind::Barrel ? BarrelHeight : Height;
+        return Kind == EFoundationMenuKind::LargeChest ? LargeChestHeight : HasViewers(Kind) ? BarrelHeight : Height;
     }
     // Whether the screen has the recipe-book button (vanilla's ContainerScreen has none).
-    static bool HasRecipeButton(EFoundationMenuKind Kind) { return Kind != EFoundationMenuKind::Barrel; }
+    static bool HasRecipeButton(EFoundationMenuKind Kind) { return !HasViewers(Kind); }
     // The "Crafting" label (vanilla's titleLabelX/Y; provisional, minecraft.wiki screenshots, no capture yet).
     static constexpr int32 TitleX = 97;
     static constexpr int32 TitleY = 8;

@@ -1,7 +1,9 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Algo/AllOf.h"
+#include "Algo/Count.h"
 #include "Blocks/VoxelPlantSurvival.h"
 #include "Foundation/FoundationBlockFamilies.h"
+#include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationPlantRules.h"
@@ -55,7 +57,7 @@ namespace
     }
 
     // A barrel (T1 step 9) opens its menu over its block entity, made on first use; its open state follows the
-    // viewers (OpenContainer, UpdateBarrelOpen). foundation.Barrel 0: no use, so the click passes on.
+    // viewers (OpenContainer, UpdateContainerOpen). foundation.Barrel 0: no use, so the click passes on.
     bool WouldUseBarrel(const FFoundationAuthority& Authority, const FFoundationPlayer&, const FFoundationHit&)
     {
         return Authority.Options.bBarrel;
@@ -69,6 +71,41 @@ namespace
         Authority.OpenContainer(Player, EFoundationMenuKind::Barrel, Hit.Cell, Block, Result);
         if (Result.IsCommitted())
             Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Barrel, Block);
+        return true;
+    }
+
+    // A chest (T1 step 18-chest) opens its menu over its block entity, a double chest's over both halves' (made on
+    // first use); its sounds follow the viewers (UpdateContainerOpen). Under a conductive block above either half
+    // nothing opens and the click is still used (minecraft.wiki "Chest"). foundation.Chest 0: no use, so the click
+    // passes on.
+    bool WouldUseChest(const FFoundationAuthority& Authority, const FFoundationPlayer&, const FFoundationHit&)
+    {
+        return Authority.Options.bChest;
+    }
+
+    bool UseChest(FFoundationAuthority& Authority, FFoundationPlayer& Player, const FFoundationHit& Hit,
+        FFoundationResult& Result)
+    {
+        if (!Authority.Options.bChest) return false;
+        const FFoundationBlockWorld& World = Authority.World;
+        const FName Block = World.GetBlock(World.Get(Hit.Cell).State).Id;
+        FIntVector Partner;
+        const bool bDouble = FoundationChests::GetPartner(World, Hit.Cell, Partner);
+        if (FoundationChests::IsBlockedAbove(World, Hit.Cell) ||
+            (bDouble && FoundationChests::IsBlockedAbove(World, Partner)))
+        {
+            Result.Outcome = EFoundationOutcome::Committed;
+            Result.bInteracted = true;
+            Result.Cell = Hit.Cell;
+            Result.State = World.Get(Hit.Cell).State;
+            return true;
+        }
+        // The entities come first: the open counts the viewers on them.
+        Authority.BlockEntities.FindOrAdd(Hit.Cell, EFoundationBlockEntityKind::Chest, Block);
+        if (bDouble) Authority.BlockEntities.FindOrAdd(Partner, EFoundationBlockEntityKind::Chest, Block);
+        Authority.OpenContainer(
+            Player, bDouble ? EFoundationMenuKind::LargeChest : EFoundationMenuKind::Chest, Hit.Cell, Block, Result);
+        if (Result.IsCommitted() && bDouble) Player.OpenMenu.Partner = Partner;
         return true;
     }
 
@@ -197,12 +234,9 @@ int32 FFoundationAuthority::AddPlayer()
 void FFoundationAuthority::RemovePlayer(int32 Id)
 {
     const FFoundationPlayer* Leaving = FindPlayer(Id);
-    const TOptional<FIntVector> Barrel =
-        Leaving && Leaving->OpenMenu.IsOpen() && Leaving->OpenMenu.Kind == EFoundationMenuKind::Barrel
-        ? TOptional<FIntVector>(Leaving->OpenMenu.Cell)
-        : NullOpt;
+    const FFoundationOpenMenu Viewed = Leaving ? Leaving->OpenMenu : FFoundationOpenMenu();
     Players.RemoveAll([Id](const FFoundationPlayer& Player) { return Player.Id == Id; });
-    if (Barrel) UpdateBarrelOpen(*Barrel);
+    UpdateViewers(Viewed);
 }
 
 FFoundationPlayer* FFoundationAuthority::FindPlayer(int32 Id)
@@ -278,8 +312,32 @@ TArray<FFoundationItemInstance> FFoundationAuthority::GetPlayerMenu(const FFound
 TArray<FFoundationItemInstance> FFoundationAuthority::GetMenuGrid(const FFoundationPlayer& Player) const
 {
     if (!UsesBlockEntity(Player.OpenMenu.Kind)) return Player.OpenMenu.Grid;
-    const FFoundationBlockEntity* Entity = BlockEntities.Find(Player.OpenMenu.Cell);
-    return Entity ? Entity->Items : TArray<FFoundationItemInstance>();
+    TArray<FIntVector, TInlineAllocator<2>> Cells;
+    TArray<FFoundationItemInstance> Grid;
+    if (!GetMenuCells(Player.OpenMenu, Cells)) return Grid;
+    for (const FIntVector& Cell : Cells)
+    {
+        const FFoundationBlockEntity* Entity = BlockEntities.Find(Cell);
+        if (!Entity) return TArray<FFoundationItemInstance>();
+        Grid.Append(Entity->Items);
+    }
+    return Grid;
+}
+
+bool FFoundationAuthority::GetMenuCells(
+    const FFoundationOpenMenu& Open, TArray<FIntVector, TInlineAllocator<2>>& OutCells) const
+{
+    OutCells.Reset();
+    if (Open.Kind != EFoundationMenuKind::LargeChest)
+    {
+        OutCells.Add(Open.Cell);
+        return true;
+    }
+    FIntVector Right, Left;
+    if (!FoundationChests::GetHalves(World, Open.Cell, Right, Left)) return false;
+    OutCells.Add(Right);
+    OutCells.Add(Left);
+    return true;
 }
 
 TArray<FFoundationItemInstance> FFoundationAuthority::GetOpenMenu(const FFoundationPlayer& Player) const
@@ -307,7 +365,9 @@ const FFoundationAuthority::FBlockUseEntry* FFoundationAuthority::FindBlockUse(F
         {TEXT("furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
         {TEXT("smoker"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
         {TEXT("blast_furnace"), {FBlockUse(&UseFurnace), FBlockWouldUse(&WouldUseFurnace)}},
-        {TEXT("barrel"), {FBlockUse(&UseBarrel), FBlockWouldUse(&WouldUseBarrel)}}};
+        {TEXT("barrel"), {FBlockUse(&UseBarrel), FBlockWouldUse(&WouldUseBarrel)}},
+        {TEXT("chest"), {FBlockUse(&UseChest), FBlockWouldUse(&WouldUseChest)}},
+        {TEXT("trapped_chest"), {FBlockUse(&UseChest), FBlockWouldUse(&WouldUseChest)}}};
     if (const FBlockUseEntry* Use = BlockUses.Find(BlockId)) return Use;
     if (const FBlockUseEntry* Use = BuiltIn.Find(BlockId)) return Use;
     // Doors, trapdoors and fence gates (survival B3a, foundation.Blocks.Interact), by family; iron has none.
@@ -429,11 +489,8 @@ void FFoundationAuthority::OpenContainer(
         Reject(Result, EFoundationReason::DropDeferred);
         return;
     }
-    // A barrel this menu replaces loses its viewer (T1 step 9).
-    const TOptional<FIntVector> LeftBarrel =
-        Player.OpenMenu.IsOpen() && Player.OpenMenu.Kind == EFoundationMenuKind::Barrel
-        ? TOptional<FIntVector>(Player.OpenMenu.Cell)
-        : NullOpt;
+    // A barrel or chest this menu replaces loses its viewer (T1 steps 9, 18-chest).
+    const FFoundationOpenMenu Left = Player.OpenMenu;
     // vanilla's containerId counts 1-100 and wraps (minecraft.wiki "Java Edition protocol"); 0 is the inventory.
     Player.LastContainerId = Player.LastContainerId % 100 + 1;
     const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
@@ -459,8 +516,8 @@ void FFoundationAuthority::OpenContainer(
     Event.Interaction = Block;
     Event.Step = Player.Facts.Step;
     AddEvent(Event);
-    if (LeftBarrel && *LeftBarrel != Cell) UpdateBarrelOpen(*LeftBarrel);
-    if (Kind == EFoundationMenuKind::Barrel) UpdateBarrelOpen(Cell);
+    if (Left.Cell != Cell || Left.Partner) UpdateViewers(Left);
+    if (HasViewers(Kind)) UpdateContainerOpen(Cell);
 }
 
 FFoundationInventory FFoundationAuthority::MakeLoadout()
@@ -548,7 +605,12 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     const FFoundationOpenMenu& Open = Player.OpenMenu;
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
-    if (UsesBlockEntity(Open.Kind) && !BlockEntities.Find(Open.Cell)) return false;
+    // Every block entity the menu's slots live in (a double chest: both halves, still paired; T1 step 18-chest).
+    TArray<FIntVector, TInlineAllocator<2>> Cells;
+    if (UsesBlockEntity(Open.Kind) &&
+        (!GetMenuCells(Open, Cells) ||
+            !Algo::AllOf(Cells, [this](const FIntVector& Cell) { return BlockEntities.Find(Cell) != nullptr; })))
+        return false;
     // The squared distance from the eye to the block's box strictly below (interaction range + 4 blocks)^2: 8.5 blocks
     // at the normal 4.5 (vanilla's stillValid; survival2.r23.container_rule).
     if (!Player.bHasFacts) return true;
@@ -609,16 +671,21 @@ void FFoundationAuthority::CloseMenu(FFoundationPlayer& Player, FFoundationResul
         const FFoundationOpenMenu Closed = MoveTemp(Player.OpenMenu);
         Player.OpenMenu = {};
         Result.Outcome = EFoundationOutcome::Committed;
-        if (Closed.IsOpen() && Closed.Kind == EFoundationMenuKind::Barrel) UpdateBarrelOpen(Closed.Cell);
+        UpdateViewers(Closed);
     }
 }
 
-void FFoundationAuthority::UpdateBarrelOpen(const FIntVector& Cell)
+void FFoundationAuthority::UpdateContainerOpen(const FIntVector& Cell)
 {
     static const FName BarrelId(TEXT("barrel")), Open(TEXT("open")), Facing(TEXT("facing")), True(TEXT("true")),
         False(TEXT("false"));
     if (!World.IsKnown(Cell)) return;
     const FFoundationBlockState State = World.Get(Cell).State;
+    if (FoundationChests::IsChest(World.GetBlock(State).Id))
+    {
+        UpdateChestOpen(Cell);
+        return;
+    }
     if (World.GetBlock(State).Id != BarrelId) return;
     const bool bViewed = Players.ContainsByPredicate(
         [&Cell](const FFoundationPlayer& Player)
@@ -644,6 +711,50 @@ void FFoundationAuthority::UpdateBarrelOpen(const FIntVector& Cell)
     Event.Amount = FoundationBarrel::SoundVolume;
     Event.LocationCm =
         FoundationGrid::CellBox(Cell, World.OriginCm).GetCenter() + Normal * (UFoundationProfile::BlockCm * .5);
+    AddEvent(Event);
+}
+
+void FFoundationAuthority::UpdateViewers(const FFoundationOpenMenu& Left)
+{
+    if (!Left.IsOpen() || !HasViewers(Left.Kind)) return;
+    UpdateContainerOpen(Left.Cell);
+    // A double chest's other half too: broken or unpaired since, it counts on its own.
+    if (Left.Partner) UpdateContainerOpen(*Left.Partner);
+}
+
+void FFoundationAuthority::UpdateChestOpen(const FIntVector& Cell)
+{
+    // A double chest counts as one: a viewer of either half views both (R16, survival2.r16.animation_and_viewers).
+    TArray<FIntVector, TInlineAllocator<2>> Cells{Cell};
+    FIntVector Partner;
+    if (FoundationChests::GetPartner(World, Cell, Partner)) Cells.Add(Partner);
+    const int32 Viewers = Algo::CountIf(Players,
+        [&Cells](const FFoundationPlayer& Player)
+        {
+            return Player.OpenMenu.IsOpen() && IsChestMenu(Player.OpenMenu.Kind) &&
+                Cells.Contains(Player.OpenMenu.Cell);
+        });
+    int32 Before = 0;
+    for (const FIntVector& Half : Cells)
+        if (FFoundationBlockEntity* Entity = BlockEntities.Find(Half))
+        {
+            Before = FMath::Max(Before, Entity->Viewers);
+            Entity->Viewers = Viewers;
+        }
+    if ((Before > 0) == (Viewers > 0)) return;
+    // One sound per chest: block.chest.open on the first viewer, .close when the last leaves, volume 0.5, pitch 0.9 +
+    // 0.1U, from the block's centre (R16's chest rows: x.5, y.5, z.5), a double chest's from between its halves'
+    // (provisional: one event stands for vanilla's two halves, whose second sound is suppressed).
+    FVector Centre = FVector::ZeroVector;
+    for (const FIntVector& Half : Cells)
+        Centre += FoundationGrid::CellBox(Half, World.OriginCm).GetCenter() / Cells.Num();
+    FFoundationEvent Event;
+    Event.Kind = EFoundationEventKind::BlockUsed;
+    Event.Cell = Cell;
+    Event.State = World.Get(Cell).State;
+    Event.Interaction = Viewers > 0 ? FName(TEXT("block.chest.open")) : FName(TEXT("block.chest.close"));
+    Event.Amount = FoundationChests::SoundVolume;
+    Event.LocationCm = Centre;
     AddEvent(Event);
 }
 
@@ -2014,6 +2125,7 @@ bool FFoundationAuthority::MakePlacementContext(const FFoundationPlayer& Player,
     OutContext.ClickedFace = Hit.Face;
     OutContext.ClickPointCm = Hit.Point;
     FoundationBlockPlacement::GetYawPitch(Player.Facts.Aim, OutContext.Yaw, OutContext.Pitch);
+    OutContext.bSecondaryUse = Player.Facts.bSecondaryUse;
     bOutAccepted =
         FoundationBlockPlacement::ResolveDestination(World, Placing, Hit.Kind == EFoundationHitKind::Block, OutContext);
     return true;
@@ -2313,11 +2425,20 @@ FFoundationResult FFoundationAuthority::Execute(
                     PayFurnaceExperience(*Furnace, Player->Facts.FeetCm - World.OriginCm,
                         int32(HashCombine(GetTypeHash(Open.Cell), GetTypeHash(Command.Sequence))));
             }
-            else if (FFoundationBlockEntity* Barrel = bOpenMenu && Open.Kind == EFoundationMenuKind::Barrel
-                    ? BlockEntities.Find(Open.Cell)
-                    : nullptr)
-                // A barrel's 27 slots live in its block entity (T1 step 9).
-                Barrel->Items = MoveTemp(TrialGrid);
+            else if (TArray<FIntVector, TInlineAllocator<2>> Cells;
+                bOpenMenu && UsesBlockEntity(Open.Kind) && GetMenuCells(Open, Cells))
+            {
+                // A barrel's or chest's 27 slots live in its block entity (T1 step 9); a double chest's 54 in its two
+                // halves', the type=right half's first (18-chest).
+                int32 First = 0;
+                for (const FIntVector& Cell : Cells)
+                    if (FFoundationBlockEntity* Entity = BlockEntities.Find(Cell))
+                    {
+                        for (int32 Slot = 0; Slot < Entity->Items.Num() && First + Slot < TrialGrid.Num(); ++Slot)
+                            Entity->Items[Slot] = TrialGrid[First + Slot];
+                        First += Entity->Items.Num();
+                    }
+            }
             else if (bOpenMenu)
                 Player->OpenMenu.Grid = MoveTemp(TrialGrid);
             Result.Outcome = EFoundationOutcome::Committed;
