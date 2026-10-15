@@ -127,7 +127,8 @@ namespace
     }
 
     FAutoConsoleCommandWithWorldArgsAndOutputDevice MobSummonCommand(TEXT("foundation.Mobs.Summon"),
-        TEXT("foundation.Mobs.Summon [type]: a mob (20a: cow, the default) 3 blocks ahead of the player, facing it."),
+        TEXT("foundation.Mobs.Summon [type]: a mob (cow, the default, pig, sheep, chicken) 3 blocks ahead of the "
+             "player, facing it."),
         FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateLambda(
             [](const TArray<FString>& Args, UWorld* World, FOutputDevice& Out)
             {
@@ -139,19 +140,20 @@ namespace
                 else if (!Args.IsEmpty() && !FoundationMobs::FindType(FName(Args[0]), Type))
                     Out.Logf(TEXT("foundation.Mobs.Summon: unknown mob %s"), *Args[0]);
                 else if (!FoundationMobs::GetKind(Type).bSpawnable)
-                    Out.Logf(TEXT("foundation.Mobs.Summon: %s is not spawnable yet (20b-20d)"),
+                    Out.Logf(TEXT("foundation.Mobs.Summon: %s is not spawnable yet (20c-20d)"),
                         *FoundationMobs::GetKind(Type).Id.ToString());
                 else
                 {
                     Authority->Options.bMobs = FoundationMobs::IsOn();
                     const float Yaw = float(Pawn->GetControlRotation().Yaw);
                     const FVector Ahead = FRotator(0, Yaw, 0).Vector() * 300;
-                    const int32 Id = Authority->SpawnMob(
-                        Type, Pawn->Simulation.Feet + Ahead - Authority->World.OriginCm, Yaw + 180);
+                    const int32 Id =
+                        Authority->SpawnMob(Type, Pawn->Simulation.Feet + Ahead - Authority->World.OriginCm, Yaw + 180);
                     if (Id == 0)
                         Out.Log(TEXT("foundation.Mobs.Summon: foundation.Mobs is 0"));
                     else
-                        Out.Logf(TEXT("foundation.Mobs.Summon: %s %d"), *FoundationMobs::GetKind(Type).Id.ToString(), Id);
+                        Out.Logf(
+                            TEXT("foundation.Mobs.Summon: %s %d"), *FoundationMobs::GetKind(Type).Id.ToString(), Id);
                 }
             }));
 
@@ -171,9 +173,11 @@ FVector FFoundationMobView::ToUnreal(const FVector& Pixels, bool bPoint)
     return FVector(-Pixels.Z, -Pixels.X, (bPoint ? MobFeetPixels : 0) - Pixels.Y) * (bPoint ? MobPixelCm : 1);
 }
 
-FTransform FFoundationMobView::MakePartTransform(const FFoundationMobPartAsset& Part, const FVector& ExtraRotation)
+FTransform FFoundationMobView::MakePartTransform(
+    const FFoundationMobPartAsset& Part, const FVector& ExtraRotation, const FVector& OffsetPixels)
 {
-    return FTransform(MobToUnrealRotation(Part.Rotation + ExtraRotation), ToUnreal(Part.Pivot, false) * MobPixelCm);
+    return FTransform(
+        MobToUnrealRotation(Part.Rotation + ExtraRotation), ToUnreal(Part.Pivot + OffsetPixels, false) * MobPixelCm);
 }
 
 void FFoundationMobView::GetPartQuads(
@@ -209,23 +213,40 @@ FTransform FFoundationMobView::MakeRootTransform(const FFoundationMob& Mob, cons
         FTransform(Rotation, Feet).ToMatrixNoScale());
 }
 
-FVector FFoundationMobView::GetPartAnimation(const FFoundationMob& Mob, FName Part, double Alpha)
+FVector FFoundationMobView::GetPartAnimation(
+    const FFoundationMob& Mob, FName Part, double Alpha, FVector* OutOffsetPixels)
 {
     using namespace FoundationMobs;
-    static const FName Legs[] = {TEXT("right_hind_leg"), TEXT("left_hind_leg"), TEXT("right_front_leg"),
-        TEXT("left_front_leg")};
+    static const FName Legs[] = {
+        TEXT("right_hind_leg"), TEXT("left_hind_leg"), TEXT("right_front_leg"), TEXT("left_front_leg")};
+    static const FName BipedLegs[] = {TEXT("right_leg"), TEXT("left_leg")};
+    if (OutOffsetPixels) *OutOffsetPixels = FVector::ZeroVector;
     const float Position = FMath::Lerp(Mob.PreviousWalkPosition, Mob.WalkPosition, float(Alpha));
     const float Speed = FMath::Min(1.f, FMath::Lerp(Mob.PreviousWalkSpeed, Mob.WalkSpeed, float(Alpha)));
     for (int32 Leg = 0; Leg < UE_ARRAY_COUNT(Legs); ++Leg)
         if (Part == Legs[Leg]) return FVector(GetLegPitch(Leg, Position, Speed), 0, 0);
+    for (int32 Leg = 0; Leg < UE_ARRAY_COUNT(BipedLegs); ++Leg)
+        if (Part == BipedLegs[Leg]) return FVector(GetBipedLegPitch(Leg, Position, Speed), 0, 0);
+    if (Part == TEXT("right_wing") || Part == TEXT("left_wing"))
+    {
+        const float Roll = GetWingRoll(FMath::Lerp(Mob.PreviousFlap, Mob.Flap, float(Alpha)),
+            FMath::Lerp(Mob.PreviousFlapSpeed, Mob.FlapSpeed, float(Alpha)));
+        return FVector(0, 0, Part == TEXT("right_wing") ? Roll : -Roll);
+    }
     if (Part == TEXT("head"))
     {
         const float HeadYaw =
             Mob.PreviousHeadYaw + FMath::FindDeltaAngleDegrees(Mob.PreviousHeadYaw, Mob.HeadYaw) * float(Alpha);
         const float BodyYaw = Mob.PreviousYaw + FMath::FindDeltaAngleDegrees(Mob.PreviousYaw, Mob.Yaw) * float(Alpha);
-        const float Pitch = FMath::Lerp(Mob.PreviousHeadPitch, Mob.HeadPitch, float(Alpha));
-        return FVector(FMath::DegreesToRadians(Pitch),
-            FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(BodyYaw, HeadYaw)), 0);
+        float Pitch = FMath::DegreesToRadians(FMath::Lerp(Mob.PreviousHeadPitch, Mob.HeadPitch, float(Alpha)));
+        // A grazing sheep's head drops and nods (its wool's head with it).
+        if (Mob.GrazeTicks > 0)
+        {
+            const float Ticks = float(Mob.GrazeTicks) - float(Alpha);
+            Pitch = GetGrazePitch(Ticks, Pitch);
+            if (OutOffsetPixels) *OutOffsetPixels = FVector(0, GetGrazeDrop(Ticks) * GrazeDropPixels, 0);
+        }
+        return FVector(Pitch, FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(BodyYaw, HeadYaw)), 0);
     }
     return FVector::ZeroVector;
 }
@@ -233,47 +254,60 @@ FVector FFoundationMobView::GetPartAnimation(const FFoundationMob& Mob, FName Pa
 bool FFoundationMobView::Prepare(EFoundationMobType Type)
 {
     FTypeDraw& Draw = Types[int32(Type)];
-    if (Draw.bTried) return !Draw.Parts.IsEmpty();
+    if (Draw.bTried) return !Draw.Layers.IsEmpty();
     Draw.bTried = true;
     AActor* Owner = View.GetOwner();
     const UFoundationMobAssets* Assets = UFoundationMobAssets::LoadDefault();
     if (!Owner || !Owner->GetRootComponent() || !Assets) return false;
     const FName Id = FoundationMobs::GetKind(Type).Id;
-    Draw.Model = Assets->FindModel(Id);
+    TArray<const FFoundationMobModelAsset*> Models;
+    Assets->FindLayers(Id, Models);
     UMaterialInterface* Material = Assets->Material.LoadSynchronous();
-    UTexture2D* Texture = Draw.Model ? Draw.Model->Texture.LoadSynchronous() : nullptr;
-    if (!Draw.Model || !Material || !Texture)
-    {
-        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Mobs: DA_Mobs has no model, texture or material for %s; it is not "
-                                                   "drawn (run ImportMobs.py)"), *Id.ToString());
-        return false;
-    }
-    UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Material, Owner);
-    Skin->SetTextureParameterValue(TEXT("Skin"), Texture);
-    View.Owned.Add(Skin);
     TArray<FTransform> Hidden;
     Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxMobs);
-    for (const FFoundationMobPartAsset& Part : Draw.Model->Parts)
+    for (const FFoundationMobModelAsset* Model : Models)
     {
-        FPartDraw& PartDraw = Draw.Parts.AddDefaulted_GetRef();
-        UStaticMesh* Mesh = BuildMobPartMesh(Owner, Part);
-        if (!Mesh) continue;
-        View.Owned.Add(Mesh);
-        UInstancedStaticMeshComponent* Component = NewObject<UInstancedStaticMeshComponent>(Owner);
-        Component->SetStaticMesh(Mesh);
-        Component->SetMaterial(0, Skin);
-        Component->SetNumCustomDataFloats(1);
-        Component->SetMobility(EComponentMobility::Movable);
-        Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        Component->SetCanEverAffectNavigation(false);
-        Component->SetVisibility(false);
-        Component->SetupAttachment(Owner->GetRootComponent());
-        Component->RegisterComponent();
-        View.Owned.Add(Component);
-        PartDraw.Component = Component;
-        PartDraw.Ids = Component->AddInstancesById(Hidden, false, false);
+        UTexture2D* Texture = Model->Texture.LoadSynchronous();
+        if (!Material || !Texture)
+        {
+            UE_LOG(LogUnnamedFoundation, Warning,
+                TEXT("Mobs: DA_Mobs has no material or texture for %s; it and the "
+                     "layers after it are not drawn (run ImportMobs.py)"),
+                *Model->Layer.ToString());
+            break;
+        }
+        UMaterialInstanceDynamic* Skin = UMaterialInstanceDynamic::Create(Material, Owner);
+        Skin->SetTextureParameterValue(TEXT("Skin"), Texture);
+        View.Owned.Add(Skin);
+        FLayerDraw& Layer = Draw.Layers.AddDefaulted_GetRef();
+        Layer.Model = Model;
+        for (const FFoundationMobPartAsset& Part : Model->Parts)
+        {
+            FPartDraw& PartDraw = Layer.Parts.AddDefaulted_GetRef();
+            UStaticMesh* Mesh = BuildMobPartMesh(Owner, Part);
+            if (!Mesh) continue;
+            View.Owned.Add(Mesh);
+            UInstancedStaticMeshComponent* Component = NewObject<UInstancedStaticMeshComponent>(Owner);
+            Component->SetStaticMesh(Mesh);
+            Component->SetMaterial(0, Skin);
+            Component->SetNumCustomDataFloats(1);
+            Component->SetMobility(EComponentMobility::Movable);
+            Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Component->SetCanEverAffectNavigation(false);
+            Component->SetVisibility(false);
+            Component->SetupAttachment(Owner->GetRootComponent());
+            Component->RegisterComponent();
+            View.Owned.Add(Component);
+            PartDraw.Component = Component;
+            PartDraw.Ids = Component->AddInstancesById(Hidden, false, false);
+        }
     }
-    return true;
+    if (Draw.Layers.IsEmpty())
+        UE_LOG(LogUnnamedFoundation, Warning,
+            TEXT("Mobs: DA_Mobs has no model, texture or material for %s; it is not "
+                 "drawn (run ImportMobs.py)"),
+            *Id.ToString());
+    return !Draw.Layers.IsEmpty();
 }
 
 void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, double Alpha)
@@ -287,44 +321,63 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
     for (int32 TypeIndex = 0; TypeIndex < int32(EFoundationMobType::Count); ++TypeIndex)
     {
         FTypeDraw& Draw = Types[TypeIndex];
-        const bool bAny = bOn && Mobs.ContainsByPredicate([TypeIndex](const FFoundationMob& Mob)
-                                     { return int32(Mob.Type) == TypeIndex; });
+        const bool bAny = bOn &&
+            Mobs.ContainsByPredicate([TypeIndex](const FFoundationMob& Mob) { return int32(Mob.Type) == TypeIndex; });
         if (!bAny && !Draw.bTried) continue;
         if (bAny && !Prepare(EFoundationMobType(TypeIndex))) continue;
-        int32 Slot = 0;
-        for (const FFoundationMob& Mob : Mobs)
+        // The nearest MaxMobs of the type within DrawCm fill the slots (Codex review 19 #2).
+        TArray<TPair<double, int32>, TInlineAllocator<MaxMobs>> Order;
+        for (int32 Index = 0; bOn && Index < Mobs.Num(); ++Index)
         {
-            if (!bOn || int32(Mob.Type) != TypeIndex || Mob.bFrozen || Slot >= MaxMobs) continue;
-            if (Pawn && FVector::DistSquared(Origin + Mob.LocalCm, Viewer) > DrawCm * DrawCm) continue;
+            const FFoundationMob& Mob = Mobs[Index];
+            if (int32(Mob.Type) != TypeIndex || Mob.bFrozen) continue;
+            const double Distance = Pawn ? FVector::DistSquared(Origin + Mob.LocalCm, Viewer) : 0;
+            if (Distance <= DrawCm * DrawCm) Order.Emplace(Distance, Index);
+        }
+        if (Order.Num() > MaxMobs)
+        {
+            Order.StableSort(
+                [](const TPair<double, int32>& A, const TPair<double, int32>& B) { return A.Key < B.Key; });
+            Order.SetNum(MaxMobs);
+        }
+        int32 Slot = 0;
+        for (const TPair<double, int32>& Entry : Order)
+        {
+            const FFoundationMob& Mob = Mobs[Entry.Value];
             const FTransform Root = MakeRootTransform(Mob, Origin, Alpha);
             // [hurt.overlay, mobs.hurt_overlay] red while hurt or dying.
             const float Overlay = Mob.HurtTime > 0 || Mob.DeathTime > 0 ? 1.f : 0.f;
             Overlays.Add(Overlay);
-            TMap<FName, FTransform> Placed;
-            for (int32 PartIndex = 0; PartIndex < Draw.Model->Parts.Num(); ++PartIndex)
+            for (FLayerDraw& Layer : Draw.Layers)
             {
-                const FFoundationMobPartAsset& Part = Draw.Model->Parts[PartIndex];
-                const FTransform* Parent = Part.Path.IsNone() ? nullptr : Placed.Find(MobParentOf(Part.Path));
-                const FTransform Local = MakePartTransform(Part, GetPartAnimation(Mob, Part.Path, Alpha));
-                const FTransform World = Local * (Parent ? *Parent : Root);
-                Placed.Add(Part.Path, World);
-                FPartDraw& PartDraw = Draw.Parts[PartIndex];
-                if (!PartDraw.Component) continue;
-                PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 0, Overlay);
-                PartDraw.Component->UpdateInstanceTransformById(PartDraw.Ids[Slot], World, true);
+                TMap<FName, FTransform> Placed;
+                for (int32 PartIndex = 0; PartIndex < Layer.Model->Parts.Num(); ++PartIndex)
+                {
+                    const FFoundationMobPartAsset& Part = Layer.Model->Parts[PartIndex];
+                    const FTransform* Parent = Part.Path.IsNone() ? nullptr : Placed.Find(MobParentOf(Part.Path));
+                    FVector Offset;
+                    const FVector Rotation = GetPartAnimation(Mob, Part.Path, Alpha, &Offset);
+                    const FTransform World = MakePartTransform(Part, Rotation, Offset) * (Parent ? *Parent : Root);
+                    Placed.Add(Part.Path, World);
+                    FPartDraw& PartDraw = Layer.Parts[PartIndex];
+                    if (!PartDraw.Component) continue;
+                    PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 0, Overlay);
+                    PartDraw.Component->UpdateInstanceTransformById(PartDraw.Ids[Slot], World, true);
+                }
             }
             ++Slot;
             ++Drawn;
         }
-        for (FPartDraw& PartDraw : Draw.Parts)
-        {
-            if (!PartDraw.Component) continue;
-            for (int32 Hide = Slot; Hide < PartDraw.Shown; ++Hide)
-                PartDraw.Component->UpdateInstanceTransformById(
-                    PartDraw.Ids[Hide], FTransform(FQuat::Identity, Viewer, FVector::ZeroVector), true);
-            PartDraw.Shown = Slot;
-            PartDraw.Component->SetVisibility(Slot > 0);
-        }
+        for (FLayerDraw& Layer : Draw.Layers)
+            for (FPartDraw& PartDraw : Layer.Parts)
+            {
+                if (!PartDraw.Component) continue;
+                for (int32 Hide = Slot; Hide < PartDraw.Shown; ++Hide)
+                    PartDraw.Component->UpdateInstanceTransformById(
+                        PartDraw.Ids[Hide], FTransform(FQuat::Identity, Viewer, FVector::ZeroVector), true);
+                PartDraw.Shown = Slot;
+                PartDraw.Component->SetVisibility(Slot > 0);
+            }
     }
 }
 
@@ -332,8 +385,12 @@ void FFoundationMobView::OnSound(const FFoundationEvent& Event)
 {
     ++Sounds;
     if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
+    {
+        // [survival.r5.play_calls] steps at pitch 1 (F 3582); ambient, hurt and death at a random pitch.
+        const bool bStep = Event.Interaction.ToString().EndsWith(TEXT(".step"));
         Effects->PlayEvent(Event.Interaction, Event.LocationCm, Event.Amount,
-            FoundationMobs::GetSoundPitch(FMath::FRand(), FMath::FRand()));
+            bStep ? FoundationMobs::StepPitch : FoundationMobs::GetSoundPitch(FMath::FRand(), FMath::FRand()));
+    }
 }
 
 FString FFoundationMobView::Describe() const
@@ -341,7 +398,13 @@ FString FFoundationMobView::Describe() const
     FString Text = FString::Printf(TEXT("mobs drawn %d, sounds %d"), Drawn, Sounds);
     for (int32 TypeIndex = 0; TypeIndex < int32(EFoundationMobType::Count); ++TypeIndex)
         if (Types[TypeIndex].bTried)
-            Text += FString::Printf(TEXT("; %s parts %d"),
-                *FoundationMobs::GetKind(EFoundationMobType(TypeIndex)).Id.ToString(), Types[TypeIndex].Parts.Num());
+        {
+            int32 Parts = 0;
+            for (const FLayerDraw& Layer : Types[TypeIndex].Layers)
+                Parts += Layer.Parts.Num();
+            Text += FString::Printf(TEXT("; %s layers %d parts %d"),
+                *FoundationMobs::GetKind(EFoundationMobType(TypeIndex)).Id.ToString(), Types[TypeIndex].Layers.Num(),
+                Parts);
+        }
     return Text;
 }

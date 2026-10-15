@@ -64,8 +64,18 @@ enum class EFoundationMenuKind : uint8
     // A crafting table's (vanilla's CraftingMenu): result, 3x3, main, hotbar; no armor or offhand.
     Crafting,
     // A furnace's (vanilla's FurnaceMenu, T1 step 8a): input, fuel, result, main, hotbar.
-    Furnace
+    Furnace,
+    // A smoker's and a blast furnace's (vanilla's SmokerMenu and BlastFurnaceMenu, T1 step 8b): the furnace's layout.
+    Smoker,
+    BlastFurnace
 };
+
+// The furnace, smoker and blast furnace menus share one layout and one block entity kind.
+inline bool IsFurnaceMenu(EFoundationMenuKind Kind)
+{
+    return Kind == EFoundationMenuKind::Furnace || Kind == EFoundationMenuKind::Smoker ||
+        Kind == EFoundationMenuKind::BlastFurnace;
+}
 
 // A menu's slot numbering: one row per kind (furnaces and the barrel add theirs). Every range is [First, Next);
 // INDEX_NONE marks a range the menu does not have.

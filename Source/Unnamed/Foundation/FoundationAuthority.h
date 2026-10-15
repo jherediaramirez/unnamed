@@ -256,8 +256,14 @@ struct FFoundationLabOptions
     // Mobs (survival T6 20a): mobs step and can be hit. Off, none spawn and Resolve sees training targets only. The
     // pawn copies foundation.Mobs in before each step; tests set it themselves.
     bool bMobs = false;
-    // Furnaces (T1 step 8a): every furnace in a loaded column ticks each step (fuel, cooking, cooling), open or not.
-    // Off, a furnace opens and holds items but never ticks. The pawn copies foundation.Furnace in before each step.
+    // Passive spawning (survival T6 20b2): with bMobs and GetBiomeId set, a column first seen loaded may spawn a
+    // creature pack. The pawn copies foundation.Mobs.Spawn in before each step.
+    bool bMobSpawn = false;
+    // Fire (step 16a): mobs take lava contact and burning damage, as the pawn does. The pawn copies foundation.Fire in.
+    bool bFire = false;
+    // Furnaces (T1 steps 8a, 8b; smokers and blast furnaces too): a right-click opens the block's menu, and every one
+    // in a loaded column ticks each step (fuel, cooking, cooling, its lit state), open or not. Off, as before 8a: no
+    // menu (the click passes on and places) and no ticks. The pawn copies foundation.Furnace in before each step.
     bool bFurnace = false;
 };
 
@@ -301,6 +307,8 @@ struct UNNAMED_API FFoundationRules
     uint64 LootSeed = 0;
     // Entity loot (survival T6 20a): tables by entity id ("cow", "sheep/white"; BuildRules, from DA_Mobs).
     TMap<FName, FFoundationLootTable> EntityLootTables;
+    // Creature spawning by biome id ("minecraft:plains"; survival T6 20b2, DA_Mobs).
+    TMap<FName, FFoundationBiomeSpawns> BiomeSpawns;
     // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
     FFoundationRecipeBook Recipes;
 
@@ -480,6 +488,11 @@ public:
     // against (the lab's fixtures and the blocks; a generated world's ungenerated columns are solid). Unset, the block
     // world's own and the statics.
     TFunction<void(const FBox& Region, TArray<FBox>& Out)> GatherCollision;
+    // Passive spawning (survival T6 20b2), set by a generated world's owner: the biome id at a cell
+    // ("minecraft:plains", none when unknown) and the world seed packs are drawn from. Unset (the Playground): no
+    // passive spawning.
+    TFunction<FName(const FIntVector& Cell)> GetBiomeId;
+    uint64 MobSpawnSeed = 0;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -593,6 +606,9 @@ public:
     FFoundationMob* FindMob(int32 Id);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
+    // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
+    // holds a fluid.
+    FFoundationPathCell GetPathCell(const FIntVector& Cell);
 
     // Death (step 11a). The respawn point: beds (step B7) set it when slept in and clear it when the bed is gone; mobs
     // (step 20c) read it. The pawn's Respawn puts the feet at the cell's bottom centre when set, else at the world's
@@ -614,7 +630,9 @@ public:
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
           Strips = 0, BucketUses = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
-    int32 MobsSpawned = 0, MobsKilled = 0;
+    int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
+    // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
+    int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
 
 private:
     FFoundationInventory MakeLoadout();
@@ -645,8 +663,9 @@ private:
     void SpawnContents(const FIntVector& Cell, TConstArrayView<FFoundationItemInstance> Items, int32 RandomSeed);
     mutable FFoundationCooking Cooking;
     mutable int32 CookingItems = INDEX_NONE;
-    // The item facts container clicks read (max stack, equipment slot).
-    FFoundationContainerRules MakeContainerRules() const;
+    // The item facts container clicks read (max stack, equipment slot); Block, an open furnace's, picks what its
+    // shift-click counts as cookable.
+    FFoundationContainerRules MakeContainerRules(FName Block = NAME_None) const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
     bool MakePlacementContext(const FFoundationPlayer& Player, const FFoundationHit& Hit,
         const FFoundationBlockType& Placing, FFoundationPlacementContext& OutContext, bool& bOutAccepted,
@@ -719,8 +738,30 @@ private:
     // Survival T6 20a: each mob's freeze test, AI, steering, motion and timers; a corpse at RemoveAtDeathTime drops
     // its loot and experience and goes.
     void StepMobs();
+    // The killing hit (a player's or a hazard's): the loot and experience drop now [survival2.r20.mob_death].
     void DropMobLoot(const FFoundationMob& Mob);
+    // Survival T6 20b2: a mob's falls, lava and burning through its FFoundationVitals (the chicken takes no fall
+    // damage); the fluid its box touches.
+    void StepMobHazards(FFoundationMob& Mob);
+    bool IsMobInFluid(const FBox& WorldBody, bool bLava) const;
+    // Survival T6 20b2: chunk-generation packs for the columns around the live players first seen loaded.
+    void StepMobSpawns();
+    // One column's chunk-generation roll and pack; how many mobs it spawned.
+    int32 SpawnPack(const FIntPoint& Column);
+    // A cell a passive mob of Type may stand in at the top of its column (X, Y): the feet cell above the top
+    // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
+    bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
+    // Survival T6 20b: a sheep standing in short grass or on a grass block; eating it (the grass goes, or the block
+    // turns to dirt).
+    bool CanGraze(const FFoundationMob& Mob) const;
+    void EatGrass(const FFoundationMob& Mob);
+    // GetPathCell's scratch boxes, kept between calls.
+    TArray<FBox> PathBoxes;
+    // The A* budget's first mob this step (rotates, so later mobs are not starved).
+    int32 PathStart = 0;
+    // Columns (SpawnColumnCells square) already seen loaded: each rolls its chunk-generation pack once per session.
+    TSet<FIntPoint> MobSpawnColumns;
 
     TArray<FFoundationPlayer> Players;
     TArray<FFoundationEvent> Events;

@@ -448,6 +448,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
     Authority.Options.bMobs = FoundationMobs::IsOn();
+    Authority.Options.bMobSpawn = FoundationMobs::IsSpawnOn();
+    Authority.Options.bFire = CVarFire.GetValueOnGameThread() != 0;
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     // A level set outside the orb pickups (the lab panel, a reset) ends the last gain's timing (review 19a1).
@@ -688,6 +690,16 @@ void AFoundationPawn::Tick(float DeltaSeconds)
                 View.Pitch = -View.Pitch;
             }
         }
+    }
+    // Survival step 11b (foundation.Death.Screen 1, first person only): the hurt tilt and the death roll about the
+    // view axis. Provisional: the hurt time runs between ticks as hurtTime - partialTick [hurt.camera_tilt]; generic
+    // damage has no direction (hurtDir 0).
+    if (FoundationDeath::IsScreenEnabled() && !IsSpringArmView() && Perspective == 0)
+    {
+        if (const int32 HurtTime = FoundationHurt::GetHurtTime(Vitals); HurtTime > 0)
+            View.Roll += FoundationHurt::GetHurtTiltDegrees(
+                HurtTime - Alpha, 10., FMath::Clamp(ReadNumber(TEXT("damageTiltStrength"), 1.), 0., 1.));
+        if (Vitals.IsDead()) View.Roll += FoundationHurt::GetDeathRollDegrees(Vitals.DeathTicks + Alpha);
     }
     Camera->SetWorldLocationAndRotation(CameraLocation, View);
     UpdateBody(Alpha, DeltaSeconds, Control, Eye, CameraLocation);

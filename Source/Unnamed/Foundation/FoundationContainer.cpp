@@ -40,7 +40,7 @@ const FFoundationMenuLayout& FFoundationMenuLayout::Get(EFoundationMenuKind Kind
     static const FFoundationMenuLayout Crafting{46, 1, 3, 3, INDEX_NONE, 10, 37, INDEX_NONE};
     // value-swaps.md, "FurnaceScreen" (input 0, fuel 1, result 2; menu 3-29 main, 30-38 hotbar).
     static const FFoundationMenuLayout Furnace{39, INDEX_NONE, 0, 0, INDEX_NONE, 3, 30, INDEX_NONE, 0, 3, 2, 1};
-    return Kind == EFoundationMenuKind::Crafting ? Crafting : Kind == EFoundationMenuKind::Furnace ? Furnace : Player;
+    return Kind == EFoundationMenuKind::Crafting ? Crafting : IsFurnaceMenu(Kind) ? Furnace : Player;
 }
 
 int32 FFoundationMenuLayout::ToInventorySlot(int32 MenuSlot) const

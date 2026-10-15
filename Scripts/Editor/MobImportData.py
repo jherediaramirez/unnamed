@@ -17,6 +17,11 @@ REPO = Path(__file__).resolve().parents[2]
 REF = REPO / "Reference/minecraft-entities-26.3"
 LOOT = REF / "data/minecraft/loot_table/entities"
 RECIPES = REF / "data/minecraft/recipe"
+# Read only (survival T6 20b2): the biomes' natural_mob_spawns and creature_world_gen_spawn_probability attributes.
+WORLDGEN = REPO / "Reference/minecraft-worldgen-26.3"
+BIOMES = WORLDGEN / "data/minecraft/worldgen/biome"
+# The chunk-generation creature chance of a biome without the attribute (minecraft.wiki "Mob spawning"; the scout O11).
+DEFAULT_GEN_CHANCE = 0.1
 TEXTURES = "assets/minecraft/textures/"
 # The eight mobs (FoundationMobs' EFoundationMobType order) and the texture each draws with.
 MOBS = {
@@ -49,13 +54,55 @@ def verify_hashes():
     return hashlib.sha256(sums).hexdigest()
 
 
+def biome_spawns():
+    """Each biome's creature spawn entries and chunk-generation chance, every entity kept (the game skips the mobs it
+    has not built), after checking the biome files against the worldgen reference's SHA256SUMS.txt. Returns
+    (biomes, digest of the worldgen SHA256SUMS.txt)."""
+    sums = (WORLDGEN / "SHA256SUMS.txt").read_bytes()
+    listed = {}
+    for line in sums.decode("utf-8").splitlines():
+        digest, _, name = line.partition("  ")
+        listed[name] = digest
+    biomes = []
+    for path in sorted(BIOMES.glob("*.json")):
+        name = path.relative_to(WORLDGEN).as_posix()
+        if listed.get(name) != hashlib.sha256(path.read_bytes()).hexdigest():
+            raise SystemExit(f"MOB_IMPORT FAIL: {name} differs from the worldgen reference's SHA256SUMS.txt")
+        attributes = json.loads(path.read_text(encoding="utf-8")).get("attributes", {})
+        spawns = attributes.get("minecraft:gameplay/natural_mob_spawns", {}).get("argument", {})
+        creatures = []
+        for entry in spawns.get("spawns_by_category", {}).get("creature", []):
+            count = entry["count"]
+            if isinstance(count, int):
+                low = high = count
+            elif count.get("type") == "minecraft:uniform":
+                low, high = count["min_inclusive"], count["max_inclusive"]
+            else:
+                raise SystemExit(f"MOB_IMPORT FAIL: {name}: count {count}")
+            creatures.append({"mob": bare(entry["type"]), "weight": entry["weight"], "min_count": low,
+                              "max_count": high})
+        chance = attributes.get("minecraft:gameplay/creature_world_gen_spawn_probability", DEFAULT_GEN_CHANCE)
+        biomes.append({"biome": "minecraft:" + path.stem, "chance": float(chance), "creatures": creatures})
+    return biomes, hashlib.sha256(sums).hexdigest()
+
+
+# Layers drawn over a mob's main layer, listed after the eight main models (20b: the sheep's wool, white; its undercoat
+# and the other colours come with shearing, 20e): (mob, layer, texture, texture asset name).
+LAYERS = [("sheep", "sheep#wool", "entity/sheep/sheep_wool.png", "T_Mob_SheepWool")]
+
+
+def texture_name(mob):
+    return "T_Mob_" + mob[0].upper() + mob[1:]
+
+
 def models():
     facts = json.loads((REF / "facts/entity_models.json").read_text(encoding="utf-8"))
     sizes = {t["name"]: (t["width"], t["height"])
              for t in json.loads((REF / "textures.json").read_text(encoding="utf-8"))["textures"]}
+    layers = [(mob, f"{mob}#main", texture, texture_name(mob)) for mob, texture in MOBS.items()] + LAYERS
     out = []
-    for mob, texture in MOBS.items():
-        layer = facts[f"{mob}#main"]
+    for mob, name, texture, asset in layers:
+        layer = facts[name]
         parts = []
         for part in layer["parts"]:
             faces = []
@@ -66,8 +113,8 @@ def models():
                     faces.append({"normal": face["n"], "positions": [v[:3] for v in face["v"]],
                                   "uvs": [v[3:5] for v in face["v"]]})
             parts.append({"path": part["path"], "pivot": part["pivot"], "rotation": part["rot"], "faces": faces})
-        out.append({"id": mob, "layer": f"{mob}#main", "texture": texture, "texture_size": sizes[texture],
-                    "parts": parts})
+        out.append({"id": mob, "layer": name, "texture": texture, "texture_asset": asset,
+                    "texture_size": sizes[texture], "parts": parts})
     return out
 
 
@@ -242,3 +289,8 @@ if __name__ == "__main__":
         print(table["block"], [[(c["item"], [m["type"] for m in c["modifiers"]]) for c in p["candidates"]]
                                for p in table["pools"]], len(table["conditions"]), "nodes")
     print("left out:", left_out)
+    biomes, worldgen = biome_spawns()
+    print("worldgen digest", worldgen[:12], len(biomes), "biomes")
+    for biome in biomes:
+        if biome["biome"] in ("minecraft:plains", "minecraft:snowy_plains", "minecraft:badlands"):
+            print(biome)

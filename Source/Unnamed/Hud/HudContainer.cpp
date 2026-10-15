@@ -33,8 +33,9 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
     {
         static const FIntPoint Furnace[] = {{56, 17}, {56, 53}, {116, 35}};
         const int32 Index = Slot - Layout.FirstContainer;
-        return Kind == EFoundationMenuKind::Furnace && Index < UE_ARRAY_COUNT(Furnace) ? Furnace[Index]
-                                                                                       : FIntPoint(-1000, -1000);
+        // The smoker and blast furnace place them as the furnace does (value-swaps.md "SmokerScreen",
+        // "BlastFurnaceScreen").
+        return IsFurnaceMenu(Kind) && Index < UE_ARRAY_COUNT(Furnace) ? Furnace[Index] : FIntPoint(-1000, -1000);
     }
     if (Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot) return {124, 35};
     if (Layout.IsCraft(Slot))
@@ -49,7 +50,7 @@ FIntPoint FHudContainerModel::GetSlotPosition(EFoundationMenuKind Kind, int32 Sl
 FIntPoint FHudContainerModel::GetRecipeButton(EFoundationMenuKind Kind)
 {
     return Kind == EFoundationMenuKind::Crafting ? FIntPoint(CraftingRecipeButtonX, CraftingRecipeButtonY)
-        : Kind == EFoundationMenuKind::Furnace   ? FIntPoint(FurnaceRecipeButtonX, FurnaceRecipeButtonY)
+        : IsFurnaceMenu(Kind)                    ? FIntPoint(FurnaceRecipeButtonX, FurnaceRecipeButtonY)
                                                  : FIntPoint(RecipeButtonX, RecipeButtonY);
 }
 
@@ -190,11 +191,18 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
         if (!bShiftDoubleClick)
             Clicks.Add({LastSlot, 0, EFoundationClickType::PickupAll});
         else
-            // Every slot past the crafting grid (the armor on, for the inventory; the main grid on, for a table).
-            for (int32 Slot = FFoundationMenuLayout::Get(Kind).GetCraftEnd(); Slot < GetSlots(); ++Slot)
-                if (HitTest(GetPosition(Slot)) == Slot && !View.Get(Slot).IsEmpty() &&
-                    View.Get(Slot).Item == LastQuickMoved.Item && View.Get(Slot).Damage == LastQuickMoved.Damage)
+        {
+            // Every slot past the crafting grid (the armor on, for the inventory; the main grid on, for a table), on
+            // the clicked slot's side only: a furnace's slots or the player's (minecraft.wiki, "from that inventory";
+            // Codex review 22, finding 1: else the logs a furnace input gave back route straight in again).
+            const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+            const bool bContainerSide = Layout.IsContainer(LastSlot);
+            for (int32 Slot = FMath::Max(Layout.GetCraftEnd(), 0); Slot < GetSlots(); ++Slot)
+                if (Layout.IsContainer(Slot) == bContainerSide && HitTest(GetPosition(Slot)) == Slot &&
+                    !View.Get(Slot).IsEmpty() && View.Get(Slot).Item == LastQuickMoved.Item &&
+                    View.Get(Slot).Damage == LastQuickMoved.Damage)
                     Clicks.Add({Slot, 0, EFoundationClickType::QuickMove});
+        }
         return Clicks;
     }
     if (!IsDragging() || Button != DragButton) return Clicks;

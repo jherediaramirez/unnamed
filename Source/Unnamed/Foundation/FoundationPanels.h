@@ -32,6 +32,8 @@ public:
     bool IsTextOpen() const { return bTextOpen; }
     // The open chat's typed line (step 15: the HUD draws it in vanilla's input bar); empty when closed.
     FString GetTypedText() const;
+    // The caret's character index in the typed line (0 to its length; the length when the box has not reported one).
+    int32 GetTypedCaret() const;
     bool IsInventoryOpen() const { return bInventoryOpen; }
     // The creative screen's search tab takes typed text: the inventory key types instead of closing.
     bool IsTypingInInventory() const;
@@ -77,5 +79,7 @@ private:
     bool bOpen = false;
     bool bTextOpen = false;
     TSharedPtr<SEditableTextBox> TextBox;
+    // The box's last reported caret offset (OnCursorMovedWithSelection); INDEX_NONE until it reports.
+    int32 TypedCaret = INDEX_NONE;
     bool bInventoryOpen = false;
 };

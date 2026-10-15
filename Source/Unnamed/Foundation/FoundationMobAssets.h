@@ -68,6 +68,38 @@ struct FFoundationMobModelAsset
     TArray<FFoundationMobPartAsset> Parts;
 };
 
+// One creature spawn entry of a biome (survival T6 20b2), verbatim from the worldgen reference's
+// natural_mob_spawns.creature: the entity id ("sheep"), its weight and the pack size (count, or a uniform's bounds).
+USTRUCT()
+struct FFoundationMobSpawnAsset
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    FName Mob;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    int32 Weight = 0;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    int32 MinCount = 1;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    int32 MaxCount = 1;
+};
+
+// A biome's creature spawning: its full id ("minecraft:plains"), creature_world_gen_spawn_probability (0.1 without
+// the attribute) and its creature entries, every entity kept.
+USTRUCT()
+struct FFoundationBiomeSpawnAsset
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    FName Biome;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    float Chance = .1f;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    TArray<FFoundationMobSpawnAsset> Creatures;
+};
+
 // DA_Mobs (survival T6 20a), written by Scripts/Editor/ImportMobs.py from Reference/minecraft-entities-26.3: the eight
 // mobs' models and their entity loot tables. Unlocked, unlike DA_Items: it belongs to track T6.
 UCLASS()
@@ -92,10 +124,19 @@ public:
     // "sheep/white").
     UPROPERTY(EditAnywhere, Category = "Mobs")
     TArray<FFoundationLootTableAsset> LootTables;
+    // Survival T6 20b2: Reference/minecraft-worldgen-26.3's SHA256SUMS.txt digest and every biome's creature spawning.
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    FString WorldgenSha256;
+    UPROPERTY(EditAnywhere, Category = "Mobs")
+    TArray<FFoundationBiomeSpawnAsset> BiomeSpawns;
 
     // DA_Mobs under EntityRoot, loaded once; null before ImportMobs.py has run.
     static const UFoundationMobAssets* LoadDefault();
+    // A mob's main layer (the first model with its id); FindLayers adds the layers drawn over it (the sheep's wool).
     const FFoundationMobModelAsset* FindModel(FName Id) const;
+    void FindLayers(FName Id, TArray<const FFoundationMobModelAsset*>& Out) const;
     // Replaces Rules.EntityLootTables with these, items resolved against Rules.Items; how many were skipped.
     int32 AddLoot(FFoundationRules& Rules) const;
+    // Replaces Rules.BiomeSpawns with BiomeSpawns, keeping only the mobs that are built and spawnable.
+    void AddSpawns(FFoundationRules& Rules) const;
 };
