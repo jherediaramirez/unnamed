@@ -69,6 +69,8 @@ public:
     int32 GetPlainSet(int32 Root) const;
     uint8 GetFluidBits(uint16 State) const;
     int32 GetNodeCount() const { return Nodes.Num(); }
+    // Every would_survive test of From tests To instead; how many it swapped.
+    int32 ReplaceState(uint16 From, uint16 To);
 
 private:
     TArray<FNode> Nodes;

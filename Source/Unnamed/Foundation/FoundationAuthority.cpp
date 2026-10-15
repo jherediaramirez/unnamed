@@ -102,6 +102,16 @@ namespace
             ++Inventory.Revision;
         }
     }
+
+    // A block's 26.3 loot table, unless foundation.Loot.AllBlocks 0 leaves only items S5b's ore tables (RollBlockDrops
+    // and SettlePlants' PopOtherHalf must agree: a two-half block drops once).
+    const FFoundationLootTable* FindAuthorityLootTable(const TMap<FName, FFoundationLootTable>& Tables, FName Block)
+    {
+        const FFoundationLootTable* Table = Tables.Find(Block);
+        return Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0
+            ? nullptr
+            : Table;
+    }
 }
 
 const TCHAR* LexToString(EFoundationReason Reason)
@@ -2802,10 +2812,8 @@ void FFoundationAuthority::RollBlockDrops(const FIntVector& Cell, FFoundationBlo
     const FFoundationItemDefinition& Tool, int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const
 {
     const FFoundationBlockType& Definition = World.GetBlock(State);
-    const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
     // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
-    if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
-        Table = nullptr;
+    const FFoundationLootTable* Table = FindAuthorityLootTable(Rules.LootTables, Definition.Id);
     if (Table)
     {
         FRandomStream Random(RandomSeed);
@@ -3025,9 +3033,11 @@ void FFoundationAuthority::SettlePlants(
     // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
     FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
     if (!Options.bPlantRules) return;
-    // Pops drop nothing until item entities exist (scout H, Q4).
     TArray<FIntVector, TInlineAllocator<8>> Changed = {Cell};
-    auto Pop = [this, &Player, &Changed](const FIntVector& At)
+    // A pop drops what an empty hand breaking that block alone drops (survival B4a; Options.bItemEntities), rolled
+    // before it goes so a double plant's other half is still in place. bRoll false: a door's other half under the
+    // "drops itself" rule, so the unit drops once (PopOtherHalf).
+    auto Pop = [this, &Player, &Changed](const FIntVector& At, bool bRoll = true)
     {
         FFoundationEvent Event;
         Event.Kind = EFoundationEventKind::Popped;
@@ -3035,7 +3045,11 @@ void FFoundationAuthority::SettlePlants(
         Event.Cell = At;
         Event.State = World.Get(At).State;
         Event.Step = Player.Facts.Step;
+        TArray<FFoundationLootDrop> Drops;
+        if (Options.bItemEntities && bRoll)
+            RollBlockDrops(At, Event.State, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, At, Pops), Drops);
         World.Set(At, World.GetRegistry().GetRemainder(Event.State));
+        if (!Drops.IsEmpty()) SpawnDrops(At, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, At, Pops));
         Changed.Add(At);
         ++Pops;
         AddEvent(Event);
@@ -3049,7 +3063,11 @@ void FFoundationAuthority::SettlePlants(
         if (FoundationPlantRules::GetOtherHalf(World, At, Old, Other, Ignored) && World.IsKnown(Other) &&
             FoundationPlantRules::IsOtherHalf(World.GetRegistry(), Old, World.Get(Other).State) &&
             !FoundationPlantRules::IsOtherHalf(World.GetRegistry(), World.Get(At).State, World.Get(Other).State))
-            Pop(Other);
+        {
+            // A 26.3 loot table drops a two-half block from its lower half alone (match_block half=lower), so both
+            // halves roll; a block without one drops itself from whichever half rolls first.
+            Pop(Other, FindAuthorityLootTable(Rules.LootTables, World.GetBlock(World.Get(Other).State).Id) != nullptr);
+        }
     };
     PopOtherHalf(Cell, Before);
     // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
@@ -3288,13 +3306,19 @@ void FFoundationAuthority::SettleAfterFluid(const FIntVector& Cell, FFoundationB
     static const FFoundationPlayer Nobody;
     if (bWashedAway)
     {
-        // The fluid already holds the cell; the block pops with no drop, as every pop until item entities exist (plan
-        // Q7).
+        // The fluid already holds the cell; the block drops what an empty hand breaking it drops, as a pop does
+        // (survival B4a, SM-Blocks' Q1; Options.bItemEntities).
         FFoundationEvent Event;
         Event.Kind = EFoundationEventKind::Popped;
         Event.Player = Nobody.Id;
         Event.Cell = Cell;
         Event.State = Before;
+        if (Options.bItemEntities)
+        {
+            TArray<FFoundationLootDrop> Drops;
+            RollBlockDrops(Cell, Before, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Pops), Drops);
+            if (!Drops.IsEmpty()) SpawnDrops(Cell, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, Pops));
+        }
         ++Pops;
         AddEvent(Event);
     }

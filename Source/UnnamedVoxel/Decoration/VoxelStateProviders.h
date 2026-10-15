@@ -69,6 +69,8 @@ public:
     // Every state a provider can give, without repeats.
     void GetStates(int32 Provider, TArray<uint16>& Out) const;
     const FNode& GetNode(int32 Provider) const { return Nodes[Provider]; }
+    // Every provider that gives From gives To instead; how many states it swapped.
+    int32 ReplaceState(uint16 From, uint16 To);
     TConstArrayView<uint16> GetStateList() const { return States; }
     TConstArrayView<int32> GetWeights() const { return Weights; }
 
