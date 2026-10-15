@@ -67,6 +67,7 @@ void FFoundationInteraction::Resync(FFoundationAuthority& Authority)
     NextUseStep = 0;
     LastPlacementStep = MIN_int64 / 2;
     bStopSprint = false;
+    OpenedContainer = 0;
     LastText = TEXT("new lab session");
 }
 
@@ -113,6 +114,11 @@ FFoundationResult FFoundationInteraction::Send(
     const FFoundationResult Result = Authority.Execute(PlayerId, Command, Vitals);
     ++Commands;
     if (Result.bSprintKnockback) bStopSprint = true;
+    if (Result.OpenedContainer != 0 && !Result.bDuplicate)
+    {
+        OpenedContainer = Result.OpenedContainer;
+        OpenedMenu = Result.OpenedMenu;
+    }
     LastResult = Result;
     History.Add(Result);
     if (History.Num() > 32) History.RemoveAt(0, History.Num() - 32);
@@ -387,6 +393,10 @@ void FFoundationInteraction::Attempt(
     const FFoundationResult Result = UsePipeline(Authority, Vitals);
     // Full hunger asks again only after the held repeat, whatever the cadence.
     if (Result.Reason == EFoundationReason::NotHungry) NextUseStep = Step + HeldRepeatSteps;
+    // A bucket's fill or pour (step 17) waits the held repeat too, so holding use does not fill and pour each step;
+    // so does a bucket refused for a full inventory, so holding does not send a refusal every step.
+    if (Result.bFilled || Result.bEmptied || Result.Reason == EFoundationReason::InventoryFull)
+        NextUseStep = Step + HeldRepeatSteps;
     if (Result.bPlaced)
     {
         OnPlaced(PressTime, NowSeconds);
@@ -426,13 +436,15 @@ FFoundationResult FFoundationInteraction::UsePipeline(FFoundationAuthority& Auth
             Result = UseTarget(Authority, Vitals, Hand);
             if (Result.Outcome != EFoundationOutcome::Pass) return Result;
         }
-        // Only a hand holding a consumable asks the authority, so other items send nothing new.
+        // Only a hand holding a consumable or a bucket (step 17) asks the authority, so other items send nothing new.
         const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
         const FFoundationItemInstance* Stack = Player ? &Player->Inventory.GetHand(Hand) : nullptr;
-        if (!bItemUse || !Stack || Stack->IsEmpty() || !Authority.Rules.GetItem(Stack->Item).GetConsumable().IsValid())
-            continue;
+        if (!bItemUse || !Stack || Stack->IsEmpty()) continue;
+        const FFoundationItemDefinition& Item = Authority.Rules.GetItem(Stack->Item);
+        if (!Item.GetConsumable().IsValid() && !FoundationBucket::IsBucket(Item.Id)) continue;
         Result = Send(Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::UseItemStart, Hand));
-        if (Result.IsCommitted())
+        // A bucket's use is instant: only a use with a duration is held.
+        if (Result.IsCommitted() && Result.UseDuration > 0)
         {
             bUsingItem = true;
             UseHand = Hand;
@@ -535,6 +547,11 @@ FFoundationResult FFoundationInteraction::SetCreativeSlot(
 FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& Authority, FFoundationVitals& Vitals,
     int32 ContainerId, int32 Slot, int32 Button, EFoundationClickType Type)
 {
+    // The screen reads foundation.Inventory.Full itself; the authority's copies of it and foundation.Crafting follow
+    // here too, so a switch flipped while the screen is open (the pawn's step paused) cannot make them disagree (Codex
+    // 5b review, finding 4; review 10, finding 5).
+    Authority.Options.bFullInventory = FoundationInventory::IsFull();
+    Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
     FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::ContainerClick, EFoundationHand::Main);
     Command.ContainerId = ContainerId;
     Command.Slot = Slot;
@@ -546,6 +563,8 @@ FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& A
 
 FFoundationResult FFoundationInteraction::ContainerClose(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
 {
+    Authority.Options.bFullInventory = FoundationInventory::IsFull();
+    Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
     return Send(
         Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::ContainerClose, EFoundationHand::Main));
 }
@@ -581,6 +600,13 @@ void FFoundationInteraction::UpdatePreview(const FFoundationAuthority& Authority
         !Player->Inventory.GetHand(EFoundationHand::Off).IsEmpty();
     if (Hit.Kind == EFoundationHitKind::Static && Authority.Statics.IsValidIndex(Hit.StaticIndex) &&
         !Authority.Statics[Hit.StaticIndex].Interaction.IsNone() && !(Facts.bSecondaryUse && bHolding))
+    {
+        Preview.bInteraction = true;
+        return;
+    }
+    // A block's own use (survival step 7, UseOn's branch 1b) shows no placement either.
+    if (Hit.Kind == EFoundationHitKind::Block && Authority.Options.bBlockUse && Authority.HasBlockUse(Hit.Cell) &&
+        !(Facts.bSecondaryUse && bHolding))
     {
         Preview.bInteraction = true;
         return;

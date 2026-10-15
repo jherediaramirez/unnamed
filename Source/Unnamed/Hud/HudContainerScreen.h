@@ -16,7 +16,9 @@ class UHudAssets;
 class UNNAMED_API SHudContainerScreen : public SLeafWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SHudContainerScreen) : _RequestedGuiScale(0) {}
+    SLATE_BEGIN_ARGS(SHudContainerScreen) : _Kind(EFoundationMenuKind::Inventory), _RequestedGuiScale(0) {}
+    // The menu: the player's inventory, or a crafting table's (survival step 7).
+    SLATE_ARGUMENT(EFoundationMenuKind, Kind)
     SLATE_ARGUMENT(TSharedPtr<const FFoundationBlockRegistry>, Registry)
     SLATE_ARGUMENT(TWeakObjectPtr<const UHudAssets>, HudAssets)
     // Every item the player could hold: names, stack sizes, equipment, tooltip lines.
@@ -43,7 +45,7 @@ public:
     void Move(FIntPoint Point);
     void Release(FIntPoint Point, int32 Button);
     // The textures the screen found (probes check the import ran).
-    bool HasArt() const { return Art.Find(TEXT("gui/container/inventory")) != nullptr; }
+    bool HasArt() const { return Art.Find(GetBackground()) != nullptr; }
 
     virtual bool SupportsKeyboardFocus() const override { return true; }
     virtual FReply OnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
@@ -85,4 +87,9 @@ private:
     bool bReleasingCapture = false;
 
     FKey GetBoundKey(const TCHAR* Id, const FKey& Default) const;
+    // A key or a non-click mouse button: the inventory key closes; the hotbar, offhand and drop bindings act on the
+    // slot under the cursor. Whether the key is bound to any of them.
+    bool PressBound(const FGeometry& Geometry, const FKey& Key, bool bControl);
+    // The background texture for the menu (inventory.png or crafting_table.png).
+    const TCHAR* GetBackground() const;
 };

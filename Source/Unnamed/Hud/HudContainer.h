@@ -12,8 +12,8 @@ struct FHudContainerClick
     bool operator==(const FHudContainerClick& Other) const = default;
 };
 
-// What the screen shows: the player's menu slots by their menu number (0-45, FFoundationContainerMenu) and the
-// cursor stack.
+// What the screen shows: the menu's slots by their menu number (FFoundationContainerMenu: the player's 0-45, or a
+// crafting table's 0-45) and the cursor stack.
 struct FHudContainerView
 {
     TArray<FHudCreativeStack> Slots;
@@ -27,7 +27,9 @@ struct FHudContainerView
 // turns presses, moves and releases into the clicks vanilla's screen sends (minecraft.wiki "Inventory", Controls):
 // left and right PICKUP, shift QUICK_MOVE, a drag with a stack QUICK_CRAFT, a double-click PICKUP_ALL (with shift, a
 // QUICK_MOVE of every stack like the last one moved), number keys and F SWAP, Q THROW, a click outside PICKUP -999.
-// The authority runs them (FFoundationContainerMenu); the widget only draws and forwards input.
+// The authority runs them (FFoundationContainerMenu); the widget only draws and forwards input. Kind Crafting is the
+// crafting table's screen (survival step 7, CraftingScreen over CraftingMenu,
+// textures/gui/container/crafting_table.png, the same 176 x 166): the same gestures over its own slots.
 class UNNAMED_API FHudContainerModel
 {
 public:
@@ -47,14 +49,33 @@ public:
     // 250 ms, minecraft.wiki).
     static constexpr double DoubleClickSeconds = .25;
 
-    // A menu slot's 16 x 16 item area (top-left), measured from inventory.png's slot frames.
+    // The crafting table's labels and recipe-book button (provisional: CraftingScreen's "Crafting" at 29,6, the
+    // "Inventory" label at 8,72 and the button at leftPos + 5, height / 2 - 49, which is 34 below topPos;
+    // minecraft.wiki screenshots, no capture yet).
+    static constexpr int32 CraftingTitleX = 29;
+    static constexpr int32 CraftingTitleY = 6;
+    static constexpr int32 InventoryLabelX = 8;
+    static constexpr int32 InventoryLabelY = 72;
+    static constexpr int32 CraftingRecipeButtonX = 5;
+    static constexpr int32 CraftingRecipeButtonY = 34;
+
+    // A menu slot's 16 x 16 item area (top-left), measured from inventory.png's slot frames; for the crafting table
+    // the value report's slot positions (value-swaps.md, "Crafting table").
     static FIntPoint GetSlotPosition(int32 Slot);
+    static FIntPoint GetSlotPosition(EFoundationMenuKind Kind, int32 Slot);
+    static FIntPoint GetRecipeButton(EFoundationMenuKind Kind);
+    FIntPoint GetPosition(int32 Slot) const { return GetSlotPosition(Kind, Slot); }
+    // The menu's slot count.
+    int32 GetSlots() const { return FFoundationMenuLayout::Get(Kind).Slots; }
+    // Whether a slot is drawn and hit: without the full inventory the main and armor slots are not slots.
+    bool IsShown(int32 Slot) const;
     // The menu slot under Point; FFoundationContainerMenu::Outside outside the window; INDEX_NONE inside it but on no
     // slot. Without the full inventory (bFullInventory off) the main and armor slots are not slots.
     int32 HitTest(FIntPoint Point) const;
     // Every slot, the crafting grid and its result included (survival step 6), and outside the window.
     static bool IsClickable(int32 Slot) { return Slot == FFoundationContainerMenu::Outside || Slot >= 0; }
-    static bool IsInRecipeButton(FIntPoint Point);
+    static bool IsInRecipeButton(FIntPoint Point) { return IsInRecipeButton(EFoundationMenuKind::Inventory, Point); }
+    static bool IsInRecipeButton(EFoundationMenuKind Kind, FIntPoint Point);
 
     // Button 0 left, 1 right, 2 middle; Time in seconds from any fixed clock.
     TArray<FHudContainerClick> MouseDown(
@@ -80,6 +101,7 @@ public:
     // The items' stack sizes and equipment slots (the drag only adds slots that can take the stack).
     FHudCreativeItems Items;
     bool bFullInventory = true;
+    EFoundationMenuKind Kind = EFoundationMenuKind::Inventory;
 
 private:
     int32 GetMaxStack(FName Item) const;

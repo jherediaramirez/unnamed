@@ -163,11 +163,17 @@ struct FFoundationResult
     bool bKnockback = false, bSprintKnockback = false, bSweep = false;
     int32 SweptTargets = 0;
     bool bItemConsumed = false, bItemReturned = false, bToolWorn = false, bToolBroke = false;
+    // A block's use opened a container (survival step 7): its id (never 0) and menu; the owner opens the screen.
+    int32 OpenedContainer = 0;
+    EFoundationMenuKind OpenedMenu = EFoundationMenuKind::Inventory;
     // Item use (step 10): the reference steps used so far and the item's total; bAte when this result finished eating.
     int32 UseTicks = 0, UseDuration = 0;
     bool bAte = false;
     // An axe stripped the block at Cell (step 14); State is the stripped state.
     bool bStripped = false;
+    // A bucket (step 17) took the source at Cell (bFilled) or poured one there (bEmptied); State is the cell's new
+    // state.
+    bool bFilled = false, bEmptied = false;
     // What a survival break returned to the inventory (items S5b): one entry per stack rolled.
     TArray<FFoundationLootDrop> Drops;
     FName Interaction;
@@ -241,6 +247,10 @@ struct FFoundationLabOptions
     // Experience orbs (survival step 12): a survival break of an ore pays orbs. Off, none spawn, as before. The pawn
     // copies foundation.Items.Xp in before each step; tests set it themselves.
     bool bExperienceOrbs = false;
+    // Block use (survival step 7): right-clicking a block with a use handler (FFoundationAuthority::RegisterBlockUse;
+    // the crafting table) runs it instead of placing. Off, right-click always places, as before. The pawn copies
+    // foundation.Blocks.Use in before each step; tests set it themselves.
+    bool bBlockUse = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -328,7 +338,16 @@ enum class EFoundationEventKind : uint8
     Stripped,
     // A player took an experience orb (step 12): EntityId the orb, Count its points, LocationCm where it stood (world
     // cm), bWholeStack whether that was its last (the orb is gone).
-    ExperiencePickedUp
+    ExperiencePickedUp,
+    // A bucket (step 17) took a source (Filled: Item the filled bucket, LocationCm the player's feet) or poured one
+    // (Emptied: Item the poured bucket); Cell the fluid's cell, State its new state.
+    Filled,
+    Emptied,
+    // Lava met water and hardened (step 17): Cell, State the block it became (stone, obsidian, cobblestone, basalt).
+    Extinguished,
+    // A block's use opened a container (survival step 7): Cell the block, EntityId the container id, Interaction the
+    // block id.
+    ContainerOpened
 };
 
 // A committed (or rejected) outcome for presentation: effects fire once from these.
@@ -365,6 +384,15 @@ struct FFoundationItemUse
     int64 LastStep = -1;
 };
 
+namespace FoundationBucket
+{
+    // The buckets step 17 uses (empty, water, lava); milk and the mob buckets wait for mobs.
+    inline bool IsBucket(FName Id)
+    {
+        return Id == TEXT("bucket") || Id == TEXT("water_bucket") || Id == TEXT("lava_bucket");
+    }
+}
+
 namespace FoundationItemUse
 {
     // foundation.Items.Use: 1 food is eaten by holding use (step 10); 0 it passes, as before. Steps 14 and 17 (axe
@@ -379,6 +407,26 @@ namespace FoundationItemUse
     UNNAMED_API bool IsEffectTick(int32 Ticks, int32 Duration);
 }
 
+// A container menu open besides the player's own (survival step 7): vanilla's containerId, the menu, the block it
+// belongs to, and the crafting table's 3x3, which belongs to the screen (closing returns it).
+struct FFoundationOpenMenu
+{
+    int32 ContainerId = 0;
+    EFoundationMenuKind Kind = EFoundationMenuKind::Inventory;
+    FIntVector Cell = FIntVector::ZeroValue;
+    FName Block;
+    TArray<FFoundationItemInstance> Grid;
+
+    bool IsOpen() const { return ContainerId != 0; }
+};
+
+namespace FoundationBlockUse
+{
+    // foundation.Blocks.Use: 1 blocks with a use handler (the crafting table) open their screen on right-click; 0
+    // right-click always places, as before.
+    UNNAMED_API bool IsOn();
+}
+
 struct FFoundationPlayer
 {
     int32 Id = 0;
@@ -391,6 +439,9 @@ struct FFoundationPlayer
     // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
     // player's vitals (TakeExperience).
     int32 ExperienceDelay = 0, PendingExperience = 0;
+    // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
+    FFoundationOpenMenu OpenMenu;
+    int32 LastContainerId = 0;
     // Results by sequence for retransmissions; bounded, oldest evicted first.
     TMap<uint32, FFoundationResult> Results;
     TArray<uint32> ResultOrder;
@@ -425,6 +476,22 @@ public:
     // The player's container 0 as its menu shows it, by menu slot (46: the result the grid makes now, the grid, the
     // armor, the main grid, the hotbar, the offhand), for the screen's view.
     TArray<FFoundationItemInstance> GetPlayerMenu(const FFoundationPlayer& Player) const;
+    // The player's open container (survival step 7) as its menu shows it, by menu slot; empty when none is open.
+    TArray<FFoundationItemInstance> GetOpenMenu(const FFoundationPlayer& Player) const;
+
+    // A block's use (survival step 7, vanilla's useWithoutItem/useItemOn for blocks): UseOn runs it for a block hit
+    // with this id when Options.bBlockUse is on, before an axe strips or the hand places. It runs for the main hand
+    // only, and not when a crouching player holds something (the sneak bypass: that player places instead). Return
+    // true when the use happened (fill Result: Committed, and any effects); false passes on to stripping and placing.
+    // The authority registers the crafting table; doors, buttons and levers (T5) register theirs the same way.
+    using FBlockUse = TFunction<bool(FFoundationAuthority& Authority, FFoundationPlayer& Player,
+        const FFoundationHit& Hit, FFoundationResult& Result)>;
+    void RegisterBlockUse(FName BlockId, FBlockUse Use);
+    // Whether the block in Cell has a use handler (previews show no placement for it).
+    bool HasBlockUse(const FIntVector& Cell) const;
+    // Opens a container menu for Player at Cell (a block use calls it); Result carries the new id.
+    void OpenContainer(FFoundationPlayer& Player, EFoundationMenuKind Kind, const FIntVector& Cell, FName Block,
+        FFoundationResult& Result);
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);
@@ -445,7 +512,7 @@ public:
     void SettleAfterFluid(const FIntVector& Cell, FFoundationBlockState Before, bool bWashedAway);
 
     // Shared queries: the same code serves previews, caller claims and validation.
-    FFoundationHit Resolve(const FFoundationPlayerFacts& Facts) const;
+    FFoundationHit Resolve(const FFoundationPlayerFacts& Facts, bool bFluidSources = false) const;
     // Where a placement would go without knowing the item: the clicked block when replaceable, else beside it.
     bool GetDestination(const FFoundationHit& Hit, FIntVector& OutDestination, EFoundationReason& OutReason) const;
     // The same for the item in a hand, as vanilla's BlockPlaceContext: a matching single slab is completed in
@@ -482,11 +549,15 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0;
+          Strips = 0, BucketUses = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
 
 private:
     FFoundationInventory MakeLoadout();
+    // Block use handlers registered by block id (RegisterBlockUse); they override the built-in ones (the crafting
+    // table, FindBlockUse).
+    TMap<FName, FBlockUse> BlockUses;
+    const FBlockUse* FindBlockUse(FName BlockId) const;
     // The item facts container clicks read (max stack, equipment slot).
     FFoundationContainerRules MakeContainerRules() const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
@@ -509,6 +580,10 @@ private:
     void Attack(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void Whiff(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationVitals& Vitals,
+        FFoundationResult& Result);
+    // A bucket in the hand (step 17): fills from or pours a fluid source as an instant use. False when the hand holds
+    // no bucket or the switch is off; otherwise Result says what happened (a pass included).
+    bool UseBucket(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
         FFoundationResult& Result);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
