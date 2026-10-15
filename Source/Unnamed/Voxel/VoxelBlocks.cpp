@@ -184,12 +184,8 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
                 // draws in the translucent section, keeping its half-transparent pixels (Codex review 15 #2).
                 Info.Layer =
                     Block.Layer == EFoundationRenderLayer::Translucent ? EVoxelLayer::Translucent : EVoxelLayer::Model;
-                // A chest keeps its model shape (light, fluids, motion) and draws no quads (bDrawsNoMesh, B4a).
-                if (!Block.bDrawsNoMesh)
-                {
-                    Info.ModelParts = Table->AddModelParts(Parts);
-                    Info.ModelPartCount = uint8(Parts.Num());
-                }
+                Info.ModelParts = Table->AddModelParts(Parts);
+                Info.ModelPartCount = uint8(Parts.Num());
                 FoundationBlockOffsets::CopyTo(Block, Info);
             }
             // Any waterlogged state (a model, a slab, a stair) holds a water source: drawn, swum in and fogged.

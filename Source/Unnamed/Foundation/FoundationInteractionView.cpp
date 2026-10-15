@@ -386,8 +386,7 @@ void UFoundationInteractionView::AddInstance(
         MakeCustomData(Registry, State, Data);
         const FTransform Moved(CellMin + GetModelOffsetCm(Type, Cell));
         TArray<TConstArrayView<int32>> Parts;
-        // A chest draws no block mesh (bDrawsNoMesh, survival B4a), as in the voxel world.
-        if (!Type.bDrawsNoMesh) Registry.GetModelParts(State, Parts);
+        Registry.GetModelParts(State, Parts);
         for (int32 Part = 0; Part < Parts.Num(); ++Part)
         {
             const TConstArrayView<int32> Alternatives = Parts[Part];

@@ -224,9 +224,9 @@ Survival B3b (track T5), the same switch (`foundation.Blocks.Interact`; 0: no us
   them. They are not saved (block edits are not saved yet; VoxelWorld.md "Edits").
 - **Arrow-held wooden buttons** wait for arrows (T2 19c; `survival.r9.arrow_button`).
 
-## Pop drops, the firefly bush and chests (B4a)
+## Pop drops and the firefly bush (B4a)
 
-Survival B4a (track T5), from Jesus's play bugs and T1's chest ask.
+Survival B4a (track T5), from Jesus's play bugs.
 
 - **Pop drops** (`FFoundationAuthority::SettlePlants`' `Pop`, `SettleAfterFluid`): a block that pops (a stack above a
   broken segment, a plant or torch whose support went, a door's other half) or is washed away drops what an empty hand
@@ -252,12 +252,8 @@ Survival B4a (track T5), from Jesus's play bugs and T1's chest ask.
   effect. No other model has the bug: only model 302 (the bush) has emissive quads, and the only other model with two
   textures on one plane, the sunflower head (model 69), puts them on opposite faces
   (`C:\dev\sandbox\b4a-blocks\firefly\two-layer-models.txt`).
-- **Chests draw no block mesh** (26.3's `ENTITYBLOCK_ANIMATED` render shape; T1's step 18 draws them): `chest`,
-  `trapped_chest` and `ender_chest` carry `bDrawsNoMesh` (`DA_Blocks`, set by `BlockImportData.py` for the manifest's
-  template `chests`; the reference is unchanged). The voxel table keeps their model shape (light, fluids, motion) with
-  no parts; the Playground draws no instance, no crack overlay and no break shrink (26.3 cracks only `MODEL` shapes).
-  Their 14/16 outline and collision come from the registry's box table, not the quads, so they stay, as do the break
-  particles (`oak_planks`) and the item icon (`unnamed:stand_in/chest_normal`).
+- **Chests keep drawing their block mesh:** T1's chest no-mesh ask is deferred with the lid animation (feature
+  freeze, after QC).
 
 ## Placement
 
@@ -298,7 +294,7 @@ Survival B4a (track T5), from Jesus's play bugs and T1's chest ask.
   - a vine, glow lichen or sculk vein loses the faces no longer held while one is left;
   - a pop's neighbours are not checked, except along a stack, which settles to its end (S7b, Jesus's answer to Q1): from each changed segment, the cells of the same stack above and below, while they change. The stacks (`FoundationPlantRules::GetStack`): sugar cane, cactus with its flower, bamboo, kelp, cave vines, pointed dripstone, sulfur spike, pale hanging moss, vine (a vine hanging under a vine) and big dripleaf with its stem;
   - a rule that reads an unknown cell keeps the plant;
-  - pops are `Popped` events; they drop what an empty hand would (B4a, "Pop drops, the firefly bush and chests").
+  - pops are `Popped` events; they drop what an empty hand would (B4a, "Pop drops and the firefly bush").
 - **Replaceable:** every block takes the facts' flag (Jesus's answer 4), except snow: one layer is replaced by a placed block, more layers are not (S7b, Jesus's answer to Q5; `FoundationBlockPlacement::IsReplaceable`, which the destination of a click also uses). Snow does not replace a snow layer: stacking layers is not built.
 - **Mining:** hardness 0 breaks at once (68 of the 85 model blocks, the torches included); vines, lichen, cocoa and sculk vein take 0.2.
 - `Options.bPlantRules` switches all of this off, for A/B runs.

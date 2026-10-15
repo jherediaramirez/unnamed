@@ -99,8 +99,6 @@ struct FFoundationBlockType
     float OffsetMinVertical = 0;
     bool bOutlineMovesWithOffset = false;
     bool bCollisionMovesWithOffset = false;
-    // Draws no block mesh, in the voxel world or the Playground (FFoundationBlockAsset).
-    bool bDrawsNoMesh = false;
 
     // One of survival B1's family blocks (FFoundationBlockAsset), behind foundation.Blocks.Families.
     bool bAppendedFamily = false;

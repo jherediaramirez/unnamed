@@ -893,9 +893,8 @@ void FFoundationBreakEffects::GetStateParts(const FFoundationAuthority& Authorit
     OutPlaces.Reset();
     const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     const FFoundationBlockType& Type = Registry.GetBlock(State);
-    // Water's cell is never minable and never pops; a chest has no block mesh to crack or shrink (bDrawsNoMesh, B4a:
-    // 26.3 draws break cracks only over MODEL render shapes). Its break particles stay.
-    if (State.IsAir() || Type.IsWater() || Type.bDrawsNoMesh) return;
+    // Water's cell is never minable and never pops.
+    if (State.IsAir() || Type.IsWater()) return;
     // The mesh pivot is the cell's minimum corner, as AddInstance places it.
     const FVector CellMin = FoundationGrid::CellMin(Cell, Authority.World.OriginCm);
     if (Registry.GetShape(State) == EFoundationBlockShape::Model)

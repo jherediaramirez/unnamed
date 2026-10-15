@@ -163,7 +163,6 @@ for block in data["blocks"]:
             entry.set_editor_property("item_wall_block", block["item_wall_block"])
     entry.set_editor_property("state_support", block["state_support"])
     entry.set_editor_property("appended_family", block["appended_family"])
-    entry.set_editor_property("draws_no_mesh", block["draws_no_mesh"])
     entry.set_editor_property("item_icon_tile", block["item_icon_tile"])
     entry.set_editor_property("item_icon_model", block["item_icon_model"])
     for key in ("item_icon_rotation", "item_icon_translation", "item_icon_scale"):

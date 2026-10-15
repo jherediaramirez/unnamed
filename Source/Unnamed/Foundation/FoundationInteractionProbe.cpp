@@ -50,9 +50,7 @@ namespace
                     Count += 1 + (Shape != EFoundationBlockShape::Fluid && Registry.GetFluid(Value.State).Amount > 0);
                     return;
                 }
-                // A chest draws no block mesh (bDrawsNoMesh, survival B4a), only its held water.
-                Parts.Reset();
-                if (!Registry.GetBlock(Value.State).bDrawsNoMesh) Registry.GetModelParts(Value.State, Parts);
+                Registry.GetModelParts(Value.State, Parts);
                 for (const TConstArrayView<int32> Alternatives : Parts)
                     Count += !Alternatives.IsEmpty();
                 Count += Registry.GetFluid(Value.State).Amount > 0;
