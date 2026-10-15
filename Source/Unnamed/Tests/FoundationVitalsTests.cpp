@@ -276,6 +276,9 @@ bool FFoundationVitalsMovementTest::RunTest(const FString&)
     TestTrue(TEXT("wading 0.01 per block, horizontal"), FMath::IsNearlyEqual(Exhaustion(Facts), .0006f, 1e-8f));
 
     TestEqual(TEXT("three blocks are safe"), FFoundationVitals::GetFallDamage(300), 0);
+    // fall.damage_thresholds: 3.5 and 3.9 blocks give nothing, 4.0 one point.
+    TestEqual(TEXT("3.5 blocks are safe"), FFoundationVitals::GetFallDamage(350), 0);
+    TestEqual(TEXT("3.9 blocks are safe"), FFoundationVitals::GetFallDamage(390), 0);
     TestEqual(TEXT("just under four"), FFoundationVitals::GetFallDamage(399.9), 0);
     TestEqual(TEXT("four blocks: one point"), FFoundationVitals::GetFallDamage(400), 1);
     TestEqual(TEXT("float shortfall keeps four"), FFoundationVitals::GetFallDamage(399.99999), 1);
@@ -414,6 +417,106 @@ bool FFoundationVitalsAttackTest::RunTest(const FString&)
     V.Hurt(EFoundationDamage::Kill, TNumericLimits<float>::Max());
     StepTimes(V, Standing(), 13);
     TestEqual(TEXT("recovery keeps counting through the death animation"), V.GetAttackStrength(), 1.f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationVitalsFireTest, "Unnamed.Foundation.Vitals.Fire",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationVitalsFireTest::RunTest(const FString&)
+{
+    // hurt.lava_contact: 4 HP at ticks 1, 11, 21 (the damage cooldown rejects the equal hits between).
+    FFoundationVitalsStep InLava = Standing();
+    InLava.bBodyInLava = true;
+    FFoundationVitals V = Quiet();
+    TArray<int32> Hits;
+    for (int32 Tick = 1; Tick <= 21; ++Tick)
+    {
+        const float Before = V.Health;
+        V.Step(InLava);
+        if (V.Health < Before) Hits.Add(Tick);
+    }
+    TestEqual(TEXT("lava hits at ticks 1, 11, 21"), Hits, TArray<int32>{1, 11, 21});
+    TestEqual(TEXT("4 HP each"), V.Health, 8.f);
+    TestEqual(TEXT("three lava hits counted"), V.LavaHurts, 3);
+    TestEqual(TEXT("no burning hit inside lava"), V.BurnHurts, 0);
+    // hurt.lava_ignite: 300 fire ticks, refreshed every lava tick.
+    TestEqual(TEXT("lava ignites for 300 ticks"), V.FireTicks, FFoundationVitals::LavaFireTicks);
+    TestTrue(TEXT("lava damage recorded"), V.LastDamage.StartsWith(TEXT("lava")));
+
+    // hurt.burning: out of lava, 1 HP every 20 ticks until the fire ticks run out.
+    FFoundationVitals B = Quiet();
+    B.FireTicks = 300;
+    Hits.Reset();
+    for (int32 Tick = 1; Tick <= 320; ++Tick)
+    {
+        const float Before = B.Health;
+        B.Step(Standing());
+        if (B.Health < Before) Hits.Add(Tick);
+    }
+    TestEqual(TEXT("fifteen burning hits"), Hits.Num(), 15);
+    TestTrue(TEXT("every 20 ticks"), Hits.Num() == 15 && Hits[0] == 1 && Hits[1] == 21 && Hits.Last() == 281);
+    TestEqual(TEXT("1 HP each"), B.Health, 5.f);
+    TestEqual(TEXT("burnt out"), B.FireTicks, 0);
+    TestEqual(TEXT("burning hits counted"), B.BurnHurts, 15);
+    TestTrue(TEXT("burning recorded"), B.LastDamage.StartsWith(TEXT("onFire")));
+
+    // Armor: lava's damage goes through it, burning's bypasses it (26.3 tags/damage_type/bypasses_armor).
+    FFoundationVitals Armored = Quiet();
+    Armored.Armor = 20;
+    Armored.Step(InLava);
+    TestTrue(TEXT("armor softens lava"), Armored.Health > 16.f && Armored.Health < 20.f);
+    FFoundationVitals ArmoredBurn = Quiet();
+    ArmoredBurn.Armor = 20;
+    ArmoredBurn.FireTicks = 20;
+    ArmoredBurn.Step(Standing());
+    TestEqual(TEXT("burning ignores armor"), ArmoredBurn.Health, 19.f);
+
+    // Water puts the fire out, with no hit.
+    FFoundationVitals W = Quiet();
+    W.FireTicks = 100;
+    FFoundationVitalsStep Wet = Standing();
+    Wet.bBodyInWater = true;
+    W.Step(Wet);
+    TestEqual(TEXT("water puts the fire out"), W.FireTicks, 0);
+    TestEqual(TEXT("one extinguish counted"), W.Extinguishes, 1);
+    TestEqual(TEXT("no hit"), W.Health, 20.f);
+    W.Step(Wet);
+    TestEqual(TEXT("an unlit player in water counts no extinguish"), W.Extinguishes, 1);
+
+    // The damage cooldown: a stronger hit inside the window applies only its excess, a weaker one nothing.
+    FFoundationVitals C = Quiet();
+    C.Hurt(EFoundationDamage::Generic, 2.f);
+    C.Step(InLava);
+    TestEqual(TEXT("lava inside a 2 HP window deals the 2 HP excess"), C.Health, 16.f);
+    FFoundationVitals D = Quiet();
+    D.Step(InLava);
+    D.FireTicks = 20;
+    D.Step(Standing());
+    TestEqual(TEXT("a burning hit inside lava's window is rejected"), D.Health, 16.f);
+
+    // Death messages (minecraft.wiki "Death messages"), shown in chat by T4 step 11.
+    FFoundationVitals Dies = Quiet();
+    Dies.Health = 3;
+    Dies.Step(InLava);
+    TestEqual(TEXT("lava's death message"), Dies.DeathMessage, FString(TEXT("Player tried to swim in lava")));
+    FFoundationVitals Burns = Quiet();
+    Burns.Health = 1;
+    Burns.FireTicks = 20;
+    Burns.Step(Standing());
+    TestEqual(TEXT("burning's death message"), Burns.DeathMessage, FString(TEXT("Player burned to death")));
+
+    // Creative and Spectator neither ignite nor take the damage; no lava fact (foundation.Fire 0) changes nothing.
+    for (EFoundationPlayerMode Mode : {EFoundationPlayerMode::Creative, EFoundationPlayerMode::Spectator})
+    {
+        FFoundationVitals Immune = Quiet();
+        Immune.Mode = Mode;
+        StepTimes(Immune, InLava, 40);
+        TestTrue(TEXT("immune modes stay whole and unlit"), Immune.Health == 20.f && Immune.FireTicks == 0);
+    }
+    FFoundationVitals Off = Quiet();
+    StepTimes(Off, Standing(), 40);
+    TestTrue(TEXT("no lava, no fire"), Off.Health == 20.f && Off.FireTicks == 0 && Off.LavaHurts == 0);
     return true;
 }
 #endif

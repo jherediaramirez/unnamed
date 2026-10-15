@@ -4,6 +4,7 @@
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationContainer.h"
+#include "Foundation/FoundationContainers.h"
 #include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationItemEntities.h"
 #include "Foundation/FoundationItems.h"
@@ -255,6 +256,9 @@ struct FFoundationLabOptions
     // Mobs (survival T6 20a): mobs step and can be hit. Off, none spawn and Resolve sees training targets only. The
     // pawn copies foundation.Mobs in before each step; tests set it themselves.
     bool bMobs = false;
+    // Furnaces (T1 step 8a): every furnace in a loaded column ticks each step (fuel, cooking, cooling), open or not.
+    // Off, a furnace opens and holds items but never ticks. The pawn copies foundation.Furnace in before each step.
+    bool bFurnace = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -492,20 +496,36 @@ public:
     // with this id when Options.bBlockUse is on, before an axe strips or the hand places. It runs for the main hand
     // only, and not when a crouching player holds something (the sneak bypass: that player places instead). Return
     // true when the use happened (fill Result: Committed, and any effects); false passes on to stripping and placing.
-    // The authority registers the crafting table; doors, buttons and levers (T5) register theirs the same way.
+    // The authority registers the crafting table and the furnace; doors, buttons and levers (T5) register theirs the
+    // same way. To consume a click without acting (a bed by day), return true with Outcome Rejected; false only passes.
+    // WouldUse, when given, answers the placement preview without side effects: false for a handler that would pass
+    // now (Codex review 12, finding 4); unset, a registered handler counts as using the click.
     using FBlockUse = TFunction<bool(FFoundationAuthority& Authority, FFoundationPlayer& Player,
         const FFoundationHit& Hit, FFoundationResult& Result)>;
-    void RegisterBlockUse(FName BlockId, FBlockUse Use);
-    // Whether the block in Cell has a use handler (previews show no placement for it).
+    using FBlockWouldUse = TFunction<bool(
+        const FFoundationAuthority& Authority, const FFoundationPlayer& Player, const FFoundationHit& Hit)>;
+    void RegisterBlockUse(FName BlockId, FBlockUse Use, FBlockWouldUse WouldUse = nullptr);
+    // Whether the block in Cell has a use handler.
     bool HasBlockUse(const FIntVector& Cell) const;
+    // Whether Player's use on Hit would be the block's (previews show no placement for it): a handler, and its
+    // WouldUse.
+    bool WouldUseBlock(const FFoundationPlayer& Player, const FFoundationHit& Hit) const;
     // Opens a container menu for Player at Cell (a block use calls it); Result carries the new id.
     void OpenContainer(FFoundationPlayer& Player, EFoundationMenuKind Kind, const FIntVector& Cell, FName Block,
         FFoundationResult& Result);
+    // Block entities by world cell (T1 step 8a: furnaces): they outlive column unloads; Reset clears them.
+    FFoundationBlockEntities BlockEntities;
+    // The generated cooking recipes and fuels, resolved against Rules.Items on first use.
+    const FFoundationCooking& GetCooking() const;
+    // An open container closes past this distance from the player's eye to its block (Codex review 12, finding 1;
+    // provisional: minecraft.wiki, the interaction range plus 4 blocks).
+    double ContainerReachExtraCm = 400;
     void SetFacts(int32 Player, const FFoundationPlayerFacts& Facts);
 
     FFoundationResult Execute(int32 Player, const FFoundationCommand& Command, FFoundationVitals& Vitals);
     // One reference step of authority-owned state: the targets' damage cooldowns, then the item entities (their
-    // motion and pickup delays, then every live player's pickups).
+    // motion and pickup delays, then every live player's pickups), the orbs, the open containers' validity (a menu
+    // whose block is gone or out of reach closes) and the furnaces.
     void Step();
     // A new session: old commands become stale, the seed blocks, loadouts and targets come back.
     void Reset();
@@ -573,8 +593,31 @@ private:
     FFoundationInventory MakeLoadout();
     // Block use handlers registered by block id (RegisterBlockUse); they override the built-in ones (the crafting
     // table, FindBlockUse).
-    TMap<FName, FBlockUse> BlockUses;
-    const FBlockUse* FindBlockUse(FName BlockId) const;
+    struct FBlockUseEntry
+    {
+        FBlockUse Use;
+        FBlockWouldUse WouldUse;
+    };
+    TMap<FName, FBlockUseEntry> BlockUses;
+    const FBlockUseEntry* FindBlockUse(FName BlockId) const;
+    // The open menu's container slots: the crafting table's grid, or its block entity's (a copy).
+    TArray<FFoundationItemInstance> GetMenuGrid(const FFoundationPlayer& Player) const;
+    // Whether the player's open menu still has its block (and its block entity) at its cell, within reach.
+    bool IsMenuValid(const FFoundationPlayer& Player) const;
+    // Closes the open menu (ContainerClose): the cursor, the crafting grid, then the 2x2 back into the inventory, the
+    // rest thrown; with foundation.Items.Entities 0 and leftovers, refused (Result says why) and the menu stays.
+    void CloseMenu(FFoundationPlayer& Player, FFoundationResult& Result);
+    // Each step: an open menu that is no longer valid closes (Codex review 12, finding 1).
+    void StepOpenMenus();
+    // Each step: a furnace entity in a loaded cell whose block is gone is dropped; with Options.bFurnace the rest tick.
+    void StepFurnaces();
+    FFoundationFurnaceRules MakeFurnaceRules() const;
+    // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
+    void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
+    // A broken container's slots as item entities, each stack with its damage (provisional spread, the block drops').
+    void SpawnContents(const FIntVector& Cell, TConstArrayView<FFoundationItemInstance> Items, int32 RandomSeed);
+    mutable FFoundationCooking Cooking;
+    mutable int32 CookingItems = INDEX_NONE;
     // The item facts container clicks read (max stack, equipment slot).
     FFoundationContainerRules MakeContainerRules() const;
     // The placement context for a hit (statics must be anchors); false with a reason when nothing can be placed.
@@ -623,6 +666,9 @@ private:
     // After an edit at Cell replaced Before: a double plant's two halves stay one unit, then the changed cells'
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player);
+    // A block's loot for Tool, rolled before it goes: its table, else "drops itself" (a double slab is two).
+    void RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State, const FFoundationItemDefinition& Tool,
+        int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const;
     // A broken block's loot as item entities, split into stacks that fit (provisional spread and speed).
     void SpawnDrops(const FIntVector& Cell, TConstArrayView<FFoundationLootDrop> Drops, int32 RandomSeed);
     void StepItemEntities();

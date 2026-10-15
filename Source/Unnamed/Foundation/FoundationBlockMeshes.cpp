@@ -176,8 +176,7 @@ UStaticMesh* FoundationBlockMeshes::Build(UObject* Outer, int32 Kind)
 bool FoundationBlockMeshes::HoldsFluid(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
 {
     const EFoundationBlockShape Shape = Registry.GetShape(State);
-    return Shape == EFoundationBlockShape::Fluid ||
-        (Shape == EFoundationBlockShape::Model && Registry.GetFluid(State).Amount > 0);
+    return Shape == EFoundationBlockShape::Fluid || Registry.GetFluid(State).Amount > 0;
 }
 
 uint8 FoundationBlockMeshes::PackFluid(
@@ -192,9 +191,9 @@ uint8 FoundationBlockMeshes::PackFluid(
         Info.FluidAmount = uint8(FMath::Clamp(Fluid.Amount, 0, 8));
         Info.FluidLevel = uint8(FMath::Clamp(Fluid.Level, 0, 15));
     }
-    else if (Shape == EFoundationBlockShape::Model && Fluid.Amount > 0)
+    else if (Fluid.Amount > 0)
     {
-        // The water a model holds is a source, as the voxel table's HeldFluid is.
+        // The water a waterlogged state holds is a source, as the voxel table's HeldFluid is.
         Info.Fluid = EVoxelFluid::Water;
         Info.FluidAmount = 8;
     }

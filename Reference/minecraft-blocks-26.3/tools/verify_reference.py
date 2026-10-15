@@ -325,6 +325,119 @@ check(use_events <= set(sounds_json), f"block_use_sounds.csv: events missing fro
 check(all(bool(r["open"]) == bool(r["close"]) != bool(r["click_on"]) == bool(r["click_off"]) for r in use_rows),
       "block_use_sounds.csv: a row needs either open and close or click_on and click_off")
 
+# Shape updates (FactsDump.java dumpShapeUpdates): BlockState.updateShape answers for stairs, fences, walls, fence gates,
+# panes and bars, settled over at most 3 passes. Every state id is an imported state (or 0, air); spot rows pinned.
+shapes = json.loads((ROOT / "facts/shape_updates.json").read_text(encoding="utf-8"))
+check(list(shapes) == ["format", "direction_order", "max_passes", "subjects", "tag_mismatches", "single_neighbour",
+                       "cross_family", "wall_up", "stairs", "gates_in_wall"] and
+      shapes["direction_order"] == ["down", "up", "north", "south", "west", "east"] and shapes["max_passes"] == 3 and
+      shapes["tag_mismatches"] == [] and list(shapes["stairs"]) == ["single", "pairs"],
+      "shape_updates.json: top-level keys, direction order, passes or tag mismatches")
+check({k: len(v) for k, v in shapes["subjects"].items()} == {"stairs": 97, "fence": 14, "wall": 32, "fence_gate": 13,
+                                                              "bars": 26}, "shape_updates.json: subject counts by kind")
+shape_subjects = [b for kind in shapes["subjects"].values() for b in kind]
+check(len(shape_subjects) == 182 and len(set(shape_subjects)) == 182 and set(shape_subjects) <= set(by_id),
+      "shape_updates.json: 182 distinct imported subjects")
+state_of = {s["id"]: (b["id"], s["properties"]) for b in states["blocks"] for s in b["states"]}
+valid_ids = set(state_of) | {0}
+shape_ids, shape_runs = [], []
+
+
+def shape_group(group):
+    check(sorted(group) == ["m", "r"], "shape_updates.json: a group's keys are r and m")
+    for result, runs in group["r"].items():
+        shape_ids.append(int(result))
+        shape_runs.extend(runs)
+    shape_runs.extend(group["m"])
+
+
+for rep, entry in shapes["single_neighbour"].items():
+    check(rep in shape_subjects and entry["state"] == by_id[rep]["default_state_id"],
+          f"shape_updates.json: single_neighbour {rep} is not a subject's default state")
+    for d in shapes["direction_order"]:
+        shape_group(entry[d])
+check(list(shapes["cross_family"]["subjects"]) == [b for b in registry_order if b in set(shape_subjects)],
+      "shape_updates.json: cross_family subjects are not the subjects in registry order")
+shape_ids.extend(shapes["cross_family"]["samples"])
+for entry in shapes["cross_family"]["subjects"].values():
+    for value in entry.values():
+        shape_group(value) if isinstance(value, dict) else shape_ids.append(value)
+for subject, entry in shapes["stairs"]["single"].items():
+    shape_ids.append(int(subject))
+    for group in entry.values():
+        shape_group(group)
+for sides, above, result, _ in shapes["wall_up"]:
+    shape_ids.extend((above, result))
+for subject, _, main, _, side, result, _ in shapes["stairs"]["pairs"]:
+    shape_ids.extend((subject, main, side, result))
+for subject, _, neighbour, result, _ in shapes["gates_in_wall"]:
+    shape_ids.extend((subject, neighbour, result))
+check(all(a <= b for a, b in shape_runs) and all(i in valid_ids for a, b in shape_runs for i in range(a, b + 1)) and
+      all(i in valid_ids for i in shape_ids), "shape_updates.json: a state id is not an imported state id or air")
+# Section sizes, and each single-neighbour group covers air and every imported state exactly once (m within them).
+check(len(shapes["single_neighbour"]) == 7 and len(shapes["cross_family"]["samples"]) == 195 and
+      len(shapes["wall_up"]) == 32 and len(shapes["stairs"]["single"]) == 8 and len(shapes["stairs"]["pairs"]) == 512 and
+      len(shapes["gates_in_wall"]) == 72, "shape_updates.json: section sizes (7, 195, 32, 8, 512, 72)")
+for rep, entry in shapes["single_neighbour"].items():
+    for d in shapes["direction_order"]:
+        covered = [i for runs in entry[d]["r"].values() for a, b in runs for i in range(a, b + 1)]
+        check(len(covered) == len(valid_ids) and set(covered) == valid_ids and set(entry[d]["m"]) <= valid_ids,
+              f"shape_updates.json: single_neighbour {rep} {d} does not cover air and every state exactly once")
+
+
+def state_id(bid, **props):
+    """The imported state of `bid` with its default properties overridden by `props`."""
+    wanted = {**state_of[by_id[bid]["default_state_id"]][1], **props}
+    return next(s["id"] for s in by_id[bid]["states"] if s["properties"] == wanted)
+
+
+def shape_answer(group, neighbour):
+    return next((int(r) for r, runs in group["r"].items() for a, b in runs if a <= neighbour <= b), None)
+
+
+single = shapes["single_neighbour"]
+default = {b: by_id[b]["default_state_id"] for b in ("stone", "glass", "oak_fence", "nether_brick_fence", "spruce_fence",
+                                                     "cobblestone_wall")}
+check(shape_answer(single["oak_fence"]["east"], default["stone"]) == state_id("oak_fence", east="true") and
+      shape_answer(single["oak_fence"]["east"], default["spruce_fence"]) == state_id("oak_fence", east="true"),
+      "shape spot: oak_fence connects east to stone and to spruce_fence")
+check(shape_answer(single["oak_fence"]["east"], default["nether_brick_fence"]) == default["oak_fence"] and
+      shape_answer(single["cobblestone_wall"]["east"], default["oak_fence"]) == default["cobblestone_wall"],
+      "shape spot: oak_fence ignores nether_brick_fence, cobblestone_wall ignores oak_fence")
+check(shape_answer(single["glass_pane"]["east"], default["glass"]) == state_id("glass_pane", east="true"),
+      "shape spot: glass_pane connects east to glass")
+wall_up = {(tuple(sides), above): result for sides, above, result, _ in shapes["wall_up"]}
+check(wall_up[("north",), 0] == state_id("cobblestone_wall", north="low") and
+      wall_up[("north",), default["stone"]] == state_id("cobblestone_wall", north="tall") and
+      wall_up[("north", "south"), 0] == state_id("cobblestone_wall", north="low", south="low", up="false"),
+      "shape spot: a wall side is low under air, tall under stone; a straight wall drops its post")
+oak_north = state_id("oak_stairs", facing="north")
+check(oak_north == state_id("oak_stairs", facing="north", half="bottom", shape="straight", waterlogged="false") and
+      shape_answer(shapes["stairs"]["single"][str(oak_north)]["north"], state_id("oak_stairs", facing="east")) ==
+      state_id("oak_stairs", facing="north", shape="outer_right") and
+      shape_answer(shapes["stairs"]["single"][str(oak_north)]["south"], state_id("oak_stairs", facing="east")) ==
+      state_id("oak_stairs", facing="north", shape="inner_right"), "shape spot: oak_stairs outer and inner corners")
+gate = state_id("oak_fence_gate", facing="north", in_wall="true", open="false", powered="false")
+gates = {(s, tuple(sides), n): r for s, sides, n, r, _ in shapes["gates_in_wall"]}
+check(gates[gate, ("west",), default["cobblestone_wall"]] == gate and
+      gates[gate, ("west",), default["stone"]] == state_id("oak_fence_gate", facing="north", in_wall="false"),
+      "shape spot: a fence gate stays in_wall beside a wall, leaves it beside stone")
+# FactsDump's own cross-check: bottom straight dry oak_stairs turn into 16 outer and 16 inner corners with a straight dry
+# bottom stair neighbour (160 each with any oak or cobblestone stair neighbour).
+corners = {"outer": [0, 0], "inner": [0, 0]}
+for subject, entry in shapes["stairs"]["single"].items():
+    if state_of[int(subject)][1]["half"] != "bottom":
+        continue
+    for group in entry.values():
+        for result, runs in group["r"].items():
+            kind = state_of[int(result)][1]["shape"].split("_")[0]
+            for a, b in runs:
+                for n in range(a, b + 1) if kind in corners else ():
+                    p = state_of[n][1]
+                    corners[kind][1] += 1
+                    corners[kind][0] += p["shape"] == "straight" and p["waterlogged"] == "false" and p["half"] == "bottom"
+check(corners == {"outer": [16, 160], "inner": [16, 160]}, f"shape_updates.json: stairs corner counts {corners}")
+
 
 # Appended blocks (build_reference.APPENDED_BLOCKS): the textures and models only they use are the last ones, so a
 # later block never moves an earlier texture index, array layer or model index.
@@ -363,6 +476,12 @@ check(sorted(texture_order.index(n) for n in new_names) == list(range(len(textur
       f"appended textures are not the last ones: {sorted(new_names)}")
 check(sorted(new_models) == list(range(len(models) - len(new_models), len(models))),
       f"appended models are not the last ones: {sorted(new_models)}")
+# The accepted models (tools/frozen_models.txt) are unchanged at their indices; later batches only follow them.
+frozen_models = build.read_frozen_models()
+check(len(frozen_models) >= 4867, f"{build.FROZEN_MODELS} is missing or shorter than survival B1's 4,867 models")
+check(len(models) >= len(frozen_models) and
+      all(build.model_digest(models[i]) == d for i, d in enumerate(frozen_models)),
+      f"{build.FROZEN_MODELS} is not a prefix of block_models.json's models")
 
 # Re-bake every model state from the jar's models and compare (needs the client jar).
 rebaked = 0

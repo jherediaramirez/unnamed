@@ -5,6 +5,7 @@
 #include "Foundation/FoundationGrid.h"
 
 class UFoundationBlockAssets;
+class UFoundationItemAssets;
 struct FFoundationBlockDefinition;
 
 // A cell's block state: the 26.3 block-state id (air is 0, stone 1, water 89-104). Runtime-only: saves use
@@ -101,6 +102,9 @@ struct FFoundationBlockType
 
     // One of survival B1's family blocks (FFoundationBlockAsset), behind foundation.Blocks.Families.
     bool bAppendedFamily = false;
+    // DropItem is the DA_Items item that places this block (the saplings, Build's Items): that item comes from
+    // DA_Items, so no block item is made for it.
+    bool bDropsPlacingItem = false;
 
     bool IsAir() const { return ProtocolId == 0; }
     bool IsWater() const { return Id == TEXT("water"); }
@@ -130,6 +134,8 @@ namespace FoundationBlockFamilies
     UNNAMED_API bool AreEnabled();
     // True for a family block while the switch is 0; false for every other block, and for null.
     UNNAMED_API bool IsHidden(const FFoundationBlockType* Block);
+    // The switch foundation.Blocks.Shapes (survival B2): 0 is B1's behaviour (collision gathered in-cell only).
+    UNNAMED_API bool AreShapesEnabled();
 }
 
 // Face codes: what one face of a state shows. Six per state in EFoundationFace order, then an overlay code.
@@ -219,8 +225,9 @@ public:
     // The project registry: the asset at UUnnamedProjectSettings::BlockAssets, then the project blocks from
     // UFoundationInteractionSettings. Built on first use; without the asset only air and project blocks exist.
     static TSharedRef<const FFoundationBlockRegistry> GetDefault();
-    static TSharedRef<FFoundationBlockRegistry> Build(
-        const UFoundationBlockAssets* Assets, TArrayView<const FFoundationBlockDefinition> ProjectBlocks);
+    // Items, when given (DA_Items), names the drop of a block without an item of its own that one of its items places.
+    static TSharedRef<FFoundationBlockRegistry> Build(const UFoundationBlockAssets* Assets,
+        TArrayView<const FFoundationBlockDefinition> ProjectBlocks, const UFoundationItemAssets* Items = nullptr);
 
     int32 GetBlockCount() const { return Blocks.Num(); }
     const FFoundationBlockType& GetBlockAt(int32 Index) const { return Blocks[Index]; }

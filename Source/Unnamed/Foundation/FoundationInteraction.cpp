@@ -547,11 +547,8 @@ FFoundationResult FFoundationInteraction::SetCreativeSlot(
 FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& Authority, FFoundationVitals& Vitals,
     int32 ContainerId, int32 Slot, int32 Button, EFoundationClickType Type)
 {
-    // The screen reads foundation.Inventory.Full itself; the authority's copies of it and foundation.Crafting follow
-    // here too, so a switch flipped while the screen is open (the pawn's step paused) cannot make them disagree (Codex
-    // 5b review, finding 4; review 10, finding 5).
-    Authority.Options.bFullInventory = FoundationInventory::IsFull();
-    Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
+    // The authority's switches come from the pawn's step, which keeps running while a screen is open (Codex review 12,
+    // finding 2; the per-click copies of review 6 #4 and review 10 #5 are gone).
     FFoundationCommand Command = MakeCommand(Authority, EFoundationCommandType::ContainerClick, EFoundationHand::Main);
     Command.ContainerId = ContainerId;
     Command.Slot = Slot;
@@ -563,8 +560,6 @@ FFoundationResult FFoundationInteraction::ContainerClick(FFoundationAuthority& A
 
 FFoundationResult FFoundationInteraction::ContainerClose(FFoundationAuthority& Authority, FFoundationVitals& Vitals)
 {
-    Authority.Options.bFullInventory = FoundationInventory::IsFull();
-    Authority.Options.bCrafting = FoundationCrafting::IsEnabled();
     return Send(
         Authority, Vitals, MakeCommand(Authority, EFoundationCommandType::ContainerClose, EFoundationHand::Main));
 }
@@ -604,8 +599,9 @@ void FFoundationInteraction::UpdatePreview(const FFoundationAuthority& Authority
         Preview.bInteraction = true;
         return;
     }
-    // A block's own use (survival step 7, UseOn's branch 1b) shows no placement either.
-    if (Hit.Kind == EFoundationHitKind::Block && Authority.Options.bBlockUse && Authority.HasBlockUse(Hit.Cell) &&
+    // A block's own use (survival step 7, UseOn's branch 1b) shows no placement either, unless its handler would pass
+    // (WouldUse, Codex review 12 finding 4).
+    if (Hit.Kind == EFoundationHitKind::Block && Authority.Options.bBlockUse && Authority.WouldUseBlock(*Player, Hit) &&
         !(Facts.bSecondaryUse && bHolding))
     {
         Preview.bInteraction = true;

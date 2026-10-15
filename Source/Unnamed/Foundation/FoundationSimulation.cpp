@@ -102,6 +102,11 @@ int32 FFoundationSimulation::Advance(double Seconds, const FFoundationIntent& In
     return Count;
 }
 
+double FFoundationSimulation::GetPoseEyesCm(const UFoundationProfile& P) const
+{
+    return bLowPose ? P.SwimmingEyesCm : bCrouched ? P.CrouchingEyesCm : P.StandingEyesCm;
+}
+
 void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegrees, const UFoundationProfile& P,
     const TArray<FBox>& WorldBoxes, const FFoundationEligibility& Eligibility)
 {
@@ -128,10 +133,17 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     }
     bHadJump = Intent.bJump;
     bHeadroom = Fits(Bounds(Feet, P.StandingHeightCm, P.WidthCm), WorldBoxes);
+    // The swim pose [player.pose_dimensions] (foundation.SwimPose): last step's sprint with the eyes in water starts
+    // swimming, sprinting with the body in water keeps it. Out of it, the low box stays until a taller one fits.
+    const bool InWater = Eligibility.Fluid == EFoundationFluid::Water && !bFlying;
+    bSwimming = Eligibility.bSwimPose && bSprinting && InWater && (bSwimming || Eligibility.bEyesInFluid);
+    bLowPose = bSwimming ||
+        (Eligibility.bSwimPose && bLowPose && !bHeadroom &&
+            !Fits(Bounds(Feet, P.CrouchingHeightCm, P.WidthCm), WorldBoxes));
     // Sneak sinks a flying player without crouching; a low ceiling still forces the pose.
-    bCrouched = (Intent.bCrouch && !bFlying) || !bHeadroom;
-    HeightCm = bCrouched ? P.CrouchingHeightCm : P.StandingHeightCm;
-    const double TargetEye = bCrouched ? P.CrouchingEyesCm : P.StandingEyesCm;
+    bCrouched = !bLowPose && ((Intent.bCrouch && !bFlying) || !bHeadroom);
+    HeightCm = bLowPose ? P.SwimmingHeightCm : bCrouched ? P.CrouchingHeightCm : P.StandingHeightCm;
+    const double TargetEye = GetPoseEyesCm(P);
     EyeCm += (TargetEye - EyeCm) * P.EyeSmoothingPerTick;
     const bool Forward = Intent.Move.Y > 1e-5;
     const bool EnoughFood = Eligibility.bEnoughFood || bFlying; // Food never limits sprint-flying.

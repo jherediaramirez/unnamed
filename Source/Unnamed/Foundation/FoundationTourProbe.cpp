@@ -1715,20 +1715,45 @@ void UFoundationRuntimeProbe::AddTourCases()
         },
         [] {});
 
-    // l. The crafting table's screen (survival step 7). The Playground has no crafting table, so the probe opens the
-    // menu as the table's block use does (FFoundationAuthority::OpenContainer), then lays the wooden pickaxe's pattern
-    // into the 3x3 and hovers the result for its tooltip. Closing returns the grid; the inventory is put back after.
+    // l. The crafting table's screen (survival step 7). The Playground has no crafting table, so the probe puts one in
+    // an air cell behind or beside the player (an open menu needs its block, Codex review 12 finding 1), opens the menu
+    // as the table's block use does (FFoundationAuthority::OpenContainer), then lays the wooden pickaxe's pattern into
+    // the 3x3 and hovers the result for its tooltip. Closing returns the grid (counted back, review 12 finding 5); the
+    // inventory and the block are put back after.
+    const TSharedRef<TOptional<TPair<FIntVector, FFoundationBlockState>>> SavedTable =
+        MakeShared<TOptional<TPair<FIntVector, FFoundationBlockState>>>();
     AddCase(
         TEXT("tour crafting table"), .8,
-        [this, Lab, Authority, SavedInventory]
+        [this, Lab, Authority, SavedInventory, SavedTable]
         {
             ResetPlayer({0, 0, 0});
             FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
             if (!Player) return;
             *SavedInventory = Player->Inventory;
+            SavedTable->Reset();
+            FFoundationBlockWorld& World = Authority().World;
+            // The first known air cell at feet level 1.5 or 2.5 blocks behind, or 1.5 to either side (the floor is the
+            // lab's, below the build bounds).
+            const FVector Back = -FRotator(0, Controller->GetControlRotation().Yaw, 0).Vector();
+            const FVector Side = FVector::CrossProduct(FVector::UpVector, Back);
+            const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+            TOptional<FIntVector> TableCell;
+            for (const FVector& Offset : {Back * 150, Back * 250, Side * 150, Side * -150})
+                if (const FIntVector Cell = FoundationGrid::CellAt(Feet + Offset, World.OriginCm);
+                    !TableCell && World.IsKnown(Cell) && World.GetBlock(World.Get(Cell).State).Id == TEXT("air"))
+                    TableCell = Cell;
+            const FFoundationBlockType* Table = World.FindBlock(TEXT("crafting_table"));
+            if (!Table || !TableCell)
+            {
+                Record(
+                    TEXT("tour crafting table open"), false, TEXT("no known air cell near the player for the table"));
+                return;
+            }
+            SavedTable->Emplace(*TableCell, World.Get(*TableCell).State);
+            World.Set(*TableCell, Table->GetDefaultState());
             FFoundationResult Opened;
             Authority().OpenContainer(
-                *Player, EFoundationMenuKind::Crafting, FIntVector::ZeroValue, TEXT("crafting_table"), Opened);
+                *Player, EFoundationMenuKind::Crafting, *TableCell, TEXT("crafting_table"), Opened);
             const TCHAR* Pattern[] = {TEXT("oak_planks"), TEXT("oak_planks"), TEXT("oak_planks"), nullptr,
                 TEXT("stick"), nullptr, nullptr, TEXT("stick"), nullptr};
             for (int32 Index = 0; Index < 9 && Player->OpenMenu.Grid.IsValidIndex(Index); ++Index)
@@ -1766,14 +1791,34 @@ void UFoundationRuntimeProbe::AddTourCases()
     AddCase(TEXT("tour flush 24d-crafting-table"), .4, [] {}, [] {});
     AddCase(
         TEXT("tour crafting table close"), .3,
-        [this, Authority, SavedInventory]
+        [this, Authority, SavedInventory, SavedTable]
         {
+            // The pattern's 3 planks and 2 sticks, counted in the inventory before and after the close.
+            auto Count = [this, Authority](const TCHAR* Id)
+            {
+                const FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId);
+                const int32 Item = Authority().Rules.FindItem(Id);
+                int32 Total = 0;
+                for (int32 Slot = 0; Player && Slot < FFoundationInventory::Slots; ++Slot)
+                    if (const FFoundationItemInstance* Stack = Player->Inventory.GetSlot(Slot);
+                        Stack && !Stack->IsEmpty() && Stack->Item == Item)
+                        Total += Stack->Count;
+                return Total;
+            };
+            const int32 PlanksBefore = Count(TEXT("oak_planks")), SticksBefore = Count(TEXT("stick"));
             Controller->GetPanels()->Close();
             if (FFoundationPlayer* Player = Authority().FindPlayer(Pawn->Interaction.PlayerId))
             {
                 const bool bClosed = !Player->OpenMenu.IsOpen();
-                Record(TEXT("tour crafting table: close returns the grid"), bClosed,
-                    TEXT("closing the screen closes the menu (its grid back in the inventory)"));
+                const bool bReturned =
+                    Count(TEXT("oak_planks")) == PlanksBefore + 3 && Count(TEXT("stick")) == SticksBefore + 2;
+                Record(TEXT("tour crafting table: close returns the grid"), bClosed && bReturned,
+                    FString::Printf(TEXT("closing the screen closes the menu and its grid comes back (planks +%d of 3, "
+                                         "sticks +%d of 2)"),
+                        Count(TEXT("oak_planks")) - PlanksBefore, Count(TEXT("stick")) - SticksBefore));
+                if (SavedTable->IsSet() && Authority().World.IsKnown(SavedTable->GetValue().Key))
+                    Authority().World.Set(SavedTable->GetValue().Key, SavedTable->GetValue().Value);
+                SavedTable->Reset();
                 const int32 Revision = Player->Inventory.Revision;
                 Player->OpenMenu = {};
                 Player->Inventory = *SavedInventory;
@@ -1781,5 +1826,28 @@ void UFoundationRuntimeProbe::AddTourCases()
             }
         },
         [] {});
+    // m. A survival screen runs the simulation under it (Codex review 12, finding 2): with the inventory open the
+    // reference steps go on and a burning player's fire ticks (T3 16a, FFoundationVitals::Step) count down.
+    const TSharedRef<TPair<int64, int32>> Before = MakeShared<TPair<int64, int32>>();
+    AddCase(
+        TEXT("tour screen runs the simulation"), .5,
+        [this, Lab, Before]
+        {
+            ResetPlayer({0, 0, 0});
+            Controller->GetPanels()->OpenSurvivalInventory(*Lab);
+            Pawn->Vitals.FireTicks = 100;
+            *Before = {Pawn->ReferenceSteps, Pawn->Vitals.FireTicks};
+        },
+        [this, Before]
+        {
+            const int64 Steps = Pawn->ReferenceSteps - Before->Key;
+            const int32 Fire = Pawn->Vitals.FireTicks;
+            Record(TEXT("tour screen runs the simulation"),
+                Controller->GetPanels()->GetSurvivalScreen().IsValid() && Steps > 0 && Fire < Before->Value,
+                FString::Printf(
+                    TEXT("inventory open: %lld reference steps, fire ticks %d -> %d"), Steps, Before->Value, Fire));
+            Controller->GetPanels()->Close();
+            Pawn->Vitals.FireTicks = 0;
+        });
 #endif
 }

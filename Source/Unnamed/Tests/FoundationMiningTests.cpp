@@ -717,4 +717,35 @@ bool FFoundationMiningWearTest::RunTest(const FString&)
             C.P().Inventory.Offhand.Damage == 1561);
     return true;
 }
+
+// Codex review 15 #4: a planted sapling mined in survival drops one sapling, as vanilla's sapling loot tables do (their
+// tables wait in the items reference's loot_later.txt). The sapling items live in DA_Items, not on the block.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationMiningSaplingDropTest, "Unnamed.Foundation.Mining.SaplingDrop", MiningTestFlags)
+bool FFoundationMiningSaplingDropTest::RunTest(const FString& Parameters)
+{
+    FMiningLab L(false);
+    const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+    int32 Saplings = 0;
+    for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
+    {
+        // The blocks that drop the DA_Items item placing them: exactly the 9 saplings.
+        const FName Id = Registry.GetBlockAt(Index).Id;
+        if (!Registry.GetBlockAt(Index).bDropsPlacingItem) continue;
+        ++Saplings;
+        if (!Id.ToString().EndsWith(TEXT("_sapling"))) AddError(Id.ToString() + TEXT(" drops its DA_Items item"));
+        L.Hold(NAME_None);
+        L.Put(Id);
+        const int32 Before = L.Count(Id);
+        FFoundationResult R;
+        const int32 Steps = MineSteps(L, 5, &R);
+        L.NextStep();
+        if (Steps != 0 || L.Count(Id) - Before != 1)
+            AddError(FString::Printf(TEXT("%s: mined in %d steps, %d dropped (expected at once, 1)"), *Id.ToString(),
+                Steps, L.Count(Id) - Before));
+    }
+    // The 9 of the items reference's ITEMS_REFERENCE_ITEMS (poplar among them).
+    TestEqual(TEXT("sapling blocks"), Saplings, 9);
+    return true;
+}
 #endif

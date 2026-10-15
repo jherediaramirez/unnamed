@@ -29,6 +29,9 @@ public:
     // The player's current key for a binding id (key.inventory, key.hotbar.1-9, key.swapOffhand, key.drop). Unset,
     // the default keys (E, 1-9, F, Q).
     SLATE_ARGUMENT(TFunction<FKey(FName)>, GetKey)
+    // The clock mouse presses are timed by (double-clicks), in seconds. Unset, the platform clock; tests set their own
+    // (Codex review 12, finding 7).
+    SLATE_ARGUMENT(TFunction<double()>, GetTime)
     // Options > GUI Scale (0 Auto), read every frame.
     SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
@@ -82,6 +85,7 @@ private:
     TFunction<void(const FHudContainerClick&)> OnClick;
     TFunction<void()> OnClose;
     TFunction<FKey(FName)> GetKey;
+    TFunction<double()> GetTime;
     FIntPoint Mouse = FIntPoint(-1000, -1000);
     // Set when the screen's own button release lets the capture go: that capture loss keeps the double-click state.
     bool bReleasingCapture = false;

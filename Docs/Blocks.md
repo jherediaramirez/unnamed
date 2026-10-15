@@ -75,16 +75,48 @@ Survival B1 (track T5) brought in 310 blocks as data. They are in the manifest u
 - **Plants:** `poplar_sapling` joined `VegetationBlocks` in `Source/UnnamedVoxel/Blocks/VoxelPlantSurvival.cpp`, so the voxel core's plant survival (see "Plants" above) covers it.
 - **Facts:** `facts/family_survival.json` holds the rule-bearing states of every imported block against air, and every state. `facts/plant_survival.json` stays frozen on `tools/survival_base_ids.txt`. `facts/block_use_sounds.csv` (90 rows) maps doors, trapdoors, gates, buttons, plates and the lever to their open, close and click events, for B3 and B5.
 - **Sounds:** the sound reference now has 332 events (3 new step and 3 new fall events appended: `cherry_sapling`, `ladder`, `weeping_vines`). `DA_Sounds` is appended: `ImportSounds.py` accepts the old block entries as an ordered subsequence. `DA_BreakAssets` was rebuilt from the extended reference. It has no append path, is self-contained and is looked up by id.
-- **Loot:** B1 blocks' loot tables are held back (`Reference/minecraft-items-26.3/tools/loot_later.txt`). Mining a B1 block drops itself. That is wrong for panes without silk touch, crops, farmland and dirt path until their sessions.
+- **Loot:** B1 blocks' loot tables are held back (`Reference/minecraft-items-26.3/tools/loot_later.txt`). Mining a B1 block drops itself, and since B2a a sapling drops its DA_Items sapling. That is wrong for panes without silk touch, crops, farmland and dirt path until their sessions.
 
 Known gaps:
 
-- Fences, walls and closed gates collide 1.0 tall, and nothing connects.
+- Nothing connects and every B1 block places its default state (B2b).
 - Doors are one lower half.
 - Stems use their age-0 tint for every state (per-state tint in B6).
 - The water cauldron imports as one translucent block, because `water_still` has partial alpha: a known look issue. Lava and powder snow cauldrons are untinted.
 - Campfires draw no cooking items.
 - Fire and campfires are data only: no burning or damage until T3 and B6.
+- **uvlock for partial faces** (`bake_models.py`): when a face's UV is no transform of its canonical UV, the lock's
+  turn is applied after the face's own UV map; whole faces apply it the other way round. Measured over the 26.3 jar
+  (`C:\dev\sandbox\b2-blocks\proof\uvlock_orders.py`): the two orders agree on every stair and wall face, and differ
+  only on the undersides of fence side bars (y 90/180/270), the undersides of open fence gates, and pressed buttons
+  turned x=90. Not changed: it would rewrite accepted baked models, and there is no vanilla ground truth yet. B3 (the
+  buttons) checks it against a vanilla probe or screenshot if it matters.
+
+## Shapes and collision (B2a)
+
+Survival B2a (track T5) prepares B2b's connections and stair shapes and widens collision.
+
+- **Switch:** `foundation.Blocks.Shapes` (int, default 1; `FoundationBlockRegistry.cpp`,
+  `FoundationBlockFamilies::AreShapesEnabled`). 0 is B1's behaviour. B2b adds placement and the neighbour pass under
+  the same switch.
+- **Collision gather:** both gatherers (`FFoundationBlockWorld::GatherCollision`, `AVoxelWorld::GatherCollision` for
+  model states) also read the cells just below and above a region and keep only the boxes that leave their cell
+  vertically and overlap the region with volume (`FoundationCollisionGather::KeepLeaving`). That gives fences, walls and
+  closed gates their 1.5-block collision and the pitcher crop's lower half its 1/16 below the cell. Every box stays in
+  its cell's column (`Blocks.PlantShapes`), so the region's own cells and these two layers cover every box. With the
+  switch at 0 the gather is exactly B1's (`Blocks.ShapesGather`).
+- **Oracle:** `facts/shape_updates.json` in the blocks reference: `BlockState.updateShape` answers for the 182 stairs,
+  fences, walls, fence gates, panes and bars, measured by `FactsDump.java` through its public `LevelReader` proxy (see
+  the reference README, "Shape updates"). B2b's placement and neighbour results are tested against it.
+- **Model order frozen:** `tools/frozen_models.txt` lists the 4,867 accepted baked models; the build and the verifier
+  require them unchanged at their indices, and later appended blocks bake in batches (`APPENDED_BATCH_STARTS`), each
+  batch's item icons before the next batch, so no item-icon index moves.
+- **Panes:** a translucent block's model (the glass panes; the water cauldron) draws in the voxel world's translucent
+  section instead of the cutout model section, so stained panes keep their half-transparent pixels.
+- **Saplings drop themselves:** a block without an item of its own that a DA_Items item places (the 9 saplings) drops
+  that item (`FFoundationBlockRegistry::Build`'s `Items`, `bDropsPlacingItem`). B8's loot tables replace this.
+- **Hidden saplings pass:** with `foundation.Blocks.Families 0`, a sapling in the main hand passes the use on to the
+  offhand, as before B1.
 
 ## Placement
 
@@ -199,7 +231,7 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
     - sturdy faces, until Q2's follow-up measures them: 20,931 answers (leaves, mud, soul sand, snow, powder snow and the model blocks as supports);
     - the mushrooms' light: 10,360 (the table reads no light; the dark probe agrees);
     - snow layers have no survival rule: 205,680 (main lane, with snow: generation places snow layers);
-    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad pops on a water source held in a block, such as a waterlogged slab or leaves (1,521); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
+    - S8's rules (main lane, small fixes; they move generation): pale moss carpet with `bottom=false` takes any floor instead of a `bottom=true` carpet (1,055,349); a lily pad popped on a water source held in a block, such as a waterlogged slab or leaves (1,521, now 0: since use step 16a, Codex review 13 #1, every waterlogged state holds water; matrix run `Tests/Evidence/2026-10-15/Native-20261015-020856`); an upper half stands on its own upper half (213); a mushroom stands on powder snow or a test instance block in the dark (4);
   - the mushrooms ignore light (S8);
   - a thick bamboo stalk's outline reaches 1/16 block into the next cell at its largest offsets, so a ray through that sliver alone misses it (targeting tests one cell at a time).
 - **Shelf mushroom:** its two textures are 32 x 32; the 16 x 16 block array holds their own vanilla mip 1 (S6 decides whether they need more).

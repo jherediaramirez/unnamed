@@ -31,6 +31,16 @@ namespace
         TEXT("Swimming: 0 walks through fluids as on land (vitals still count lava as water), 1 swims (water and lava "
              "drag, sinking, jump to rise, sneak to sink, jump out at walls; lava no longer counts as water)."),
         ECVF_Default);
+    TAutoConsoleVariable<int32> CVarFire(TEXT("foundation.Fire"), 1,
+        TEXT("Lava and burning (step 16): 0 lava does no damage, 1 lava hurts 4 at ticks 1, 11, 21 ... and sets the "
+             "player burning for 15 s, burning hurts 1 every second, water puts it out (needs foundation.Swim 1 to "
+             "tell lava from water)."),
+        ECVF_Default);
+    TAutoConsoleVariable<int32> CVarSwimPose(TEXT("foundation.SwimPose"), 1,
+        TEXT("Swim pose (step 16): 0 the standing or crouching box in water, 1 sprinting with the eyes in water swims "
+             "in a 0.6 x 0.6 box with the eyes at 0.4, kept while sprinting in water; it stands up only where the "
+             "standing (else crouching) box fits."),
+        ECVF_Default);
     TAutoConsoleVariable<int32> CVarBody(TEXT("foundation.Body"), 1,
         TEXT("The player body (Better Steve) in the third-person views: 0 none (the hitbox outline as before), 1 "
              "shown in F5's back and front views, hidden in first person."),
@@ -260,10 +270,23 @@ void AFoundationPawn::SetSimulationEnabled(bool bEnabled)
     LastIntent = {};
 }
 
+void AFoundationPawn::SetScreenInput(bool bScreen)
+{
+    if (bScreenInput == bScreen) return;
+    bScreenInput = bScreen;
+    // The keys are let go, as vanilla's screens release them: no sprint, no half-finished double tap.
+    Simulation.bSprinting = false;
+    Simulation.bHadForward = false;
+    Simulation.SprintTimer = 0;
+    Simulation.bHadJump = false;
+    Simulation.FlyTriggerTimer = 0;
+    LastIntent = {};
+}
+
 FVector AFoundationPawn::GetEyePosition() const
 {
     const auto* P = GetDefault<UFoundationProfile>();
-    return Simulation.Feet + FVector(0, 0, Simulation.bCrouched ? P->CrouchingEyesCm : P->StandingEyesCm);
+    return Simulation.Feet + FVector(0, 0, Simulation.GetPoseEyesCm(*P));
 }
 
 FFoundationTarget AFoundationPawn::TraceTarget() const
@@ -331,6 +354,7 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bBodyInWater = bBodyInWater = bSwim ? Lab->GetFluid(Body) == EFoundationFluid::Water : Lab->IsInWater(Body);
     Facts.bEyesInWater = bEyesInWater =
         bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
+    Facts.bBodyInLava = bSwim && CVarFire.GetValueOnGameThread() != 0 && Lab->GetFluid(Body) == EFoundationFluid::Lava;
     Vitals.Step(Facts);
     if (Vitals.ShouldRespawn()) Respawn();
 }
@@ -367,6 +391,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
     Authority.Options.bMobs = FoundationMobs::IsOn();
+    Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.
@@ -378,11 +403,19 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         Interaction.OpenedContainer = 0;
         const AFoundationController* PlayerController = Cast<AFoundationController>(GetController());
         UFoundationPanels* Panels = PlayerController ? PlayerController->GetPanels() : nullptr;
-        if (Panels && GetLab())
-            Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container);
-        else
+        // A furnace has no screen until step 8a2: it closes at once (nothing opens; the furnace still ticks).
+        if (!Panels || !GetLab() || !Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container))
             Interaction.ContainerClose(Authority, Vitals);
     }
+    // The authority closed the open container (its block broke, the player walked off; Codex review 12, finding 1):
+    // so does its screen. Death closes any survival screen (the simulation runs under it now).
+    else if (const AFoundationController* PlayerController = Cast<AFoundationController>(GetController()))
+        if (UFoundationPanels* Panels = PlayerController->GetPanels();
+            Panels && Panels->GetOpenContainer() != INDEX_NONE)
+            if (const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId); Vitals.IsDead() ||
+                (Player && Panels->GetOpenContainer() > 0 &&
+                    Player->OpenMenu.ContainerId != Panels->GetOpenContainer()))
+                Panels->Close();
     // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
     if (Interaction.bStopSprint)
     {
@@ -469,8 +502,10 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     };
     if (bSimulate)
     {
-        const FUnnamedInputIntent Request =
+        FUnnamedInputIntent Request =
             PlayerController->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->ConsumeIntent();
+        // An open survival screen zeroes the player's input; the simulation runs on (Codex review 12, finding 2).
+        if (bScreenInput) Request = {};
         // Mouse look uses the reference sensitivity curve and invert preferences.
         FRotator View = PlayerController->GetControlRotation();
         const double Gain = 8. * FMath::Pow(ReadNumber(TEXT("sensitivity"), .5) * .6 + .2, 3) * .15;
@@ -510,6 +545,7 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             StepCollision.Reset();
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
+            Eligibility.bSwimPose = CVarSwimPose.GetValueOnGameThread() != 0;
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;

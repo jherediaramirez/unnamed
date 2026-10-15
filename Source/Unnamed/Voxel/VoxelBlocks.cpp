@@ -180,13 +180,17 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
             if (Registry.GetShape(State) == EFoundationBlockShape::Model && Registry.GetModelParts(State, Parts))
             {
                 Info.Shape = EVoxelShape::Model;
-                Info.Layer = EVoxelLayer::Model;
+                // A translucent block's model (the glass panes: force_translucent, the reference's material_layer)
+                // draws in the translucent section, keeping its half-transparent pixels (Codex review 15 #2).
+                Info.Layer =
+                    Block.Layer == EFoundationRenderLayer::Translucent ? EVoxelLayer::Translucent : EVoxelLayer::Model;
                 Info.LightEmission = uint8(FMath::Clamp(Registry.GetLightEmission(State), 0, 15));
                 Info.ModelParts = Table->AddModelParts(Parts);
                 Info.ModelPartCount = uint8(Parts.Num());
-                if (Registry.GetFluid(State).Amount > 0) Info.HeldFluid = WaterSource;
                 FoundationBlockOffsets::CopyTo(Block, Info);
             }
+            // Any waterlogged state (a model, a slab, a stair) holds a water source: drawn, swum in and fogged.
+            if (Registry.GetFluid(State).Amount > 0) Info.HeldFluid = WaterSource;
             Info.bCastsOcclusion = Info.Shape == EVoxelShape::Full && Info.Layer != EVoxelLayer::Translucent;
             // Only opaque surfaces hide a neighbour's face; a slab covers just its bottom or top square, snow layers
             // their bottom.
