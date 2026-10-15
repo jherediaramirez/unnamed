@@ -427,18 +427,21 @@ bool FFoundationCraftingTableMenuTest::RunTest(const FString&)
         L.Use();
         TestTrue(TEXT("reopen keeps the grid"), L.Holds(L.P().OpenMenu.Grid[0], TEXT("stick"), 1));
     }
-    // A table broken while open: its clicks are refused (provisional stillValid); a wrong id too.
+    // A wrong id is refused; a table broken while open closes its menu (Codex review 12, finding 1), so its id goes
+    // stale.
     {
         FTableLab L;
         const int32 Id = L.Open();
         TestTrue(TEXT("wrong id refused"),
             L.Click(Id + 1, 37, 0, EFoundationClickType::Pickup).Reason == EFoundationReason::InvalidSlot);
         L.Put(TEXT("air"));
+        TestFalse(TEXT("broken table: menu closed"), L.P().OpenMenu.IsOpen());
         TestTrue(TEXT("broken table refused"),
             L.Click(Id, 37, 0, EFoundationClickType::Pickup).Reason == EFoundationReason::InvalidSlot);
-        TestTrue(TEXT("close still returns"), L.Close().IsCommitted());
+        TestTrue(TEXT("close still commits"), L.Close().IsCommitted());
     }
-    // Codex 5b finding 4: the client's container click copies foundation.Inventory.Full into the authority first.
+    // Codex review 12, finding 2 (retiring 5b finding 4's and review 10 finding 5's copies): a click no longer copies
+    // foundation.Inventory.Full or foundation.Crafting; the pawn's step does, and it runs while the screen is open.
     {
         FTableLab L;
         IConsoleVariable* Full = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Inventory.Full"));
@@ -448,12 +451,86 @@ bool FFoundationCraftingTableMenuTest::RunTest(const FString&)
         L.A.Options.bFullInventory = true;
         L.I.ContainerClick(
             L.A, L.Vitals, FFoundationContainerMenu::PlayerContainer, 36, 0, EFoundationClickType::Pickup);
-        TestFalse(TEXT("click copies the switch (0)"), L.A.Options.bFullInventory);
-        TestFalse(TEXT("lab inventory applied"), L.Inv().bFull);
-        Full->Set(1, ECVF_SetByCode);
+        TestTrue(TEXT("click keeps the authority's switch"), L.A.Options.bFullInventory && L.Inv().bFull);
         L.I.ContainerClose(L.A, L.Vitals);
-        TestTrue(TEXT("close copies the switch (1)"), L.A.Options.bFullInventory);
+        TestTrue(TEXT("close keeps the authority's switch"), L.A.Options.bFullInventory);
         Full->Set(Before, ECVF_SetByCode);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationCraftingTableStillValidTest, "Unnamed.Foundation.CraftingTable.StillValid", TableTestFlags)
+
+bool FFoundationCraftingTableStillValidTest::RunTest(const FString&)
+{
+    // Codex review 12, finding 1: an open table closes the way ContainerClose does once its block is gone or the eye is
+    // past the reach plus 4 blocks (provisional, minecraft.wiki); its grid comes back to the inventory.
+    {
+        FTableLab L;
+        L.Open();
+        L.Lay({TEXT("stick")});
+        L.Put(TEXT("air"));
+        TestFalse(TEXT("broken: closed"), L.P().OpenMenu.IsOpen());
+        TestTrue(TEXT("broken: the stick back in hotbar 0"), L.Holds(L.Inv().Hotbar[0], TEXT("stick"), 1));
+    }
+    {
+        // The table's cell spans x 200-300; the reach is 450 + 400 cm from the eye to the cell's box.
+        FTableLab L;
+        L.Open();
+        L.Lay({TEXT("stick")});
+        L.Eye = FVector(300 + 849, 50, 150);
+        L.NextStep();
+        TestTrue(TEXT("849 cm away: still open"), L.P().OpenMenu.IsOpen());
+        L.Eye = FVector(300 + 851, 50, 150);
+        L.NextStep();
+        TestFalse(TEXT("851 cm away: closed"), L.P().OpenMenu.IsOpen());
+        TestTrue(TEXT("walked away: the stick back"), L.Holds(L.Inv().Hotbar[0], TEXT("stick"), 1));
+    }
+    {
+        // With foundation.Items.Entities 0 and no room, the close is refused as the player's own would be: the menu
+        // stays (its clicks refused) until there is room.
+        FTableLab L;
+        L.Open();
+        for (int32 Slot = 0; Slot < FFoundationInventory::FirstArmor; ++Slot)
+            L.Inv().SetSlot(Slot, L.Inv().MakeStack(L.Item(TEXT("cobblestone")), 64));
+        L.Lay({TEXT("stick")});
+        const int32 Id = L.P().OpenMenu.ContainerId;
+        L.Put(TEXT("air"));
+        TestTrue(TEXT("full: still open"), L.P().OpenMenu.IsOpen());
+        TestTrue(TEXT("full: clicks refused"),
+            L.Click(Id, 37, 0, EFoundationClickType::Pickup).Reason == EFoundationReason::InvalidSlot);
+        L.Inv().SetSlot(5, {});
+        L.NextStep();
+        TestFalse(TEXT("room: closed"), L.P().OpenMenu.IsOpen());
+        TestTrue(TEXT("room: the stick back"), L.Holds(L.Inv().Hotbar[5], TEXT("stick"), 1));
+    }
+    // Codex review 12, finding 6: a spectator neither opens the table nor places, and its container clicks are refused.
+    {
+        FTableLab L;
+        L.Vitals.Mode = EFoundationPlayerMode::Spectator;
+        const FFoundationResult Result = L.Use();
+        TestTrue(TEXT("spectator: passes"), Result.Outcome == EFoundationOutcome::Pass);
+        TestTrue(TEXT("spectator: nothing opened or placed"), Result.OpenedContainer == 0 && !Result.bPlaced);
+        TestTrue(TEXT("spectator: click refused"),
+            L.Click(FFoundationContainerMenu::PlayerContainer, 39, 0, EFoundationClickType::Pickup).Reason ==
+                EFoundationReason::InvalidSlot);
+        TestTrue(TEXT("spectator: planks untouched"), L.Holds(L.Inv().Hotbar[3], TEXT("oak_planks"), 16));
+    }
+    // Codex review 12, finding 4: a handler's WouldUse answers the preview; one that would pass shows the placement.
+    {
+        FTableLab L;
+        bool bWould = false;
+        L.A.RegisterBlockUse(
+            TEXT("stone"),
+            [](FFoundationAuthority&, FFoundationPlayer&, const FFoundationHit&, FFoundationResult&) { return false; },
+            [&bWould](const FFoundationAuthority&, const FFoundationPlayer&, const FFoundationHit&) { return bWould; });
+        L.Put(TEXT("stone"));
+        L.I.UpdatePreview(L.A, L.P().Facts);
+        TestTrue(TEXT("would pass: placement shown"), L.I.Preview.bPlacement && !L.I.Preview.bInteraction);
+        bWould = true;
+        L.I.UpdatePreview(L.A, L.P().Facts);
+        TestTrue(TEXT("would use: no placement"), L.I.Preview.bInteraction && !L.I.Preview.bPlacement);
     }
     return true;
 }

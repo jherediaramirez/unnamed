@@ -36,6 +36,10 @@ public:
     FVector GetEyePosition() const;
     FFoundationTarget TraceTarget() const;
     void SetSimulationEnabled(bool bEnabled);
+    // A survival screen (the inventory, a container) is open: the simulation keeps running (vitals, item entities,
+    // orbs, furnaces) with the player's movement and look input zeroed (Codex review 12, finding 2).
+    void SetScreenInput(bool bScreen);
+    bool HasScreenInput() const { return bScreenInput; }
     // Restores fresh vitals at the respawn point the authority holds (FFoundationAuthority::SetRespawnPoint, beds B7),
     // else at the lab's spawn (death respawn, also used by the probe).
     void Respawn();
@@ -135,6 +139,7 @@ private:
     // Reused per step: the collision provider's boxes near the player.
     TArray<FBox> StepCollision;
     bool bSimulate = true;
+    bool bScreenInput = false;
     bool bProbeCreated = false;
     bool bBodyInWater = false, bEyesInWater = false;
     int32 Perspective = 0;

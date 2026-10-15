@@ -277,6 +277,19 @@ void AFoundationPawn::SetSimulationEnabled(bool bEnabled)
     LastIntent = {};
 }
 
+void AFoundationPawn::SetScreenInput(bool bScreen)
+{
+    if (bScreenInput == bScreen) return;
+    bScreenInput = bScreen;
+    // The keys are let go, as vanilla's screens release them: no sprint, no half-finished double tap.
+    Simulation.bSprinting = false;
+    Simulation.bHadForward = false;
+    Simulation.SprintTimer = 0;
+    Simulation.bHadJump = false;
+    Simulation.FlyTriggerTimer = 0;
+    LastIntent = {};
+}
+
 FVector AFoundationPawn::GetEyePosition() const
 {
     const auto* P = GetDefault<UFoundationProfile>();
@@ -434,6 +447,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bItemUse = FoundationItemUse::IsOn();
     Authority.Options.bExperienceOrbs = FoundationExperienceOrbs::IsOn();
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
+    Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     Authority.Step();
     // Step 12: the orbs this player took this step fill its XP bar.
@@ -445,11 +459,19 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         Interaction.OpenedContainer = 0;
         const AFoundationController* PlayerController = Cast<AFoundationController>(GetController());
         UFoundationPanels* Panels = PlayerController ? PlayerController->GetPanels() : nullptr;
-        if (Panels && GetLab())
-            Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container);
-        else
+        // A furnace has no screen until step 8a2: it closes at once (nothing opens; the furnace still ticks).
+        if (!Panels || !GetLab() || !Panels->OpenContainerScreen(*GetLab(), Interaction.OpenedMenu, Container))
             Interaction.ContainerClose(Authority, Vitals);
     }
+    // The authority closed the open container (its block broke, the player walked off; Codex review 12, finding 1):
+    // so does its screen. Death closes any survival screen (the simulation runs under it now).
+    else if (const AFoundationController* PlayerController = Cast<AFoundationController>(GetController()))
+        if (UFoundationPanels* Panels = PlayerController->GetPanels();
+            Panels && Panels->GetOpenContainer() != INDEX_NONE)
+            if (const FFoundationPlayer* Player = Authority.FindPlayer(Interaction.PlayerId); Vitals.IsDead() ||
+                (Player && Panels->GetOpenContainer() > 0 &&
+                    Player->OpenMenu.ContainerId != Panels->GetOpenContainer()))
+                Panels->Close();
     // A landed sprint-knockback hit ends the sprint; held sprint input restarts it by the simulation's own rules.
     if (Interaction.bStopSprint)
     {
@@ -536,8 +558,10 @@ void AFoundationPawn::Tick(float DeltaSeconds)
     };
     if (bSimulate)
     {
-        const FUnnamedInputIntent Request =
+        FUnnamedInputIntent Request =
             PlayerController->GetLocalPlayer()->GetSubsystem<UUnnamedInputSubsystem>()->ConsumeIntent();
+        // An open survival screen zeroes the player's input; the simulation runs on (Codex review 12, finding 2).
+        if (bScreenInput) Request = {};
         // Mouse look uses the reference sensitivity curve and invert preferences.
         FRotator View = PlayerController->GetControlRotation();
         const double Gain = 8. * FMath::Pow(ReadNumber(TEXT("sensitivity"), .5) * .6 + .2, 3) * .15;

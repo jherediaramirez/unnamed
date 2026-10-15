@@ -42,6 +42,7 @@ void SHudContainerScreen::Construct(const FArguments& Arguments)
     OnClick = Arguments._OnClick;
     OnClose = Arguments._OnClose;
     GetKey = Arguments._GetKey;
+    GetTime = Arguments._GetTime;
     Model.Items = Arguments._Items;
     Model.Kind = Arguments._Kind;
     Model.bFullInventory = FoundationInventory::IsFull();
@@ -130,7 +131,8 @@ FReply SHudContainerScreen::OnMouseButtonDown(const FGeometry& Geometry, const F
         return PressBound(Geometry, Event.GetEffectingButton(), Event.IsControlDown()) ? FReply::Handled()
                                                                                        : FReply::Unhandled();
     bReleasingCapture = false;
-    Press(ToGui(Geometry, Event.GetScreenSpacePosition()), Button, Event.IsShiftDown(), FPlatformTime::Seconds());
+    Press(ToGui(Geometry, Event.GetScreenSpacePosition()), Button, Event.IsShiftDown(),
+        GetTime ? GetTime() : FPlatformTime::Seconds());
     return FReply::Handled().CaptureMouse(SharedThis(this));
 }
 

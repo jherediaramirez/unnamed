@@ -1,0 +1,133 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Foundation/FoundationItems.h"
+
+// Block entities (T1 step 8a, the furnace): the slots and timers a block keeps besides its state, UObject-free. The
+// authority owns the store, keyed by world cell, so an entity outlives its column's unload; like every block edit it
+// lasts for the session (saved worlds keep it from the voxel plan's phase 10, Docs/VoxelWorld.md "Edits"). The barrel
+// and the chest (steps 8b, 9) add their kinds to the same store.
+
+// The cooking recipe types (the 26.3 recipe types); the furnace cooks Smelting, the smoker and blast furnace (8b)
+// theirs.
+enum class EFoundationCookingKind : uint8
+{
+    Smelting,
+    Blasting,
+    Smoking,
+    Campfire
+};
+
+// One cooking recipe (FoundationCookingData.inl), resolved against the rules' items.
+struct FFoundationCookingRecipe
+{
+    FName Id;
+    EFoundationCookingKind Kind = EFoundationCookingKind::Smelting;
+    TArray<int32> Ingredients;
+    int32 Result = INDEX_NONE;
+    int32 Count = 1;
+    int32 CookTicks = 200;
+    float Experience = 0;
+};
+
+// The generated cooking recipes and fuels (Scripts/GenerateCookingData.py: the 26.3 jar's recipes, the value report's
+// survival.r3.fuels), resolved by item id. Recipes and fuels naming an item the rules lack are left out.
+class UNNAMED_API FFoundationCooking
+{
+public:
+    void Build(TFunctionRef<int32(FName Item)> FindItem);
+    bool IsBuilt() const { return bBuilt; }
+    // A furnace's burn ticks for an item (survival.r3.fuels); 0 for no fuel.
+    int32 GetBurnTicks(int32 Item) const;
+    bool IsFuel(int32 Item) const { return GetBurnTicks(Item) > 0; }
+    // The recipe of Kind that takes Item, or INDEX_NONE.
+    int32 Find(EFoundationCookingKind Kind, int32 Item) const;
+    const FFoundationCookingRecipe* Get(int32 Recipe) const;
+    int32 GetRecipeCount() const { return Recipes.Num(); }
+    int32 GetFuelCount() const { return Fuels.Num(); }
+
+private:
+    bool bBuilt = false;
+    TArray<FFoundationCookingRecipe> Recipes;
+    TMap<int32, int32> Fuels;
+    TMap<TPair<uint8, int32>, int32> ByIngredient;
+};
+
+enum class EFoundationBlockEntityKind : uint8
+{
+    Furnace
+};
+
+// One block's entity: its kind, the block id it belongs to, its slots and (a furnace) its timers.
+struct FFoundationBlockEntity
+{
+    // A furnace's slots, as its menu numbers them.
+    static constexpr int32 FurnaceInput = 0, FurnaceFuel = 1, FurnaceResult = 2, FurnaceSlots = 3;
+
+    EFoundationBlockEntityKind Kind = EFoundationBlockEntityKind::Furnace;
+    FName Block;
+    TArray<FFoundationItemInstance> Items;
+    // A furnace (vanilla's litTimeRemaining, litTotalTime, cookingTimer, cookingTotalTime): fuel ticks left and the
+    // current fuel's total, cooking progress and the input's cook time.
+    int32 LitTime = 0, LitDuration = 0, CookProgress = 0, CookTotal = 0;
+    // Recipe index (FFoundationCooking, stable while the rules' items are) -> items cooked since the output was last
+    // taken; their XP is paid then (or on a break).
+    TMap<int32, int32> RecipesUsed;
+
+    bool IsLit() const { return LitTime > 0; }
+};
+
+// What a furnace tick needs from the rules.
+struct FFoundationFurnaceRules
+{
+    const FFoundationCooking* Cooking = nullptr;
+    TFunction<int32(int32 Item)> GetMaxStack;
+    // Fuel remainders and the sponge: the empty bucket, the water bucket, the lava bucket, the wet sponge.
+    int32 Bucket = INDEX_NONE, WaterBucket = INDEX_NONE, LavaBucket = INDEX_NONE, WetSponge = INDEX_NONE;
+};
+
+class UNNAMED_API FFoundationBlockEntities
+{
+public:
+    FFoundationBlockEntity* Find(const FIntVector& Cell) { return Entities.Find(Cell); }
+    const FFoundationBlockEntity* Find(const FIntVector& Cell) const { return Entities.Find(Cell); }
+    // The entity at Cell, made for Block when there is none (or when the one there belongs to another block).
+    FFoundationBlockEntity& FindOrAdd(const FIntVector& Cell, EFoundationBlockEntityKind Kind, FName Block);
+    bool Remove(const FIntVector& Cell, FFoundationBlockEntity* OutRemoved = nullptr);
+    void Clear()
+    {
+        Entities.Empty();
+        NextInstanceId = 1 << 30;
+    }
+    int32 Num() const { return Entities.Num(); }
+    TMap<FIntVector, FFoundationBlockEntity>& GetAll() { return Entities; }
+    const TMap<FIntVector, FFoundationBlockEntity>& GetAll() const { return Entities; }
+    // A new stack of the store's own (instance ids from 2^30 up, apart from the inventories').
+    FFoundationItemInstance MakeStack(int32 Item, int32 Count);
+
+private:
+    TMap<FIntVector, FFoundationBlockEntity> Entities;
+    int32 NextInstanceId = 1 << 30;
+};
+
+namespace FoundationFurnace
+{
+    // foundation.Furnace: 1 furnaces in loaded columns tick (fuel, cooking, cooling); 0 a furnace opens and holds
+    // items but never ticks.
+    UNNAMED_API bool IsOn();
+
+    // One furnace tick (the value report's survival.r3.furnace_ticks): a lit furnace spends a fuel tick; an unlit one
+    // with input it can cook and fuel lights (fuel ticks, the item used up, a lava bucket leaving its bucket); a lit
+    // one that can cook advances one tick and at the cook total makes the result (the input used up, the recipe
+    // counted for XP); one that cannot cook resets its progress; unlit without both input and fuel, unfinished progress
+    // cools 2 a tick, clamped at 0. True when anything changed.
+    UNNAMED_API bool Tick(FFoundationBlockEntity& Furnace, const FFoundationFurnaceRules& Rules,
+        FFoundationBlockEntities& Store, EFoundationCookingKind Kind = EFoundationCookingKind::Smelting);
+    // After a click put another item in the input slot (vanilla's setItem for slot 0): its cook time, progress 0.
+    UNNAMED_API void OnInputChanged(
+        FFoundationBlockEntity& Furnace, const FFoundationCooking& Cooking, EFoundationCookingKind Kind);
+    // The XP owed for the recipes used (survival.r3.xp_rule): per recipe floor(items x xp) plus 1 with the fraction's
+    // chance (none for a whole total).
+    UNNAMED_API int32 RollExperience(
+        const TMap<int32, int32>& RecipesUsed, const FFoundationCooking& Cooking, FRandomStream& Random);
+}

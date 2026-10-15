@@ -590,6 +590,8 @@ namespace
         TMap<FName, FKey> Bindings;
         FVector2D Corner = FVector2D(0, 0);
         TSharedPtr<SHudContainerScreen> Screen;
+        // A fixed press clock (Codex review 12, finding 7); unset, the platform's.
+        TOptional<double> Now;
 
         explicit FScreenWidget(FScreenLab& InLab) : L(InLab)
         {
@@ -601,7 +603,8 @@ namespace
                 .GetView([this] { return L.View(); })
                 .OnClick([this](const FHudContainerClick& Click) { Sent.Add(Click); L.Send(Click); })
                 .OnClose([this] { bClosed = true; })
-                .GetKey([this](FName Id) { return Bindings.FindRef(Id); });
+                .GetKey([this](FName Id) { return Bindings.FindRef(Id); })
+                .GetTime([this] { return Now.Get(FPlatformTime::Seconds()); });
             // clang-format on
         }
         FGeometry Geometry() const { return FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform(Corner)); }
@@ -638,9 +641,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FHudContainerResultClicksTest::RunTest(const FString&)
 {
     // Codex review 10, finding 4: two quick left clicks on the result slot through the real widget craft twice (no
-    // double-click there; provisional, vanilla play). Two logs in the 2x2 end as 8 planks on the cursor.
+    // double-click there; provisional, vanilla play). Two logs in the 2x2 end as 8 planks on the cursor. Both presses
+    // at the same instant (review 12, finding 7): a double-click would have to be refused, not merely too slow.
     FScreenLab L;
     FScreenWidget W(L);
+    W.Now = 100.;
     FFoundationInventory& I = L.Inv();
     I.bFull = true;
     for (int32 Slot = 0; Slot < FFoundationInventory::OffhandSlot; ++Slot)
