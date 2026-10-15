@@ -640,8 +640,11 @@ FFoundationFluid FFoundationBlockRegistry::GetFluid(FFoundationBlockState State)
     const FFoundationBlockType& Block = GetBlock(State);
     if (!Block.IsFluid())
     {
-        // Waterlogged and always-water model states (kelp, seagrass) hold water: a source when the amount is 8.
-        const int32 Water = StateWater[Block.TableOffset + (IsKnown(State) ? State.Id - Block.MinStateId : 0)];
+        // Waterlogged and always-water model states (kelp, seagrass) hold water: a source when the amount is 8. The
+        // asset carries only model states' water; any other waterlogged state (a slab, a stair) holds a source too.
+        static const FName Waterlogged(TEXT("waterlogged")), True(TEXT("true"));
+        int32 Water = StateWater[Block.TableOffset + (IsKnown(State) ? State.Id - Block.MinStateId : 0)];
+        if (Water == 0 && IsKnown(State) && GetValue(State, Waterlogged) == True) Water = 8;
         if (Water > 0)
         {
             Fluid.bWater = true;

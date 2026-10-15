@@ -22,6 +22,11 @@ public:
     double StandingEyesCm = 162;
     UPROPERTY(Config, EditAnywhere)
     double CrouchingEyesCm = 127;
+    // The swim pose (foundation.SwimPose 1): 0.6 x 0.6 with the eyes at 0.4 [player.pose_dimensions].
+    UPROPERTY(Config, EditAnywhere)
+    double SwimmingHeightCm = 60;
+    UPROPERTY(Config, EditAnywhere)
+    double SwimmingEyesCm = 40;
     UPROPERTY(Config, EditAnywhere)
     double StepCm = 60;
     UPROPERTY(Config, EditAnywhere)

@@ -23,6 +23,8 @@ struct FFoundationEligibility
     bool bEyesInFluid = false;
     double FluidAtFeetCm = 0;
     TFunction<bool(const FBox&)> IsFluidFree;
+    // foundation.SwimPose 1: sprinting in water swims in the low box.
+    bool bSwimPose = false;
 };
 
 // One simulation step's request. The pawn builds it from the input layer's FUnnamedInputIntent
@@ -45,11 +47,16 @@ struct UNNAMED_API FFoundationSimulation
     int32 JumpCooldown = 0, SprintTimer = 0, AutoJumpDelay = 0, FlyTriggerTimer = 0;
     bool bGrounded = false, bCrouched = false, bSprinting = false, bHeadroom = true, bHorizontalCollision = false,
          bHadForward = false;
+    // Swimming (26.3 updateSwimming): bSwimming is the state, bLowPose the 0.6-tall box it uses; the low box stays
+    // after swimming ends until a standing or crouching box fits.
+    bool bSwimming = false, bLowPose = false;
     // Creative flight, toggled by a double tap of jump; bHadJump is the previous step's held jump.
     bool bFlying = false, bHadJump = false;
     // The last step started a jump, and whether it was a sprint jump (food exhaustion facts).
     bool bJumped = false, bSprintJumped = false;
     FString Rejection = TEXT("unhindered fixture: sufficient food, no effects");
+    // The pose's eye height, before smoothing: swimming, crouching or standing.
+    double GetPoseEyesCm(const UFoundationProfile& P) const;
     // Stands the player at Position with the profile's standing height and eyes.
     void Reset(FVector Position, const UFoundationProfile& P);
     // Banks Seconds and returns how many reference steps are due now (bounded catch-up). Callers that

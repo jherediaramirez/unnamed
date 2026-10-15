@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 15, 2026
+
+- [Use step 16a: lava, burning, the swim pose, fall rounding, Codex review 13](2026-10-15-Use-SurvivalFixes-16a.md): record, lane `feature/survival-use`. `foundation.Fire 1`: lava hurts 4 at ticks 1, 11, 21 and sets the player burning for 300 ticks, burning hurts 1 every 20 ticks, water puts it out (three fire sounds). `foundation.SwimPose 1`: sprinting in water swims in the 0.6 x 0.6 box with the eyes at 0.4. The fall thresholds pinned by a test. Codex 13: waterlogged slabs hold drawn, swimmable water; a pour replaces a torch or flower and pops its drop; a double slab takes no water.
+
 ## October 14, 2026
 
 - [Use step 16 handoff: survival fixes](2026-10-14-Use-Handoff-Step16.md): the next step on lane `feature/survival-use` (base e65229c0 plus the step-17 landing merge): lava and burning damage, the swim pose's hitbox, fall rounding, pick block from the main inventory, Codex review 9, the bucket held-repeat test.

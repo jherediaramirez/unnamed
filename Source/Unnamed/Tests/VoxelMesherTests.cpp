@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Core/RealtimeMeshBuilder.h"
+#include "Foundation/FoundationBlockMeshes.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationProfile.h"
@@ -1107,4 +1108,39 @@ bool FVoxelMesherModelDataTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// Codex review 13 #1: a waterlogged slab holds a water source in the voxel table (swum in, fogged, drawn), and the
+// mesher draws that water around the slab; a dry slab draws none.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelMesherWaterloggedSlabTest, "Unnamed.Voxel.Mesher.WaterloggedSlab",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FVoxelMesherWaterloggedSlabTest::RunTest(const FString&)
+{
+    const TSharedRef<const FFoundationBlockRegistry> Blocks = FFoundationBlockRegistry::GetDefault();
+    const FFoundationBlockRegistry& Registry = *Blocks;
+    const TSharedRef<const FVoxelBlockTable> Table = VoxelBlocks::GetDefault();
+    const FFoundationBlockType* Slab = Registry.FindBlock(TEXT("oak_slab"));
+    if (!TestNotNull(TEXT("oak slab"), Slab)) return false;
+    const FFoundationBlockState Dry = Registry.WithValue(Slab->GetDefaultState(), TEXT("type"), TEXT("bottom"));
+    const FFoundationBlockState Wet = Registry.WithValue(Dry, TEXT("waterlogged"), TEXT("true"));
+    TestEqual(TEXT("a bottom slab"), Table->Get(Dry.Id).Shape, EVoxelShape::SlabBottom);
+    TestTrue(TEXT("the waterlogged slab holds a water source"),
+        Registry.GetFluid(Wet).bWater && Registry.GetFluid(Wet).bSource && Table->Get(Wet.Id).HeldFluid != 0);
+    TestTrue(TEXT("the dry slab holds none"), !Registry.GetFluid(Dry).bWater && Table->Get(Dry.Id).HeldFluid == 0);
+    TestTrue(TEXT("the block meshes see its water"),
+        FoundationBlockMeshes::HoldsFluid(Registry, Wet) && !FoundationBlockMeshes::HoldsFluid(Registry, Dry));
+    const uint16 Stone = Table->FindState(TEXT("stone"));
+    auto WaterQuads = [&](FFoundationBlockState State)
+    {
+        const FVoxelMeshData Mesh = ModelTestMesh(*Table,
+            [&](int32 X, int32 Y, int32 Z) -> uint16
+            {
+                if (Z < ModelTestZ) return Stone;
+                return X == 8 && Y == 8 && Z == ModelTestZ ? State.Id : uint16(0);
+            });
+        return Mesh.Layers[int32(EVoxelLayer::Water)].Positions.Num();
+    };
+    TestEqual(TEXT("a dry slab draws no water"), WaterQuads(Dry), 0);
+    TestTrue(TEXT("a waterlogged slab draws its water"), WaterQuads(Wet) > 0);
+    return true;
+}
 #endif

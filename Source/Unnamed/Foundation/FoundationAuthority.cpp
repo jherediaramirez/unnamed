@@ -1368,32 +1368,45 @@ bool FFoundationAuthority::UseBucket(
         SettlePlants(Hit.Cell, Before, Player);
         return true;
     }
-    // Pouring: water fills a waterloggable block (the clicked one, else the one beside it); otherwise the source goes
-    // where a block would be placed (the clicked block when replaceable, else beside it) if that cell is air, a fluid
-    // or replaceable. A replaced plant goes without a drop (a known issue). Lava never waterlogs. Pouring into the same
-    // source empties the bucket and leaves the cell as it was.
+    // Pouring: water fills a waterloggable block (the clicked one, else the one beside it; never a double slab,
+    // minecraft.wiki "Slab"); otherwise the source goes where a block would be placed (the clicked block when
+    // replaceable, else beside it) if that cell is air, a fluid, replaceable or washed away by fluids (a torch). A
+    // replaced block pops its drop (minecraft.wiki "Water Bucket"), as item entities only. Lava never waterlogs.
+    // Pouring into the same source empties the bucket and leaves the cell as it was.
     const FFoundationBlockType* FluidBlock = Registry.FindBlock(bWater ? TEXT("water") : TEXT("lava"));
     const int32 Emptied = Rules.FindItem(BucketId);
     if (!FluidBlock || Emptied == INDEX_NONE) return true;
+    static const FName SlabType(TEXT("type")), Double(TEXT("double"));
     auto TakesWater = [&](FFoundationBlockState State)
-    { return bWater && Registry.GetValue(State, Waterlogged) == False; };
+    {
+        return bWater && Registry.GetValue(State, Waterlogged) == False && Registry.GetValue(State, SlabType) != Double;
+    };
+    const FGameplayTag WashedAway = FGameplayTag::RequestGameplayTag(TEXT("Block.WashedAwayByFluids"), false);
+    auto IsReplaced = [&](FFoundationBlockState State)
+    {
+        return FoundationBlockPlacement::IsReplaceable(World, State) ||
+            (WashedAway.IsValid() && Registry.GetBlock(State).Tags.HasTag(WashedAway));
+    };
     FIntVector Cell = Hit.Cell;
     FFoundationBlockState Before = World.Get(Cell).State;
     if (!TakesWater(Before))
     {
-        if (!FoundationBlockPlacement::IsReplaceable(World, Before)) Cell += FoundationGrid::FaceOffset(Hit.Face);
+        if (!IsReplaced(Before)) Cell += FoundationGrid::FaceOffset(Hit.Face);
         if (!World.IsKnown(Cell)) return true;
         Before = World.Get(Cell).State;
     }
     FFoundationBlockState After;
     if (TakesWater(Before))
         After = Registry.WithValue(Before, Waterlogged, True);
-    else if (Before.IsAir() || Registry.GetBlock(Before).IsFluid() ||
-        FoundationBlockPlacement::IsReplaceable(World, Before))
+    else if (Before.IsAir() || Registry.GetBlock(Before).IsFluid() || IsReplaced(Before))
         After = FluidBlock->GetDefaultState();
     else
         return true;
+    TArray<FFoundationLootDrop> Drops;
+    if (Options.bItemEntities && !Before.IsAir() && !Registry.GetBlock(Before).IsFluid() && !TakesWater(Before))
+        RollBlockDrops(Cell, Before, Rules.Hand, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, BucketUses), Drops);
     if (After != Before) World.Set(Cell, After);
+    if (!Drops.IsEmpty()) SpawnDrops(Cell, Drops, FoundationLoot::MakeSeed(~Rules.LootSeed, Cell, BucketUses));
     const int32 Poured = Stack.Item;
     if (!bCreative) Swap(Emptied, Cell);
     ++BucketUses;
@@ -1657,6 +1670,38 @@ void FFoundationAuthority::MineContinue(FFoundationPlayer& Player, const FFounda
         Result.Outcome = EFoundationOutcome::Committed;
 }
 
+void FFoundationAuthority::RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State,
+    const FFoundationItemDefinition& Tool, int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const
+{
+    const FFoundationBlockType& Definition = World.GetBlock(State);
+    const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
+    // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
+    if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
+        Table = nullptr;
+    if (Table)
+    {
+        FRandomStream Random(RandomSeed);
+        FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
+        // Before the block goes: a double plant's other half is still in place (location_check).
+        Context.GetBlockAt = [this, &Cell](const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& Props)
+        {
+            if (!World.IsKnown(Cell + Offset)) return false;
+            const FFoundationBlockState At = World.Get(Cell + Offset).State;
+            Block = World.GetBlock(At).Id;
+            Props = World.GetRegistry().GetProperties(At);
+            return true;
+        };
+        FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Out);
+    }
+    else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
+    {
+        // Provisional loot rule for blocks without a table, "drops itself": a double slab is two slabs.
+        const int32 DropCount =
+            Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
+        if (DropCount > 0) Out.Add({Drop, DropCount});
+    }
+}
+
 bool FFoundationAuthority::BreakBlock(
     FFoundationPlayer& Player, const FIntVector& Cell, FFoundationResult& Result, bool bCreative)
 {
@@ -1668,37 +1713,9 @@ bool FFoundationAuthority::BreakBlock(
     // to the inventory (the lab's stand-in before items S8a); then, without room for all of it, the break is refused
     // and the block stays.
     TArray<FFoundationLootDrop> Drops;
+    // A refused break rolls the same drops again: the break count moves only when a block breaks.
     if (!Player.Inventory.bInfiniteSupply && bEligible)
-    {
-        const FFoundationLootTable* Table = Rules.LootTables.Find(Definition.Id);
-        // foundation.Loot.AllBlocks 0: only items S5b's ore tables roll.
-        if (Table && Table->Index >= FoundationLoot::LegacyTables && CVarLootAllBlocks.GetValueOnAnyThread() == 0)
-            Table = nullptr;
-        if (Table)
-        {
-            // A refused break rolls the same drops again: the break count moves only when a block breaks.
-            FRandomStream Random(FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks));
-            FFoundationLootContext Context{Tool, Definition.Id, World.GetRegistry().GetProperties(State)};
-            // Before the break: a double plant's other half is still in place (location_check).
-            Context.GetBlockAt = [this, &Cell](
-                                     const FIntVector& Offset, FName& Block, TArray<TPair<FName, FName>>& Props)
-            {
-                if (!World.IsKnown(Cell + Offset)) return false;
-                const FFoundationBlockState At = World.Get(Cell + Offset).State;
-                Block = World.GetBlock(At).Id;
-                Props = World.GetRegistry().GetProperties(At);
-                return true;
-            };
-            FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
-        }
-        else if (const int32 Drop = Rules.FindItem(Definition.DropItem); Drop != INDEX_NONE)
-        {
-            // Provisional loot rule for blocks without a table, "drops itself": a double slab is two slabs.
-            const int32 DropCount =
-                Definition.DropCount * (World.GetRegistry().GetValue(State, TEXT("type")) == TEXT("double") ? 2 : 1);
-            if (DropCount > 0) Drops.Add({Drop, DropCount});
-        }
-    }
+        RollBlockDrops(Cell, State, Tool, FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Breaks), Drops);
     FFoundationInventory Trial = Player.Inventory;
     if (!Options.bItemEntities &&
         !Algo::AllOf(Drops, [&](const FFoundationLootDrop& Drop)
