@@ -133,6 +133,8 @@ private:
     // The slot that only gives (the crafting result, a furnace's result), or INDEX_NONE.
     int32 GetResultSlot() const;
     int32 GetMaxStack(FName Item) const;
+    // What Slot holds of Item: the slot's own cap (FFoundationMenuLayout::GetSlotLimit), then the stack size.
+    int32 GetSlotMax(int32 Slot, FName Item) const;
     // The menu's rules for a drag slot: the slot takes the item (armor by equipment) and is empty or holds the same
     // item with room.
     bool CanDragTo(int32 Slot, const FHudContainerView& View) const;

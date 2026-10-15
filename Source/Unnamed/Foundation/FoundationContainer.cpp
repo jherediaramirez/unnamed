@@ -136,13 +136,8 @@ int32 FFoundationContainerMenu::GetMaxStack(const FFoundationItemInstance& Stack
 
 int32 FFoundationContainerMenu::GetSlotMax(int32 MenuSlot, const FFoundationItemInstance& Stack) const
 {
-    // An armor slot holds one item, as a furnace's fuel slot holds one bucket.
-    const int32 SlotMax = Layout.IsArmor(MenuSlot) ||
-            (Layout.FuelSlot != INDEX_NONE && MenuSlot == Layout.FuelSlot && !Stack.IsEmpty() &&
-                Stack.Item == Rules.Bucket)
-        ? 1
-        : 64;
-    return FMath::Min(SlotMax, GetMaxStack(Stack));
+    return FMath::Min(
+        Layout.GetSlotLimit(MenuSlot, !Stack.IsEmpty() && Stack.Item == Rules.Bucket), GetMaxStack(Stack));
 }
 
 FFoundationItemInstance FFoundationContainerMenu::Split(FFoundationItemInstance& Stack, int32 Count)
@@ -246,14 +241,20 @@ void FFoundationContainerMenu::ClickResult(int32 Button, EFoundationClickType Ty
             Carried.Count += TakeResult().Count;
         break;
     case EFoundationClickType::QuickMove:
-        // Shift crafts while the result stays the same item and all of it fits in the main grid and hotbar, filled
-        // from the hotbar's last slot (provisional: minecraft.wiki "Crafting"; the value report has no crafting row).
+        // Shift crafts while the result stays the same item, into the hotbar 8..0 then the main grid 35..9, merging
+        // before filling (survival2.r23.crafting_rules). With room for only part of a result, that part goes in, the
+        // rest is thrown and the craft stops; with no room nothing is crafted.
         for (int32 Crafts = 0; Crafts < Grid.Num() * 64; ++Crafts)
         {
             const int32 Item = ResultStack.Item;
-            if (GetRoom(ResultStack, Layout.FirstMain, Layout.GetHotbarEnd()) < ResultStack.Count) break;
+            if (GetRoom(ResultStack, Layout.FirstMain, Layout.GetHotbarEnd()) <= 0) break;
             FFoundationItemInstance Made = TakeResult();
             MoveInto(Made, Layout.FirstMain, Layout.GetHotbarEnd(), true);
+            if (!Made.IsEmpty())
+            {
+                Result.Thrown = Made;
+                break;
+            }
             if (ResultStack.IsEmpty() || ResultStack.Item != Item) break;
         }
         break;

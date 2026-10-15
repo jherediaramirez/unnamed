@@ -7,6 +7,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "HAL/IConsoleManager.h"
 #include "Hud/HudContainer.h"
+#include "FoundationShiftCraftCases.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -456,6 +457,18 @@ bool FFoundationCraftingTableMenuTest::RunTest(const FString&)
         TestTrue(TEXT("close keeps the authority's switch"), L.A.Options.bFullInventory);
         Full->Set(Before, ECVF_SetByCode);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationCraftingTableShiftFitTest, "Unnamed.Foundation.CraftingTable.ShiftCraftFit", TableTestFlags)
+
+bool FFoundationCraftingTableShiftFitTest::RunTest(const FString&)
+{
+    // The table's result against R23's five cases (FoundationShiftCraftCases.h).
+    FoundationShiftCraft::Run<FTableLab>(
+        *this, TEXT("table"), [](FTableLab& L) { return L.Open(); },
+        [](FTableLab& L) -> FFoundationItemInstance& { return L.P().OpenMenu.Grid[0]; });
     return true;
 }
 

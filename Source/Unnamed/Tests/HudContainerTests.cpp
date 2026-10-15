@@ -745,19 +745,70 @@ bool FHudContainerFurnaceTest::RunTest(const FString&)
         ExpectSame(*this, *FString::Printf(TEXT("a drag of %s"), *Item.ToString()), Drag.GetDragSlots(), Expected);
     }
 
-    // A double-click collects on the input, never on the result (each click there takes).
+    // A double-click collects on the input and on the output, which does not craft (Codex review 22, finding 2), in
+    // all three kinds.
     View.Carried = {TEXT("coal"), 1};
-    for (const int32 Slot : {0, 2})
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+        for (const int32 Slot : {0, 2})
+        {
+            FHudContainerModel Clicks = Model;
+            Clicks.Kind = Kind;
+            const FIntPoint Point = At(Slot) + FIntPoint(8, 8);
+            Clicks.MouseDown(Point, 0, false, View, 0);
+            Clicks.MouseUp(Point, 0, View);
+            Clicks.MouseDown(Point, 0, false, View, .1);
+            const bool bPickAll = Clicks.MouseUp(Point, 0, View)
+                                      .ContainsByPredicate([](const FHudContainerClick& C)
+                                          { return C.Type == EFoundationClickType::PickupAll; });
+            TestTrue(FString::Printf(TEXT("kind %d: a double-click on slot %d collects"), int32(Kind), Slot), bPickAll);
+        }
+
+    // The crafting table's result still never starts a collect: each click there crafts.
     {
-        FHudContainerModel Clicks = Model;
-        const FIntPoint Point = At(Slot) + FIntPoint(8, 8);
-        Clicks.MouseDown(Point, 0, false, View, 0);
-        Clicks.MouseUp(Point, 0, View);
-        Clicks.MouseDown(Point, 0, false, View, .1);
-        const bool bPickAll = Clicks.MouseUp(Point, 0, View)
-                                  .ContainsByPredicate([](const FHudContainerClick& C)
-                                      { return C.Type == EFoundationClickType::PickupAll; });
-        TestEqual(FString::Printf(TEXT("double-click on slot %d collects"), Slot), bPickAll, Slot == 0);
+        FHudContainerModel Table = MakeScreenModel();
+        Table.Kind = EFoundationMenuKind::Crafting;
+        FHudContainerView Grid;
+        Grid.Slots.SetNum(Table.GetSlots());
+        Grid.Carried = {TEXT("coal"), 1};
+        const FIntPoint Point = FHudContainerModel::GetSlotPosition(EFoundationMenuKind::Crafting, 0) + FIntPoint(8, 8);
+        Table.MouseDown(Point, 0, false, Grid, 0);
+        Table.MouseUp(Point, 0, Grid);
+        Table.MouseDown(Point, 0, false, Grid, .1);
+        TestFalse(TEXT("crafting result: a double-click does not collect"),
+            Table.MouseUp(Point, 0, Grid)
+                .ContainsByPredicate(
+                    [](const FHudContainerClick& C) { return C.Type == EFoundationClickType::PickupAll; }));
+    }
+
+    // The drag preview holds the fuel slot to one empty bucket, as the authority does (Codex review 22, finding 3): 8
+    // buckets over the fuel slot and an empty inventory slot show 1 and 4, with 3 left on the cursor; a fuel slot
+    // already holding a bucket takes no drag.
+    for (const EFoundationMenuKind Kind :
+        {EFoundationMenuKind::Furnace, EFoundationMenuKind::Smoker, EFoundationMenuKind::BlastFurnace})
+    {
+        FHudContainerModel Buckets = Model;
+        Buckets.Kind = Kind;
+        Buckets.Items.Add(TEXT("bucket")).MaxStack = 16;
+        Buckets.FuelItems.Add(TEXT("bucket"));
+        FHudContainerView Empty;
+        Empty.Slots.SetNum(39);
+        Empty.Carried = {TEXT("bucket"), 8};
+        FHudContainerModel Drag = Buckets;
+        Drag.MouseDown(At(1) + FIntPoint(8, 8), 0, false, Empty, 0);
+        Drag.MouseMove(At(3) + FIntPoint(8, 8), Empty);
+        TMap<int32, FHudCreativeStack> Preview;
+        FHudCreativeStack Cursor;
+        Drag.GetDragPreview(Empty, Preview, Cursor);
+        TestTrue(FString::Printf(TEXT("kind %d: the preview shows 1 / 4 and 3 on the cursor"), int32(Kind)),
+            Preview.Contains(1) && Preview[1].Count == 1 && Preview.Contains(3) && Preview[3].Count == 4 &&
+                Cursor.Count == 3);
+        Empty.Slots[1] = {TEXT("bucket"), 1};
+        FHudContainerModel Held = Buckets;
+        Held.MouseDown(At(3) + FIntPoint(8, 8), 0, false, Empty, 0);
+        Held.MouseMove(At(1) + FIntPoint(8, 8), Empty);
+        ExpectSame(*this, *FString::Printf(TEXT("kind %d: a held bucket takes no drag"), int32(Kind)),
+            Held.GetDragSlots(), TArray<int32>{3});
     }
 
     // T1 step 8b: the smoker and blast furnace screens place every slot and the button as the furnace's

@@ -104,6 +104,14 @@ int32 FHudContainerModel::GetMaxStack(FName Item) const
     return Info ? FMath::Max(Info->MaxStack, 1) : 64;
 }
 
+int32 FHudContainerModel::GetSlotMax(int32 Slot, FName Item) const
+{
+    // The authority's limit (FFoundationContainerMenu::GetSlotMax): the slot's own cap, then the item's stack size.
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    return FMath::Min(
+        Layout.GetSlotLimit(Slot, Item == FName(FFoundationMenuLayout::FuelBucketItem)), GetMaxStack(Item));
+}
+
 bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) const
 {
     // Never the result slot (it only gives); the crafting grid takes a drag like any slot.
@@ -124,7 +132,7 @@ bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) co
     const FHudCreativeStack& Stack = View.Get(Slot);
     return Stack.IsEmpty() ||
         (Stack.Item == View.Carried.Item && Stack.Damage == View.Carried.Damage &&
-            Stack.Count < GetMaxStack(Stack.Item));
+            Stack.Count < GetSlotMax(Slot, Stack.Item));
 }
 
 TArray<FHudContainerClick> FHudContainerModel::MouseDown(
@@ -135,12 +143,14 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     const int32 Slot = HitTest(Point);
     if (Slot == INDEX_NONE || !IsClickable(Slot)) return {};
     // The second left press on a slot: with a stack on the cursor it collects (PICKUP_ALL), after a shift-click it
-    // moves every stack like the one moved; either happens on the release. Never on the result slot: each click there
-    // crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no double-click
-    // row; Codex review 10, finding 4).
-    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside && Slot != GetResultSlot() &&
-        Slot == LastSlot && Time - LastTime < DoubleClickSeconds &&
-        (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
+    // moves every stack like the one moved; either happens on the release. Never on the crafting result: each click
+    // there crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no
+    // double-click row; Codex review 10, finding 4). A furnace's output does not craft, so it collects (Codex review
+    // 22, finding 2).
+    const FFoundationMenuLayout& Layout = FFoundationMenuLayout::Get(Kind);
+    const bool bCraftResult = Layout.HasCraftResult() && Slot == FContainerModelMenu::ResultSlot;
+    const bool bDouble = Button == 0 && Slot != FContainerModelMenu::Outside && !bCraftResult && Slot == LastSlot &&
+        Time - LastTime < DoubleClickSeconds && (bShift ? !LastQuickMoved.IsEmpty() : !View.Carried.IsEmpty());
     LastSlot = Slot;
     LastTime = bDouble ? -1000 : Time;
     if (bDouble)
@@ -271,7 +281,7 @@ void FHudContainerModel::GetDragPreview(
     {
         const FHudCreativeStack& Stack = View.Get(Slot);
         const int32 Existing = Stack.IsEmpty() ? 0 : Stack.Count;
-        const int32 Place = FMath::Min(Each + Existing, GetMaxStack(View.Carried.Item));
+        const int32 Place = FMath::Min(Each + Existing, GetSlotMax(Slot, View.Carried.Item));
         Remaining -= FMath::Max(Place - Existing, 0);
         Slots.Add(Slot, {View.Carried.Item, FMath::Max(Place, Existing), View.Carried.Damage});
     }

@@ -213,7 +213,8 @@ FFoundationContainerRules FFoundationAuthority::MakeContainerRules(FName Block) 
     Out.IsFuel = [this](int32 Item) { return GetCooking().IsFuel(Item); };
     Out.IsCookable = [this, Cooking = FoundationFurnace::GetCookingKind(Block)](int32 Item)
     { return GetCooking().Find(Cooking, Item) != INDEX_NONE; };
-    Out.Bucket = Rules.FindItem(TEXT("bucket"));
+    // The fuel slot's bucket, by the name the screen's drag preview uses too.
+    Out.Bucket = Rules.FindItem(FFoundationMenuLayout::FuelBucketItem);
     if (Options.bCrafting)
         Out.Craft = [this](TConstArrayView<int32> Grid, int32 Width, int32 Height)
         {
@@ -420,7 +421,8 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
     if (IsFurnaceMenu(Open.Kind) && !BlockEntities.Find(Open.Cell)) return false;
-    // Within the interaction range plus 4 blocks of the eye (vanilla's stillValid; provisional, minecraft.wiki).
+    // The squared distance from the eye to the block's box strictly below (interaction range + 4 blocks)^2: 8.5 blocks
+    // at the normal 4.5 (vanilla's stillValid; survival2.r23.container_rule).
     if (!Player.bHasFacts) return true;
     const double ReachCm = Rules.BlockReachCm + ContainerReachExtraCm;
     return FoundationGrid::CellBox(Open.Cell, World.OriginCm).ComputeSquaredDistanceToPoint(Player.Facts.EyeCm) <
