@@ -199,6 +199,8 @@ struct FFoundationPlayerFacts
     // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
+    // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
+    EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -453,6 +455,16 @@ namespace FoundationBlockUse
     UNNAMED_API bool IsOn();
 }
 
+// A mob's melee hit on a player (survival T6 20c), for the player's owner to apply to its vitals: the mob, its attack
+// damage (before difficulty), its name for the death message, and where it stood (world cm: the knockback's source).
+struct FFoundationMobHit
+{
+    int32 Mob = 0;
+    float Damage = 0;
+    FString Attacker;
+    FVector FromCm = FVector::ZeroVector;
+};
+
 struct FFoundationPlayer
 {
     int32 Id = 0;
@@ -465,6 +477,8 @@ struct FFoundationPlayer
     // Experience orbs (step 12): steps until the next orb can be taken, and points taken but not yet claimed by the
     // player's vitals (TakeExperience).
     int32 ExperienceDelay = 0, PendingExperience = 0;
+    // Mob hits since its owner last took them (TakeMobHits).
+    TArray<FFoundationMobHit> MobHits;
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
@@ -496,6 +510,9 @@ public:
     // passive spawning.
     TFunction<FName(const FIntVector& Cell)> GetBiomeId;
     uint64 MobSpawnSeed = 0;
+    // The day's sky facts (survival T6 20c), set by a generated world's owner from the sky reference's day timeline:
+    // gameplay/sky_light_level (0-15) and gameplay/monsters_burn now. Unset (the Playground): 15 and no burning.
+    TFunction<void(float& OutSkyLightLevel, bool& bOutMonstersBurn)> GetSkyFacts;
     FFoundationRules Rules;
     FFoundationLabOptions Options;
     TArray<FFoundationStatic> Statics;
@@ -601,6 +618,8 @@ public:
     int32 RemoveExperienceOrbs();
     // The points a player has taken since the last call (its owner adds them to its vitals after each step).
     int32 TakeExperience(int32 Player);
+    // The mob hits on a player since the last call (survival T6 20c; its owner hurts its vitals with each).
+    TArray<FFoundationMobHit> TakeMobHits(int32 Player);
     // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
     // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
     void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
@@ -647,6 +666,8 @@ public:
     int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
     // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
     int32 MobCycles = 0, MobsCycleSpawned = 0;
+    // Survival T6 20c: melee hits monsters landed on players; sun ignitions.
+    int32 MobMeleeHits = 0, MobSunBurns = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
     int64 GetMobCycleStep() const { return MobCycleStep; }
@@ -761,6 +782,17 @@ private:
     // damage); the fluid its box touches.
     void StepMobHazards(FFoundationMob& Mob);
     bool IsMobInFluid(const FBox& WorldBody, bool bLava) const;
+    // Survival T6 20c: a monster's targeting and melee (ThinkHostile; a hit queues on its player), and the zombie's
+    // sun burn.
+    void StepMonster(FFoundationMob& Mob, TConstArrayView<FFoundationMobPlayer> Near);
+    void StepSunBurn(FFoundationMob& Mob);
+    // No collision box crosses the segment between two world points (vanilla's COLLIDER line of sight; GatherMobBoxes,
+    // so a generated world's ungenerated columns block it).
+    bool HasMobLineOfSight(const FVector& FromCm, const FVector& ToCm);
+    // No motion-blocking block (a collision box or a fluid) above the cell up to the world's top: the sky light proxy.
+    bool IsSkyVisible(const FIntVector& Cell);
+    // The world and static boxes in a region, as the mobs move against them.
+    void GatherMobBoxes(const FBox& Region, TArray<FBox>& Out);
     // Survival T6 20b2: chunk-generation packs for the columns around the live players first seen loaded.
     void StepMobSpawns();
     // One column's chunk-generation roll and pack; how many mobs it spawned.

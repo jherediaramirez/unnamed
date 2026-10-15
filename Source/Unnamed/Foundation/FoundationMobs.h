@@ -42,8 +42,15 @@ struct FFoundationMobKind
     float DeathRollDegrees = 90;
     // Experience a player kill pays, inclusive (minecraft.wiki "Experience", provisional).
     int32 ExperienceMin = 1, ExperienceMax = 3;
-    // foundation.Mobs.Summon accepts it (20b: the four farm animals).
+    // foundation.Mobs.Summon accepts it (20b: the four farm animals; 20c the zombie).
     bool bSpawnable = false;
+    // [mobs.base_attributes] the attack_damage attribute (0: no melee); the follow_range attribute (zombie 35
+    // [survival.r10.ai_rules]; the others 16, provisional: Codex T6 section C); [survival.r10.ai_defaults]
+    // LookAtPlayerGoal's distance (zombie 8; the animals 6).
+    float AttackDamage = 0;
+    double FollowRangeCm = 1600, LookCm = 600;
+    // en_us.json entity.minecraft.<id>: the attacker name in death messages.
+    const TCHAR* Name = TEXT("");
 };
 
 // A live player as the mobs' AI sees it (world cm): its eyes, its feet and the item ids in its hands.
@@ -52,6 +59,9 @@ struct FFoundationMobPlayer
     int32 Id = 0;
     FVector EyeCm = FVector::ZeroVector, FeetCm = FVector::ZeroVector;
     FName MainHand, Offhand;
+    // Its box (survival T6 20c: the melee reach), and whether monsters may target it: alive in Survival or Adventure.
+    double WidthCm = 60, HeightCm = 180;
+    bool bTargetable = true;
 };
 
 // One creature spawn entry of a biome (survival T6 20b2; DA_Mobs from the worldgen reference's natural_mob_spawns):
@@ -126,6 +136,10 @@ struct FFoundationMob
     double StepDistanceCm = 0;
     int32 Age = 0;
     bool bOnGround = false, bHorizontalCollision = false;
+    // Monsters (survival T6 20c): the player it targets (0: none) and the steps since it last saw it; steps to its
+    // next melee hit; bAttackNow: hit the target this step; the arm swing's steps since the hit (AttackSwingTicks: none).
+    int32 Target = 0, UnseenTicks = 0, AttackCooldown = 0, AttackSwing = MAX_int32 / 2;
+    bool bAttackNow = false;
     // Its column is not loaded: it neither moves, thinks nor counts its timers, and is not drawn.
     bool bFrozen = false;
     FRandomStream Random;
@@ -253,8 +267,38 @@ namespace FoundationMobs
     constexpr int32 CreatureCycleTicks = 400, CreatureBaseCap = 10, CapChunks = 289, SpawnRadiusColumns = 8;
     constexpr int32 GroupRounds = 3, MaxRoundAttempts = 4, ClusterMax = 4;
     constexpr double MinPlayerDistanceCells = 24, MaxPlayerDistanceCells = 128;
-    // The four farm animals are the creature category (the hostiles are 20c's monsters).
+    // The four farm animals are the creature category; zombie, skeleton, creeper and spider the monsters.
     UNNAMED_API bool IsCreature(EFoundationMobType Type);
+    UNNAMED_API bool IsMonster(EFoundationMobType Type);
+
+    // Monsters (survival T6 20c). [survival.r10.ai_defaults S 5392-5398] the zombie's goals: HurtByTargetGoal and
+    // NearestAttackableTargetGoal (players; randomInterval 5, mustSee, unseenMemoryTicks 60), ZombieAttackGoal (a
+    // MeleeAttackGoal: attackInterval 20, speedModifier 1, not following an unseen target), the stroll at 1. The
+    // target search runs on even steps with a 1 in TargetChance roll (goals are checked every other tick,
+    // provisional), over the players within the follow range (TargetSearchUpCm vertically, provisional) that it can
+    // see. Provisional (no measurement yet): the melee reach (the mob's box grown MeleeReachCm horizontally touches
+    // the target's), the chase's repath delay RepathMinTicks + [0, RepathRandomTicks), the arm swing's length.
+    constexpr int32 TargetChance = 5, UnseenMemoryTicks = 60, MeleeIntervalTicks = 20;
+    constexpr double TargetSearchUpCm = 400, MeleeReachCm = 82.8;
+    constexpr int32 RepathMinTicks = 4, RepathRandomTicks = 7, AttackSwingTicks = 6;
+    // The view's zombie arms (provisional): radians they dip at the swing's middle.
+    constexpr float ZombieArmDip = .6f;
+    // [survival.r10.idle_and_sun S 5457; survival2.r20.ai_world_ticks: a zombie at noon caught fire on tick 21] a
+    // zombie burns for SunBurnTicks when the day's monsters_burn is on, the light at its eyes is brighter than 0.5,
+    // U x 30 < (brightness - 0.4) x 2, and it sees the sky there (not in water).
+    constexpr int32 SunBurnTicks = 160;
+    // The overworld's light-to-brightness curve (dimension ambient light 0; minecraft.wiki "Light", provisional):
+    // f / (4 - 3f) with f = Level / 15.
+    UNNAMED_API float GetBrightness(int32 Level);
+    // The sun-burn roll (one draw); true: it catches fire. Only call it when the day burns and Brightness > 0.5.
+    UNNAMED_API bool RollSunBurn(FFoundationMob& Mob, float Brightness);
+    // A monster's targeting and melee for this step, before Think: keeps, drops or picks its target among Players
+    // (CanSee: an unblocked line from one world point to another), chases it, and sets bAttackNow when its swing is
+    // due and the target is in reach and in sight.
+    UNNAMED_API void ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
+        TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee);
+    // Whether the mob's box grown MeleeReachCm horizontally touches the player's.
+    UNNAMED_API bool IsInMeleeReach(const FFoundationMob& Mob, const FVector& OriginCm, const FFoundationMobPlayer& Player);
     // floor(CreatureBaseCap x EligibleColumns / CapChunks).
     UNNAMED_API int32 GetCreatureCap(int32 EligibleColumns);
 
