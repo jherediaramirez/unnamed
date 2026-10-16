@@ -30,8 +30,13 @@ public:
     float GetMasterVolume() const { return MasterVolume; }
     float GetBassGainDb() const { return BassGainDb; }
     bool IsBassAttached() const { return bBassAttached; }
+    // How many times Apply ran (tests and probes).
+    int32 GetApplyCount() const { return ApplyCount; }
     // Re-reads the preferences and applies them now.
     void Apply();
+    // Bound to every map load: the engine resets the transient primary volume to 1 as it loads a map
+    // (UnrealEngine.cpp LoadMap), so the saved Master Volume goes back on.
+    void HandleMapLoaded(UWorld* World);
 
 private:
     // Removes the shelf from the device it was added to (by id, so it works without a world).
@@ -41,6 +46,8 @@ private:
     TObjectPtr<UMenuBassShelfPreset> BassPreset;
     int32 AppliedRevision = -1;
     int32 AppliedSwitch = -1;
+    int32 ApplyCount = 0;
+    FDelegateHandle MapLoadedHandle;
     float MasterVolume = 1;
     float BassGainDb = 0;
     bool bBassAttached = false;

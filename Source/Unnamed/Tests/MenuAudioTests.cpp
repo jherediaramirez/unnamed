@@ -2,10 +2,14 @@
 #include "Menu/MenuAudioSettings.h"
 #include "Menu/MenuBassShelfPreset.h"
 #include "Dom/JsonObject.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "UObject/UObjectGlobals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -151,6 +155,37 @@ bool FMenuAudioBassPreferenceTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("max"), (*Bass)->GetNumberField(TEXT("max")), 1.);
     TestEqual(TEXT("step"), (*Bass)->GetNumberField(TEXT("step")), .01);
     TestEqual(TEXT("on by default (+5 dB)"), (*Bass)->GetNumberField(TEXT("default")), 1.);
+    return true;
+}
+
+// R38-1: a map load re-applies the saved Master Volume (the engine sets the transient primary volume back to 1 while
+// it loads a map). The game instance's own settings listen to every map load and re-apply at once.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FMenuAudioMapLoadTest, "Unnamed.Menu.Audio.MasterVolumeAfterMapLoad", MenuAudioTestFlags)
+
+bool FMenuAudioMapLoadTest::RunTest(const FString& Parameters)
+{
+    UGameInstance* Instance = NewObject<UGameInstance>(GEngine);
+    Instance->AddToRoot();
+    Instance->InitializeStandalone();
+    UWorld* World = Instance->GetWorld();
+    UMenuAudioSettings* Audio = Instance->GetSubsystem<UMenuAudioSettings>();
+    if (TestNotNull(TEXT("the game instance's audio settings"), Audio))
+    {
+        Audio->Tick(0);
+        const int32 Before = Audio->GetApplyCount();
+        Audio->Tick(0);
+        TestEqual(TEXT("nothing changed: no re-apply"), Audio->GetApplyCount(), Before);
+        TestTrue(TEXT("listens to map loads"), FCoreUObjectDelegates::PostLoadMapWithWorld.IsBoundToObject(Audio));
+        Audio->HandleMapLoaded(World);
+        TestEqual(TEXT("a map load re-applies the Master Volume"), Audio->GetApplyCount(), Before + 1);
+    }
+    Instance->Shutdown();
+    TestFalse(TEXT("shut down: no longer listening"),
+        Audio && FCoreUObjectDelegates::PostLoadMapWithWorld.IsBoundToObject(Audio));
+    GEngine->DestroyWorldContext(World);
+    World->DestroyWorld(false);
+    Instance->RemoveFromRoot();
     return true;
 }
 #endif
