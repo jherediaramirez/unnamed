@@ -8,7 +8,7 @@
 |---|---|
 | Git | Main repository folder (`.git` lives here). Remote `origin` = github.com/jherediaramirez/unnamed |
 | Branch | `feature/survival` |
-| Latest commit | `0c8d9a74` (eb52cea7 + the three QC fixes below + a RunChecks fix). **Not pushed yet**: `origin/feature/survival` is still `eb52cea7` |
+| Latest commit | `feature/survival` on GitHub: eb52cea7 + the three QC fixes below + a RunChecks fix + these docs. Pushed 2026-10-16 |
 | Build | Editor built here at `0c8d9a74` on 2026-10-16 |
 | Checks | Final profile GREEN on the committed code. Results are in `_STATUS\LATEST-REPORT.md` |
 | Engine | UE 5.8 (`C:\Program Files\Epic Games\UE_5.8`) |

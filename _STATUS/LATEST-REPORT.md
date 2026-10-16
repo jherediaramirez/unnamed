@@ -1,6 +1,6 @@
 # QC bug status — Minecraft 26.3, 2026-10-16
 
-**Updated 2026-10-16 ~14:45 in `C:\dev\projects\Minecraft 26.3`** (the single project folder). The three paused fixes (LOW02 R40-4, LOW03 R17-1 and R47-4) were finished and committed on `feature/survival`. The branch is now `0c8d9a74` locally (eb52cea7 + 1d81fbf6 R40-4, e8275a71 R17-1, 1215000b R47-4, 0c8d9a74 RunChecks quoting fix); **push pending**. Final checks on the committed code are GREEN:
+**Updated 2026-10-16 ~14:45 in `C:\dev\projects\Minecraft 26.3`** (the single project folder). The three paused fixes (LOW02 R40-4, LOW03 R17-1 and R47-4) were finished and committed on `feature/survival`. It was pushed to GitHub on 2026-10-16: eb52cea7 + 1d81fbf6 R40-4, e8275a71 R17-1, 1215000b R47-4, 0c8d9a74 RunChecks quoting fix, plus the status docs. Final checks on the committed code are GREEN:
 - native: 583/583
 - voxel: 211 suites
 - radius-8 and digest hashes: 9/9 against `expected-hashes-survival.txt`
