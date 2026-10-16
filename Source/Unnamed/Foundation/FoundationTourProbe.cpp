@@ -2217,10 +2217,11 @@ void UFoundationRuntimeProbe::AddTourCases()
                 World.Set(*LeftCell, Registry.WithValue(West, TEXT("type"), TEXT("left")));
                 World.Set(RightCell, Registry.WithValue(West, TEXT("type"), TEXT("right")));
                 FFoundationBlockEntities& Store = Authority().BlockEntities;
-                FFoundationBlockEntity& Left =
-                    Store.FindOrAdd(*LeftCell, EFoundationBlockEntityKind::Chest, TEXT("chest"));
+                // Both halves are added before either is held: a map insert can move the other entry.
+                Store.FindOrAdd(*LeftCell, EFoundationBlockEntityKind::Chest, TEXT("chest"));
                 FFoundationBlockEntity& Right =
                     Store.FindOrAdd(RightCell, EFoundationBlockEntityKind::Chest, TEXT("chest"));
+                FFoundationBlockEntity& Left = *Store.Find(*LeftCell);
                 const struct
                 {
                     FFoundationBlockEntity* Half;
