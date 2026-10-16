@@ -151,7 +151,7 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("foundation.Blocks.Families exists"), Switch.Variable)) return false;
     FFamilyLab L;
     const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
-    int32 Families = 0, Placed = 0, Refused = 0, NoItem = 0, NoFloor = 0;
+    int32 Families = 0, Placed = 0, Refused = 0, NoItem = 0, NoFloor = 0, NoFarmland = 0;
     for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
@@ -172,6 +172,9 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
         if ((Block.Id == TEXT("ladder") || Block.Id == TEXT("weeping_vines")) &&
             Reason == EFoundationReason::CannotSurvive)
             ++NoFloor;
+        // Survival B6a: wheat_seeds places wheat, which stands only on #minecraft:supports_crops (farmland).
+        else if (Block.Id == TEXT("wheat") && Reason == EFoundationReason::CannotSurvive)
+            ++NoFarmland;
         else if (Reason == EFoundationReason::None && &Registry.GetBlock(State) == &Block)
             ++Placed;
         else
@@ -188,12 +191,13 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
                                  "with it off, %d have no item"),
         Families, Placed, Refused, NoItem));
     TestEqual(TEXT("family blocks in the registry"), Families, B1Blocks);
-    // 310 minus the reference's 286 block items and the 9 sapling items (DA_Items): crops, the vine plants, the filled
-    // cauldrons and the fires have no item of their own.
-    TestEqual(TEXT("family blocks without an item"), NoItem, 15);
+    // 310 minus the reference's 286 block items, the 9 sapling items (DA_Items) and wheat (wheat_seeds' place link,
+    // survival B6a): the other crops, the vine plants, the filled cauldrons and the fires have no item of their own.
+    TestEqual(TEXT("family blocks without an item"), NoItem, 14);
+    TestEqual(TEXT("wheat refused on grass"), NoFarmland, 1);
     TestEqual(TEXT("the ladder and weeping vines refused on a floor alone"), NoFloor, 2);
     TestTrue(TEXT("every other family block with an item placed"),
-        Placed == Families - NoItem - NoFloor && Refused == Placed + NoFloor);
+        Placed == Families - NoItem - NoFloor - NoFarmland && Refused == Placed + NoFloor + NoFarmland);
     return true;
 }
 

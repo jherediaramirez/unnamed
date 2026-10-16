@@ -4,6 +4,8 @@
 #include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationExperienceOrbs.h"
+#include "Foundation/FoundationFireContact.h"
+#include "Foundation/FoundationGrowth.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPanels.h"
@@ -329,6 +331,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bClimbing = Simulation.bClimbing;
     Facts.bAlive = !Vitals.IsDead();
     Facts.Mode = Vitals.Mode;
+    Facts.Difficulty = Vitals.Difficulty;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;
@@ -425,6 +428,15 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bEyesInWater = bEyesInWater =
         bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
     Facts.bBodyInLava = bSwim && CVarFire.GetValueOnGameThread() != 0 && Lab->GetFluid(Body) == EFoundationFluid::Lava;
+    // Fire blocks and a lava cauldron's lava (step 16c), read from the authority's blocks (the Playground and the voxel
+    // world; a bare lab has none).
+    if (CVarFire.GetValueOnGameThread() != 0 && FoundationFireContact::IsOn())
+        if (const FFoundationAuthority* Authority = GetAuthority())
+        {
+            const FoundationFireContact::FContact Contact = FoundationFireContact::Get(Authority->World, Body);
+            Facts.FireBlockDamage = Contact.FireDamage;
+            Facts.bLavaContact = Contact.bLavaCauldron;
+        }
     Vitals.Step(Facts);
     HandleDeath();
     // With the death screen the player waits for its Respawn button (RequestRespawn); DeathTicks keeps counting.
@@ -468,6 +480,8 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.Options.bBarrel = FoundationBarrel::IsOn();
     Authority.Options.bChest = FoundationChests::IsOn();
+    Authority.Options.bGrowth = FoundationGrowth::IsOn();
+    Authority.Options.bCauldrons = FoundationCauldrons::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)

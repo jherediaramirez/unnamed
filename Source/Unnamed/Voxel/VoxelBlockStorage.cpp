@@ -1,4 +1,5 @@
 #include "Voxel/VoxelBlockStorage.h"
+#include "Storage/VoxelColumn.h"
 #include "Voxel/VoxelColumnPipeline.h"
 
 FVoxelBlockStorage::FVoxelBlockStorage(TFunction<FVoxelColumnPipeline*()> InGetPipeline)
@@ -67,4 +68,30 @@ bool FVoxelBlockStorage::IsLoaded(const FIntVector& Cell) const
 {
     const FVoxelColumnPipeline* Pipeline = GetPipeline();
     return Pipeline && Pipeline->IsGenerated(FIntPoint(Cell.X >> 4, Cell.Y >> 4));
+}
+
+int32 FVoxelBlockStorage::GetTopZ(int32 X, int32 Y, bool bMotionBlocking) const
+{
+    const FVoxelColumnPipeline* Pipeline = GetPipeline();
+    const FVoxelColumn* Column = Pipeline ? Pipeline->FindColumn(FIntPoint(X >> 4, Y >> 4)) : nullptr;
+    if (!Column) return MIN_int32;
+    return Column->GetHeight(
+        bMotionBlocking ? EVoxelHeightmap::MotionBlocking : EVoxelHeightmap::WorldSurface, X & 15, Y & 15);
+}
+
+bool FVoxelBlockStorage::MayHold(const FIntVector& SectionMin, TFunctionRef<bool(FFoundationBlockState)> Test) const
+{
+    const FVoxelColumnPipeline* Pipeline = GetPipeline();
+    const FVoxelColumn* Column =
+        Pipeline ? Pipeline->FindColumn(FIntPoint(SectionMin.X >> 4, SectionMin.Y >> 4)) : nullptr;
+    const int32 Index = (SectionMin.Z - VoxelConstants::MinZ) >> 4;
+    // Nothing is held outside the generated columns or the world's height; a misaligned query cannot tell.
+    if (!Column || Index < 0 || Index >= VoxelConstants::Height / 16) return false;
+    if ((SectionMin.Z & 15) != 0) return true;
+    const FVoxelSection& Section = Column->GetSection(Index);
+    if (Section.IsUniform()) return Test(FFoundationBlockState{Section.GetUniformState()});
+    if (Section.GetBitsPerIndex() == 16) return true;
+    for (const uint16 State : Section.GetPalette())
+        if (Test(FFoundationBlockState{State})) return true;
+    return false;
 }

@@ -4,6 +4,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationChests.h"
+#include "Foundation/FoundationGrowth.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameplayTagContainer.h"
 #include "HAL/IConsoleManager.h"
@@ -42,13 +43,13 @@ namespace
         return Tag.IsValid() && Block.Tags.HasTag(Tag);
     }
 
-    bool IsSide(EFoundationFace Face)
+    bool IsFamilySide(EFoundationFace Face)
     {
         return Face <= EFoundationFace::South;
     }
 
     // Seen from above: north, east, south, west.
-    EFoundationFace GetClockWise(EFoundationFace Face)
+    EFoundationFace GetFamilyClockWise(EFoundationFace Face)
     {
         switch (Face)
         {
@@ -65,7 +66,7 @@ namespace
 
     EFoundationFace GetCounterClockWise(EFoundationFace Face)
     {
-        return FoundationBlockPlacement::GetOpposite(GetClockWise(Face));
+        return FoundationBlockPlacement::GetOpposite(GetFamilyClockWise(Face));
     }
 
     bool IsSameAxis(EFoundationFace A, EFoundationFace B)
@@ -78,7 +79,7 @@ namespace
         return FName(FoundationGrid::FaceName(Face));
     }
 
-    EFoundationFace GetFacing(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+    EFoundationFace GetFamilyFacing(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
     {
         const FName Value = Registry.GetValue(State, TEXT("facing"));
         for (int32 Face = 0; Face < 4; ++Face)
@@ -158,7 +159,7 @@ namespace
     // FenceGateBlock.connectsToDirection: a gate joins the side its closed bar points to.
     bool GateJoins(const FFoundationBlockRegistry& Registry, FFoundationBlockState Gate, EFoundationFace Toward)
     {
-        return IsSameAxis(GetClockWise(GetFacing(Registry, Gate)), Toward);
+        return IsSameAxis(GetFamilyClockWise(GetFamilyFacing(Registry, Gate)), Toward);
     }
 
     bool IsSturdyToward(
@@ -235,7 +236,7 @@ namespace
     FFoundationBlockState MakeStairShape(
         const FFoundationBlockRegistry& Registry, FFoundationBlockState State, const FIntVector& Cell, FGetState Get)
     {
-        const EFoundationFace Facing = GetFacing(Registry, State);
+        const EFoundationFace Facing = GetFamilyFacing(Registry, State);
         const FName Half = Registry.GetValue(State, TEXT("half"));
         auto SameHalfStair = [&Registry, &Half](FFoundationBlockState Other)
         {
@@ -245,16 +246,16 @@ namespace
         auto CanTakeShape = [&](EFoundationFace Side)
         {
             const FFoundationBlockState Other = Get(Cell + FoundationGrid::FaceOffset(Side));
-            return !SameHalfStair(Other) || GetFacing(Registry, Other) != Facing;
+            return !SameHalfStair(Other) || GetFamilyFacing(Registry, Other) != Facing;
         };
         const TCHAR* Shape = TEXT("straight");
         const FFoundationBlockState Front = Get(Cell + FoundationGrid::FaceOffset(Facing));
         const FFoundationBlockState Back =
             Get(Cell + FoundationGrid::FaceOffset(FoundationBlockPlacement::GetOpposite(Facing)));
-        if (const EFoundationFace FrontFacing = GetFacing(Registry, Front); SameHalfStair(Front) &&
+        if (const EFoundationFace FrontFacing = GetFamilyFacing(Registry, Front); SameHalfStair(Front) &&
             !IsSameAxis(FrontFacing, Facing) && CanTakeShape(FoundationBlockPlacement::GetOpposite(FrontFacing)))
             Shape = FrontFacing == GetCounterClockWise(Facing) ? TEXT("outer_left") : TEXT("outer_right");
-        else if (const EFoundationFace BackFacing = GetFacing(Registry, Back);
+        else if (const EFoundationFace BackFacing = GetFamilyFacing(Registry, Back);
             SameHalfStair(Back) && !IsSameAxis(BackFacing, Facing) && CanTakeShape(BackFacing))
             Shape = BackFacing == GetCounterClockWise(Facing) ? TEXT("inner_left") : TEXT("inner_right");
         return Registry.WithValue(State, TEXT("shape"), Shape);
@@ -273,6 +274,66 @@ namespace
     TAutoConsoleVariable<int32> CVarBlocksClimb(TEXT("foundation.Blocks.Climb"), 1,
         TEXT("1: the player climbs ladders, vines and the other #minecraft:climbable blocks (survival B4b). 0: no "
              "climbing; movement as before B4b."));
+
+    TAutoConsoleVariable<int32> CVarBlocksFarmland(TEXT("foundation.Blocks.Farmland"), 1,
+        TEXT("1: hoes till and shovels flatten (with foundation.Items.Use), and farmland and dirt paths turn to dirt "
+             "under a block they do not survive (survival B5). 0: neither, as before B5."));
+
+    // B6a: the tag a crop or stem needs on the block below it (block_manifest.json: #minecraft:supports_crops,
+    // supports_pumpkin_stem, supports_melon_stem; farmland alone in each); None for every other block.
+    FName GetFamilyCropSoilTag(FName Id)
+    {
+        if (Id == TEXT("pumpkin_stem")) return TEXT("Block.SupportsPumpkinStem");
+        if (Id == TEXT("melon_stem")) return TEXT("Block.SupportsMelonStem");
+        const bool bCrop = Id == TEXT("wheat") || Id == TEXT("carrots") || Id == TEXT("potatoes") ||
+            Id == TEXT("beetroots") || Id == TEXT("torchflower_crop") || Id == TEXT("pitcher_crop");
+        return bCrop ? FName(TEXT("Block.SupportsCrops")) : NAME_None;
+    }
+
+    // B5: the blocks that turn to dirt under a block they do not survive (FarmBlock, DirtPathBlock).
+    bool IsTurnedToDirt(FName Id)
+    {
+        return Id == TEXT("farmland") || Id == TEXT("dirt_path");
+    }
+
+    // B5: what farmland and a dirt path survive above them: family_survival.json's "up" set for both (signature 19,
+    // every state of these 133 blocks; the other five probes pass every candidate). .Interact.FarmlandSurvival
+    // compares it with the facts file.
+    bool DoesKeepFarmland(FName Id)
+    {
+        static const TSet<FName> Kept = {TEXT("air"), TEXT("oak_sapling"), TEXT("spruce_sapling"),
+            TEXT("birch_sapling"), TEXT("jungle_sapling"), TEXT("acacia_sapling"), TEXT("cherry_sapling"),
+            TEXT("dark_oak_sapling"), TEXT("pale_oak_sapling"), TEXT("mangrove_propagule"), TEXT("poplar_sapling"),
+            TEXT("water"), TEXT("lava"), TEXT("short_grass"), TEXT("fern"), TEXT("dead_bush"), TEXT("bush"),
+            TEXT("red_shrub"), TEXT("short_dry_grass"), TEXT("tall_dry_grass"), TEXT("seagrass"), TEXT("tall_seagrass"),
+            TEXT("dandelion"), TEXT("poppy"), TEXT("blue_orchid"), TEXT("allium"), TEXT("azure_bluet"),
+            TEXT("red_tulip"), TEXT("orange_tulip"), TEXT("white_tulip"), TEXT("pink_tulip"), TEXT("oxeye_daisy"),
+            TEXT("cornflower"), TEXT("lily_of_the_valley"), TEXT("brown_mushroom"), TEXT("red_mushroom"), TEXT("torch"),
+            TEXT("wall_torch"), TEXT("fire"), TEXT("soul_fire"), TEXT("wheat"), TEXT("ladder"), TEXT("lever"),
+            TEXT("stone_button"), TEXT("snow"), TEXT("cactus_flower"), TEXT("sugar_cane"), TEXT("pumpkin_stem"),
+            TEXT("melon_stem"), TEXT("vine"), TEXT("glow_lichen"), TEXT("oak_fence_gate"), TEXT("lily_pad"),
+            TEXT("cocoa"), TEXT("shelf_mushroom"), TEXT("carrots"), TEXT("potatoes"), TEXT("oak_button"),
+            TEXT("spruce_button"), TEXT("birch_button"), TEXT("jungle_button"), TEXT("acacia_button"),
+            TEXT("cherry_button"), TEXT("dark_oak_button"), TEXT("pale_oak_button"), TEXT("mangrove_button"),
+            TEXT("poplar_button"), TEXT("bamboo_button"), TEXT("sunflower"), TEXT("lilac"), TEXT("rose_bush"),
+            TEXT("peony"), TEXT("tall_grass"), TEXT("large_fern"), TEXT("spruce_fence_gate"), TEXT("birch_fence_gate"),
+            TEXT("jungle_fence_gate"), TEXT("acacia_fence_gate"), TEXT("cherry_fence_gate"),
+            TEXT("dark_oak_fence_gate"), TEXT("pale_oak_fence_gate"), TEXT("mangrove_fence_gate"),
+            TEXT("poplar_fence_gate"), TEXT("bamboo_fence_gate"), TEXT("torchflower_crop"), TEXT("pitcher_crop"),
+            TEXT("beetroots"), TEXT("kelp"), TEXT("kelp_plant"), TEXT("tube_coral"), TEXT("brain_coral"),
+            TEXT("bubble_coral"), TEXT("fire_coral"), TEXT("horn_coral"), TEXT("tube_coral_fan"),
+            TEXT("brain_coral_fan"), TEXT("bubble_coral_fan"), TEXT("fire_coral_fan"), TEXT("horn_coral_fan"),
+            TEXT("tube_coral_wall_fan"), TEXT("brain_coral_wall_fan"), TEXT("bubble_coral_wall_fan"),
+            TEXT("fire_coral_wall_fan"), TEXT("horn_coral_wall_fan"), TEXT("sea_pickle"), TEXT("sweet_berry_bush"),
+            TEXT("weeping_vines"), TEXT("weeping_vines_plant"), TEXT("twisting_vines"), TEXT("twisting_vines_plant"),
+            TEXT("crimson_fence_gate"), TEXT("warped_fence_gate"), TEXT("crimson_button"), TEXT("warped_button"),
+            TEXT("polished_blackstone_button"), TEXT("powder_snow"), TEXT("cave_vines"), TEXT("cave_vines_plant"),
+            TEXT("spore_blossom"), TEXT("azalea"), TEXT("flowering_azalea"), TEXT("moss_carpet"), TEXT("pink_petals"),
+            TEXT("wildflowers"), TEXT("leaf_litter"), TEXT("big_dripleaf"), TEXT("big_dripleaf_stem"),
+            TEXT("small_dripleaf"), TEXT("hanging_roots"), TEXT("pale_moss_carpet"), TEXT("pale_hanging_moss"),
+            TEXT("closed_eyeblossom"), TEXT("firefly_bush")};
+        return Kept.Contains(Id);
+    }
 
     // B4b's growing vines: the vine's head id and the side its support is on.
     bool GetVineSupport(FName Id, FName& OutHead, EFoundationFace& OutToward)
@@ -324,7 +385,7 @@ namespace
         const FFoundationPlacementContext& Context)
     {
         const FFoundationBlockRegistry& Registry = World.GetRegistry();
-        const EFoundationFace Left = GetCounterClockWise(Facing), Right = GetClockWise(Facing);
+        const EFoundationFace Left = GetCounterClockWise(Facing), Right = GetFamilyClockWise(Facing);
         auto Read = [&World](const FIntVector& At)
         { return World.IsKnown(At) ? World.Get(At).State : FFoundationBlockState(); };
         auto CountFull = [&](EFoundationFace Side)
@@ -401,10 +462,10 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
     switch (Family)
     {
     case EFoundationBlockFamily::Stairs:
-        return IsSide(Toward) ? MakeStairShape(Registry, State, Cell, Get) : State;
+        return IsFamilySide(Toward) ? MakeStairShape(Registry, State, Cell, Get) : State;
     case EFoundationBlockFamily::Fence:
     case EFoundationBlockFamily::Pane:
-        if (!IsSide(Toward)) return State;
+        if (!IsFamilySide(Toward)) return State;
         return Registry.WithValue(State, SideName(Toward),
             Connects(Registry, Block, Family, Neighbour, Toward) ? TEXT("true") : TEXT("false"));
     case EFoundationBlockFamily::Wall:
@@ -413,7 +474,7 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
         bool Connected[4];
         for (int32 Side = 0; Side < 4; ++Side)
             Connected[Side] = Registry.GetValue(State, SideName(EFoundationFace(Side))) != NoSide;
-        if (IsSide(Toward)) Connected[int32(Toward)] = Connects(Registry, Block, Family, Neighbour, Toward);
+        if (IsFamilySide(Toward)) Connected[int32(Toward)] = Connects(Registry, Block, Family, Neighbour, Toward);
         const FFoundationBlockState Above =
             Toward == EFoundationFace::Up ? Neighbour : Get(Cell + FoundationGrid::FaceOffset(EFoundationFace::Up));
         return MakeWall(Registry, State, Connected, Above);
@@ -421,7 +482,7 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
     case EFoundationBlockFamily::FenceGate:
     {
         // Walls on either side across the gate's facing lower it into the wall (VALUES "Fence gates").
-        if (!IsSide(Toward) || !IsSameAxis(GetClockWise(GetFacing(Registry, State)), Toward)) return State;
+        if (!IsFamilySide(Toward) || !IsSameAxis(GetFamilyClockWise(GetFamilyFacing(Registry, State)), Toward)) return State;
         const bool bInWall = IsWall(Registry, Neighbour) ||
             IsWall(Registry, Get(Cell + FoundationGrid::FaceOffset(FoundationBlockPlacement::GetOpposite(Toward))));
         return Registry.WithValue(State, TEXT("in_wall"), bInWall ? TEXT("true") : TEXT("false"));
@@ -452,6 +513,10 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::GetStateForPlacement(World, Block, Context);
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     FFoundationBlockState State = Block.GetDefaultState();
+    // Farmland or a dirt path under a block it does not survive places dirt (B5; FarmBlock and DirtPathBlock).
+    if (FFoundationBlockState Dirt; GetTurnedState(Registry, State, Dirt) &&
+        GetSurvival(World, Context.Destination, State) == EFoundationFamilySurvival::Fails)
+        return Dirt;
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::None) return State;
     const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Context.Yaw);
@@ -470,7 +535,7 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
     // latter, the half top unless the click was on a top face.
     if (Family == EFoundationBlockFamily::Trapdoor)
     {
-        const bool bOnSide = IsSide(Context.ClickedFace) && !Context.bReplaceClicked;
+        const bool bOnSide = IsFamilySide(Context.ClickedFace) && !Context.bReplaceClicked;
         State = Registry.WithValue(State, TEXT("facing"),
             SideName(bOnSide ? Context.ClickedFace : FoundationBlockPlacement::GetOpposite(Look)));
         if (Context.bReplaceClicked)
@@ -508,13 +573,13 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
         const FFoundationBlockState Clicked =
             World.IsKnown(Context.ClickedCell) ? World.Get(Context.ClickedCell).State : FFoundationBlockState();
         if (!Context.bReplaceClicked && Registry.GetBlock(Clicked).Id == Block.Id &&
-            GetFacing(Registry, Clicked) == Context.ClickedFace)
+            GetFamilyFacing(Registry, Clicked) == Context.ClickedFace)
             return Registry.WithValue(State, TEXT("facing"), SideName(Context.ClickedFace));
         FFoundationBlockState First = State;
         bool bFirst = true;
         for (const EFoundationFace Toward : FoundationBlockPlacement::GetClickLooks(Context))
         {
-            if (!IsSide(Toward)) continue;
+            if (!IsFamilySide(Toward)) continue;
             const FFoundationBlockState Attached =
                 Registry.WithValue(State, TEXT("facing"), SideName(FoundationBlockPlacement::GetOpposite(Toward)));
             if (GetSurvival(World, Context.Destination, Attached) == EFoundationFamilySurvival::Survives)
@@ -561,6 +626,7 @@ bool FoundationBlockFamilies::IsInteractOn()
 bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Block)
 {
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::IsOn();
+    if (IsTurnedToDirt(Block.Id)) return IsFarmlandOn();
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
         Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever ||
@@ -628,7 +694,7 @@ bool FoundationBlockFamilies::Use(
         double Yaw, Pitch;
         FoundationBlockPlacement::GetYawPitch(Player.Facts.Aim, Yaw, Pitch);
         const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Yaw);
-        if (GetFacing(Registry, State) == FoundationBlockPlacement::GetOpposite(Look))
+        if (GetFamilyFacing(Registry, State) == FoundationBlockPlacement::GetOpposite(Look))
             Used = Registry.WithValue(Used, TEXT("facing"), SideName(Look));
     }
     Writes.Emplace(Hit.Cell, Used);
@@ -705,6 +771,26 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
+    // Farmland and dirt paths (B5): what is above them (DoesKeepFarmland).
+    if (IsFarmlandOn() && IsTurnedToDirt(Registry.GetBlock(State).Id))
+    {
+        const FIntVector Above = Cell + FIntVector(0, 0, 1);
+        if (!World.IsKnown(Above)) return EFoundationFamilySurvival::Unknown;
+        return DoesKeepFarmland(Registry.GetBlock(World.Get(Above).State).Id) ? EFoundationFamilySurvival::Survives
+                                                                              : EFoundationFamilySurvival::Fails;
+    }
+    // Crops and stems (B6a, behind foundation.Blocks.Growth): their soil tag below. A pitcher crop's upper half stands
+    // on its lower half (the plant rules pair them). Light is not a survival rule yet (QC-KNOWN-BUGS).
+    if (const FName SoilTag = GetFamilyCropSoilTag(Registry.GetBlock(State).Id);
+        !SoilTag.IsNone() && FoundationGrowth::IsOn() && Registry.GetValue(State, TEXT("half")) != TEXT("upper"))
+    {
+        const FIntVector Below = Cell - FIntVector(0, 0, 1);
+        if (!World.IsKnown(Below)) return EFoundationFamilySurvival::Unknown;
+        const FGameplayTag Soil = FGameplayTag::RequestGameplayTag(SoilTag, false);
+        return Soil.IsValid() && Registry.GetBlock(World.Get(Below).State).Tags.HasTag(Soil)
+            ? EFoundationFamilySurvival::Survives
+            : EFoundationFamilySurvival::Fails;
+    }
     // Twisting and weeping vines (B4b): their own vine or a sturdy face on the side they grow from.
     FName VineHead;
     EFoundationFace VineToward = EFoundationFace::None;
@@ -729,7 +815,7 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
             Family == EFoundationBlockFamily::Ladder ? FName(TEXT("wall")) : Registry.GetValue(State, TEXT("face"));
         const EFoundationFace Toward = Face == TEXT("floor") ? EFoundationFace::Down
             : Face == TEXT("ceiling")                        ? EFoundationFace::Up
-                                      : FoundationBlockPlacement::GetOpposite(GetFacing(Registry, State));
+                                      : FoundationBlockPlacement::GetOpposite(GetFamilyFacing(Registry, State));
         const FIntVector Support = Cell + FoundationGrid::FaceOffset(Toward);
         if (!World.IsKnown(Support)) return EFoundationFamilySurvival::Unknown;
         return IsFaceSturdy(Registry, World.Get(Support).State, FoundationBlockPlacement::GetOpposite(Toward))
@@ -744,6 +830,21 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
         ? Registry.GetBlock(State).Contains(Support)
         : IsFaceSturdy(Registry, Support, EFoundationFace::Up);
     return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
+}
+
+bool FoundationBlockFamilies::IsFarmlandOn()
+{
+    return CVarBlocksFarmland.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::GetTurnedState(
+    const FFoundationBlockRegistry& Registry, FFoundationBlockState State, FFoundationBlockState& OutState)
+{
+    if (!IsFarmlandOn() || !IsTurnedToDirt(Registry.GetBlock(State).Id)) return false;
+    const FFoundationBlockType* Dirt = Registry.FindBlock(TEXT("dirt"));
+    if (!Dirt) return false;
+    OutState = Dirt->GetDefaultState();
+    return true;
 }
 
 bool FoundationBlockFamilies::IsClimbOn()
@@ -765,5 +866,5 @@ bool FoundationBlockFamilies::IsClimbable(const FFoundationBlockWorld& World, co
     if (!World.IsKnown(Below)) return false;
     const FFoundationBlockState Ladder = World.Get(Below).State;
     return GetStateFamily(Registry, Ladder) == EFoundationBlockFamily::Ladder &&
-        GetFacing(Registry, Ladder) == GetFacing(Registry, State);
+        GetFamilyFacing(Registry, Ladder) == GetFamilyFacing(Registry, State);
 }

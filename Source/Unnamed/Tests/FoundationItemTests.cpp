@@ -262,7 +262,9 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
                 Definition->DurabilityPerHit == Asset.DamagePerHit &&
                 Definition->DefaultMiningSpeed == Asset.DefaultMiningSpeed &&
                 Definition->MiningRules.Num() == Asset.Rules.Num() && Definition->Tags.Num() == Asset.ItemTags.Num() &&
-                Definition->PlacesBlock == Asset.PlacesBlock && Definition->DisplayName == Asset.DisplayName &&
+                // wheat_seeds plants wheat (survival B6a's place link in BuildRules; DA_Items holds none).
+                Definition->PlacesBlock == (Id == TEXT("wheat_seeds") ? FName(TEXT("wheat")) : Asset.PlacesBlock) &&
+                Definition->DisplayName == Asset.DisplayName &&
                 // A special model's item (the shield) has no layers: its stand-in GUI sprite.
                 Definition->Sprite == (Asset.Textures.IsEmpty() ? Asset.GuiSprite : Asset.Textures[0]) &&
                 !Definition->Sprite.IsNone());

@@ -359,6 +359,7 @@ void FFoundationBlockRegistry::AddBlock(
         StateBoxRanges.Add(FIntVector::ZeroValue);
         StateLight.Add(Block.LightEmission);
         StateWater.Add(0);
+        StateTint.Add(Block.Tint);
         // Imported blocks overwrite it from the asset (AddModelData).
         StateSupport.Add(BlockShapes[State] == EFoundationBlockShape::Full ? TorchSidesAndTop : 0);
     }
@@ -372,6 +373,7 @@ bool FFoundationBlockRegistry::IsValidModelData(const FFoundationBlockAsset& Sou
     // Every array is empty or covers every state; model parts index existing models; box counts match the boxes.
     if (!Source.StateLight.IsEmpty() && Source.StateLight.Num() != States) return false;
     if (!Source.StateWater.IsEmpty() && Source.StateWater.Num() != States) return false;
+    if (!Source.StateTint.IsEmpty() && Source.StateTint.Num() != States) return false;
     if (!Source.StateSupport.IsEmpty() && Source.StateSupport.Num() != States) return false;
     if (!Source.StateBoxCounts.IsEmpty())
     {
@@ -433,6 +435,7 @@ void FFoundationBlockRegistry::AddModelData(const FFoundationBlockAsset& Source,
         }
         if (!Source.StateLight.IsEmpty()) StateLight[Entry] = Source.StateLight[State];
         if (!Source.StateWater.IsEmpty()) StateWater[Entry] = Source.StateWater[State];
+        if (!Source.StateTint.IsEmpty()) StateTint[Entry] = Source.StateTint[State];
         if (!Source.StateSupport.IsEmpty()) StateSupport[Entry] = Source.StateSupport[State];
     }
 }
@@ -502,6 +505,13 @@ int32 FFoundationBlockRegistry::GetLightEmission(FFoundationBlockState State) co
     const FFoundationBlockType* Block;
     const int32 Local = GetLocalIndex(State, Block);
     return StateLight[Block->TableOffset + Local];
+}
+
+FColor FFoundationBlockRegistry::GetTint(FFoundationBlockState State) const
+{
+    const FFoundationBlockType* Block;
+    const int32 Local = GetLocalIndex(State, Block);
+    return StateTint[Block->TableOffset + Local];
 }
 
 uint8 FFoundationBlockRegistry::GetTorchSupport(FFoundationBlockState State) const

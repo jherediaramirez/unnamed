@@ -65,6 +65,10 @@ void UFoundationInteractionSettings::BuildRules(FFoundationRules& Rules) const
     const UFoundationItemAssets* ItemAssets = UFoundationItemAssets::LoadDefault();
     if (ItemAssets) MergeItems(Rules.Items, ItemAssets->MakeDefinitions(), TEXT("DA_Items"));
     MergeItems(Rules.Items, Items, TEXT("UFoundationInteractionSettings::Items"));
+    // Seeds that plant their crop (survival B6a): DA_Items' wheat_seeds has no place link; the wheat block's
+    // vanilla_item names it (the block reference's README). B6b adds the other seeds.
+    for (FFoundationItemDefinition& Item : Rules.Items)
+        if (Item.Id == TEXT("wheat_seeds") && Item.PlacesBlock.IsNone()) Item.PlacesBlock = TEXT("wheat");
     // Block loot (items S5b), resolved against every item above.
     Rules.LootTables.Reset();
     Rules.LootPredicates.Reset();

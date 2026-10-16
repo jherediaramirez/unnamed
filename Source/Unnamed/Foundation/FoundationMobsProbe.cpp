@@ -320,9 +320,10 @@ void UFoundationRuntimeProbe::AddMobCases()
             const FFoundationAuthority* A = Authority();
             const FFoundationMob* Mob = A ? const_cast<FFoundationAuthority*>(A)->FindMob(*Zombie) : nullptr;
             Record(TEXT("mobs: the zombie targets the player"), Mob && Mob->Target == Pawn->Interaction.PlayerId,
-                Mob ? FString::Printf(TEXT("target %d at %s (player %s), moving %d, path %d/%d, cooldown %d"), Mob->Target,
-                          *(A->World.OriginCm + Mob->LocalCm).ToCompactString(), *Pawn->GetActorLocation().ToCompactString(),
-                          Mob->bMoving, Mob->PathIndex, Mob->Path.Num(), Mob->AttackCooldown)
+                Mob ? FString::Printf(TEXT("target %d at %s (player %s), moving %d, path %d/%d, cooldown %d"),
+                          Mob->Target, *(A->World.OriginCm + Mob->LocalCm).ToCompactString(),
+                          *Pawn->GetActorLocation().ToCompactString(), Mob->bMoving, Mob->PathIndex, Mob->Path.Num(),
+                          Mob->AttackCooldown)
                     : TEXT("no zombie"));
             Record(TEXT("mobs: its hits hurt the player 3 each"),
                 A && A->MobMeleeHits >= 1 && Pawn->Vitals.Health < 20.f &&
@@ -342,6 +343,85 @@ void UFoundationRuntimeProbe::AddMobCases()
             Pawn->Vitals.Mode = Before->Key;
             Pawn->Vitals.Difficulty = Before->Value;
             ResetPlayer(Spot);
+        });
+    // 20c2: the spider close up at rest, then walking (its eight legs; the look call against the model data), and
+    // Peaceful removing a monster. The Playground has no sky hook: its full daylight keeps the spider neutral.
+    auto Spider = MakeShared<int32>(0), Despawned = MakeShared<int32>(0);
+    const auto FindSpider = [Authority, Spider] { return Authority() ? Authority()->FindMob(*Spider) : nullptr; };
+    AddCase(
+        TEXT("mobs: a spider stands"), 1.,
+        [this, SetMobs, Authority, Spider, LookAt]
+        {
+            SetMobs(1);
+            ResetPlayer(Spot);
+            FFoundationAuthority* A = Authority();
+            if (!A) return;
+            A->ClearMobs();
+            A->Options.bMobs = true;
+            *Spider = A->SpawnMob(EFoundationMobType::Spider, Spot + FVector(260, 0, 0) - A->World.OriginCm, 180);
+            LookAt(Spot + FVector(260, 0, 40));
+        },
+        [this, Shot, Drawn, FindSpider]
+        {
+            const FFoundationMob* Mob = FindSpider();
+            Record(TEXT("mobs: the spider stands, neutral in daylight"),
+                Mob && Mob->bOnGround && Mob->IsAlive() && Mob->Target == 0,
+                Mob ? FString::Printf(TEXT("at %s, target %d"), *Mob->LocalCm.ToCompactString(), Mob->Target)
+                    : TEXT("no spider"));
+            Record(TEXT("mobs: one spider drawn"), Drawn() == 1, FString::FromInt(Drawn()));
+            Shot(TEXT("13a-spider-rest"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: spider side view"), .4,
+        [FindSpider]
+        {
+            if (FFoundationMob* Mob = FindSpider())
+                Mob->Yaw = Mob->PreviousYaw = Mob->HeadYaw = Mob->PreviousHeadYaw = 90;
+        },
+        [Shot] { Shot(TEXT("13c-spider-side")); });
+    Flush();
+    AddCase(
+        TEXT("mobs: the spider walks"), .8,
+        [this, FindSpider, LookAt]
+        {
+            if (FFoundationMob* Mob = FindSpider())
+            {
+                Mob->bMoving = true;
+                Mob->SpeedModifier = 1;
+                Mob->MoveTicks = Mob->StuckTicks = 0;
+                Mob->TargetCm = Mob->LocalCm + FVector(0, 900, 0);
+            }
+            LookAt(Spot + FVector(260, 250, 40));
+        },
+        [this, Shot, FindSpider]
+        {
+            const FFoundationMob* Mob = FindSpider();
+            Record(TEXT("mobs: the spider walking (legs swing)"), Mob && Mob->WalkSpeed > .1f,
+                Mob ? FString::Printf(TEXT("walk speed %.2f"), Mob->WalkSpeed) : TEXT("no spider"));
+            Shot(TEXT("13b-spider-walks"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: Peaceful removes monsters"), .4,
+        [this, Authority, Zombie, Despawned, Before]
+        {
+            *Before = {Pawn->Vitals.Mode, Pawn->Vitals.Difficulty};
+            Pawn->Vitals.Difficulty = EFoundationDifficulty::Peaceful;
+            if (FFoundationAuthority* A = Authority())
+            {
+                *Despawned = A->MobsDespawned;
+                *Zombie = A->SpawnMob(EFoundationMobType::Zombie, Spot + FVector(300, 0, 0) - A->World.OriginCm, 180);
+            }
+        },
+        [this, Authority, FindSpider, Zombie, Despawned, Before]
+        {
+            FFoundationAuthority* A = Authority();
+            Record(TEXT("mobs: Peaceful removed the spider and the zombie"),
+                A && !FindSpider() && !A->FindMob(*Zombie) && A->MobsDespawned - *Despawned == 2,
+                FString::Printf(TEXT("despawned %d"), A ? A->MobsDespawned - *Despawned : -1));
+            Pawn->Vitals.Difficulty = Before->Value;
+            if (FFoundationAuthority* Mutable = Authority()) Mutable->ClearMobs();
         });
     // The control pair: the same cow with foundation.Mobs 1, then 0.
     AddCase(

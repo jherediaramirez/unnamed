@@ -1,6 +1,7 @@
 #include "Misc/AutomationTest.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
+#include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationContainer.h"
 #include "Foundation/FoundationContainers.h"
 #include "Foundation/FoundationGrid.h"
@@ -725,6 +726,191 @@ bool FFoundationFurnaceAmbiencePauseTest::RunTest(const FString&)
         World->RemoveFromRoot();
         World->DestroyWorld(false);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFurnaceParticlesTest, "Unnamed.Foundation.Furnace.Particles", FurnaceTestFlags)
+
+bool FFoundationFurnaceParticlesTest::RunTest(const FString&)
+{
+    // T1 step 8b2b, R15 (survival2.r15.particles, survival2.r15.exact_callback_chances): every number below is
+    // R15's, written out here, not read from the code under test. Positions are in R15's block units from the cell's
+    // minimum corner (x east, y up, z south: Unreal's X, Z, Y); velocities in blocks per tick.
+    using namespace FoundationBreak;
+    struct FExpected
+    {
+        const TCHAR* Name;
+        EFurnaceBlock Block;
+        double Height; // the y scatter's top: 6/16 or 9/16; 0 for the smoker's fixed point
+        int32 Count;
+    };
+    const FExpected Blocks[] = {{TEXT("furnace"), EFurnaceBlock::Furnace, 6. / 16, 2},
+        {TEXT("blast furnace"), EFurnaceBlock::BlastFurnace, 9. / 16, 1},
+        {TEXT("smoker"), EFurnaceBlock::Smoker, 0, 1}};
+    // R15's constructed velocity min / max (x, y, z) and lives per block and particle.
+    struct FVelocityBounds
+    {
+        double Min[3], Max[3];
+        int32 LifeMin, LifeMax;
+    };
+    const FVelocityBounds FurnaceSmoke = {{-0.016648441813071783, -0.006498183732635731, -0.016205374329359614},
+        {0.016078244336677032, 0.02552693557872951, 0.016100393702104396}, 8, 39};
+    const FVelocityBounds FurnaceFlame = {{-0.001590048134315185, -0.0007306004704901707, -0.0017042530239760349},
+        {0.001675544493461396, 0.0025944586811569147, 0.0016457570363519638}, 12, 43};
+    const FVelocityBounds BlastSmoke = {{-0.016229974088278174, -0.006668580475772605, -0.01709410356186065},
+        {0.015865230962249056, 0.02577922275389481, 0.01614790345860682}, 8, 39};
+    const FVelocityBounds SmokerSmoke = {{-0.01698576348466761, -0.006212481158443666, -0.016955601084038267},
+        {0.01629296290080078, 0.02575841174141764, 0.016299815327071025}, 8, 39};
+    const FVector Origin(10, 20, 30);
+    const FBox Box = FoundationGrid::CellBox({3, -2, 5}, Origin);
+    constexpr double Eps = 1e-6;
+    // Facing north the front is z = -0.02 with x scattered; south z = 1.02; west x = -0.02 with z scattered; east
+    // x = 1.02 (centre + facing x 0.52, lateral +-0.3).
+    struct FFront
+    {
+        EFoundationFace Facing;
+        int32 FrontAxis; // R15 axis 0 (x) or 2 (z)
+        double Front;
+    };
+    const FFront Fronts[] = {{EFoundationFace::North, 2, -0.02}, {EFoundationFace::South, 2, 1.02},
+        {EFoundationFace::West, 0, -0.02}, {EFoundationFace::East, 0, 1.02}};
+    for (const FExpected& Expected : Blocks)
+        for (const FFront& Front : Fronts)
+        {
+            FRandomStream Random(1234);
+            bool bCount = true, bPlace = true, bVelocity = true, bLife = true, bKinds = true;
+            double LateralMin = 1, LateralMax = 0, HeightMax = 0;
+            int32 LifeSeen[2][2] = {{100, 0}, {100, 0}};
+            double VelocityMin[2][3] = {{1, 1, 1}, {1, 1, 1}}, VelocityMax[2][3] = {{-1, -1, -1}, {-1, -1, -1}};
+            for (int32 Callback = 0; Callback < 2000; ++Callback)
+            {
+                TArray<FFurnaceParticleSpawn> Out;
+                SpawnFurnaceParticles(Expected.Block, Box, Front.Facing, Random, Out);
+                bCount &= Out.Num() == Expected.Count;
+                if (Out.IsEmpty()) continue;
+                bKinds &= Out[0].Kind == EFurnaceParticle::Smoke &&
+                    (Expected.Count == 1 || (Out.Num() > 1 && Out[1].Kind == EFurnaceParticle::Flame));
+                for (const FFurnaceParticleSpawn& Spawn : Out)
+                {
+                    const FVector Local = (Spawn.Spawn.Location - Box.Min) / 100;
+                    const double Mc[3] = {Local.X, Local.Z, Local.Y};
+                    if (Expected.Block == EFurnaceBlock::Smoker)
+                        bPlace &= FMath::Abs(Mc[0] - .5) < Eps && FMath::Abs(Mc[1] - 1.1) < Eps &&
+                            FMath::Abs(Mc[2] - .5) < Eps;
+                    else
+                    {
+                        const double Lateral = Mc[2 - Front.FrontAxis];
+                        bPlace &= FMath::Abs(Mc[Front.FrontAxis] - Front.Front) < Eps && Lateral >= .2 - Eps &&
+                            Lateral < .8 + Eps && Mc[1] >= -Eps && Mc[1] < Expected.Height + Eps;
+                        LateralMin = FMath::Min(LateralMin, Lateral);
+                        LateralMax = FMath::Max(LateralMax, Lateral);
+                        HeightMax = FMath::Max(HeightMax, Mc[1]);
+                    }
+                    const bool bFlame = Spawn.Kind == EFurnaceParticle::Flame;
+                    const FVelocityBounds& Bounds = bFlame              ? FurnaceFlame
+                        : Expected.Block == EFurnaceBlock::Furnace      ? FurnaceSmoke
+                        : Expected.Block == EFurnaceBlock::BlastFurnace ? BlastSmoke
+                                                                        : SmokerSmoke;
+                    const FVector PerTick = Spawn.Spawn.Velocity / 2000;
+                    const double V[3] = {PerTick.X, PerTick.Z, PerTick.Y};
+                    for (int32 Axis = 0; Axis < 3; ++Axis)
+                    {
+                        bVelocity &= V[Axis] >= Bounds.Min[Axis] - 1e-9 && V[Axis] <= Bounds.Max[Axis] + 1e-9;
+                        VelocityMin[bFlame][Axis] = FMath::Min(VelocityMin[bFlame][Axis], V[Axis]);
+                        VelocityMax[bFlame][Axis] = FMath::Max(VelocityMax[bFlame][Axis], V[Axis]);
+                    }
+                    const double Ticks = Spawn.Spawn.Life * 20;
+                    const int32 Whole = FMath::RoundToInt32(Ticks);
+                    bLife &= FMath::Abs(Ticks - Whole) < 1e-6 && Whole >= Bounds.LifeMin && Whole <= Bounds.LifeMax;
+                    LifeSeen[bFlame][0] = FMath::Min(LifeSeen[bFlame][0], Whole);
+                    LifeSeen[bFlame][1] = FMath::Max(LifeSeen[bFlame][1], Whole);
+                }
+            }
+            const FString At =
+                FString::Printf(TEXT("%s facing %s"), Expected.Name, FoundationGrid::FaceName(Front.Facing));
+            TestTrue(At + TEXT(": particles per callback (furnace 2, smoker 1, blast furnace 1)"), bCount);
+            TestTrue(At + TEXT(": smoke first, then the furnace's flame"), bKinds);
+            TestTrue(At + TEXT(": every spawn inside R15's box"), bPlace);
+            if (Expected.Block != EFurnaceBlock::Smoker)
+                TestTrue(At + TEXT(": the lateral scatter fills [0.2, 0.8) along the face, the height its range"),
+                    LateralMin < .21 && LateralMax > .79 && HeightMax > Expected.Height - .01);
+            TestTrue(At + TEXT(": velocities within R15's constructed bounds"), bVelocity);
+            const FVelocityBounds& Smoke = Expected.Block == EFurnaceBlock::Furnace ? FurnaceSmoke
+                : Expected.Block == EFurnaceBlock::BlastFurnace                     ? BlastSmoke
+                                                                                    : SmokerSmoke;
+            bool bSpread = true;
+            for (int32 Axis = 0; Axis < 3; ++Axis)
+                bSpread &= VelocityMax[0][Axis] - VelocityMin[0][Axis] > .9 * (Smoke.Max[Axis] - Smoke.Min[Axis]);
+            TestTrue(At + TEXT(": the smoke's velocities fill the bounds"), bSpread);
+            if (Expected.Block == EFurnaceBlock::Furnace)
+            {
+                bool bFlameSpread = true;
+                for (int32 Axis = 0; Axis < 3; ++Axis)
+                    bFlameSpread &= VelocityMax[1][Axis] - VelocityMin[1][Axis] >
+                        .9 * (FurnaceFlame.Max[Axis] - FurnaceFlame.Min[Axis]);
+                TestTrue(At + TEXT(": the flame's velocities fill the bounds"), bFlameSpread);
+            }
+            TestTrue(At + TEXT(": lives in whole ticks within 8-39 (flame 12-43)"), bLife);
+            TestTrue(At + TEXT(": the smoke's lives reach 8 and 39"), LifeSeen[0][0] == 8 && LifeSeen[0][1] == 39);
+            if (Expected.Block == EFurnaceBlock::Furnace)
+                TestTrue(
+                    At + TEXT(": the flame's lives reach 12 and 43"), LifeSeen[1][0] == 12 && LifeSeen[1][1] == 43);
+        }
+
+    // The drawn layers: the smoke steps 0 to 7 over its life, the flame is 8.
+    TestEqual(TEXT("smoke at birth: layer 0"), GetFurnaceParticleLayer(EFurnaceParticle::Smoke, 0, 1), 0);
+    TestEqual(TEXT("smoke at half life: layer 4"), GetFurnaceParticleLayer(EFurnaceParticle::Smoke, .5, 1), 4);
+    TestEqual(TEXT("smoke at its end: layer 7"), GetFurnaceParticleLayer(EFurnaceParticle::Smoke, .999, 1), 7);
+    TestEqual(TEXT("flame: layer 8"), GetFurnaceParticleLayer(EFurnaceParticle::Flame, .5, 1), 8);
+    // The flight: no gravity (a still flame stays put), the smoke rises.
+    FParticleState Flame, Smoke;
+    StepFurnaceParticle(Flame, EFurnaceParticle::Flame, .5);
+    StepFurnaceParticle(Smoke, EFurnaceParticle::Smoke, .5);
+    TestTrue(TEXT("a still flame does not fall"), Flame.Location.IsNearlyZero() && Flame.Velocity.IsNearlyZero());
+    TestTrue(TEXT("a still smoke rises"), Smoke.Location.Z > 0 && Smoke.Velocity.Z > 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFurnaceDisplayCallbacksTest, "Unnamed.Foundation.Furnace.DisplayCallbacks", FurnaceTestFlags)
+
+bool FFoundationFurnaceDisplayCallbacksTest::RunTest(const FString&)
+{
+    // T1 step 8b2b: one display callback per lit block drives the smoke, the flame and the sound's roll; the rate is
+    // 1 in 50 per tick of the ambience clock, every tick when forced, none with the switch off or while paused.
+    IConsoleVariable* Ambience = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Furnace.Ambience"));
+    IConsoleVariable* Force = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Furnace.AmbienceForce"));
+    if (!TestNotNull(TEXT("foundation.Furnace.Ambience"), Ambience) ||
+        !TestNotNull(TEXT("foundation.Furnace.AmbienceForce"), Force))
+        return false;
+    const int32 SavedAmbience = Ambience->GetInt(), SavedForce = Force->GetInt();
+    TestEqual(TEXT("the force is off by default"), SavedForce, 0);
+    FRandomStream Random(77);
+    auto Roll = [&Random] { return Random.FRand(); };
+    Ambience->Set(1, ECVF_SetByCode);
+    Force->Set(0, ECVF_SetByCode);
+    int32 Callbacks = 0;
+    for (int32 Frame = 0; Frame < 25000; ++Frame)
+        Callbacks += FoundationFurnace::RollDisplayCallbacks(4, Roll);
+    TestTrue(FString::Printf(TEXT("1 in 50 of 100000 ticks: %d near 2000"), Callbacks),
+        Callbacks > 1800 && Callbacks < 2200);
+    float Clock = 0;
+    TestEqual(TEXT("paused: no ticks, so no callback"),
+        FoundationFurnace::RollDisplayCallbacks(FoundationFurnace::StepAmbienceClock(Clock, 1.f, false), Roll), 0);
+    Force->Set(1, ECVF_SetByCode);
+    TestEqual(TEXT("forced: a callback every tick"), FoundationFurnace::RollDisplayCallbacks(4, Roll), 4);
+    TestEqual(TEXT("forced and paused: none"),
+        FoundationFurnace::RollDisplayCallbacks(FoundationFurnace::StepAmbienceClock(Clock, 1.f, false), Roll), 0);
+    Ambience->Set(0, ECVF_SetByCode);
+    TestEqual(TEXT("switch 0 (forced too): none"), FoundationFurnace::RollDisplayCallbacks(4, Roll), 0);
+    Force->Set(0, ECVF_SetByCode);
+    Callbacks = 0;
+    for (int32 Frame = 0; Frame < 1000; ++Frame)
+        Callbacks += FoundationFurnace::RollDisplayCallbacks(4, Roll);
+    TestEqual(TEXT("switch 0: none"), Callbacks, 0);
+    Ambience->Set(SavedAmbience, ECVF_SetByCode);
+    Force->Set(SavedForce, ECVF_SetByCode);
     return true;
 }
 

@@ -229,8 +229,9 @@ private:
     void PlayFireSounds(const AFoundationPawn* Pawn);
     // The local player's footsteps (step 13a2): one PlayFootstep for each step the pawn counted since the last frame.
     void PlayFootsteps(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn);
-    // A lit furnace's, smoker's or blast furnace's sound near the local pawn (T1 step 8b, foundation.Furnace.Ambience).
-    void PlayFurnaceSounds(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
+    // A lit furnace's, smoker's or blast furnace's sound, smoke and flame near the local pawn (T1 steps 8b and 8b2b,
+    // foundation.Furnace.Ambience): one display callback drives both.
+    void PlayFurnaceAmbience(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
     void AddFlash(const FBox& Box, FLinearColor Color, double Life, bool bCross = false);
     void Burst(const FVector& Center, FLinearColor Color, int32 Count, double Size, double Speed, uint32 Seed);
     void ShowNumber(const FVector& Location, const FString& Text, FColor Color);
@@ -363,7 +364,7 @@ private:
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
-    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardFireBlockHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
     TWeakObjectPtr<const AFoundationPawn> FootstepOwner;
     int32 HeardFootsteps = 0;
     // Seconds not yet spent on the furnaces' 20 Hz display ticks.

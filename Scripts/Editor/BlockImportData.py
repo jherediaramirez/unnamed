@@ -232,7 +232,13 @@ def build(root):
                 "offset_max_horizontal": offset.get("max_xz", 0.0), "offset_min_vertical": offset.get("min_y", 0.0),
                 "outline_moves_with_offset": offset.get("outline_moves", False),
                 "collision_moves_with_offset": offset.get("collision_moves", False),
-                "replaceable": replaceable.pop()}
+                "replaceable": replaceable.pop(), **state_tint_fields(block, entry)}
+
+    def state_tint_fields(block, entry):
+        """Per-state tint of a block whose tint follows its age (the pumpkin and melon stems' color_by_age: survival
+        B6a, Codex review 15 #5; survival2.r23.stem_color_rule); the others keep the block's one tint."""
+        by_age = (block.get("tint") or {}).get("color_by_age")
+        return {"state_tint": [color(by_age[int(s["properties"]["age"])]) for s in entry["states"]]} if by_age else {}
     def cube_light_fields(block, entry):
         """Per-state light of a full-cube or slab block, from the facts, when a state's light differs from the block's
         (a lit furnace, smoker, blast furnace, redstone ore or lamp); the others keep the block's one light."""
