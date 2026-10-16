@@ -9,7 +9,8 @@ class FFoundationBlockRegistry;
 class UHudAssets;
 
 using FHudCreativeInventory = TFunction<TArray<FHudCreativeStack>()>;
-using FHudCreativeWriter = TFunction<void(const FHudCreativeWrite&)>;
+// Sends one write to the authority; whether it was accepted.
+using FHudCreativeWriter = TFunction<bool(const FHudCreativeWrite&)>;
 
 // The creative inventory screen over the game viewport: Java 26.3's CreativeModeInventoryScreen art, layout and
 // clicks (FHudCreativeModel) at the HUD's GUI scale, with the dark backdrop container screens draw. The owner
@@ -74,7 +75,8 @@ private:
     };
     FFrame GetFrame(const FGeometry& Geometry) const;
     FIntPoint ToGui(const FGeometry& Geometry, const FPointerEvent& Event) const;
-    void Write(const TArray<FHudCreativeWrite>& Writes);
+    // Sends the writes; false when the authority refused a throw (a write to the outside slot).
+    bool Write(const TArray<FHudCreativeWrite>& Writes);
     const FSlateBrush* FindBrush(const FString& Id) const { return Art.Find(Id); }
 
     FHudCreativeModel Model;

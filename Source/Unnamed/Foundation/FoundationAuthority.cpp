@@ -2924,15 +2924,36 @@ FFoundationResult FFoundationAuthority::Execute(
     {
         const int32 Item = Rules.FindItem(Command.CreativeItem);
         const bool bClear = Command.CreativeItem.IsNone() || Command.CreativeCount <= 0;
+        // The slot outside the window throws the stack (the creative screen's outside click, as the survival screens'
+        // throws; QC RA1-1). With foundation.Items.Entities 0 it is refused, as their throw is.
+        const bool bThrow = Command.Slot == FFoundationContainerMenu::Outside;
         if (!Options.bCreativeInventory)
             Reject(Result, EFoundationReason::InvalidSlot);
-        else if (!Player->Inventory.GetSlot(Command.Slot))
+        else if (bThrow && bClear)
+            Reject(Result, EFoundationReason::NoItem);
+        else if (!bThrow && !Player->Inventory.GetSlot(Command.Slot))
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
         // Damage runs from 0 to the max damage, the durability bar's range (facts/durability_bar.json).
         else if (!bClear && (Command.CreativeDamage < 0 || Command.CreativeDamage > Rules.Items[Item].MaxDurability))
             Reject(Result, EFoundationReason::InvalidDamage);
+        else if (bThrow)
+        {
+            // Never in a slot, so it takes no instance id.
+            FFoundationItemInstance Stack;
+            Stack.Item = Item;
+            Stack.Count = Command.CreativeCount;
+            Stack.Damage = Command.CreativeDamage;
+            if (!Options.bItemEntities)
+                Reject(Result, EFoundationReason::DropDeferred);
+            else if (!Player->Facts.bAlive)
+                Reject(Result, EFoundationReason::Dead);
+            else if (!Throw(*Player, Stack, Stack.Count))
+                Reject(Result, EFoundationReason::NoSupply);
+            else
+                Result.Outcome = EFoundationOutcome::Committed;
+        }
         else
         {
             FFoundationInventory& Inventory = Player->Inventory;

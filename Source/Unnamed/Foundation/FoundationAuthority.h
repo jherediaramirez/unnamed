@@ -132,7 +132,7 @@ struct FFoundationCommand
     int32 Slot = 0;
     bool bWholeStack = false;
     // SetCreativeSlot: the item (None clears the slot), count and damage (the stack's own, as vanilla's creative slot
-    // packet carries the whole stack).
+    // packet carries the whole stack). Slot FFoundationContainerMenu::Outside throws the stack instead.
     FName CreativeItem;
     int32 CreativeCount = 0;
     int32 CreativeDamage = 0;

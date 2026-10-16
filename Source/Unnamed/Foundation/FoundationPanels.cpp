@@ -654,9 +654,9 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
         })
         .OnWrite([WeakLab, WeakPawn](const FHudCreativeWrite& Write)
         {
-            if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
+            return WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority() &&
                 WeakPawn->Interaction.SetCreativeSlot(*WeakLab->GetAuthority(), WeakPawn->Vitals, Write.Slot,
-                    Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage);
+                    Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage).IsCommitted();
         })
         .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
     // clang-format on

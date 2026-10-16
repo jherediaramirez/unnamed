@@ -104,11 +104,13 @@ FIntPoint SHudCreativeScreen::ToGui(const FGeometry& Geometry, const FPointerEve
     return FIntPoint(FMath::FloorToInt32(Local.X), FMath::FloorToInt32(Local.Y)) - Frame.Origin;
 }
 
-void SHudCreativeScreen::Write(const TArray<FHudCreativeWrite>& Writes)
+bool SHudCreativeScreen::Write(const TArray<FHudCreativeWrite>& Writes)
 {
-    if (!OnWrite) return;
+    bool bThrown = true;
+    if (!OnWrite) return bThrown;
     for (const FHudCreativeWrite& Write : Writes)
-        OnWrite(Write);
+        if (!OnWrite(Write) && Write.Slot == FFoundationContainerMenu::Outside) bThrown = false;
+    return bThrown;
 }
 
 FReply SHudCreativeScreen::OnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
@@ -131,8 +133,11 @@ FReply SHudCreativeScreen::OnMouseButtonDown(const FGeometry& Geometry, const FP
     else
     {
         Model.bFullInventory = FoundationInventory::IsFull();
-        Write(
-            Model.Click(Hit, Index, Event.IsShiftDown(), GetInventory ? GetInventory() : TArray<FHudCreativeStack>()));
+        // A refused throw (foundation.Items.Entities 0, a dead player) keeps the stack on the cursor (QC RA1-1).
+        const FHudCreativeStack Before = Model.Carried;
+        if (!Write(Model.Click(
+                Hit, Index, Event.IsShiftDown(), GetInventory ? GetInventory() : TArray<FHudCreativeStack>())))
+            Model.Carried = Before;
     }
     return FReply::Handled().CaptureMouse(SharedThis(this));
 }
