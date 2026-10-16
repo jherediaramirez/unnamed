@@ -80,6 +80,10 @@ private:
     FIntPoint ToGui(const FGeometry& Geometry, const FPointerEvent& Event) const;
     // Sends the writes; false when the authority refused a throw (a write to the outside slot).
     bool Write(const TArray<FHudCreativeWrite>& Writes);
+    FKey GetBoundKey(const TCHAR* Id, const FKey& Default) const;
+    // The inventory key closes; a hotbar key swaps the hovered slot with that hotbar slot. Whether Key was one.
+    bool PressInventory(const FKey& Key);
+    bool PressHotbar(const FKey& Key);
     const FSlateBrush* FindBrush(const FString& Id) const { return Art.Find(Id); }
 
     FHudCreativeModel Model;

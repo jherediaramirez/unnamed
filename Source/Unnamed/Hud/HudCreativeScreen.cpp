@@ -116,6 +116,12 @@ bool SHudCreativeScreen::Write(const TArray<FHudCreativeWrite>& Writes)
 
 FReply SHudCreativeScreen::OnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    // Another mouse button (a thumb button) acts as the inventory or hotbar binding it is set to, as a key does and as
+    // SHudContainerScreen's (QC RA1-4).
+    const FKey Pressed = Event.GetEffectingButton();
+    if (Pressed != EKeys::LeftMouseButton && Pressed != EKeys::RightMouseButton && Pressed != EKeys::MiddleMouseButton)
+        return !Model.IsSearch() && (PressInventory(Pressed) || PressHotbar(Pressed)) ? FReply::Handled()
+                                                                                      : FReply::Unhandled();
     Mouse = ToGui(Geometry, Event);
     const FHudCreativeHit Hit = Model.HitTest(Mouse);
     const FKey Button = Event.GetEffectingButton();
@@ -166,11 +172,9 @@ FReply SHudCreativeScreen::OnMouseWheel(const FGeometry& Geometry, const FPointe
 FReply SHudCreativeScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
-    // The inventory and hotbar keys are the player's bindings, as the survival screens' (QC RA1-4).
-    auto Bound = [this](const TCHAR* Id, const FKey& Default) { return GetKey ? GetKey(FName(Id)) : Default; };
-    if (Key == EKeys::Escape || (Key == Bound(TEXT("key.inventory"), EKeys::E) && !Model.IsSearch()))
+    if (Key == EKeys::Escape || (!Model.IsSearch() && PressInventory(Key)))
     {
-        if (OnClose) OnClose();
+        if (Key == EKeys::Escape && OnClose) OnClose();
         return FReply::Handled();
     }
     if (Model.IsSearch())
@@ -187,17 +191,36 @@ FReply SHudCreativeScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent&
         FocusTime = FPlatformTime::Seconds();
         return FReply::Handled();
     }
+    PressHotbar(Key);
+    return FReply::Handled();
+}
+
+FKey SHudCreativeScreen::GetBoundKey(const TCHAR* Id, const FKey& Default) const
+{
+    // The inventory and hotbar keys are the player's bindings, as the survival screens' (QC RA1-4).
+    return GetKey ? GetKey(FName(Id)) : Default;
+}
+
+bool SHudCreativeScreen::PressInventory(const FKey& Key)
+{
+    if (Key != GetBoundKey(TEXT("key.inventory"), EKeys::E)) return false;
+    if (OnClose) OnClose();
+    return true;
+}
+
+bool SHudCreativeScreen::PressHotbar(const FKey& Key)
+{
     static const FKey Numbers[] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six,
         EKeys::Seven, EKeys::Eight, EKeys::Nine};
     for (int32 Number = 0; Number < 9; ++Number)
-        if (Key == Bound(*FString::Printf(TEXT("key.hotbar.%d"), Number + 1), Numbers[Number]))
+        if (Key == GetBoundKey(*FString::Printf(TEXT("key.hotbar.%d"), Number + 1), Numbers[Number]))
         {
             Model.bFullInventory = FoundationInventory::IsFull();
             Write(Model.PressNumber(
                 Model.HitTest(Mouse), Number, GetInventory ? GetInventory() : TArray<FHudCreativeStack>()));
-            return FReply::Handled();
+            return true;
         }
-    return FReply::Handled();
+    return false;
 }
 
 FReply SHudCreativeScreen::OnKeyChar(const FGeometry& Geometry, const FCharacterEvent& Event)

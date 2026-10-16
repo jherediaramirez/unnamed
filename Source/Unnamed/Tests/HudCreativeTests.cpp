@@ -427,6 +427,14 @@ bool FHudCreativeKeysTest::RunTest(const FString&)
         Writes.Num() == 2 &&
             Writes.ContainsByPredicate([](const FHudCreativeWrite& Write)
                 { return Write.Slot == 3 && Write.Stack == FHudCreativeStack{TEXT("stone"), 5}; }));
+    // A hotbar key bound to a thumb button works as the key does (as SHudContainerScreen's).
+    Bindings.Add(TEXT("key.hotbar.5"), EKeys::ThumbMouseButton);
+    Writes.Reset();
+    Screen->OnMouseButtonDown(Geometry,
+        FPointerEvent(0, FVector2D::ZeroVector, FVector2D::ZeroVector, {EKeys::ThumbMouseButton},
+            EKeys::ThumbMouseButton, 0, FModifierKeysState()));
+    TestTrue(TEXT("a thumb button bound to hotbar 5 swaps with it"),
+        Writes.ContainsByPredicate([](const FHudCreativeWrite& Write) { return Write.Slot == 4; }));
     Press(EKeys::E);
     TestFalse(TEXT("E no longer closes"), bClosed);
     bClosed = false;
