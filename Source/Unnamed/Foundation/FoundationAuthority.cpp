@@ -3373,12 +3373,14 @@ bool FFoundationAuthority::UseCauldron(FFoundationPlayer& Player, const FFoundat
     }
     else
     {
-        After = Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
+        After =
+            Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
         NewItem = Rules.FindItem(BucketId);
         if (NewItem == INDEX_NONE) return false;
     }
     if (After != Before) World.Set(Hit.Cell, After);
-    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is held.
+    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is
+    // held.
     if (bTake || !bCreative) SwapBucket(Player, Command.Hand, Stack, NewItem, Hit.Cell, bCreative);
     ++BucketUses;
     Result.Outcome = EFoundationOutcome::Committed;
@@ -3696,7 +3698,10 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
     // cactus, campfire, in_fire, lava, ...) reaches the player some other way, without a source.
     const bool bBlockable = Attack.Type == EFoundationDamage::MobAttack ||
         Attack.Type == EFoundationDamage::PlayerAttack || Attack.Type == EFoundationDamage::Arrow;
-    if (!Player || !bBlockable || !IsBlocking(PlayerId) || Vitals.IsDead() || !(Attack.Amount > 0.f))
+    // The shield blocks the damage after difficulty scaling and wears by it (Codex review 34, finding 2; minecraft.wiki
+    // "Shield"): a Hard zombie's 3 is 4.5 to block, and on Peaceful there is no hit to block.
+    const float Damage = Vitals.ScaleDamage(Attack.Type, Attack.Amount);
+    if (!Player || !bBlockable || !IsBlocking(PlayerId) || Vitals.IsDead() || !(Damage > 0.f))
         return Vitals.Hurt(Attack.Type, Attack.Amount, Attack.Attacker);
     // The default damage reduction's horizontal_blocking_angle (90): the angle between the look and the direction to
     // the source, both horizontal (minecraft.wiki "Data component format/blocks_attacks"; the edge counts,
@@ -3709,7 +3714,7 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
     // Looking straight up or down, or a source at the feet, leaves no horizontal direction: not blocked (provisional).
     if (Look.IsZero() || ToSource.IsZero() || Angle > Blocks.AngleDegrees + 1e-4)
         return Vitals.Hurt(Attack.Type, Attack.Amount, Attack.Attacker);
-    const float Blocked = FMath::Clamp(Blocks.Base + Blocks.Factor * Attack.Amount, 0.f, Attack.Amount);
+    const float Blocked = FMath::Clamp(Blocks.Base + Blocks.Factor * Damage, 0.f, Damage);
     ++AttacksBlocked;
     FFoundationEvent Event;
     Event.Player = Player->Id;
@@ -3722,10 +3727,10 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
     AddEvent(Event);
     // item_damage: from the threshold on, base + factor x damage, floored (the shield's 1 + floor(damage) from 3;
     // minecraft.wiki "Shield", provisional), under lab tool wear and not in creative.
-    if (Attack.Amount >= Blocks.ItemDamageThreshold && Options.bToolWear &&
-        Vitals.Mode != EFoundationPlayerMode::Creative && Shield.MaxDurability > 0)
+    if (Damage >= Blocks.ItemDamageThreshold && Options.bToolWear && Vitals.Mode != EFoundationPlayerMode::Creative &&
+        Shield.MaxDurability > 0)
     {
-        const int32 Wear = FMath::FloorToInt32(Blocks.ItemDamageBase + Blocks.ItemDamageFactor * Attack.Amount);
+        const int32 Wear = FMath::FloorToInt32(Blocks.ItemDamageBase + Blocks.ItemDamageFactor * Damage);
         if (Wear > 0 && Player->Inventory.Wear(Player->Use.Hand, Wear, Shield.MaxDurability))
         {
             FFoundationEvent Broke = Event;
@@ -3749,8 +3754,8 @@ bool FFoundationAuthority::HurtPlayer(int32 PlayerId, FFoundationVitals& Vitals,
         AddEvent(Disabled);
         CancelUse(*Player);
     }
-    const float Rest = Attack.Amount - Blocked;
-    return Rest > 0.f && Vitals.Hurt(Attack.Type, Rest, Attack.Attacker);
+    const float Rest = Damage - Blocked;
+    return Rest > 0.f && Vitals.HurtScaled(Attack.Type, Rest, Attack.Attacker);
 }
 
 bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)

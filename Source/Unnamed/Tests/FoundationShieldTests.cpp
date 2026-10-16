@@ -282,4 +282,51 @@ bool FFoundationShieldMobHitsTest::RunTest(const FString&)
     return true;
 }
 
+// Codex review 34, finding 2: the shield blocks a mob's hit after difficulty scaling (minecraft.wiki "Shield": it
+// blocks the damage dealt and wears by it; "Difficulty": a mob's 3 is 2.5 on Easy, 4.5 on Hard, nothing on Peaceful).
+// Mutation: the block and the wear by the unscaled 3 (4 on Hard, 4 on Easy, a block on Peaceful).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationShieldMobHitsDifficultyTest, "Unnamed.Foundation.Shield.MobHitsDifficulty", ShieldTestFlags)
+
+bool FFoundationShieldMobHitsDifficultyTest::RunTest(const FString&)
+{
+    // The first Blocked event's amount, or -1.
+    const auto BlockedAmount = [](const FShieldLab& L)
+    {
+        const FFoundationEvent* Blocked = L.A.GetEvents().FindByPredicate(
+            [](const FFoundationEvent& Event) { return Event.Kind == EFoundationEventKind::Blocked; });
+        return Blocked ? Blocked->Amount : -1.f;
+    };
+    {
+        FShieldLab L;
+        if (!TestTrue(TEXT("a shield in hand"), L.Shield != INDEX_NONE)) return false;
+        L.Vitals.Difficulty = EFoundationDifficulty::Hard;
+        L.Raise(5);
+        FFoundationSimulation Simulation;
+        L.ZombieHit(Simulation, 0);
+        TestEqual(TEXT("Hard: health 20"), L.Vitals.Health, 20.f);
+        TestEqual(TEXT("Hard: 4.5 blocked"), BlockedAmount(L), 4.5f);
+        TestEqual(TEXT("Hard: worn 1 + floor(4.5) = 5"), L.ShieldDamage(), 5);
+    }
+    {
+        FShieldLab L;
+        L.Vitals.Difficulty = EFoundationDifficulty::Easy;
+        L.Raise(5);
+        FFoundationSimulation Simulation;
+        L.ZombieHit(Simulation, 0);
+        TestEqual(TEXT("Easy: 2.5 blocked"), BlockedAmount(L), 2.5f);
+        TestEqual(TEXT("Easy: 2.5 is under the threshold 3, no wear"), L.ShieldDamage(), 0);
+    }
+    {
+        FShieldLab L;
+        L.Vitals.Difficulty = EFoundationDifficulty::Peaceful;
+        L.Raise(5);
+        FFoundationSimulation Simulation;
+        L.ZombieHit(Simulation, 0);
+        TestTrue(TEXT("Peaceful: no hit, nothing blocked or worn"),
+            L.Vitals.Health == 20.f && L.Count(EFoundationEventKind::Blocked) == 0 && L.ShieldDamage() == 0);
+    }
+    return true;
+}
+
 #endif

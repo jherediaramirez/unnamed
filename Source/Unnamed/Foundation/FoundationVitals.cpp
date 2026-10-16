@@ -199,18 +199,24 @@ void FFoundationVitals::TickFood()
 
 bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount, const FString& Attacker)
 {
+    if (!(Amount > 0.f)) return false;
+    return HurtScaled(Type, ScaleDamage(Type, Amount), Attacker);
+}
+
+float FFoundationVitals::ScaleDamage(EFoundationDamage Type, float Amount) const
+{
+    if (!GetRule(Type).bScalesWithDifficulty) return Amount;
+    // Mobs cannot hurt a Peaceful player.
+    if (Difficulty == EFoundationDifficulty::Peaceful) return 0.f;
+    if (Difficulty == EFoundationDifficulty::Easy) return FMath::Min(Amount / 2.f + 1.f, Amount);
+    if (Difficulty == EFoundationDifficulty::Hard) return Amount * 3.f / 2.f;
+    return Amount;
+}
+
+bool FFoundationVitals::HurtScaled(EFoundationDamage Type, float Damage, const FString& Attacker)
+{
     const FDamageRule& Rule = GetRule(Type);
-    if (IsDead() || !(Amount > 0.f) || (IsInvulnerable() && !Rule.bBypassesInvulnerability)) return false;
-    float Damage = Amount;
-    if (Rule.bScalesWithDifficulty)
-    {
-        // Mobs cannot hurt a Peaceful player.
-        if (Difficulty == EFoundationDifficulty::Peaceful) return false;
-        if (Difficulty == EFoundationDifficulty::Easy)
-            Damage = FMath::Min(Damage / 2.f + 1.f, Damage);
-        else if (Difficulty == EFoundationDifficulty::Hard)
-            Damage = Damage * 3.f / 2.f;
-    }
+    if (IsDead() || !(Damage > 0.f) || (IsInvulnerable() && !Rule.bBypassesInvulnerability)) return false;
     // During the first half of the 20-tick cooldown a hit deals only what exceeds the last one.
     float Dealt = Damage;
     if (IsInHurtWindow())

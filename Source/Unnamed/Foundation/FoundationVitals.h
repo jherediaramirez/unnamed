@@ -141,6 +141,10 @@ struct UNNAMED_API FFoundationVitals
     // The whole hurt path: invulnerability, difficulty, damage cooldown, armor, absorption, exhaustion, death.
     // Attacker names the mob or player behind a mob or player attack in the death message (survival T6 20c).
     bool Hurt(EFoundationDamage Type, float Amount, const FString& Attacker = FString());
+    // The difficulty's share of the hurt path: Amount as the current difficulty scales it (0 for a mob's hit on a
+    // Peaceful player), and the rest of the path for a Damage already scaled (a shield's unblocked part).
+    float ScaleDamage(EFoundationDamage Type, float Amount) const;
+    bool HurtScaled(EFoundationDamage Type, float Damage, const FString& Attacker = FString());
     void Heal(float Amount);
     void Eat(int32 Nutrition, float SaturationGain);
     // Player exhaustion: ignored while invulnerable, capped at 40.
