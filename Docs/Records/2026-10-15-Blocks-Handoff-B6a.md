@@ -32,6 +32,9 @@ farmland moisture (hydration, drying, fresh farmland's revert) and the stem tint
 - **Pre-commit review:** Sonnet 5.5 on the diff only; re-run what fixes touch.
 - **Mutations:** `C:\dev\sandbox\b5-blocks\scripts\mutate.py` + `run-mutations.ps1` are the template (apply, build,
   targeted tests, revert with `touch`, final rebuild).
+- **Unity builds:** every anonymous-namespace helper gets a file-specific name (B5 met the clash: `FoundationChests.cpp`'s`n  `GetClockWise`/`IsSide`/`GetFacing` against the families' copies, C2084 once new files shifted the unity batches;
+  the families' copies are now `GetFamilyClockWise`/`IsFamilySide`/`GetFamilyFacing`, T2 19c renames the chest copies).
+  Grep each new helper name across `Source/Unnamed` before the final run.
 - **Never:** push, bare `git stash`, edit CLAUDE.md, re-record goldens or world hashes, hand-edit a DA_* asset.
 - **Measure lead context** with `node C:\dev\sandbox\b0-sounds\MeasureAgentUsage.mjs --session <id>`.
 

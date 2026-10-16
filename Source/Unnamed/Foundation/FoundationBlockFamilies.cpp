@@ -42,13 +42,13 @@ namespace
         return Tag.IsValid() && Block.Tags.HasTag(Tag);
     }
 
-    bool IsSide(EFoundationFace Face)
+    bool IsFamilySide(EFoundationFace Face)
     {
         return Face <= EFoundationFace::South;
     }
 
     // Seen from above: north, east, south, west.
-    EFoundationFace GetClockWise(EFoundationFace Face)
+    EFoundationFace GetFamilyClockWise(EFoundationFace Face)
     {
         switch (Face)
         {
@@ -65,7 +65,7 @@ namespace
 
     EFoundationFace GetCounterClockWise(EFoundationFace Face)
     {
-        return FoundationBlockPlacement::GetOpposite(GetClockWise(Face));
+        return FoundationBlockPlacement::GetOpposite(GetFamilyClockWise(Face));
     }
 
     bool IsSameAxis(EFoundationFace A, EFoundationFace B)
@@ -78,7 +78,7 @@ namespace
         return FName(FoundationGrid::FaceName(Face));
     }
 
-    EFoundationFace GetFacing(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
+    EFoundationFace GetFamilyFacing(const FFoundationBlockRegistry& Registry, FFoundationBlockState State)
     {
         const FName Value = Registry.GetValue(State, TEXT("facing"));
         for (int32 Face = 0; Face < 4; ++Face)
@@ -158,7 +158,7 @@ namespace
     // FenceGateBlock.connectsToDirection: a gate joins the side its closed bar points to.
     bool GateJoins(const FFoundationBlockRegistry& Registry, FFoundationBlockState Gate, EFoundationFace Toward)
     {
-        return IsSameAxis(GetClockWise(GetFacing(Registry, Gate)), Toward);
+        return IsSameAxis(GetFamilyClockWise(GetFamilyFacing(Registry, Gate)), Toward);
     }
 
     bool IsSturdyToward(
@@ -235,7 +235,7 @@ namespace
     FFoundationBlockState MakeStairShape(
         const FFoundationBlockRegistry& Registry, FFoundationBlockState State, const FIntVector& Cell, FGetState Get)
     {
-        const EFoundationFace Facing = GetFacing(Registry, State);
+        const EFoundationFace Facing = GetFamilyFacing(Registry, State);
         const FName Half = Registry.GetValue(State, TEXT("half"));
         auto SameHalfStair = [&Registry, &Half](FFoundationBlockState Other)
         {
@@ -245,16 +245,16 @@ namespace
         auto CanTakeShape = [&](EFoundationFace Side)
         {
             const FFoundationBlockState Other = Get(Cell + FoundationGrid::FaceOffset(Side));
-            return !SameHalfStair(Other) || GetFacing(Registry, Other) != Facing;
+            return !SameHalfStair(Other) || GetFamilyFacing(Registry, Other) != Facing;
         };
         const TCHAR* Shape = TEXT("straight");
         const FFoundationBlockState Front = Get(Cell + FoundationGrid::FaceOffset(Facing));
         const FFoundationBlockState Back =
             Get(Cell + FoundationGrid::FaceOffset(FoundationBlockPlacement::GetOpposite(Facing)));
-        if (const EFoundationFace FrontFacing = GetFacing(Registry, Front); SameHalfStair(Front) &&
+        if (const EFoundationFace FrontFacing = GetFamilyFacing(Registry, Front); SameHalfStair(Front) &&
             !IsSameAxis(FrontFacing, Facing) && CanTakeShape(FoundationBlockPlacement::GetOpposite(FrontFacing)))
             Shape = FrontFacing == GetCounterClockWise(Facing) ? TEXT("outer_left") : TEXT("outer_right");
-        else if (const EFoundationFace BackFacing = GetFacing(Registry, Back);
+        else if (const EFoundationFace BackFacing = GetFamilyFacing(Registry, Back);
             SameHalfStair(Back) && !IsSameAxis(BackFacing, Facing) && CanTakeShape(BackFacing))
             Shape = BackFacing == GetCounterClockWise(Facing) ? TEXT("inner_left") : TEXT("inner_right");
         return Registry.WithValue(State, TEXT("shape"), Shape);
@@ -373,7 +373,7 @@ namespace
         const FFoundationPlacementContext& Context)
     {
         const FFoundationBlockRegistry& Registry = World.GetRegistry();
-        const EFoundationFace Left = GetCounterClockWise(Facing), Right = GetClockWise(Facing);
+        const EFoundationFace Left = GetCounterClockWise(Facing), Right = GetFamilyClockWise(Facing);
         auto Read = [&World](const FIntVector& At)
         { return World.IsKnown(At) ? World.Get(At).State : FFoundationBlockState(); };
         auto CountFull = [&](EFoundationFace Side)
@@ -450,10 +450,10 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
     switch (Family)
     {
     case EFoundationBlockFamily::Stairs:
-        return IsSide(Toward) ? MakeStairShape(Registry, State, Cell, Get) : State;
+        return IsFamilySide(Toward) ? MakeStairShape(Registry, State, Cell, Get) : State;
     case EFoundationBlockFamily::Fence:
     case EFoundationBlockFamily::Pane:
-        if (!IsSide(Toward)) return State;
+        if (!IsFamilySide(Toward)) return State;
         return Registry.WithValue(State, SideName(Toward),
             Connects(Registry, Block, Family, Neighbour, Toward) ? TEXT("true") : TEXT("false"));
     case EFoundationBlockFamily::Wall:
@@ -462,7 +462,7 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
         bool Connected[4];
         for (int32 Side = 0; Side < 4; ++Side)
             Connected[Side] = Registry.GetValue(State, SideName(EFoundationFace(Side))) != NoSide;
-        if (IsSide(Toward)) Connected[int32(Toward)] = Connects(Registry, Block, Family, Neighbour, Toward);
+        if (IsFamilySide(Toward)) Connected[int32(Toward)] = Connects(Registry, Block, Family, Neighbour, Toward);
         const FFoundationBlockState Above =
             Toward == EFoundationFace::Up ? Neighbour : Get(Cell + FoundationGrid::FaceOffset(EFoundationFace::Up));
         return MakeWall(Registry, State, Connected, Above);
@@ -470,7 +470,7 @@ FFoundationBlockState FoundationBlockFamilies::UpdateShape(const FFoundationBloc
     case EFoundationBlockFamily::FenceGate:
     {
         // Walls on either side across the gate's facing lower it into the wall (VALUES "Fence gates").
-        if (!IsSide(Toward) || !IsSameAxis(GetClockWise(GetFacing(Registry, State)), Toward)) return State;
+        if (!IsFamilySide(Toward) || !IsSameAxis(GetFamilyClockWise(GetFamilyFacing(Registry, State)), Toward)) return State;
         const bool bInWall = IsWall(Registry, Neighbour) ||
             IsWall(Registry, Get(Cell + FoundationGrid::FaceOffset(FoundationBlockPlacement::GetOpposite(Toward))));
         return Registry.WithValue(State, TEXT("in_wall"), bInWall ? TEXT("true") : TEXT("false"));
@@ -523,7 +523,7 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
     // latter, the half top unless the click was on a top face.
     if (Family == EFoundationBlockFamily::Trapdoor)
     {
-        const bool bOnSide = IsSide(Context.ClickedFace) && !Context.bReplaceClicked;
+        const bool bOnSide = IsFamilySide(Context.ClickedFace) && !Context.bReplaceClicked;
         State = Registry.WithValue(State, TEXT("facing"),
             SideName(bOnSide ? Context.ClickedFace : FoundationBlockPlacement::GetOpposite(Look)));
         if (Context.bReplaceClicked)
@@ -561,13 +561,13 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
         const FFoundationBlockState Clicked =
             World.IsKnown(Context.ClickedCell) ? World.Get(Context.ClickedCell).State : FFoundationBlockState();
         if (!Context.bReplaceClicked && Registry.GetBlock(Clicked).Id == Block.Id &&
-            GetFacing(Registry, Clicked) == Context.ClickedFace)
+            GetFamilyFacing(Registry, Clicked) == Context.ClickedFace)
             return Registry.WithValue(State, TEXT("facing"), SideName(Context.ClickedFace));
         FFoundationBlockState First = State;
         bool bFirst = true;
         for (const EFoundationFace Toward : FoundationBlockPlacement::GetClickLooks(Context))
         {
-            if (!IsSide(Toward)) continue;
+            if (!IsFamilySide(Toward)) continue;
             const FFoundationBlockState Attached =
                 Registry.WithValue(State, TEXT("facing"), SideName(FoundationBlockPlacement::GetOpposite(Toward)));
             if (GetSurvival(World, Context.Destination, Attached) == EFoundationFamilySurvival::Survives)
@@ -682,7 +682,7 @@ bool FoundationBlockFamilies::Use(
         double Yaw, Pitch;
         FoundationBlockPlacement::GetYawPitch(Player.Facts.Aim, Yaw, Pitch);
         const EFoundationFace Look = FoundationBlockPlacement::GetHorizontalLook(Yaw);
-        if (GetFacing(Registry, State) == FoundationBlockPlacement::GetOpposite(Look))
+        if (GetFamilyFacing(Registry, State) == FoundationBlockPlacement::GetOpposite(Look))
             Used = Registry.WithValue(Used, TEXT("facing"), SideName(Look));
     }
     Writes.Emplace(Hit.Cell, Used);
@@ -791,7 +791,7 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
             Family == EFoundationBlockFamily::Ladder ? FName(TEXT("wall")) : Registry.GetValue(State, TEXT("face"));
         const EFoundationFace Toward = Face == TEXT("floor") ? EFoundationFace::Down
             : Face == TEXT("ceiling")                        ? EFoundationFace::Up
-                                      : FoundationBlockPlacement::GetOpposite(GetFacing(Registry, State));
+                                      : FoundationBlockPlacement::GetOpposite(GetFamilyFacing(Registry, State));
         const FIntVector Support = Cell + FoundationGrid::FaceOffset(Toward);
         if (!World.IsKnown(Support)) return EFoundationFamilySurvival::Unknown;
         return IsFaceSturdy(Registry, World.Get(Support).State, FoundationBlockPlacement::GetOpposite(Toward))
@@ -842,5 +842,5 @@ bool FoundationBlockFamilies::IsClimbable(const FFoundationBlockWorld& World, co
     if (!World.IsKnown(Below)) return false;
     const FFoundationBlockState Ladder = World.Get(Below).State;
     return GetStateFamily(Registry, Ladder) == EFoundationBlockFamily::Ladder &&
-        GetFacing(Registry, Ladder) == GetFacing(Registry, State);
+        GetFamilyFacing(Registry, Ladder) == GetFamilyFacing(Registry, State);
 }
