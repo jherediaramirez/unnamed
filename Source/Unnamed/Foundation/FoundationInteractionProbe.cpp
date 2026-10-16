@@ -1332,6 +1332,15 @@ void UFoundationRuntimeProbe::AddInteractionCases()
     { IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Hand.EatMotion"))->Set(Value, ECVF_SetByCode); };
     const TSharedRef<int32> CrumbsBefore = MakeShared<int32>(0), EatenAtRelease = MakeShared<int32>(0);
     const TSharedRef<bool> bWasEatingAtRelease = MakeShared<bool>(false);
+    // The held item's pivot rotation, and whether it is the EatMotion 0 ease's full pose (pitch -15, yaw -35, no
+    // swing); vanilla's eat transform (EatMotion 1) turns the pivot elsewhere, so the two motions tell apart.
+    auto EatPivot = [Lab]
+    {
+        const UStaticMeshComponent* Held = Lab->GetView()->GetHeldItem();
+        const USceneComponent* Pivot = Held ? Held->GetAttachParent() : nullptr;
+        return Pivot ? Pivot->GetRelativeRotation() : FRotator::ZeroRotator;
+    };
+    auto IsEasePose = [](const FRotator& Rotation) { return Rotation.Equals(FRotator(-15, -35, 0), .5); };
     auto StartEating = [this, Authority](int32 Food)
     {
         ResetPlayer({-750, 650, 0});
@@ -1407,13 +1416,17 @@ void UFoundationRuntimeProbe::AddInteractionCases()
         });
     AddCase(
         TEXT("eat capture on"), .8, [StartEating] { StartEating(10); },
-        [this, Lab, Capture, Player]
+        [this, Lab, Capture, Player, EatPivot, IsEasePose]
         {
             const double Blend = Lab->GetView()->GetEatBlend();
+            const FRotator Rotation = EatPivot();
             Record(TEXT("mid-way: the held apple is in its eating pose"),
-                Pawn->Interaction.bUsingItem && Blend > .99 && Player() && Player()->Use.bActive,
-                FString::Printf(TEXT("using %d, ticks %d of %d, blend %.2f"), Pawn->Interaction.bUsingItem,
-                    Pawn->Interaction.UseTicks, Pawn->Interaction.UseDuration, Blend));
+                Pawn->Interaction.bUsingItem && Blend > .99 && Player() && Player()->Use.bActive &&
+                    !IsEasePose(Rotation),
+                FString::Printf(TEXT("using %d, ticks %d of %d, blend %.2f, pivot %s (vanilla's eat transform, not "
+                                     "the ease)"),
+                    Pawn->Interaction.bUsingItem, Pawn->Interaction.UseTicks, Pawn->Interaction.UseDuration, Blend,
+                    *Rotation.ToString()));
             Capture(TEXT("eating-on"));
         });
     AddCase(TEXT("eat capture on hold"), .2, [] {}, [this] { PressKey(EKeys::RightMouseButton, false); });
@@ -1424,12 +1437,14 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             SetEatMotion(0);
             StartEating(10);
         },
-        [this, Lab, Capture]
+        [this, Lab, Capture, EatPivot, IsEasePose]
         {
             const double Blend = Lab->GetView()->GetEatBlend();
-            Record(TEXT("EatMotion 0: the step 10 ease shows mid-way"), Pawn->Interaction.bUsingItem && Blend > .99,
-                FString::Printf(TEXT("using %d, ticks %d, blend %.2f"), Pawn->Interaction.bUsingItem,
-                    Pawn->Interaction.UseTicks, Blend));
+            const FRotator Rotation = EatPivot();
+            Record(TEXT("EatMotion 0: the step 10 ease shows mid-way"),
+                Pawn->Interaction.bUsingItem && Blend > .99 && IsEasePose(Rotation),
+                FString::Printf(TEXT("using %d, ticks %d, blend %.2f, pivot %s"), Pawn->Interaction.bUsingItem,
+                    Pawn->Interaction.UseTicks, Blend, *Rotation.ToString()));
             Capture(TEXT("eating-ease"));
         });
     AddCase(
