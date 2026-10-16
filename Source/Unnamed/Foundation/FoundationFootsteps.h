@@ -28,6 +28,11 @@ namespace FoundationFootsteps
     constexpr float UnderPitchScale = .8f;
     // The block stepped on is 0.2 blocks below the feet (provisional, wiki).
     constexpr double SupportDepthCm = 20;
+    // The player's box edges are moved this far in before the support search, so a box touching a block's side does
+    // not stand on it.
+    constexpr double BoxInsetCm = .01;
+    // A collision top this far above the feet still holds them (the movement may rest a hair inside a block).
+    constexpr double TopToleranceCm = 1;
 
     struct FState
     {
@@ -57,9 +62,12 @@ namespace FoundationFootsteps
     // One reference step. A due step waits for the ground (a jump lands on it).
     UNNAMED_API EStep Advance(FState& State, const FFacts& Facts);
 
-    // What a step at FeetCm stands on: the cell 0.2 blocks below the feet, or under it a fence, wall or fence gate when
-    // that cell is air. bCombination: the cell above that one is a carpet or snow layer, which plays first (Primary),
-    // the support second (Under).
+    // What a step at FeetCm stands on: a #inside_step_sound_blocks block the feet are in (a lily pad: it alone plays);
+    // else the cell 0.2 blocks below the feet when its collision holds them, or under an air cell a fence, wall or
+    // fence gate; else (the centre past an edge, over air or water) the block under the player's box whose collision
+    // top is highest in those 0.2 blocks, then nearest the centre (minecraft.wiki, Java Edition 1.20, Sounds; the order
+    // between two holding blocks is provisional); else the centre's own block. bCombination: the cell above the support
+    // is a carpet or snow layer, which plays first (Primary), the support second (Under).
     struct FStepBlocks
     {
         FFoundationBlockState Primary;

@@ -11,6 +11,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Menu/MenuBassShelfPreset.h"
 #include "Menu/MenuPreferences.h"
+#include "UObject/UObjectGlobals.h"
 
 namespace
 {
@@ -33,10 +34,13 @@ void UMenuAudioSettings::Initialize(FSubsystemCollectionBase& Collection)
     Super::Initialize(Collection);
     Collection.InitializeDependency<UMenuPreferences>();
     BassPreset = NewObject<UMenuBassShelfPreset>(this);
+    MapLoadedHandle =
+        FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UMenuAudioSettings::HandleMapLoaded);
 }
 
 void UMenuAudioSettings::Deinitialize()
 {
+    FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(MapLoadedHandle);
     DetachBass();
     Super::Deinitialize();
 }
@@ -71,6 +75,7 @@ void UMenuAudioSettings::Tick(float DeltaTime)
 void UMenuAudioSettings::Apply()
 {
     const UMenuPreferences* Preferences = GetGameInstance()->GetSubsystem<UMenuPreferences>();
+    ++ApplyCount;
     AppliedRevision = Preferences ? Preferences->GetRevision() : 0;
     AppliedSwitch = CVarBass.GetValueOnGameThread();
     MasterVolume = float(FMath::Clamp(ReadNumber(Preferences, TEXT("sound_master"), 1.), 0., 1.));
@@ -85,9 +90,7 @@ void UMenuAudioSettings::Apply()
     if (bBassAttached && AttachedDeviceId != AppliedDeviceId) DetachBass();
     if (BassGainDb > 0)
     {
-        FMenuBassShelfSettings Settings;
-        Settings.GainDb = BassGainDb;
-        BassPreset->UpdateSettings(Settings);
+        SetBassPresetGain(*BassPreset, BassGainDb);
         if (!bBassAttached)
         {
             // Never two shelves: a removal first (nothing when absent), queued before the add.
@@ -99,6 +102,20 @@ void UMenuAudioSettings::Apply()
     }
     else
         DetachBass();
+}
+
+void UMenuAudioSettings::HandleMapLoaded(UWorld* World)
+{
+    // Every map load, any world: Apply only touches this game instance's world's device.
+    Apply();
+}
+
+void UMenuAudioSettings::SetBassPresetGain(UMenuBassShelfPreset& Preset, float GainDb)
+{
+    FMenuBassShelfSettings Settings;
+    Settings.GainDb = GainDb;
+    Preset.Settings = Settings;
+    Preset.UpdateSettings(Settings);
 }
 
 void UMenuAudioSettings::DetachBass()
