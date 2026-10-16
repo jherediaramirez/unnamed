@@ -1,4 +1,6 @@
 #include "Foundation/FoundationRuntimeProbe.h"
+#include "Components/StaticMeshComponent.h"
+#include "Foundation/FoundationArrowView.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationItemEntityView.h"
@@ -14,8 +16,8 @@
 // full cost: TestFoundationRuntime.ps1 -Editor -Suite smear -FullCostRendering). On the Playground's open ground a pig
 // and a cow walk across a still view at 2 m/s (driven: the floor gives A* no path), then again with the camera
 // following the pig; a porkchop and a crafting table fly across a still view, then lie bobbing; the held sword swings;
-// the player walks. A moving subject is shot the first frame it is drawn past a fixed point, so two builds' shots frame
-// the same moment. Shots are named <output>-smear-<name>.png, without the HUD.
+// the player walks; an arrow flies across a still view. A moving subject is shot the first frame it is drawn past a
+// fixed point, so two builds' shots frame the same moment. Shots are named <output>-smear-<name>.png, without the HUD.
 void UFoundationRuntimeProbe::AddSmearCases()
 {
 #if WITH_DEV_AUTOMATION_TESTS
@@ -25,7 +27,7 @@ void UFoundationRuntimeProbe::AddSmearCases()
     static constexpr double WalkCm = 10;
     struct FSubjects
     {
-        int32 Pig = 0, Cow = 0, Porkchop = 0, Table = 0;
+        int32 Pig = 0, Cow = 0, Porkchop = 0, Table = 0, Arrow = 0;
     };
     auto Subjects = MakeShared<FSubjects>();
     auto LookAt = [this](const FVector& Target)
@@ -57,16 +59,20 @@ void UFoundationRuntimeProbe::AddSmearCases()
         }
         return Item != nullptr;
     };
-    auto Counts = [this]
+    auto GetView = [this]() -> const UFoundationInteractionView*
     {
         const AFoundationPlayground* Lab = Cast<AFoundationPlayground>(Pawn->GetLab());
-        const UFoundationInteractionView* View = Lab ? Lab->GetView() : nullptr;
+        return Lab ? Lab->GetView() : nullptr;
+    };
+    auto Counts = [GetView]
+    {
+        const UFoundationInteractionView* View = GetView();
         const FFoundationMobView* Mobs = View ? View->GetMobView() : nullptr;
         const FFoundationItemEntityView* Drops = View ? View->GetItemEntityView() : nullptr;
         return FString::Printf(TEXT("mobs drawn %d, drops drawn %d"), Mobs ? Mobs->GetDrawnCount() : -1,
             Drops ? Drops->GetDrawnCount() : -1);
     };
-    // Clears the mobs and drops, the player standing at the spot.
+    // Clears the mobs, drops and arrows, the player standing at the spot.
     auto Clear = [this]
     {
         ResetPlayer(Spot);
@@ -74,28 +80,32 @@ void UFoundationRuntimeProbe::AddSmearCases()
         {
             A->ClearMobs();
             A->RemoveItemEntities();
+            A->RemoveArrows();
         }
     };
     // A case that runs Each every frame, takes the shot the first frame Ready holds (Frame counts from the case's
     // start), keeps running Each while the screenshot lands (the next frame), and records Detail as it was at the shot.
+    // It passes only if Shown held at the shot: its subjects were drawn (Codex review 41, R41-4).
     auto ShotWhen = [this](const FString& Name, TFunction<void()> Start, TFunction<void()> Each,
-                        TFunction<bool(int32 Frame)> Ready, TFunction<FString()> Detail)
+                        TFunction<bool(int32 Frame)> Ready, TFunction<FString()> Detail, TFunction<bool()> Shown)
     {
         struct FShot
         {
             int32 StartFrame = 0, ShotFrame = -1;
+            bool bShown = false;
             FString Note;
         };
         auto Shot = MakeShared<FShot>();
         AddCase(
             TEXT("smear: ") + Name, .1,
-            [this, Name, Start, Each, Ready, Detail, Shot]
+            [this, Name, Start, Each, Ready, Detail, Shown, Shot]
             {
                 Shot->StartFrame = Frames;
                 Shot->ShotFrame = -1;
+                Shot->bShown = false;
                 if (Start) Start();
                 bHoldCase = true;
-                FrameHook = [this, Name, Each, Ready, Detail, Shot]
+                FrameHook = [this, Name, Each, Ready, Detail, Shown, Shot]
                 {
                     if (Each) Each();
                     if (Shot->ShotFrame < 0 && Ready(Frames - Shot->StartFrame))
@@ -104,13 +114,18 @@ void UFoundationRuntimeProbe::AddSmearCases()
                             FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-smear-") + Name + TEXT(".png"), false,
                             false);
                         Shot->ShotFrame = Frames;
+                        Shot->bShown = Shown();
                         Shot->Note = Detail();
                     }
                     else if (Shot->ShotFrame >= 0 && Frames > Shot->ShotFrame + 1)
                         bHoldCase = false;
                 };
             },
-            [this, Name, Shot] { Record(TEXT("smear: ") + Name + TEXT(" shot"), Shot->ShotFrame >= 0, Shot->Note); });
+            [this, Name, Shot]
+            {
+                Record(TEXT("smear: ") + Name + TEXT(" shot, its subjects drawn"), Shot->ShotFrame >= 0 && Shot->bShown,
+                    Shot->Note + (Shot->bShown ? TEXT("") : TEXT("; not drawn at the shot")));
+            });
     };
 
     // 1-3: the pig walks across the view, left to right 4 m away, the cow behind it the other way, facing where they
@@ -156,6 +171,11 @@ void UFoundationRuntimeProbe::AddSmearCases()
         return FString::Printf(
             TEXT("pig drawn at %s, cow at %s; %s"), *Pig.ToCompactString(), *Cow.ToCompactString(), *Counts());
     };
+    auto MobsShown = [GetView]
+    {
+        const UFoundationInteractionView* View = GetView();
+        return View && View->GetMobView() && View->GetMobView()->GetDrawnCount() == 2;
+    };
     ShotWhen(
         TEXT("1-mobs-still-camera"),
         [Place, LookAt]
@@ -163,8 +183,8 @@ void UFoundationRuntimeProbe::AddSmearCases()
             Place();
             LookAt(Spot + FVector(450, 0, 60));
         },
-        Walk, PigPast(-100), MobsDetail);
-    ShotWhen(TEXT("2-mobs-still-camera"), nullptr, Walk, PigPast(60), MobsDetail);
+        Walk, PigPast(-100), MobsDetail, MobsShown);
+    ShotWhen(TEXT("2-mobs-still-camera"), nullptr, Walk, PigPast(60), MobsDetail, MobsShown);
     // The same walk with the camera turning to follow the pig: the ground and the cow sweep past it.
     ShotWhen(
         TEXT("3-mobs-camera-follows-pig"), Place,
@@ -174,7 +194,7 @@ void UFoundationRuntimeProbe::AddSmearCases()
             FVector Pig;
             if (MobAt(Subjects->Pig, Pig)) LookAt(Pig + FVector(50, 0, 60));
         },
-        PigPast(-100), MobsDetail);
+        PigPast(-100), MobsDetail, MobsShown);
 
     // 4-5: a porkchop (an extruded sprite) and a crafting table (a block) thrown across a still view, out of the
     // player's reach; shot as the porkchop passes 1 m left of the view's centre line, then lying (bobbing and
@@ -196,6 +216,11 @@ void UFoundationRuntimeProbe::AddSmearCases()
         return FString::Printf(TEXT("porkchop drawn at %s (age %d), crafting table at %s; %s"),
             *Porkchop.ToCompactString(), Age, *Table.ToCompactString(), *Counts());
     };
+    auto DropsShown = [GetView]
+    {
+        const UFoundationInteractionView* View = GetView();
+        return View && View->GetItemEntityView() && View->GetItemEntityView()->GetDrawnCount() == 2;
+    };
     ShotWhen(
         TEXT("4-drops-fly"),
         [this, Subjects]
@@ -215,7 +240,7 @@ void UFoundationRuntimeProbe::AddSmearCases()
             int32 Age = 0;
             return ItemAt(Subjects->Porkchop, At, Age) && At.Y >= Spot.Y - 100;
         },
-        DropsDetail);
+        DropsDetail, DropsShown);
     ShotWhen(
         TEXT("5-drops-lie"), nullptr, nullptr,
         [ItemAt, Subjects](int32)
@@ -224,7 +249,7 @@ void UFoundationRuntimeProbe::AddSmearCases()
             int32 Age = 0;
             return ItemAt(Subjects->Porkchop, At, Age) && Age >= 50;
         },
-        DropsDetail);
+        DropsDetail, DropsShown);
 
     // 6-7: the held iron sword (slot 3) mid-swing 4 frames after an attack into the air, the view still; then walking
     // forward with it for 0.75 s.
@@ -246,6 +271,16 @@ void UFoundationRuntimeProbe::AddSmearCases()
             Player ? *A->GetHandItem(*Player, EFoundationHand::Main).Id.ToString() : TEXT("?"),
             *Pawn->GetActorLocation().ToCompactString(), *Controller->GetControlRotation().ToCompactString());
     };
+    // The iron sword held and its mesh drawn.
+    auto SwordShown = [this, GetView]
+    {
+        const UFoundationInteractionView* View = GetView();
+        const UStaticMeshComponent* Held = View ? View->GetHeldItem() : nullptr;
+        const FFoundationAuthority* A = Pawn->GetAuthority();
+        const FFoundationPlayer* Player = A ? A->FindPlayer(Pawn->Interaction.PlayerId) : nullptr;
+        return Held && Held->IsVisible() && Held->GetStaticMesh() && Player &&
+            A->GetHandItem(*Player, EFoundationHand::Main).Id == TEXT("iron_sword");
+    };
     ShotWhen(
         TEXT("6-sword-swing"),
         [this]
@@ -253,10 +288,67 @@ void UFoundationRuntimeProbe::AddSmearCases()
             PressKey(EKeys::LeftMouseButton, true);
             PressKey(EKeys::LeftMouseButton, false);
         },
-        nullptr, [](int32 Frame) { return Frame >= 4; }, HeldDetail);
+        nullptr, [](int32 Frame) { return Frame >= 4; }, HeldDetail, SwordShown);
     ShotWhen(
         TEXT("7-walking"), [this] { PressKey(EKeys::W, true); }, nullptr, [](int32 Frame) { return Frame >= 45; },
-        HeldDetail);
+        HeldDetail, SwordShown);
+
+    // 8-9: an arrow shot across a still view 4.5 m away, left to right, at a weak draw's speed (0.6 blocks per tick)
+    // and without spread; shot as it passes 1.2 m left of the view's centre line, then 0.8 m right of it.
+    AddCase(
+        TEXT("smear: arrow setup"), .6,
+        [Clear, LookAt]
+        {
+            Clear();
+            LookAt(Spot + FVector(450, 0, 120));
+        },
+        [] {});
+    auto ArrowAt = [this, Drawn, Subjects](FVector& OutCm)
+    {
+        const FFoundationAuthority* A = Pawn->GetAuthority();
+        const FFoundationArrow* Arrow = A ? A->GetArrows().FindByPredicate([Subjects](const FFoundationArrow& Each)
+                                                { return Each.Id == Subjects->Arrow; })
+                                          : nullptr;
+        if (Arrow) OutCm = Drawn(Arrow->PreviousLocalCm, Arrow->LocalCm);
+        return Arrow != nullptr;
+    };
+    auto ArrowPast = [ArrowAt](double Y)
+    {
+        return [ArrowAt, Y](int32)
+        {
+            FVector At;
+            return ArrowAt(At) && At.Y >= Spot.Y + Y;
+        };
+    };
+    auto ArrowDetail = [GetView, ArrowAt]
+    {
+        FVector At(0);
+        const bool bFound = ArrowAt(At);
+        const UFoundationInteractionView* View = GetView();
+        const FFoundationArrowView* Arrows = View ? View->GetArrowView() : nullptr;
+        return FString::Printf(TEXT("arrow %s at %s; arrows drawn %d"), bFound ? TEXT("drawn") : TEXT("gone"),
+            *At.ToCompactString(), Arrows ? Arrows->GetDrawnCount() : -1);
+    };
+    auto ArrowShown = [GetView]
+    {
+        const UFoundationInteractionView* View = GetView();
+        return View && View->GetArrowView() && View->GetArrowView()->GetDrawnCount() == 1;
+    };
+    ShotWhen(
+        TEXT("8-arrow-flies"),
+        [this, Subjects]
+        {
+            FFoundationAuthority* A = Pawn->GetAuthority();
+            if (!A) return;
+            FFoundationArrowShot Shot;
+            Shot.FromCm = Spot + FVector(450, -520, 170);
+            Shot.Direction = FVector(0, 1, .3).GetSafeNormal();
+            Shot.SpeedBlocks = .6f;
+            Shot.Inaccuracy = 0;
+            Subjects->Arrow = A->ShootArrow(Shot);
+        },
+        nullptr, ArrowPast(-120), ArrowDetail, ArrowShown);
+    ShotWhen(TEXT("9-arrow-flies-on"), nullptr, nullptr, ArrowPast(80), ArrowDetail, ArrowShown);
     AddCase(
         TEXT("smear: restore"), .2,
         [this, Clear]

@@ -126,6 +126,9 @@ bool FFoundationArrowView::Prepare()
     Arrows->SetMaterial(0, Skin);
     // M_Mob's custom data 0 is the hurt overlay: none.
     Arrows->SetNumCustomDataFloats(1);
+    // K-PLAYER-7, as the mobs' parts: the instances move, not the component, so each keeps its previous transform and
+    // the engine writes the arrows' motion vectors (without them the anti-aliasing smeared a flying arrow).
+    Arrows->SetHasPerInstancePrevTransforms(true);
     Arrows->SetMobility(EComponentMobility::Movable);
     Arrows->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Arrows->SetCanEverAffectNavigation(false);
@@ -162,8 +165,20 @@ void FFoundationArrowView::Update(const FFoundationAuthority& Authority, const A
     {
         const FFoundationArrow& Arrow = All[Wanted[Slot].Value];
         const FVector At = Origin + FMath::Lerp(Arrow.PreviousLocalCm, Arrow.LocalCm, Alpha);
-        Arrows->UpdateInstanceTransformById(Ids[Slot], FTransform(FRotator(Arrow.Pitch, Arrow.Yaw, 0), At), true);
+        const FTransform Transform(FRotator(Arrow.Pitch, Arrow.Yaw, 0), At);
+        // An arrow new to its slot starts still; one drawn there last frame moves from where it was.
+        FTransform Previous = Transform;
+        if (SlotArrows.IsValidIndex(Slot) && SlotArrows[Slot] == Arrow.Id)
+            Arrows->GetInstanceTransform(Arrows->GetInstanceIndexForId(Ids[Slot]), Previous, true);
+        Arrows->SetPreviousTransformById(Ids[Slot], Previous, true);
+        Arrows->UpdateInstanceTransformById(Ids[Slot], Transform, true);
+        if (SlotArrows.IsValidIndex(Slot))
+            SlotArrows[Slot] = Arrow.Id;
+        else
+            SlotArrows.Add(Arrow.Id);
     }
+    // The slots past the last drawn are hidden: an arrow drawn there later is new to its slot.
+    SlotArrows.SetNum(Wanted.Num());
     for (int32 Slot = Wanted.Num(); Slot < Shown; ++Slot)
         Arrows->UpdateInstanceTransformById(Ids[Slot], FTransform(FQuat::Identity, Viewer, FVector::ZeroVector), true);
     Shown = Drawn = Wanted.Num();

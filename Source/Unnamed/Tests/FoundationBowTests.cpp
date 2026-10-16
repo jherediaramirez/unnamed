@@ -1,11 +1,14 @@
 #include "Misc/AutomationTest.h"
+#include "Engine/World.h"
 #include "Foundation/FoundationArrowView.h"
 #include "Foundation/FoundationArrows.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationMobAssets.h"
+#include "GameFramework/Actor.h"
 #include "UnnamedProjectSettings.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -515,6 +518,64 @@ bool FFoundationArrowModelTest::RunTest(const FString&)
     AddInfo(FString::Printf(TEXT("arrow model: %d corners on the back plane, bounds %s"), Back, *Bounds.ToString()));
     TestTrue(TEXT("the back's plane at -61.875 cm, its corners 15.91 cm out"),
         Back >= 8 && FMath::IsNearlyEqual(Bounds.Max.Z, 11.25 * UE_DOUBLE_SQRT_2, .01));
+    return true;
+}
+
+// K-PLAYER-7 (the smear fix, arrows): the arrows are instances of one component that move, not the component, so it
+// keeps per-instance previous transforms (with them the engine writes the arrows' motion vectors; without them TSR took
+// a flying arrow for still scenery and smeared it). An arrow drawn in its slot again moves from last frame's transform;
+// one new to its slot starts still. Drawn by FFoundationArrowView in a bare world from DA_Projectiles' model.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationArrowMotionVectorsTest, "Unnamed.Foundation.Arrows.MotionVectors", BowTestFlags)
+bool FFoundationArrowMotionVectorsTest::RunTest(const FString&)
+{
+    FBowLab Lab;
+    Lab.Shoot(FVector(0, 0, 500), FVector::ForwardVector);
+    // A bare world, never begun, rooted while the test holds it (no world context, so DestroyWorld(false)).
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (World) World->AddToRoot();
+    AActor* Owner = World ? World->SpawnActor<AActor>() : nullptr;
+    if (TestNotNull(TEXT("an actor"), Owner))
+    {
+        USceneComponent* Root = NewObject<USceneComponent>(Owner);
+        Owner->SetRootComponent(Root);
+        Root->RegisterComponent();
+        FFoundationArrowView View(*NewObject<UFoundationInteractionView>(Owner));
+        // Slot 0 (the first instance): its transform and previous transform, in the world.
+        FTransform Now, Previous;
+        auto Slot0 = [Owner, &Now, &Previous]
+        {
+            const auto* Component = Owner->FindComponentByClass<UInstancedStaticMeshComponent>();
+            return Component && Component->GetInstanceTransform(0, Now, true) &&
+                Component->GetInstancePrevTransform(0, Previous, true);
+        };
+        View.Update(Lab.A, nullptr, 1);
+        const auto* Arrows = Owner->FindComponentByClass<UInstancedStaticMeshComponent>();
+        if (TestTrue(TEXT("the arrow is drawn"), View.GetDrawnCount() == 1 && Arrows && Slot0()))
+        {
+            TestEqual(TEXT("every instance has a previous transform"), Arrows->PerInstancePrevTransform.Num(),
+                Arrows->GetInstanceCount());
+            TestTrue(TEXT("drawn first: still"), Previous.Equals(Now, 1e-3));
+            const FTransform First = Now;
+            // A step on, it has flown on.
+            Lab.NextStep();
+            View.Update(Lab.A, nullptr, 1);
+            Slot0();
+            TestTrue(TEXT("flying: the previous transform is last frame's"), Previous.Equals(First, 1e-3));
+            TestTrue(TEXT("flying: it moved since"), FVector::Dist(Now.GetLocation(), Previous.GetLocation()) > 100);
+            // Another arrow takes the slot: it starts still.
+            Lab.A.RemoveArrows();
+            Lab.Shoot(FVector(0, 300, 500), FVector::ForwardVector);
+            View.Update(Lab.A, nullptr, 1);
+            Slot0();
+            TestTrue(TEXT("a new arrow in the slot: still"), Previous.Equals(Now, 1e-3));
+        }
+    }
+    if (World)
+    {
+        World->RemoveFromRoot();
+        World->DestroyWorld(false);
+    }
     return true;
 }
 #endif

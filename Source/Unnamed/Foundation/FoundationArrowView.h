@@ -40,6 +40,8 @@ private:
     UFoundationInteractionView& View;
     UInstancedStaticMeshComponent* Arrows = nullptr;
     TArray<FPrimitiveInstanceId> Ids;
+    // The arrow each slot drew last frame (its id), for the motion vectors.
+    TArray<int32> SlotArrows;
     int32 Shown = 0;
     bool bTried = false;
     int32 Drawn = 0;
