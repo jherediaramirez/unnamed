@@ -671,6 +671,12 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     const FFoundationOpenMenu& Open = Player.OpenMenu;
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
+    // A container's switch at 0 takes its menu away, as it takes the block's use (QC RA1-2): the next step closes it,
+    // and a click on it is refused.
+    if ((IsFurnaceMenu(Open.Kind) && !Options.bFurnace) ||
+        (Open.Kind == EFoundationMenuKind::Barrel && !Options.bBarrel) ||
+        ((Open.Kind == EFoundationMenuKind::Chest || Open.Kind == EFoundationMenuKind::LargeChest) && !Options.bChest))
+        return false;
     // Every block entity the menu's slots live in (a double chest: both halves, still paired; T1 step 18-chest).
     TArray<FIntVector, TInlineAllocator<2>> Cells;
     if (UsesBlockEntity(Open.Kind) &&
@@ -840,15 +846,18 @@ void FFoundationAuthority::StepFurnaces()
             Gone.Add(Cell);
             continue;
         }
-        if (Entity.Kind != EFoundationBlockEntityKind::Furnace || !Options.bFurnace) continue;
-        FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
+        if (Entity.Kind != EFoundationBlockEntityKind::Furnace) continue;
+        if (Options.bFurnace)
+            FoundationFurnace::Tick(
+                Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
         // The block's lit state follows the fuel on the same tick (survival.r3.furnace_ticks: lit at tick 1, unlit at
         // fuel + 1; its light comes with the state). Same block id, so the entity stays; a plain state change, as an
         // axe's strip is, with no place event. Written after the loop, so no world hook runs mid-iteration. Switched
-        // off mid-burn, a block keeps its last lit state, as its entity keeps its timers.
+        // off mid-burn, the block goes unlit (QC RA1-2) while its entity keeps its timers; back on, it lights again.
         const FFoundationBlockState State = World.Get(Cell).State;
         static const FName Lit(TEXT("lit")), True(TEXT("true")), False(TEXT("false"));
-        const FFoundationBlockState Want = World.GetRegistry().WithValue(State, Lit, Entity.IsLit() ? True : False);
+        const FFoundationBlockState Want =
+            World.GetRegistry().WithValue(State, Lit, Options.bFurnace && Entity.IsLit() ? True : False);
         if (Want != State) Relit.Add({Cell, Want});
     }
     for (const FIntVector& Cell : Gone)

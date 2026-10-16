@@ -549,6 +549,27 @@ bool FFoundationFurnaceSwitchTest::RunTest(const FString&)
             TestTrue(FString::Printf(TEXT("%s on: its entity, nothing placed"), Block),
                 L.A.BlockEntities.Find(L.Aimed) && L.Inv().GetHand(EFoundationHand::Main).Count == 4);
         }
+        // QC RA1-2: switched off with its menu open and burning, the menu closes at the next step, a click on it is
+        // refused, and the block goes unlit (its entity keeps its timers for the switch's return).
+        {
+            FFurnaceLab L(Block);
+            // An input each block cooks: the smoker only food.
+            L.Load(Kind == EFoundationMenuKind::Smoker ? TEXT("beef") : TEXT("raw_iron"), 4, TEXT("coal"), 1);
+            const int32 Id = L.Open();
+            L.Steps(5);
+            TestTrue(
+                FString::Printf(TEXT("%s: open and lit"), Block), Id > 0 && L.P().OpenMenu.IsOpen() && L.IsBlockLit());
+            L.A.Options.bFurnace = false;
+            TestFalse(FString::Printf(TEXT("%s off: a click on it is refused before the step"), Block),
+                L.Click(Id, 0, 0, EFoundationClickType::Pickup).IsCommitted());
+            L.Steps(1);
+            TestFalse(FString::Printf(TEXT("%s off: the open menu closes"), Block), L.P().OpenMenu.IsOpen());
+            TestTrue(FString::Printf(TEXT("%s off: the block goes unlit, the entity keeps its timers"), Block),
+                !L.IsBlockLit() && L.F().IsLit());
+            L.A.Options.bFurnace = true;
+            L.Steps(1);
+            TestTrue(FString::Printf(TEXT("%s back on: lit again"), Block), L.IsBlockLit());
+        }
     }
     return true;
 }

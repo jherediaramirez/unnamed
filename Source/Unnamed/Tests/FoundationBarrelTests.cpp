@@ -280,6 +280,19 @@ bool FFoundationBarrelSwitchTest::RunTest(const FString&)
     TestFalse(TEXT("off: no menu"), L.P().OpenMenu.IsOpen());
     TestNull(TEXT("off: no entity"), L.A.BlockEntities.Find(L.Aimed));
     TestFalse(TEXT("off: stays closed"), L.IsOpenState());
+    // QC RA1-2: switched off with its menu open, a click on it is refused at once and the menu closes at the next step.
+    {
+        FBarrelLab Open;
+        Open.B().Items[0] = Open.Stack(TEXT("dirt"), 3);
+        const int32 Id = Open.Open();
+        TestTrue(TEXT("open"), Id > 0 && Open.P().OpenMenu.IsOpen());
+        Open.A.Options.bBarrel = false;
+        TestFalse(TEXT("off: a click on it is refused before the step"),
+            Open.Click(Id, 0, 0, EFoundationClickType::Pickup).IsCommitted());
+        TestTrue(TEXT("off: the barrel keeps its slot"), Open.Holds(Open.B().Items[0], TEXT("dirt"), 3));
+        Open.Steps(1);
+        TestFalse(TEXT("off: the open menu closes"), Open.P().OpenMenu.IsOpen());
+    }
     return true;
 }
 
