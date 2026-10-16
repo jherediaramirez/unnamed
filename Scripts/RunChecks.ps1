@@ -276,8 +276,9 @@ Step 'hashes' {
         New-Item -ItemType Directory -Path $dir | Out-Null
         $userDir=Join-Path ([IO.Path]::GetTempPath()) ('UnnamedChecksProfile-'+[guid]::NewGuid())
         $commands=@(foreach($preset in 'overworld','large_biomes','amplified'){"voxel.Bench Columns 8 $preset"})+'Automation RunTests Unnamed.Voxel.NoSuchTestRunChecks'
-        $process=Start-Process -FilePath $editorCmd -WindowStyle Hidden -PassThru -ArgumentList @("$root\Unnamed.uproject",'-unattended','-nop4','-NullRHI','-nosplash',
-            ('"-ExecCmds='+($commands -join ', ')+'"'),'"-TestExit=Automation Test Queue Empty"',"-abslog=$dir\native.log","-UserDir=$userDir/")
+        # Start-Process joins its arguments without quoting them, so paths are quoted here (a folder name may have spaces).
+        $process=Start-Process -FilePath $editorCmd -WindowStyle Hidden -PassThru -ArgumentList @(('"'+"$root\Unnamed.uproject"+'"'),'-unattended','-nop4','-NullRHI','-nosplash',
+            ('"-ExecCmds='+($commands -join ', ')+'"'),'"-TestExit=Automation Test Queue Empty"',('"-abslog='+"$dir\native.log"+'"'),('"-UserDir='+"$userDir/"+'"'))
         $deadline=(Get-Date).AddMinutes(25); $hashesOut=$false
         try{
             # Each preset logs its block hashes, then its biome hashes. Bench editors have sat idle after them (items S5, S7).
