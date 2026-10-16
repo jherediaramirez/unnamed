@@ -1,6 +1,6 @@
-# The full-body player, M1a: the Unnamed Player in both views (2026-10-16)
+# The full-body player, M1: the Unnamed Player in both views, and the strike in its hand (2026-10-16)
 
-Branch `feature/fp-body-m1a`, merged into `main`. The brief was `Resources/PlayerBody/FP-BODY-M1-BRIEF.md`; the plan is
+M1a on branch `feature/fp-body-m1a`, M1b on `feature/fp-body-m1b`, each merged into `main`. The brief was `Resources/PlayerBody/FP-BODY-M1-BRIEF.md`; the plan is
 `Resources/PlayerBody/unnamed-fp-tp-integration-plan-20261015/PLAN.md` (sections 1, 3, 5, 7). Design:
 [Foundation architecture](../Foundation/Architecture.md#player-body-and-the-third-person-views).
 
@@ -90,9 +90,52 @@ picked setting B (drop 14, anchor 18-30, back 22, twist 1): 23.1 cm.
 - Swimming, the low pose fills much of the view.
 - Held items still draw at the camera (LEGACY-HAND): looking down you see the body's arm and the floating item.
 
+## M1b: the pickaxe in the real hand
+
+- **What changed.** The pickaxes are body-held (`FoundationBodyGrip::IsBodyHeld`).
+  - `SM_UP_Pickaxe` hangs on `hand_r_grip` of both bodies with an identity transform (its origin and axes are the
+    grip's).
+  - It is drawn with flat colours on the dev grid material: a wood handle, the head tinted by tier (provisional; the
+    tool has no texture).
+  - The world body's tool casts the owner's shadow in first person; the copy's tool is owner-only.
+  - The view hides its camera pickaxe while the owner sees the body's (`AFoundationPawn::IsMainItemInBody`). Other
+    items stay on the camera (LEGACY-HAND).
+- **The strike.** `FFoundationBodyAction` runs StrikeA on the view's swing clock:
+  - A press starts it at the interaction's step. Time = (step + alpha - start) / 6 x 0.3 s, with the pawn's alpha, so
+    frame 9 (the contact) is drawn as step start + 3 begins, the tick the hit lands.
+  - It repeats while mining, and a new press restarts it with a 0.05 s crossfade. It fades back to `UP_Pickaxe_Hold`
+    over 0.1 s; the hold fades with the item over 0.08 s.
+  - The proxy blends it over the gait with PLAN 5's mask: spine_01 half and spine_02 whole in component space; neck,
+    head, clavicles, arms and hands whole; pelvis and legs keep the gait.
+  - The head look leaves the spine during actions. The chest aims at the view (pitch -45..35, yaw +-30; proposed). The
+    first-person corrections run after it.
+- **Verification.** Native `Unnamed.Foundation.Body.Strike` and `.UpperBody`; the full native suite 591 of 591. Body suite 95 of 95 at 30, 60 and
+  120 fps (`Tests/Evidence/2026-10-16/Playground-body/Runtime-M1b2-193830-{30,60,120}`):
+
+| Check (PLAN 7) | Target | Measured (30 / 60 / 120 fps) |
+|---|---|---|
+| Socket read back | <= 0.05 cm | 0.00000 cm, 0.0000 deg on both bodies |
+| Strike start | on the swing start step | the body's start step equals the view's swing clock's |
+| Contact timing | frame 9 drawn in the frame containing step start + 3 (+-1 at 30 fps) | the same frame at every rate |
+| No doubled pickaxe | in either view | exactly one drawn in the hold, in the back view and at frames 0-15 in both views |
+| Arms vs the approved strike | <= 0.5 deg arm-local | <= 0.039 / 0.043 / 0.051 deg (frames 0-15, both bodies) |
+| Mining unchanged | results and timings | the stone breaks in 8 steps with either set |
+| Rollback | `Body.Set 0` = today's camera pickaxe | the camera's pickaxe, no body tool |
+
+  - The tip at the contact frame lands 1.3-2.1 cm from the authored target: the gait's half share of spine_01 and the
+    aim are blended in.
+  - In first person the tool comes no closer than 21.9-22.7 cm to the eye.
+  - Stills: `runtime-60-body-strike-{fp,back}-frame03..15.png` (paused at exact frames), `strike-contact.png`.
+  - Not made: the plan's 60 fps and 1/3-speed MP4s. The stills at exact frames and the arm-angle check stand in for
+    them.
+- **For Jesus to judge.**
+  - The tool's look: flat-coloured blocks, or the game's own item sprite.
+  - The aim limits.
+  - The wind-up (frame 6) brings the fist close past the camera in first person.
+
 ## Handoff
 
-M1b: StrikeA through the real right hand (`hand_r_grip`, `SM_UP_Pickaxe`) on the 6-step swing clock, contact frame 9
-at step 3, the camera pickaxe hidden while the body holds it (PLAN 7). Verify with `-Suite body` at 30/60/120 and the
-native suite. The swim and P1 clips are authored in a separate session
-(`Resources/PlayerBody/unnamed-player-clips-v003-20261016/`, uncommitted until Jesus reviews).
+M2: the rest of the existing library — Rise/Firm landings, turns in place, the A-B-A-C strike chain, contact and
+gesture, the other tools, offhand hold, empty-hand arm, the swim/flight/death placeholders (PLAN 7). The new P1 clips
+(swim, tread, use, eat, death) are authored in `Resources/PlayerBody/unnamed-player-clips-v003-20261016/`
+(uncommitted until Jesus reviews); importing them is M3's.

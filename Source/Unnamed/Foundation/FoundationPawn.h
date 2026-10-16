@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationBody.h"
+#include "Foundation/FoundationBodyGrip.h"
 #include "Foundation/FoundationBodyPose.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationExperienceOrbs.h"
@@ -18,6 +19,7 @@ class UBoxComponent;
 class UCameraComponent;
 class USkeletalMesh;
 class USkeletalMeshComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class UNNAMED_API AFoundationPawn : public APawn
@@ -106,6 +108,13 @@ public:
     // Where the body faces (stepped with the simulation) and which clips it plays (advanced per frame).
     FFoundationBodyTurn BodyTurn;
     FFoundationBodyAnimator BodyAnimator;
+    // The upper body's action: the pickaxe in the real hand and its strike on the swing clock (FoundationBodyGrip).
+    FFoundationBodyAction BodyAction;
+    // The tool on each body's hand_r_grip (null without the Unnamed Player).
+    UStaticMeshComponent* GetBodyTool() const { return BodyTool; }
+    UStaticMeshComponent* GetFirstPersonBodyTool() const { return FirstPersonBodyTool; }
+    // The main-hand item is drawn in the body's hand for the owner this frame: the view hides its camera copy.
+    bool IsMainItemInBody() const { return bMainItemInBody; }
     // After a respawn, lab reset or teleport: the body stands facing the view, no jump or landing pending.
     void ResetBody();
 
@@ -169,6 +178,8 @@ private:
     void DestroyBody();
     // A body mesh component with the body's anim instance, placed by UpdateBody; null without its clips.
     USkeletalMeshComponent* MakeBodyComponent(USkeletalMesh* Mesh, FName Name);
+    // SM_UP_Pickaxe on a body's grip socket, hidden until held; null when the mesh is missing.
+    UStaticMeshComponent* MakeBodyTool(USkeletalMeshComponent* Body, FName Name);
     // Places, poses and shows or hides the bodies for this frame (Eye: the rendered eyes; CameraLocation: the camera).
     void UpdateBody(
         double Alpha, double Seconds, const FRotator& Control, const FVector& Eye, const FVector& CameraLocation);
@@ -183,6 +194,13 @@ private:
     TObjectPtr<USkeletalMeshComponent> BodyMesh;
     UPROPERTY()
     TObjectPtr<USkeletalMeshComponent> FirstPersonBodyMesh;
+    UPROPERTY()
+    TObjectPtr<UStaticMeshComponent> BodyTool;
+    UPROPERTY()
+    TObjectPtr<UStaticMeshComponent> FirstPersonBodyTool;
+    // The item the tools are tinted for, and whether the owner sees the main-hand item in the body's hand.
+    FName BodyToolItem;
+    bool bMainItemInBody = false;
     // The set the bodies were made for (foundation.Body.Set as last read: a change remakes them) and the one they are.
     EFoundationBodySet RequestedBodySet = EFoundationBodySet::BetterSteve, BodySet = EFoundationBodySet::BetterSteve;
     // The world body is the owner's world-space representation (shadow only for the owner).

@@ -5,8 +5,11 @@
 #include "Foundation/FoundationBody.h"
 #include "UnnamedProjectSettings.h"
 #if WITH_EDITORONLY_DATA
+// A unity neighbour's global Section meets the engine header's parameter of that name.
+PRAGMA_DISABLE_SHADOW_VARIABLE_WARNINGS
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Rendering/SkeletalMeshModel.h"
+PRAGMA_ENABLE_SHADOW_VARIABLE_WARNINGS
 #endif
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -325,17 +328,17 @@ bool FFoundationBodyHeadSectionTest::RunTest(const FString& Parameters)
     const FSkeletalMeshLODModel& Lod = Mesh->GetImportedModel()->LODModels[0];
     for (int32 Index = 0; Index < Lod.Sections.Num(); ++Index)
     {
-        const FSkelMeshSection& Section = Lod.Sections[Index];
+        const FSkelMeshSection& LodSection = Lod.Sections[Index];
         double Low = TNumericLimits<double>::Max(), High = TNumericLimits<double>::Lowest();
-        for (const FSoftSkinVertex& Vertex : Section.SoftVertices)
+        for (const FSoftSkinVertex& Vertex : LodSection.SoftVertices)
         {
             Low = FMath::Min(Low, double(Vertex.Position.Z));
             High = FMath::Max(High, double(Vertex.Position.Z));
         }
         const FString Name = FString::Printf(TEXT("section %d (material %d, %d vertices, z %.1f..%.1f cm)"), Index,
-            Section.MaterialIndex, Section.SoftVertices.Num(), Low, High);
+            LodSection.MaterialIndex, LodSection.SoftVertices.Num(), Low, High);
         AddInfo(Name);
-        if (Section.MaterialIndex == Head)
+        if (LodSection.MaterialIndex == Head)
             TestTrue(Name + TEXT(" is the head cube"), Low >= 139.5 && High <= 180.5);
         else
             TestTrue(Name + TEXT(" stays below the head"), High <= 140.5);
