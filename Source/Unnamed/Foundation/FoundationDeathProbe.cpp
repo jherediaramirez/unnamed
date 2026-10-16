@@ -222,14 +222,15 @@ void UFoundationRuntimeProbe::AddDeathCases()
         TEXT("death 1: click Respawn"), .4,
         [this, Click, bClicked]
         {
-            *bClicked = Click(EHudDeathButton::Respawn);
-            // No Slate viewport: the button's own call, so the remaining checks still run.
+            // Slate routes the click synchronously, so whether it respawned is read before the fallback below.
+            *bClicked = Click(EHudDeathButton::Respawn) && !Pawn->Vitals.IsDead();
+            // No Slate viewport, or a click that did nothing: the button's own call, so the remaining checks still run.
             if (Pawn->IsDeathScreenActive()) Pawn->RequestRespawn();
         },
         [this, Spawn, bClicked, GameplayInput]
         {
-            Record(TEXT("death 1: the click on Respawn respawns"), *bClicked && !Pawn->Vitals.IsDead(),
-                FString::Printf(TEXT("click sent %d"), *bClicked));
+            Record(TEXT("death 1: the click on Respawn respawns"), *bClicked,
+                FString::Printf(TEXT("alive after the click alone %d"), *bClicked));
             const double Off = FVector::Dist2D(Pawn->Simulation.Feet, Spawn());
             const FHudSnapshot& S = Controller->GetHud()->GetPresenter()->GetSnapshot();
             Record(TEXT("death 1: alive at the spawn, gameplay input back, the screen gone"),
