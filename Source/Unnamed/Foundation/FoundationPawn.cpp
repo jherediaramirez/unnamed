@@ -475,10 +475,11 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bBodyInWater = bBodyInWater = bSwim ? Lab->GetFluid(Body) == EFoundationFluid::Water : Lab->IsInWater(Body);
     Facts.bEyesInWater = bEyesInWater =
         bSwim ? Lab->GetFluid(GetEyePosition()) == EFoundationFluid::Water : Lab->IsInWater(GetEyePosition());
-    Facts.bBodyInLava = bSwim && CVarFire.GetValueOnGameThread() != 0 && Lab->GetFluid(Body) == EFoundationFluid::Lava;
+    Facts.bFireEnabled = CVarFire.GetValueOnGameThread() != 0;
+    Facts.bBodyInLava = bSwim && Facts.bFireEnabled && Lab->GetFluid(Body) == EFoundationFluid::Lava;
     // Fire blocks and a lava cauldron's lava (step 16c), read from the authority's blocks (the Playground and the voxel
     // world; a bare lab has none).
-    if (CVarFire.GetValueOnGameThread() != 0 && FoundationFireContact::IsOn())
+    if (Facts.bFireEnabled && FoundationFireContact::IsOn())
         if (const FFoundationAuthority* Authority = GetAuthority())
         {
             const FoundationFireContact::FContact Contact = FoundationFireContact::Get(Authority->World, Body);

@@ -371,6 +371,134 @@ void UFoundationRuntimeProbe::AddDeathCases()
                     FString::Printf(TEXT("fire ticks %d, on fire %d"), Pawn->Vitals.FireTicks, Snapshot().bOnFire));
             });
     }
+    // R17-1: toggle the real fire switch after the pawn has ignited from a world fire block. The dry interval is
+    // longer than a burn period, so stale burning cannot pass just because its next damage tick has not arrived.
+    const FIntVector FireSwitchCell(20, -30, 0);
+    const FVector FireSwitchFeet(2050, -2950, 0);
+    auto SavedFireCell = MakeShared<TOptional<FFoundationBlockState>>();
+    auto SavedFireSwitches = MakeShared<TPair<int32, int32>>(1, 1);
+    auto SavedFireRegen = MakeShared<bool>(true);
+    auto FireSwitchHealth = MakeShared<float>(0);
+    auto FireSwitchBurns = MakeShared<int32>(0);
+    auto FireSwitchSteps = MakeShared<int64>(0);
+    auto FireSwitchExtinguishes = MakeShared<int32>(0);
+    auto SetFireSwitch = [](const TCHAR* Name, int32 Value)
+    {
+        if (IConsoleVariable* Switch = IConsoleManager::Get().FindConsoleVariable(Name))
+            Switch->Set(Value, ECVF_SetByCode);
+    };
+    AddCase(
+        TEXT("fire switch: ignite from contact"), 1.2,
+        [this, FeelSetup, FireSwitchCell, FireSwitchFeet, SavedFireCell, SavedFireSwitches, SavedFireRegen,
+            SetFireSwitch]
+        {
+            for (const TPair<const TCHAR*, int32*> Switch :
+                {TPair<const TCHAR*, int32*>(TEXT("foundation.Fire"), &SavedFireSwitches->Key),
+                    {TEXT("foundation.FireBlocks"), &SavedFireSwitches->Value}})
+            {
+                if (const IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(Switch.Key))
+                    *Switch.Value = CVar->GetInt();
+                SetFireSwitch(Switch.Key, 1);
+            }
+            *SavedFireRegen = Pawn->Vitals.bNaturalRegeneration;
+            FeelSetup(1);
+            Pawn->Vitals.bNaturalRegeneration = false;
+            ResetPlayer(FireSwitchFeet);
+            FFoundationAuthority* A = Pawn->GetAuthority();
+            const FFoundationBlockType* Fire = A ? A->World.FindBlock(TEXT("fire")) : nullptr;
+            if (!Fire || !A->World.IsKnown(FireSwitchCell))
+            {
+                Record(TEXT("fire switch: fixture"), false, TEXT("missing known cell or fire block"));
+                return;
+            }
+            SavedFireCell->Emplace(A->World.Get(FireSwitchCell).State);
+            A->World.Set(FireSwitchCell, Fire->GetDefaultState());
+        },
+        [this, Snapshot, FeelShot]
+        {
+            Record(TEXT("fire switch: contact ignited the player"),
+                Pawn->Vitals.IsOnFire() && Pawn->Vitals.FireBlockHurts > 0 && Snapshot().bOnFire,
+                Pawn->Vitals.Describe());
+            FeelShot(TEXT("fire-switch-on"));
+        });
+    AddCase(TEXT("fire switch: flush on capture"), .2, [] {}, [] {});
+    AddCase(
+        TEXT("fire switch: disable existing burning"), 1.2,
+        [this, FireSwitchFeet, SetFireSwitch, FireSwitchHealth, FireSwitchBurns, FireSwitchSteps]
+        {
+            ResetPlayer(FireSwitchFeet + FVector(300, 0, 0), false);
+            SetFireSwitch(TEXT("foundation.Fire"), 0);
+            Pawn->Vitals.DamageCooldown = 0;
+            *FireSwitchHealth = Pawn->Vitals.Health;
+            *FireSwitchBurns = Pawn->Vitals.BurnHurts;
+            *FireSwitchSteps = Pawn->ReferenceSteps;
+        },
+        [this, Snapshot, FeelShot, FireSwitchHealth, FireSwitchBurns, FireSwitchSteps]
+        {
+            const int64 Steps = Pawn->ReferenceSteps - *FireSwitchSteps;
+            Record(TEXT("fire switch: off clears existing burning and damage"),
+                Steps >= FFoundationVitals::BurnIntervalTicks && Pawn->Vitals.FireTicks == 0 &&
+                    Pawn->Vitals.Health == *FireSwitchHealth && Pawn->Vitals.BurnHurts == *FireSwitchBurns &&
+                    !Snapshot().bOnFire,
+                FString::Printf(TEXT("%lld steps; health %.1f -> %.1f; burns %d -> %d; fire %d; overlay %d"), Steps,
+                    *FireSwitchHealth, Pawn->Vitals.Health, *FireSwitchBurns, Pawn->Vitals.BurnHurts,
+                    Pawn->Vitals.FireTicks, Snapshot().bOnFire));
+            FeelShot(TEXT("fire-switch-off"));
+        });
+    AddCase(TEXT("fire switch: flush off capture"), .2, [] {}, [] {});
+    AddCase(
+        TEXT("fire switch: disabled contact"), .3,
+        [this, FireSwitchFeet, FireSwitchHealth]
+        {
+            ResetPlayer(FireSwitchFeet, false);
+            *FireSwitchHealth = Pawn->Vitals.Health;
+        },
+        [this, FireSwitchHealth]
+        {
+            Record(TEXT("fire switch: off prevents new fire and contact damage"),
+                Pawn->Vitals.FireTicks == 0 && Pawn->Vitals.Health == *FireSwitchHealth, Pawn->Vitals.Describe());
+        });
+    AddCase(
+        TEXT("fire switch: re-enable contact"), 1.2,
+        [this, FireSwitchFeet, SetFireSwitch]
+        {
+            ResetPlayer(FireSwitchFeet);
+            SetFireSwitch(TEXT("foundation.Fire"), 1);
+        },
+        [this, Snapshot, FeelShot]
+        {
+            Record(TEXT("fire switch: on restores ignition and the overlay"),
+                Pawn->Vitals.IsOnFire() && Pawn->Vitals.Health < Pawn->Vitals.MaxHealth && Snapshot().bOnFire,
+                Pawn->Vitals.Describe());
+            FeelShot(TEXT("fire-switch-restored"));
+        });
+    AddCase(TEXT("fire switch: flush restored capture"), .2, [] {}, [] {});
+    AddCase(
+        TEXT("fire switch: water still extinguishes"), .3,
+        [this, FireSwitchExtinguishes]
+        {
+            *FireSwitchExtinguishes = Pawn->Vitals.Extinguishes;
+            ResetPlayer({1150, 550, 0}, false);
+        },
+        [this, Snapshot, FireSwitchExtinguishes]
+        {
+            Record(TEXT("fire switch: water still extinguishes with fire on"),
+                Pawn->Vitals.FireTicks == 0 && Pawn->Vitals.Extinguishes == *FireSwitchExtinguishes + 1 &&
+                    !Snapshot().bOnFire,
+                Pawn->Vitals.Describe());
+        });
+    AddCase(
+        TEXT("fire switch: restore fixture"), .1,
+        [this, FeelSetup, FireSwitchCell, SavedFireCell, SavedFireSwitches, SavedFireRegen, SetFireSwitch]
+        {
+            if (FFoundationAuthority* A = Pawn->GetAuthority(); A && SavedFireCell->IsSet())
+                A->World.Set(FireSwitchCell, SavedFireCell->GetValue());
+            SetFireSwitch(TEXT("foundation.Fire"), SavedFireSwitches->Key);
+            SetFireSwitch(TEXT("foundation.FireBlocks"), SavedFireSwitches->Value);
+            FeelSetup(1);
+            Pawn->Vitals.bNaturalRegeneration = *SavedFireRegen;
+        },
+        [] {});
     for (const int32 Value : {1, 0})
     {
         AddCase(

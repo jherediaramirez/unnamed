@@ -47,6 +47,9 @@ namespace
 
 void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune)
 {
+    // R17-1: switching fire off clears an existing burn as well as suppressing new contact damage/ignition.
+    // This is not a water extinguish and does not refill fire-contact grace.
+    if (!Facts.bFireEnabled) FireTicks = 0;
     // Falls accumulate only downward movement outside water and climbing, and land once.
     const FVector& Moved = Facts.DisplacementCm;
     if (Facts.bBodyInWater || Facts.bClimbing)
@@ -76,6 +79,7 @@ void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFa
             ++Extinguishes;
         }
     }
+    if (!Facts.bFireEnabled) return;
     if (FireTicks > 0)
     {
         if (FireTicks % BurnIntervalTicks == 0 && !bLava && Hurt(EFoundationDamage::OnFire, 1.f)) ++BurnHurts;
@@ -107,6 +111,8 @@ void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
     // Attack recovery and age count every player tick, through the death animation too.
     ++AttackTicker;
     ++Age;
+    // A dead player's tick returns before StepHazards, but disabling fire still clears its stored burn.
+    if (!Facts.bFireEnabled) FireTicks = 0;
     if (IsDead())
     {
         ++DeathTicks;

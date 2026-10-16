@@ -53,6 +53,8 @@ struct FFoundationVitalsStep
     bool bBodyInWater = false, bEyesInWater = false;
     // The step climbed (FFoundationSimulation::bClimbing): no fall builds, as in water.
     bool bClimbing = false;
+    // The player's foundation.Fire switch. Other holders keep the existing hazards unless explicitly disabled.
+    bool bFireEnabled = true;
     // The body touches lava (the pawn passes it only with foundation.Fire 1).
     bool bBodyInLava = false;
     // Fire block contact (step 16c, foundation.FireBlocks): the in_fire damage of the hottest fire cell the body
