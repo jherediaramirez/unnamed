@@ -92,6 +92,8 @@ private:
     void AddCommandsCases();
     // The death screen (step 11a) and its switch-0 control, in the interaction suite (FoundationDeathProbe.cpp).
     void AddDeathCases();
+    // Player footsteps (step 13a2, FoundationFootstepsProbe.cpp).
+    void AddFootstepCases();
     // The pause menu's life in the world's foundation.Pause.Menu mode, in the all and pause suites
     // (FoundationPauseProbe.cpp).
     void AddPauseMenuCases();

@@ -10,6 +10,8 @@ public class Unnamed : ModuleRules
         PublicIncludePaths.Add(ModuleDirectory);
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "GameplayTags" });
         PrivateDependencyModuleNames.AddRange(new[] { "DeveloperSettings", "Slate", "SlateCore", "WebBrowser", "HTTP", "Json", "ApplicationCore", "RHI", "RenderCore" });
+        // The Bass setting's master-submix low shelf (Menu/MenuBassShelfPreset).
+        PrivateDependencyModuleNames.AddRange(new[] { "AudioMixer", "SignalProcessing" });
         // Block meshes are built at runtime; the editor-only block import decodes PNGs and registers new assets.
         PrivateDependencyModuleNames.AddRange(new[] { "MeshDescription", "StaticMeshDescription", "ImageWrapper", "AssetRegistry" });
         // The voxel world: its plain C++ core (Source/UnnamedVoxel) and the vendored chunk mesh component.

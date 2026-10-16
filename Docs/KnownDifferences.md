@@ -1,6 +1,6 @@
 # Known Differences
 
-- 101 additional scalar preferences, language, resource-pack order, warning dismissal and the extra telemetry choice are now saved. Their gameplay/presentation effects remain pending unless listed as implemented below. This supersedes earlier descriptions of these values as document-only mocks. PIE/session-only launches use temporary defaults; standalone launches persist. Dormant bindings, server favorites and durable world drafts remain deferred. See MenuPreferences.md.
+- 102 additional scalar preferences (Master Volume and Bass applied in game since survival step 13a2), language, resource-pack order, warning dismissal and the extra telemetry choice are now saved. Their gameplay/presentation effects remain pending unless listed as implemented below. This supersedes earlier descriptions of these values as document-only mocks. PIE/session-only launches use temporary defaults; standalone launches persist. Dormant bindings, server favorites and durable world drafts remain deferred. See MenuPreferences.md.
 
 - Seven movement bindings and the two Hold/Toggle policies are native and persistent; Shift now sprints and C crouches. Crouch replaces the source's Sneak label, and the other 55 binding rows are Planned and disabled. See Keybindings.md. Actual character movement remains a future acceptance gate. Input v2 fixes the reproduced Unreal Windows CEF key-code capture failure; see the follow-up verification record for the native Windows test status.
 
