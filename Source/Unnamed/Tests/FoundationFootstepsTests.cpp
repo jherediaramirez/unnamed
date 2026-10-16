@@ -231,6 +231,40 @@ bool FFoundationFootstepsEdgeTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// R38-4 (review): at a shoreline the centre over water still steps on the stone beside it; with the centre over air,
+// the stone the feet rest on beats nearer farmland 1/16 lower; a carpet at an edge keeps its support under it.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFootstepsSupportTest, "Unnamed.Foundation.Footsteps.BoxSupportChoice", FootstepTestFlags)
+
+bool FFoundationFootstepsSupportTest::RunTest(const FString& Parameters)
+{
+    FFootstepsLookupWorld Lookup(*this);
+    const double Cm = UFoundationProfile::BlockCm;
+    FoundationFootsteps::FStepBlocks Found;
+    // Stone beside water: the centre 10 cm out over the water.
+    Lookup.Set({0, 0, 0}, TEXT("stone"));
+    Lookup.Set({1, 0, 0}, TEXT("water"));
+    if (TestTrue(TEXT("shoreline: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(Cm + 10, .5 * Cm, Cm), Found)))
+        TestEqual(TEXT("shoreline: the stone, not the water"), Lookup.Id(Found.Primary), FString(TEXT("stone")));
+    // The centre over air at (4, 2)'s corner; farmland west of it (nearer the centre), stone south of it (the feet on
+    // its top).
+    Lookup.Set({3, 2, 0}, TEXT("farmland"));
+    Lookup.Set({4, 1, 0}, TEXT("stone"));
+    if (TestTrue(TEXT("farmland vs stone: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(4 * Cm + 5, 2 * Cm + 15, Cm), Found)))
+        TestEqual(TEXT("farmland vs stone: the stone underfoot"), Lookup.Id(Found.Primary), FString(TEXT("stone")));
+    // A moss carpet on stone, the centre 10 cm past it over air: the carpet over the stone (combination).
+    Lookup.Set({7, 0, 0}, TEXT("stone"));
+    Lookup.Set({7, 0, 1}, TEXT("moss_carpet"));
+    if (TestTrue(TEXT("carpet edge: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(8 * Cm + 10, .5 * Cm, Cm + Cm / 16), Found)))
+        TestTrue(TEXT("carpet edge: carpet over stone"),
+            Found.bCombination && Lookup.Id(Found.Primary) == TEXT("moss_carpet") &&
+                Lookup.Id(Found.Under) == TEXT("stone"));
+    return true;
+}
+
 // The sound: the block's step event at its sound type's volume x 0.15 and pitch x 1 (DA_BreakAssets, DA_Sounds); the
 // support under a carpet at a third of that and pitch x 0.8.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
