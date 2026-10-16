@@ -132,13 +132,22 @@ namespace FoundationFurnace
     // cooking, cooling, the lit state); 0 as before T1 step 8a: no block use (a right-click places against them) and
     // no ticks.
     UNNAMED_API bool IsOn();
-    // foundation.Furnace.Ambience: 1 a lit furnace, smoker or blast furnace plays its sound (T1 step 8b); 0 silent.
+    // foundation.Furnace.Ambience: 1 a lit furnace, smoker or blast furnace plays its sound (T1 step 8b) and shows its
+    // smoke and flame (8b2b); 0 neither.
     UNNAMED_API bool IsAmbienceOn();
-    // The ambience's 20 Hz clock (UFoundationInteractionView::PlayFurnaceSounds): adds DeltaTime and gives the ticks
+    // foundation.Furnace.AmbienceForce (dev, a cheat variable, default 0): 1 every lit block gets a display callback on
+    // every ambience tick (the sound still rolls its 0.1), so a shot or a probe does not wait on the 1 in 50.
+    UNNAMED_API bool IsAmbienceForced();
+    // The ambience's 20 Hz clock (UFoundationInteractionView::PlayFurnaceAmbience): adds DeltaTime and gives the ticks
     // to roll this frame, at most 4. Paused (bRunning false: the pawn's simulation is off, as in the pause menu; a
     // container screen keeps it on) it rolls none and starts over (Codex review 25, finding 1; vanilla stops sounds
     // while paused, MC-118081).
     UNNAMED_API int32 StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning);
+    // One lit block's display callbacks over Ticks of that clock: each tick one with chance DisplayChance, Roll's
+    // U[0, 1) draw (provisional scheduling, T1 8b1); every tick with foundation.Furnace.AmbienceForce 1; none with
+    // foundation.Furnace.Ambience 0. Each callback spawns the block's smoke and flame and rolls its sound (T1 8b2b).
+    constexpr float DisplayChance = 1.f / 50;
+    UNNAMED_API int32 RollDisplayCallbacks(int32 Ticks, TFunctionRef<float()> Roll);
 
     // What a block cooks: the smoker Smoking, the blast furnace Blasting, anything else (the furnace) Smelting.
     UNNAMED_API EFoundationCookingKind GetCookingKind(FName Block);

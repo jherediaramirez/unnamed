@@ -111,6 +111,10 @@ UNNAMED_API const TCHAR* LexToString(EFoundationOutcome Outcome);
 UNNAMED_API const TCHAR* LexToString(EFoundationCommandType Type);
 
 class FVoxelPlantSurvival;
+namespace FoundationGrowth
+{
+    struct FGrowthTable;
+}
 
 // One request across the authority boundary. Target, destination, revisions and item are the caller's
 // claims; the authority re-resolves and re-validates everything from its own state.
@@ -174,6 +178,9 @@ struct FFoundationResult
     bool bAte = false;
     // An axe stripped the block at Cell (step 14); State is the stripped state.
     bool bStripped = false;
+    // A hoe tilled (bTilled) or a shovel flattened (bFlattened) the block at Cell (survival B5); State is its new
+    // state.
+    bool bTilled = false, bFlattened = false;
     // A bucket (step 17) took the source at Cell (bFilled) or poured one there (bEmptied); State is the cell's new
     // state.
     bool bFilled = false, bEmptied = false;
@@ -281,6 +288,14 @@ struct FFoundationLabOptions
     // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
     // foundation.Chest in before each step.
     bool bChest = false;
+    // Random ticks (survival B6a, FoundationGrowth): crops and stems grow and farmland wets and dries in the sections
+    // around each player. Off, nothing random-ticks, as before. The pawn copies foundation.Blocks.Growth in before each
+    // step; tests set it themselves.
+    bool bGrowth = false;
+    // Cauldrons (survival step 16c, with bItemUse): a water or lava bucket fills a cauldron, an empty bucket takes a
+    // full one back. Off, as step 17: a bucket ignores cauldrons. The pawn copies foundation.Cauldrons in before each
+    // step.
+    bool bCauldrons = true;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -328,6 +343,11 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationBiomeSpawns> BiomeSpawns;
     // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
     FFoundationRecipeBook Recipes;
+    // Random ticks (survival B6a): picks per 16-cell section per step (vanilla's randomTickSpeed, 3), in the sections
+    // within RandomTickRadius sections of a player horizontally, over the build height (provisional: vanilla's
+    // simulation distance is not in our data). The picks are a pure function of LootSeed, the section and the step.
+    int32 RandomTickSpeed = 3;
+    int32 RandomTickRadius = 4;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
@@ -402,7 +422,11 @@ enum class EFoundationEventKind : uint8
     BlockingDisabled,
     // An arrow's sound (step 19c): Interaction entity.arrow.shoot, .hit or .hit_player, LocationCm where (world cm),
     // Amount the volume, Pitch the pitch, EntityId the arrow.
-    ArrowSound
+    ArrowSound,
+    // A hoe tilled a block (Tilled) or a shovel flattened one (Flattened) (survival B5): Cell, State (the new state),
+    // Item (the tool).
+    Tilled,
+    Flattened
 };
 
 // What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
@@ -471,6 +495,12 @@ namespace FoundationBucket
     {
         return Id == TEXT("bucket") || Id == TEXT("water_bucket") || Id == TEXT("lava_bucket");
     }
+}
+
+namespace FoundationCauldrons
+{
+    // foundation.Cauldrons (step 16c): 1 buckets fill and empty cauldrons; 0 as step 17.
+    UNNAMED_API bool IsOn();
 }
 
 namespace FoundationItemUse
@@ -757,7 +787,9 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0, BucketUses = 0, AttacksBlocked = 0;
+          Strips = 0, BucketUses = 0, AttacksBlocked = 0, Tills = 0;
+    // Survival B6a: random ticks picked, and those that changed a block.
+    int64 RandomTicks = 0, RandomTickChanges = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Farm extras (20e1): sheep shorn, cows milked, sheep dyed.
@@ -814,6 +846,11 @@ private:
     };
     TArray<FBlockTick> BlockTicks;
     void StepBlockTicks();
+    // Survival B6a: with Options.bGrowth, Rules.RandomTickSpeed picks in every section near a player run
+    // FoundationGrowth::RandomTick, and its writes are settled as edits. The table is rebuilt for a new registry.
+    void StepRandomTicks();
+    TSharedPtr<FoundationGrowth::FGrowthTable> GrowthTable;
+    int64 RandomTickStep = 0;
     // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
     // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
     // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
@@ -847,17 +884,16 @@ private:
     // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled). Adventure passes.
     bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
         FFoundationResult& Result, EFoundationPlayerMode Mode);
+    // Hoe tilling and shovel flattening (survival B5, FoundationTilling): true when the hand's hoe or shovel changed
+    // the hit block (Result filled). Adventure passes.
+    bool TillOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result,
         EFoundationPlayerMode Mode);
     // Farm extras (survival T6 20e1; FoundationMobFarm.cpp): shears, a dye or an empty bucket on a mob. True when the
     // hand's item did something (Result filled); false passes.
     bool UseOnMob(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationMob& Mob,
         EFoundationPlayerMode Mode, FFoundationResult& Result);
-    // A used item becomes NewItem in the hand (a bucket filled or emptied, a cow milked): creative keeps the used item
-    // and adds NewItem when the inventory holds none; survival swaps a single item in place; from a stack, one goes
-    // and NewItem is added, or dropped at the player's feet when nothing takes it (seeded by Cell and Salt).
-    void SwapHeldItem(FFoundationPlayer& Player, EFoundationHand Hand, int32 NewItem, bool bCreative,
-        const FIntVector& Cell, int32 Salt);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
@@ -870,6 +906,15 @@ private:
     // no bucket or the switch is off; otherwise Result says what happened (a pass included).
     bool UseBucket(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
         FFoundationResult& Result);
+    // A bucket on a cauldron (step 16c): true when it filled or emptied the hit cauldron (Result filled); false passes
+    // on (no bucket, no cauldron, or an empty bucket on a cauldron that is not full).
+    bool UseCauldron(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
+    // A used bucket becomes NewItem (steps 17 and 16c). Creative keeps the used bucket and adds NewItem only when the
+    // inventory holds none; survival swaps a single bucket in place, or from a stack takes one and adds the new bucket,
+    // dropping it at the player when nothing takes it. Stack is the hand's stack before the use.
+    void SwapBucket(FFoundationPlayer& Player, EFoundationHand Hand, const FFoundationItemInstance& Stack,
+        int32 NewItem, const FIntVector& Cell, bool bCreative);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.

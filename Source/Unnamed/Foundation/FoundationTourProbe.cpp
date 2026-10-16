@@ -11,6 +11,7 @@
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationBreakAssets.h"
 #include "Foundation/FoundationBreakEffects.h"
+#include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationGrid.h"
 #include "Menu/MenuPreferences.h"
 #include "Dom/JsonObject.h"
@@ -1970,6 +1971,112 @@ void UFoundationRuntimeProbe::AddTourCases()
                     Player->Inventory = *SavedInventory;
                     Player->Inventory.Revision = Revision + 1;
                 }
+            },
+            [] {});
+    }
+
+    // n1. The furnace particles (T1 step 8b2b): a lit furnace, smoker and blast furnace in known air cells ahead of the
+    // player, their fronts toward the camera. foundation.Furnace.AmbienceForce 1 gives each a display callback every
+    // tick, so the shots are not luck. The control shot has foundation.Furnace.Ambience 0 (nothing spawns, the blocks
+    // still show); the second turns it on. The blocks, their entities and the switches are put back after.
+    {
+        struct FParticleTour
+        {
+            TArray<TPair<FIntVector, FFoundationBlockState>> Placed;
+            FString Ambience, Force;
+            int32 Spawned = 0;
+        };
+        const TSharedRef<FParticleTour> ParticleTour = MakeShared<FParticleTour>();
+        auto FurnaceEffects = [Lab]() -> FFoundationBreakEffects*
+        { return Lab->GetView() ? Lab->GetView()->GetBreakEffects() : nullptr; };
+        AddCase(
+            TEXT("tour furnace particles off"), 1.,
+            [this, Authority, ParticleTour, FurnaceEffects]
+            {
+                ResetPlayer({0, 0, 0});
+                ParticleTour->Placed.Reset();
+                ParticleTour->Ambience = GetTourCVar(TEXT("foundation.Furnace.Ambience"));
+                ParticleTour->Force = GetTourCVar(TEXT("foundation.Furnace.AmbienceForce"));
+                SetTourCVar(TEXT("foundation.Furnace.Ambience"), TEXT("0"));
+                SetTourCVar(TEXT("foundation.Furnace.AmbienceForce"), TEXT("1"));
+                FFoundationBlockWorld& World = Authority().World;
+                const FFoundationBlockRegistry& Registry = World.GetRegistry();
+                const double Yaw = Controller->GetControlRotation().Yaw;
+                const FVector Forward = FRotator(0, Yaw, 0).Vector();
+                const FVector Side = FVector::CrossProduct(FVector::UpVector, Forward);
+                const FVector Feet = Pawn->GetActorLocation() + FVector(0, 0, 50);
+                // The fronts toward the camera: the opposite of the look (Minecraft's yaw, as placement uses).
+                double McYaw = 0, McPitch = 0;
+                FoundationBlockPlacement::GetYawPitch(Forward, McYaw, McPitch);
+                const TCHAR* Facing = FoundationGrid::FaceName(
+                    FoundationBlockPlacement::GetOpposite(FoundationBlockPlacement::GetHorizontalLook(McYaw)));
+                const TCHAR* Blocks[] = {TEXT("furnace"), TEXT("smoker"), TEXT("blast_furnace")};
+                for (int32 Index = 0; Index < 3; ++Index)
+                {
+                    // Two blocks ahead (the starter blocks stand at three), one apart.
+                    const FIntVector Cell =
+                        FoundationGrid::CellAt(Feet + Forward * 200 + Side * (Index - 1) * 120, World.OriginCm);
+                    const FFoundationBlockType* Type = World.FindBlock(Blocks[Index]);
+                    if (!Type || !World.IsKnown(Cell) || World.GetBlock(World.Get(Cell).State).Id != TEXT("air"))
+                        continue;
+                    ParticleTour->Placed.Emplace(Cell, World.Get(Cell).State);
+                    const FFoundationBlockState State = Registry.WithValue(
+                        Registry.WithValue(Type->GetDefaultState(), TEXT("facing"), Facing), TEXT("lit"), TEXT("true"));
+                    World.Set(Cell, State);
+                    FFoundationBlockEntity& Entity =
+                        Authority().BlockEntities.FindOrAdd(Cell, EFoundationBlockEntityKind::Furnace, Blocks[Index]);
+                    Entity.Items.SetNum(FFoundationBlockEntity::FurnaceSlots);
+                    Entity.LitDuration = Entity.LitTime = 1600;
+                }
+                if (const FFoundationBreakEffects* Effect = FurnaceEffects())
+                    ParticleTour->Spawned = Effect->GetFurnaceParticlesSpawned();
+            },
+            [this, ParticleTour, FurnaceEffects]
+            {
+                const FFoundationBreakEffects* Effect = FurnaceEffects();
+                const int32 Live = Effect ? Effect->GetLiveFurnaceParticleCount() : -1;
+                const int32 Spawned = Effect ? Effect->GetFurnaceParticlesSpawned() - ParticleTour->Spawned : -1;
+                Record(TEXT("tour furnace particles off: none"), ParticleTour->Placed.Num() == 3 && Spawned == 0,
+                    FString::Printf(TEXT("Ambience 0 (forced): %d lit blocks placed, %d spawned, %d live"),
+                        ParticleTour->Placed.Num(), Spawned, Live));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24i-furnace-particles-off.png"), true,
+                    false);
+            });
+        AddCase(TEXT("tour flush 24i-furnace-particles-off"), .4, [] {}, [] {});
+        AddCase(
+            TEXT("tour furnace particles"), 1.,
+            [ParticleTour, FurnaceEffects]
+            {
+                SetTourCVar(TEXT("foundation.Furnace.Ambience"), TEXT("1"));
+                if (const FFoundationBreakEffects* Effect = FurnaceEffects())
+                    ParticleTour->Spawned = Effect->GetFurnaceParticlesSpawned();
+            },
+            [this, ParticleTour, FurnaceEffects]
+            {
+                const FFoundationBreakEffects* Effect = FurnaceEffects();
+                const int32 Live = Effect ? Effect->GetLiveFurnaceParticleCount() : -1;
+                const int32 Spawned = Effect ? Effect->GetFurnaceParticlesSpawned() - ParticleTour->Spawned : -1;
+                // Forced, each block spawns every tick: the furnace 2 a tick, the smoker and blast furnace 1.
+                Record(TEXT("tour furnace particles: smoke and flame"),
+                    ParticleTour->Placed.Num() == 3 && Live > 0 && Spawned >= 40,
+                    FString::Printf(TEXT("Ambience 1 (forced): %d spawned in about 1 s, %d live"), Spawned, Live));
+                FScreenshotRequest::RequestScreenshot(
+                    FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-tour-24i-furnace-particles.png"), true, false);
+            });
+        AddCase(TEXT("tour flush 24i-furnace-particles"), .4, [] {}, [] {});
+        AddCase(
+            TEXT("tour furnace particles close"), .3,
+            [Authority, ParticleTour]
+            {
+                SetTourCVar(TEXT("foundation.Furnace.Ambience"), ParticleTour->Ambience);
+                SetTourCVar(TEXT("foundation.Furnace.AmbienceForce"), ParticleTour->Force);
+                for (const auto& [Cell, Before] : ParticleTour->Placed)
+                {
+                    Authority().BlockEntities.Remove(Cell);
+                    if (Authority().World.IsKnown(Cell)) Authority().World.Set(Cell, Before);
+                }
+                ParticleTour->Placed.Reset();
             },
             [] {});
     }

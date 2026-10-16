@@ -177,7 +177,7 @@ bool FFoundationAuthority::UseOnMob(FFoundationPlayer& Player, const FFoundation
             Reject(Result, EFoundationReason::InventoryFull);
             return true;
         }
-        SwapHeldItem(Player, Command.Hand, Milk, bCreative, Cell, MobMilks);
+        SwapBucket(Player, Command.Hand, Stack, Milk, Cell, bCreative);
         ++MobMilks;
         AddMobSound(Mob, TEXT("milk"), 1);
         Result.Outcome = EFoundationOutcome::Committed;

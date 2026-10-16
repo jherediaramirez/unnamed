@@ -10,6 +10,8 @@
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationStripping.h"
+#include "Foundation/FoundationGrowth.h"
+#include "Foundation/FoundationTilling.h"
 #include "HAL/IConsoleManager.h"
 #include "Sky/VoxelTimeline.h"
 
@@ -22,6 +24,9 @@ namespace
         TEXT(
             "1: hold use to eat food (step 10: apple, bread, cooked beef and the reference's other foods, 1.6 s each). "
             "0: food passes, as before. Axe stripping (step 14) and buckets (step 17) hang off this switch."));
+    TAutoConsoleVariable<int32> CVarCauldrons(TEXT("foundation.Cauldrons"), 1,
+        TEXT("1: a water or lava bucket fills a cauldron, an empty bucket takes a full one back (step 16c, with "
+             "foundation.Items.Use 1). 0: buckets ignore cauldrons, as in step 17."));
     TAutoConsoleVariable<int32> CVarBlockUse(TEXT("foundation.Blocks.Use"), 1,
         TEXT("1: right-clicking a block with a use (the crafting table, survival step 7) uses it; sneaking with an "
              "item still places. 0: right-click always places, as before."));
@@ -194,6 +199,11 @@ bool FoundationBlockUse::IsOn()
 bool FoundationItemUse::IsOn()
 {
     return CVarItemUse.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationCauldrons::IsOn()
+{
+    return CVarCauldrons.GetValueOnAnyThread() != 0;
 }
 
 bool FoundationItemUse::IsEffectTick(int32 Ticks, int32 Duration)
@@ -445,6 +455,55 @@ void FFoundationAuthority::StepBlockTicks()
     }
 }
 
+void FFoundationAuthority::StepRandomTicks()
+{
+    using namespace FoundationGrowth;
+    const int64 Tick = RandomTickStep++;
+    if (!Options.bGrowth || Rules.RandomTickSpeed <= 0) return;
+    if (!GrowthTable || !GrowthTable->IsFor(World.GetRegistry()))
+        GrowthTable = MakeShared<FGrowthTable>(World.GetRegistry());
+    // The sections near any player, once each (survival B6a; the radius is provisional).
+    TSet<FIntPoint> Columns;
+    const int32 Radius = FMath::Max(Rules.RandomTickRadius, 0);
+    for (const FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts) continue;
+        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+        const FIntPoint Center(
+            FoundationGrid::FloorDivide(Feet.X, SectionCells), FoundationGrid::FloorDivide(Feet.Y, SectionCells));
+        for (int32 DY = -Radius; DY <= Radius; ++DY)
+            for (int32 DX = -Radius; DX <= Radius; ++DX)
+                Columns.Add(Center + FIntPoint(DX, DY));
+    }
+    const int32 MinZ = FoundationGrid::FloorDivide(World.BoundsMin.Z, SectionCells);
+    const int32 MaxZ = FoundationGrid::FloorDivide(World.BoundsMax.Z, SectionCells);
+    auto SeesSky = [this](const FIntVector& At) { return IsSkyVisible(At + FIntVector(0, 0, 1)); };
+    static const FFoundationPlayer Nobody;
+    TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<2>> Writes;
+    for (const FIntPoint& Column : Columns)
+        for (int32 Z = MinZ; Z <= MaxZ; ++Z)
+            for (int32 Index = 0; Index < Rules.RandomTickSpeed; ++Index)
+            {
+                FGrowthRoll Roll;
+                const FIntVector Cell =
+                    GetRandomTickCell(Rules.LootSeed, FIntVector(Column.X, Column.Y, Z), Tick, Index, Roll);
+                ++RandomTicks;
+                if (!World.IsKnown(Cell) || GrowthTable->Get(World.Get(Cell).State).Kind == EGrowthKind::None) continue;
+                Writes.Reset();
+                RandomTick(World, *GrowthTable, Cell, Roll, SeesSky, Writes);
+                if (Writes.IsEmpty()) continue;
+                ++RandomTickChanges;
+                // Every cell is written before any settles, so a pitcher crop's two halves still pair.
+                TArray<FFoundationBlockState, TInlineAllocator<2>> Before;
+                for (const TPair<FIntVector, FFoundationBlockState>& Write : Writes)
+                {
+                    Before.Add(World.Get(Write.Key).State);
+                    World.Set(Write.Key, Write.Value);
+                }
+                for (int32 Write = 0; Write < Writes.Num(); ++Write)
+                    SettlePlants(Writes[Write].Key, Before[Write], Nobody, false);
+            }
+}
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
 {
     return World.IsKnown(Cell) && FindBlockUse(World.GetBlock(World.Get(Cell).State).Id) != nullptr;
@@ -596,6 +655,7 @@ void FFoundationAuthority::Step()
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepBlockTicks();
+    StepRandomTicks();
     StepItemEntities();
     StepMobs();
     StepMobSpawns();
@@ -3053,8 +3113,11 @@ void FFoundationAuthority::UseOn(
             const FBlockUse Use = Found->Use;
             if (Use(*this, Player, Hit, Result)) return;
         }
+    // 1c. A bucket on a cauldron (survival step 16c, foundation.Cauldrons), from either hand, on the same terms.
+    if (!bBypass && Options.bCauldrons && UseCauldron(Player, Command, Hit, Result, Mode)) return;
     // 2. The hand item's use on the block (foundation.Items.Use): an axe strips.
     if (StripOn(Player, Command, Hit, Result, Mode)) return;
+    if (TillOn(Player, Command, Hit, Result, Mode)) return;
     // 3. The hand item's place capability; without one the use passes to the next hand. A hidden B1 family block
     // (foundation.Blocks.Families 0) counts as none, as before B1 (a sapling in hand passes to the offhand).
     const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
@@ -3170,6 +3233,180 @@ bool FFoundationAuthority::StripOn(FFoundationPlayer& Player, const FFoundationC
     return true;
 }
 
+bool FFoundationAuthority::TillOn(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationHit& Hit, FFoundationResult& Result, EFoundationPlayerMode Mode)
+{
+    const FFoundationItemInstance& Stack = Player.Inventory.GetHand(Command.Hand);
+    // Adventure passes, as the axe does (StripOn).
+    if (!Options.bItemUse || !FoundationBlockFamilies::IsFarmlandOn() || Mode == EFoundationPlayerMode::Adventure ||
+        Stack.IsEmpty() || Hit.Kind != EFoundationHitKind::Block || !World.IsKnown(Hit.Cell))
+        return false;
+    const int32 ToolItem = Stack.Item;
+    const FFoundationItemDefinition& Tool = Rules.GetItem(ToolItem);
+    const FGameplayTag HoesTag = FoundationTilling::GetHoesTag();
+    const FGameplayTag ShovelsTag = FoundationTilling::GetShovelsTag();
+    const bool bHoe = HoesTag.IsValid() && Tool.Tags.HasTagExact(HoesTag);
+    if (!bHoe && !(ShovelsTag.IsValid() && Tool.Tags.HasTagExact(ShovelsTag))) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState Before = World.Get(Hit.Cell).State;
+    const FoundationTilling::FConversion* Row = FoundationTilling::Find(
+        bHoe ? FoundationTilling::GetHoeTable() : FoundationTilling::GetShovelTable(), Registry.GetBlock(Before).Id);
+    if (!Row) return false;
+    // The top or a side, with air above (wiki "Hoe", "Dirt Path"); rooted dirt's hoe row has neither rule.
+    if (!Row->bAnyFace)
+    {
+        const FIntVector Above = Hit.Cell + FIntVector(0, 0, 1);
+        if (Hit.Face == EFoundationFace::Down || !World.IsKnown(Above) || !World.Get(Above).State.IsAir()) return false;
+    }
+    const FFoundationBlockType* Target = Registry.FindBlock(Row->To);
+    if (!Target || FoundationBlockFamilies::IsHidden(Target)) return false;
+    const FFoundationBlockState After = Target->GetDefaultState();
+    World.Set(Hit.Cell, After);
+    ++Tills;
+    Result.Outcome = EFoundationOutcome::Committed;
+    (bHoe ? Result.bTilled : Result.bFlattened) = true;
+    Result.Cell = Hit.Cell;
+    Result.State = After;
+    // One point of wear (WearPerUse), when tool wear is on; creative tools never wear.
+    if (Mode != EFoundationPlayerMode::Creative && Options.bToolWear && Tool.MaxDurability > 0)
+    {
+        Result.bToolWorn = true;
+        Result.bToolBroke = Player.Inventory.Wear(Command.Hand, FoundationTilling::WearPerUse, Tool.MaxDurability);
+    }
+    FFoundationEvent Event;
+    Event.Kind = bHoe ? EFoundationEventKind::Tilled : EFoundationEventKind::Flattened;
+    Event.Player = Player.Id;
+    Event.Cell = Hit.Cell;
+    Event.State = After;
+    Event.Item = ToolItem;
+    Event.Step = Player.Facts.Step;
+    AddEvent(Event);
+    if (Result.bToolBroke)
+    {
+        Event.Kind = EFoundationEventKind::ToolBroke;
+        AddEvent(Event);
+    }
+    // Rooted dirt's hanging roots come out of the clicked face (wiki "Rooted Dirt"), as an item entity.
+    const int32 DropItem = Row->Drop.IsNone() ? INDEX_NONE : Rules.FindItem(Row->Drop);
+    if (Options.bItemEntities && DropItem != INDEX_NONE)
+    {
+        FFoundationLootDrop Drop;
+        Drop.Item = DropItem;
+        Drop.Count = 1;
+        const FIntVector Out = Hit.Face == EFoundationFace::None ? Hit.Cell + FIntVector(0, 0, 1)
+                                                                 : Hit.Cell + FoundationGrid::FaceOffset(Hit.Face);
+        SpawnDrops(Out, {Drop}, FoundationLoot::MakeSeed(~Rules.LootSeed, Hit.Cell, Tills));
+    }
+    // Farmland and a path support less than dirt did (block_support.json: no torch on any face), so the neighbours
+    // settle.
+    SettlePlants(Hit.Cell, Before, Player);
+    return true;
+}
+
+void FFoundationAuthority::SwapBucket(FFoundationPlayer& Player, EFoundationHand Hand,
+    const FFoundationItemInstance& Stack, int32 NewItem, const FIntVector& Cell, bool bCreative)
+{
+    FFoundationInventory& Inventory = Player.Inventory;
+    const int32 MaxStack = Rules.GetItem(NewItem).MaxStack;
+    if (bCreative)
+    {
+        if (Stack.Item == NewItem) return;
+        for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+            if (const FFoundationItemInstance* Held = Inventory.GetSlot(Slot); Held && Held->Item == NewItem) return;
+        Inventory.Add(NewItem, 1, MaxStack);
+        return;
+    }
+    if (Stack.Count == 1)
+    {
+        const int32 HandSlot = Hand == EFoundationHand::Main ? Inventory.Selected : FFoundationInventory::OffhandSlot;
+        Inventory.SetSlot(HandSlot, Inventory.MakeStack(NewItem, 1));
+        return;
+    }
+    Inventory.ConsumeOne(Hand);
+    if (Inventory.Add(NewItem, 1, MaxStack) > 0) return;
+    const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+    const FFoundationLootDrop Drop{NewItem, 1};
+    SpawnDrops(Feet, MakeArrayView(&Drop, 1), FoundationLoot::MakeSeed(Rules.LootSeed, Cell, BucketUses));
+}
+
+bool FFoundationAuthority::UseCauldron(FFoundationPlayer& Player, const FFoundationCommand& Command,
+    const FFoundationHit& Hit, FFoundationResult& Result, EFoundationPlayerMode Mode)
+{
+    static const FName BucketId(TEXT("bucket")), WaterBucketId(TEXT("water_bucket")), LavaBucketId(TEXT("lava_bucket"));
+    static const FName Level(TEXT("level")), Full(TEXT("3"));
+    // Adventure changes no block with a bucket (step 17's rule): the bucket's own use then passes too.
+    if (!Options.bItemUse || Mode == EFoundationPlayerMode::Adventure) return false;
+    if (Hit.Kind != EFoundationHitKind::Block || !World.IsKnown(Hit.Cell)) return false;
+    const FFoundationItemInstance Stack = Player.Inventory.GetHand(Command.Hand);
+    if (Stack.IsEmpty()) return false;
+    const FName Id = Rules.GetItem(Stack.Item).Id;
+    if (!FoundationBucket::IsBucket(Id)) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockType* Empty = Registry.FindBlock(TEXT("cauldron"));
+    const FFoundationBlockType* Water = Registry.FindBlock(TEXT("water_cauldron"));
+    const FFoundationBlockType* Lava = Registry.FindBlock(TEXT("lava_cauldron"));
+    if (!Empty || !Water || !Lava) return false;
+    const FFoundationBlockState Before = World.Get(Hit.Cell).State;
+    const FFoundationBlockType* Block = &Registry.GetBlock(Before);
+    if (Block != Empty && Block != Water && Block != Lava) return false;
+    // minecraft.wiki "Cauldron": a water bucket fills it to level 3, a lava bucket makes a lava cauldron; an empty
+    // bucket takes only a full water cauldron or a lava cauldron back. A full bucket on a cauldron already holding
+    // something replaces the contents (provisional: the wiki is silent, vanilla-like).
+    const bool bCreative = Mode == EFoundationPlayerMode::Creative;
+    const bool bTake = Id == BucketId;
+    FFoundationBlockState After;
+    int32 NewItem = INDEX_NONE;
+    if (bTake)
+    {
+        const bool bFullWater = Block == Water && Registry.GetValue(Before, Level) == Full;
+        if (!bFullWater && Block != Lava) return false;
+        After = Empty->GetDefaultState();
+        NewItem = Rules.FindItem(Block == Lava ? LavaBucketId : WaterBucketId);
+        if (NewItem == INDEX_NONE) return false;
+        // A stack's new bucket needs a slot, or the item entities to drop it; otherwise nothing changes.
+        if (!bCreative && Stack.Count > 1 && !Options.bItemEntities &&
+            Player.Inventory.GetSpaceFor(NewItem, Rules.GetItem(NewItem).MaxStack) < 1)
+        {
+            Reject(Result, EFoundationReason::InventoryFull);
+            return true;
+        }
+    }
+    else
+    {
+        After = Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
+        NewItem = Rules.FindItem(BucketId);
+        if (NewItem == INDEX_NONE) return false;
+    }
+    if (After != Before) World.Set(Hit.Cell, After);
+    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is held.
+    if (bTake || !bCreative) SwapBucket(Player, Command.Hand, Stack, NewItem, Hit.Cell, bCreative);
+    ++BucketUses;
+    Result.Outcome = EFoundationOutcome::Committed;
+    Result.Cell = Hit.Cell;
+    Result.State = After;
+    FFoundationEvent Event;
+    Event.Player = Player.Id;
+    Event.Step = Player.Facts.Step;
+    Event.Cell = Hit.Cell;
+    Event.State = After;
+    if (bTake)
+    {
+        // The fill sound plays at the cauldron (minecraft.wiki "Cauldron", Sounds), not at the player as a source's.
+        Result.bFilled = true;
+        Event.Kind = EFoundationEventKind::Filled;
+        Event.Item = NewItem;
+        Event.LocationCm = FoundationGrid::CellBox(Hit.Cell, World.OriginCm).GetCenter();
+    }
+    else
+    {
+        Result.bEmptied = true;
+        Event.Kind = EFoundationEventKind::Emptied;
+        Event.Item = Stack.Item;
+    }
+    AddEvent(Event);
+    return true;
+}
+
 bool FFoundationAuthority::UseBucket(
     FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode, FFoundationResult& Result)
 {
@@ -3193,7 +3430,7 @@ bool FFoundationAuthority::UseBucket(
     // goes and the new bucket is added, or dropped at the player when nothing takes it.
     const bool bCreative = Mode == EFoundationPlayerMode::Creative;
     auto Swap = [&](int32 NewItem, const FIntVector& Cell)
-    { SwapHeldItem(Player, Command.Hand, NewItem, bCreative, Cell, BucketUses); };
+    { SwapBucket(Player, Command.Hand, Stack, NewItem, Cell, bCreative); };
     FFoundationEvent Event;
     Event.Player = Player.Id;
     Event.Step = Player.Facts.Step;
@@ -3521,33 +3758,6 @@ bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)
     const bool bWasActive = Player.Use.bActive;
     Player.Use = {};
     return bWasActive;
-}
-
-void FFoundationAuthority::SwapHeldItem(
-    FFoundationPlayer& Player, EFoundationHand Hand, int32 NewItem, bool bCreative, const FIntVector& Cell, int32 Salt)
-{
-    FFoundationInventory& Inventory = Player.Inventory;
-    const FFoundationItemInstance Stack = Inventory.GetHand(Hand);
-    const int32 MaxStack = Rules.GetItem(NewItem).MaxStack;
-    if (bCreative)
-    {
-        if (Stack.Item == NewItem) return;
-        for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
-            if (const FFoundationItemInstance* Held = Inventory.GetSlot(Slot); Held && Held->Item == NewItem) return;
-        Inventory.Add(NewItem, 1, MaxStack);
-        return;
-    }
-    if (Stack.Count == 1)
-    {
-        Inventory.SetSlot(Hand == EFoundationHand::Main ? Inventory.Selected : FFoundationInventory::OffhandSlot,
-            Inventory.MakeStack(NewItem, 1));
-        return;
-    }
-    Inventory.ConsumeOne(Hand);
-    if (Inventory.Add(NewItem, 1, MaxStack) > 0) return;
-    const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
-    const FFoundationLootDrop Drop{NewItem, 1};
-    SpawnDrops(Feet, MakeArrayView(&Drop, 1), FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Salt));
 }
 
 void FFoundationAuthority::UseEntity(
@@ -3978,6 +4188,13 @@ void FFoundationAuthority::SettlePlants(
             return true;
         }
         if (CanPlantSurvive(At, State)) return false;
+        // Farmland and a dirt path turn to dirt instead (survival B5): no drop and no Popped event.
+        if (FFoundationBlockState Turned; FoundationBlockFamilies::GetTurnedState(World.GetRegistry(), State, Turned))
+        {
+            World.Set(At, Turned);
+            Changed.Add(At);
+            return true;
+        }
         Pop(At);
         PopOtherHalf(At, State);
         return true;
