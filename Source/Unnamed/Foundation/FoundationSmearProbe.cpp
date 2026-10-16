@@ -174,7 +174,9 @@ void UFoundationRuntimeProbe::AddSmearCases()
     auto MobsShown = [GetView]
     {
         const UFoundationInteractionView* View = GetView();
-        return View && View->GetMobView() && View->GetMobView()->GetDrawnCount() == 2;
+        // Both drawn with every model part's mesh: a model loaded without geometry does not count (R46-1).
+        return View && View->GetMobView() && View->GetMobView()->GetDrawnCount() == 2 &&
+            View->GetMobView()->GetWholeCount() == 2;
     };
     ShotWhen(
         TEXT("1-mobs-still-camera"),

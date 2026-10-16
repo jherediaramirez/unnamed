@@ -351,7 +351,7 @@ bool FFoundationMobView::Prepare(EFoundationMobType Type, EFoundationMobVariant 
 void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, double Alpha)
 {
     const TArray<FFoundationMob>& Mobs = Authority.GetMobs();
-    Drawn = 0;
+    Drawn = Whole = 0;
     Overlays.Reset();
     const bool bOn = Authority.Options.bMobs;
     const FVector Origin = Authority.World.OriginCm;
@@ -397,6 +397,8 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
             // [jar sheep model layers; minecraft.wiki "Sheep", provisional] the wool, tinted by the colour, is gone
             // when shorn; the tinted undercoat shows on a coloured sheep, shorn or not (a white one's is in its skin).
             const FLinearColor Tint = bFarm ? FoundationMobFarm::GetWoolTint(Mob.Color) : FLinearColor::White;
+            int32 Meshes = 0;
+            bool bMissing = false;
             for (FLayerDraw& Layer : Draw.Layers)
             {
                 const bool bShown =
@@ -412,7 +414,10 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
                     const FTransform World = MakePartTransform(Part, Rotation, Offset) * (Parent ? *Parent : Root);
                     Placed.Add(Part.Path, World);
                     FPartDraw& PartDraw = Layer.Parts[PartIndex];
+                    // A part with faces but no mesh is missing; a faceless part (a pivot for others) needs none.
+                    bMissing |= !PartDraw.Component && !Part.Faces.IsEmpty();
                     if (!PartDraw.Component) continue;
+                    ++Meshes;
                     PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 0, Overlay);
                     // M_Mob reads one minus the tint (0, the default, is untinted: the arrows and the shield).
                     PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 1, 1 - LayerTint.R);
@@ -435,6 +440,7 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
                 Draw.SlotMobs.Add(Mob.Id);
             ++Slot;
             ++Drawn;
+            Whole += Meshes > 0 && !bMissing ? 1 : 0;
         }
         // The slots past the last drawn are hidden: a mob drawn there later is new to its slot.
         Draw.SlotMobs.SetNum(Slot);

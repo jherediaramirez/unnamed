@@ -31,6 +31,9 @@ public:
     void OnSound(const FFoundationEvent& Event);
     // Probes: mobs drawn this frame and the overlay value each got; the sound hook calls.
     int32 GetDrawnCount() const { return Drawn; }
+    // Of those, the mobs drawn with at least one mesh and a mesh for every part that has faces (probes: a model loaded
+    // without geometry is not whole).
+    int32 GetWholeCount() const { return Whole; }
     const TArray<float>& GetDrawnOverlays() const { return Overlays; }
     int32 Sounds = 0;
     FString Describe() const;
@@ -85,6 +88,6 @@ private:
 
     UFoundationInteractionView& View;
     TStaticArray<FTypeDraw, int32(EFoundationMobType::Count) * VariantCount> Types;
-    int32 Drawn = 0;
+    int32 Drawn = 0, Whole = 0;
     TArray<float> Overlays;
 };
