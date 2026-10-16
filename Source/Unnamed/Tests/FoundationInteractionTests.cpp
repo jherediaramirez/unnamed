@@ -2093,4 +2093,71 @@ bool FFoundationBlocksPopDropsTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("bItemEntities off: no item entities"), L.A.GetItemEntities().Num(), 0);
     return true;
 }
+// R36-2: removing either half in Creative removes the whole plant without loot. The paired-half rule must not
+// suppress survival loot or the normal neighbor drops when Creative removes a plant's support instead.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBlocksCreativePlantDropsTest,
+    "Unnamed.Foundation.Blocks.CreativePlantDrops",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationBlocksCreativePlantDropsTest::RunTest(const FString& Parameters)
+{
+    struct FCreativePlantDropCase
+    {
+        const TCHAR* Label;
+        EFoundationPlayerMode Mode;
+        bool bInfinite;
+        int32 TargetZ;
+        int32 ExpectedDrops;
+    };
+    const FCreativePlantDropCase Cases[] = {{TEXT("survival lower"), EFoundationPlayerMode::Survival, false, 2, 1},
+        {TEXT("survival upper"), EFoundationPlayerMode::Survival, false, 3, 1},
+        {TEXT("creative finite lower"), EFoundationPlayerMode::Creative, false, 2, 0},
+        {TEXT("creative finite upper"), EFoundationPlayerMode::Creative, false, 3, 0},
+        {TEXT("creative infinite lower"), EFoundationPlayerMode::Creative, true, 2, 0},
+        {TEXT("creative infinite upper"), EFoundationPlayerMode::Creative, true, 3, 0},
+        {TEXT("creative support"), EFoundationPlayerMode::Creative, true, 1, 1}};
+    const FIntVector Support(0, 0, 1), Lower(0, 0, 2), Upper(0, 0, 3);
+    for (const FCreativePlantDropCase& Case : Cases)
+    {
+        FLab L(Case.bInfinite);
+        if (!TestTrue(TEXT("plant survival rules built"), L.A.PlantSurvival.IsValid())) return false;
+        L.A.Options.bItemEntities = true;
+        L.Vitals.Mode = Case.Mode;
+        L.Hold(3); // Empty hand: Creative must be allowed to destroy the targeted block.
+        const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
+        FFoundationBlockState LowerState, UpperState;
+        if (!TestTrue(TEXT("sunflower halves parse"),
+                Registry.Parse(TEXT("sunflower[half=lower]"), LowerState) &&
+                    Registry.Parse(TEXT("sunflower[half=upper]"), UpperState)))
+            return false;
+        const int32 SunflowerItem = L.A.Rules.FindItem(TEXT("sunflower"));
+        if (!TestTrue(TEXT("sunflower item registered"), SunflowerItem != INDEX_NONE)) return false;
+        L.Put(Support, TEXT("dirt"));
+        L.A.World.Set(Lower, LowerState);
+        L.A.World.Set(Upper, UpperState);
+        const FIntVector Target(0, 0, Case.TargetZ);
+        L.Stand({-150, 50, 0}, FVector(200, 0, Case.TargetZ * UFoundationProfile::BlockCm + 50 - 162));
+        L.Facts([&Case](FFoundationPlayerFacts& Facts) { Facts.Mode = Case.Mode; });
+        const FFoundationCommand Command = L.Make(EFoundationCommandType::MineStart);
+        const FString Label(Case.Label);
+        if (!TestTrue(Label + TEXT(": aim resolves the requested cell"),
+                Command.Target.Kind == EFoundationHitKind::Block && Command.Target.Cell == Target))
+            continue;
+        TestEqual(Label + TEXT(": starts without item entities"), L.A.GetItemEntities().Num(), 0);
+        const FFoundationResult Result = L.Run(Command);
+        TestTrue(Label + TEXT(": command breaks the requested cell"),
+            Result.IsCommitted() && Result.bBroken && Result.Cell == Target);
+        TestTrue(Label + TEXT(": both halves removed"), !L.Solid(Lower) && !L.Solid(Upper));
+        TestEqual(Label + TEXT(": support only removed when targeted"), L.Solid(Support), Case.TargetZ != Support.Z);
+        int32 SunflowerCount = 0;
+        for (const FFoundationItemEntity& Entity : L.A.GetItemEntities())
+        {
+            TestEqual(Label + TEXT(": dropped item is sunflower"), Entity.Item, SunflowerItem);
+            SunflowerCount += Entity.Item == SunflowerItem ? Entity.Count : 0;
+        }
+        TestEqual(Label + TEXT(": sunflower count"), SunflowerCount, Case.ExpectedDrops);
+        TestEqual(Label + TEXT(": item entity count"), L.A.GetItemEntities().Num(), Case.ExpectedDrops);
+    }
+    return true;
+}
 #endif

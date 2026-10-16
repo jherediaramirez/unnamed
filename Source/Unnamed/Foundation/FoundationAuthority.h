@@ -942,8 +942,9 @@ private:
     // neighbours that no longer survive pop, one level deep (Jesus's answer 6), and a stack to its end (Q1).
     // bWriteUpperHalf: a placement's lower half writes its upper half; a block use's writes never do (Codex 28 #1: a
     // lone lower door half would overwrite the block above it).
+    // bCreativeBreak: suppress loot only from the edited block's paired half, not from unsupported neighbours.
     void SettlePlants(const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player,
-        bool bWriteUpperHalf = true);
+        bool bWriteUpperHalf = true, bool bCreativeBreak = false);
     // A block's loot for Tool, rolled before it goes: its table, else "drops itself" (a double slab is two).
     void RollBlockDrops(const FIntVector& Cell, FFoundationBlockState State, const FFoundationItemDefinition& Tool,
         int32 RandomSeed, TArray<FFoundationLootDrop>& Out) const;

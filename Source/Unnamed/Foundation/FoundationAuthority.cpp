@@ -4058,7 +4058,7 @@ bool FFoundationAuthority::BreakBlock(
         Event.Kind = EFoundationEventKind::ToolBroke;
         AddEvent(Event);
     }
-    SettlePlants(Cell, State, Player);
+    SettlePlants(Cell, State, Player, /*bWriteUpperHalf=*/true, /*bCreativeBreak=*/bCreative);
     return true;
 }
 
@@ -4154,8 +4154,8 @@ FFoundationBlockState FFoundationAuthority::TrimPlantFaces(const FIntVector& Cel
     return Trimmed;
 }
 
-void FFoundationAuthority::SettlePlants(
-    const FIntVector& Cell, FFoundationBlockState Before, const FFoundationPlayer& Player, bool bWriteUpperHalf)
+void FFoundationAuthority::SettlePlants(const FIntVector& Cell, FFoundationBlockState Before,
+    const FFoundationPlayer& Player, bool bWriteUpperHalf, bool bCreativeBreak)
 {
     // Stairs, fences, walls, panes and gates beside the edit (survival B2b, foundation.Blocks.Shapes).
     FoundationBlockFamilies::UpdateNeighbourShapes(World, Cell);
@@ -4182,7 +4182,7 @@ void FFoundationAuthority::SettlePlants(
         AddEvent(Event);
     };
     // A double plant is one unit: the half that was removed or replaced takes its other half along.
-    auto PopOtherHalf = [this, &Pop](const FIntVector& At, FFoundationBlockState Old)
+    auto PopOtherHalf = [this, &Pop](const FIntVector& At, FFoundationBlockState Old, bool bRoll = true)
     {
         FIntVector Other;
         FFoundationBlockState Ignored;
@@ -4193,10 +4193,13 @@ void FFoundationAuthority::SettlePlants(
         {
             // A 26.3 loot table drops a two-half block from its lower half alone (match_block half=lower), so both
             // halves roll; a block without one drops itself from whichever half rolls first.
-            Pop(Other, FindAuthorityLootTable(Rules.LootTables, World.GetBlock(World.Get(Other).State).Id) != nullptr);
+            Pop(Other,
+                bRoll &&
+                    FindAuthorityLootTable(Rules.LootTables, World.GetBlock(World.Get(Other).State).Id) != nullptr);
         }
     };
-    PopOtherHalf(Cell, Before);
+    // Creative removes the edited plant as one unit without loot; unrelated neighbour pops still roll normally.
+    PopOtherHalf(Cell, Before, !bCreativeBreak);
     // A placed lower half writes its upper half (CheckPlantPlacement found the cell free).
     FIntVector Upper;
     FFoundationBlockState UpperState;
