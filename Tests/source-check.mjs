@@ -59,4 +59,25 @@ for(const f of runtimeReads){
   if(!fs.existsSync(path.join(root,f)))throw Error(`${f} is missing`);
   if(!covers(f))throw Error(`${f} is read at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
 }
-console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test, ${readRoots.size} runtime reference roots and ${runtimeReads.length} runtime reference files staged.`);
+// A packaged game is monolithic: its globals are constructed before main, when there is no command line, GLog, config or
+// engine yet. A global object whose constructor reads one is a fatal error at static init (QC K-BUILD-4: the transition
+// probe read FCommandLine::Get, and the package exited with 777006 before writing a log). Defer such work to a delegate.
+const staticInitReads=/\b(FCommandLine::|FParse::|GLog\b|GConfig\b|GEngine\b|GIsEditor\b)/;
+const blockAt=(text,open)=>{let depth=0;for(let i=open;i<text.length;i++){if(text[i]==='{')depth++;else if(text[i]==='}'&&!--depth)return text.slice(open,i+1);}return text.slice(open);};
+const staticInitCtors=text=>{const bad=[];
+  for(const g of text.matchAll(/^ {0,4}(F\w+)\s+(G\w+)\s*;/gm)){
+    const ctor=new RegExp(`\\b${g[1]}\\(\\)\\s*(?::[^{]*)?\\{`).exec(text);
+    if(ctor&&staticInitReads.test(blockAt(text,ctor.index+ctor[0].length-1)))bad.push(`${g[2]} (${g[1]})`);
+  }return bad;};
+if(!staticInitCtors('class FProbe{FProbe(){FParse::Value(FCommandLine::Get(),TEXT("X="),V);}};\n    FProbe GProbe;\n').length)
+  throw Error('The static init scan misses a global whose constructor reads the command line');
+let globalsChecked=0;
+const walkGlobals=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+  const p=path.join(dir,e.name);
+  if(e.isDirectory()){walkGlobals(p);continue;}
+  if(!/\.cpp$/.test(e.name))continue;
+  globalsChecked++;
+  for(const g of staticInitCtors(fs.readFileSync(p,'utf8')))throw Error(`${path.relative(root,p)}: the global ${g} reads the command line, GLog, config or the engine in its constructor, before main in a package`);
+}};
+for(const d of ['Source/Unnamed','Source/UnnamedVoxel'])walkGlobals(path.join(root,d));
+console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test, ${readRoots.size} runtime reference roots and ${runtimeReads.length} runtime reference files staged, no static-init reads in ${globalsChecked} source files.`);
