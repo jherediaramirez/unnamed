@@ -28,6 +28,10 @@ Before this update, everything was stopped at `eb52cea7` (landing 54); see [refe
 
 The original inventory audit was completed at 13:34 EDT on eb52cea7. Original discovery evidence and plausible `(P)` markers are retained; they are not labels for the quality of the later fix verification. Historical entries outside the main table are listed separately below. No new bug investigation or fix was started for this report.
 
+## 2026-10-16 evening: the dev seed's world starts in Creative (branch `fix/dev-world-mode-agreement`, not merged)
+
+New row K-WORLD-3 (low), found while setting up editor checks for `fix/qc-low-editor-12`: `L_Generated` opened plainly gave a Survival player (hearts, hunger) the creative lab rules (infinite supply, no tool wear, creative inventory), so `/gamemode survival` printed nothing and tool wear could not be checked there. Docs/VoxelWorld.md says the bare map plays by the Playground's lab defaults (infinite supply), so the player's mode now follows them: `AVoxelWorld::GetStartMode` gives Creative for the bare map (Survival with `bInfiniteSupplyDefault` off), and both `ConfigurePlayer` and the lab rules (`ApplyStartRules`) read it. Saved worlds are unchanged. To check tool wear in the dev world: `/gamemode survival` now switches mode and rules together. Native test `Unnamed.Foundation.Commands.StartMode` pins the agreement (dev seed, Creative, Survival and Hardcore worlds, and `/gamemode survival` from the dev start). Build GREEN; native `Unnamed.Foundation` 314/314. RED: with the old `ConfigurePlayer` (no mode for the bare map) the test fails on "dev seed: the player's mode". Human check: open L_Generated plainly; no hearts or hunger, ∞ on stacks; `/gamemode survival` prints "Set own game mode to Survival Mode".
+
 ## Landed fixes
 
 The symptom identifies the bug corrected. Evidence limits and pending acceptance stay visible.

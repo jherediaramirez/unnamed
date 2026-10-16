@@ -14,6 +14,7 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Voxel/VoxelWorld.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace CommandsTestsLocal
@@ -214,6 +215,61 @@ bool FFoundationCommandsGameModeTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("spectator refused"), Lab.Run(TEXT("/gamemode spectator")),
         FString(TEXT("Spectator Mode isn't available in this build")));
     TestEqual(TEXT("still creative"), Lab.Vitals.Mode, EFoundationPlayerMode::Creative);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCommandsStartModeTest, "Unnamed.Foundation.Commands.StartMode",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationCommandsStartModeTest::RunTest(const FString& Parameters)
+{
+    // A world's player starts in the mode its lab rules go with. L_Generated opened plainly used to give a Survival
+    // player the creative rules, so /gamemode survival printed nothing and changed nothing.
+    const auto Check = [this](const TCHAR* What, const FUnnamedSavedWorld* Saved, EFoundationPlayerMode Expected)
+    {
+        const EFoundationPlayerMode Mode = AVoxelWorld::GetStartMode(Saved);
+        TestEqual(FString::Printf(TEXT("%s: mode"), What), Mode, Expected);
+        const bool bCreative = Mode == EFoundationPlayerMode::Creative;
+        FFoundationLabOptions Options;
+        Options.bInfiniteSupply = Options.bCreativeInventory = !bCreative;
+        Options.bToolWear = bCreative;
+        AVoxelWorld::ApplyStartRules(Saved, Options);
+        TestTrue(FString::Printf(TEXT("%s: the rules go with the mode"), What),
+            Options.bInfiniteSupply == bCreative && Options.bToolWear == !bCreative &&
+                Options.bCreativeInventory == bCreative);
+    };
+    const bool bLabInfinite = UFoundationInteractionSettings::Get().bInfiniteSupplyDefault;
+    Check(TEXT("dev seed"), nullptr, bLabInfinite ? EFoundationPlayerMode::Creative : EFoundationPlayerMode::Survival);
+    FUnnamedSavedWorld Saved;
+    Saved.GameMode = TEXT("Creative");
+    Check(TEXT("creative world"), &Saved, EFoundationPlayerMode::Creative);
+    Saved.GameMode = TEXT("Survival");
+    Check(TEXT("survival world"), &Saved, EFoundationPlayerMode::Survival);
+    Saved.GameMode = TEXT("Hardcore");
+    Check(TEXT("hardcore world"), &Saved, EFoundationPlayerMode::Survival);
+
+    // The pawn's mode, as the dev seed's lab (no saved world) gives it.
+    FFoundationVitals Vitals;
+    Vitals.Mode = EFoundationPlayerMode::Spectator;
+    GetDefault<AVoxelWorld>()->ConfigurePlayer(Vitals);
+    TestEqual(TEXT("dev seed: the player's mode"), Vitals.Mode, AVoxelWorld::GetStartMode(nullptr));
+
+    // From the dev seed's start, /gamemode to the other mode switches mode and rules together.
+    FCommandLab Lab;
+    AVoxelWorld::ApplyStartRules(nullptr, Lab.A.Options);
+    Lab.A.Reset();
+    Lab.Vitals.Mode = Vitals.Mode;
+    TestEqual(TEXT("dev seed: the hotbar's supply"), Lab.P().Inventory.bInfiniteSupply, Lab.A.Options.bInfiniteSupply);
+    if (bLabInfinite)
+    {
+        TestEqual(TEXT("dev seed: /gamemode survival"), Lab.Run(TEXT("/gamemode survival")),
+            FString(TEXT("Set own game mode to Survival Mode")));
+        TestTrue(TEXT("dev seed: survival rules"),
+            !Lab.A.Options.bInfiniteSupply && Lab.A.Options.bToolWear && !Lab.A.Options.bCreativeInventory &&
+                !Lab.P().Inventory.bInfiniteSupply);
+    }
+    else
+        TestEqual(TEXT("dev seed: /gamemode creative"), Lab.Run(TEXT("/gamemode creative")),
+            FString(TEXT("Set own game mode to Creative Mode")));
     return true;
 }
 

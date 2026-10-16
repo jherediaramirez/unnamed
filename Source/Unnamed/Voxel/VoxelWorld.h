@@ -91,8 +91,14 @@ public:
     virtual FVector GetSafeSpawn(const UFoundationProfile& Profile) const override;
     virtual double GetFallOutZ() const override;
     virtual void ApplyLogicalOffset(const FVector& Offset) override;
-    // A saved world's game mode (Hardcore plays as Survival on Hard), difficulty and natural regeneration rule.
+    // The game mode (GetStartMode), and a saved world's difficulty and natural regeneration rule.
     virtual void ConfigurePlayer(FFoundationVitals& Vitals) const override;
+    // The game mode a world starts in: a saved world's (Hardcore plays as Survival), else the Playground's lab default
+    // (infinite supply is Creative). The player's mode and the lab rules (ApplyStartRules) both come from it.
+    static EFoundationPlayerMode GetStartMode(const FUnnamedSavedWorld* Saved);
+    // The start mode's lab rules, as /gamemode sets them: Creative has infinite supply, no tool wear and the creative
+    // inventory. A saved world starts with no blocks; the dev seed's world with the lab's finite block count.
+    static void ApplyStartRules(const FUnnamedSavedWorld* Saved, FFoundationLabOptions& Options);
     // The loading screen's state: ready once the player stands on the spawn and the view is on screen; progress is the
     // columns in view that are on screen; the map colours the columns around the spawn by pipeline stage.
     virtual void GetLoadState(FFoundationLoadState& Out, bool bWithMap) const override;

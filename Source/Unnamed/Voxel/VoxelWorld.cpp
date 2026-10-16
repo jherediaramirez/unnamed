@@ -336,15 +336,31 @@ const FUnnamedSavedWorld* AVoxelWorld::GetSavedWorld() const
 void AVoxelWorld::ConfigurePlayer(FFoundationVitals& Vitals) const
 {
     const FUnnamedSavedWorld* World = GetSavedWorld();
+    Vitals.Mode = GetStartMode(World);
     if (!World) return;
-    // Hardcore plays as Survival on Hard (the store forces Hard); its permadeath needs a game-over screen first.
-    Vitals.Mode =
-        World->GameMode == TEXT("Creative") ? EFoundationPlayerMode::Creative : EFoundationPlayerMode::Survival;
     static_assert(int32(EFoundationDifficulty::Hard) == 3, "Difficulty names follow the enum");
     const TCHAR* const Difficulties[] = {TEXT("Peaceful"), TEXT("Easy"), TEXT("Normal"), TEXT("Hard")};
     for (int32 Index = 0; Index < UE_ARRAY_COUNT(Difficulties); ++Index)
         if (World->Difficulty == Difficulties[Index]) Vitals.Difficulty = EFoundationDifficulty(Index);
     Vitals.bNaturalRegeneration = World->GetRule(TEXT("natural_health_regeneration"), true);
+}
+
+EFoundationPlayerMode AVoxelWorld::GetStartMode(const FUnnamedSavedWorld* Saved)
+{
+    // Hardcore plays as Survival on Hard (the store forces Hard); its permadeath needs a game-over screen first.
+    const bool bCreative =
+        Saved ? Saved->GameMode == TEXT("Creative") : UFoundationInteractionSettings::Get().bInfiniteSupplyDefault;
+    return bCreative ? EFoundationPlayerMode::Creative : EFoundationPlayerMode::Survival;
+}
+
+void AVoxelWorld::ApplyStartRules(const FUnnamedSavedWorld* Saved, FFoundationLabOptions& Options)
+{
+    const bool bCreative = GetStartMode(Saved) == EFoundationPlayerMode::Creative;
+    Options.bInfiniteSupply = bCreative;
+    Options.bToolWear = !bCreative;
+    Options.bCreativeInventory = bCreative;
+    // Survival starts with the loadout's tools and no blocks: blocks come from mining.
+    Options.FiniteBlockCount = Saved ? 0 : UFoundationInteractionSettings::Get().FiniteBlockCount;
 }
 
 void AVoxelWorld::SetupClock()
@@ -566,14 +582,10 @@ void AVoxelWorld::SetupAuthority()
         [Streaming = TWeakObjectPtr<UVoxelWorldSubsystem>(GetStreaming())]() -> FVoxelColumnPipeline*
         { return Streaming.IsValid() ? Streaming->GetPipeline() : nullptr; }));
     Authority.Options.PlacementPreset = Settings.DefaultPreset;
-    // A saved world plays by its game mode; the map opened bare plays as the Playground's lab does.
+    // A saved world plays by its game mode; the map opened bare plays as the Playground's lab does, in the mode that
+    // goes with it (ConfigurePlayer gives the player the same mode).
     const FUnnamedSavedWorld* Saved = GetSavedWorld();
-    const bool bCreative = Saved ? Saved->GameMode == TEXT("Creative") : Settings.bInfiniteSupplyDefault;
-    Authority.Options.bInfiniteSupply = bCreative;
-    Authority.Options.bToolWear = !bCreative;
-    Authority.Options.bCreativeInventory = bCreative;
-    // Survival starts with the loadout's tools and no blocks: blocks come from mining.
-    Authority.Options.FiniteBlockCount = Saved ? 0 : Settings.FiniteBlockCount;
+    ApplyStartRules(Saved, Authority.Options);
     // Flowing water and lava (water and sky W2a) wake up from the block world's changes, under the saved world's game
     // rules (26.3's defaults for the dev seed's world).
     FVoxelFluidOptions FluidOptions;
