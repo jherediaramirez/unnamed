@@ -40,12 +40,19 @@ if(!guards)throw Error('No missing-asset guards found in Source/Unnamed/Tests');
 const buildCs=fs.readFileSync(path.join(root,'Source/Unnamed/Unnamed.Build.cs'),'utf8');
 const staged=[...buildCs.matchAll(/RuntimeDependencies\.Add\(\s*"\$\(ProjectDir\)\/(Reference\/[^"]+)"/g)].map(m=>m[1]);
 const covers=file=>staged.some(s=>s.endsWith('/...')?file.startsWith(s.slice(0,-3)):file===s);
+// A root is one TEXT("Reference/<root>...") literal or split pieces: TEXT("Reference"), TEXT("<root>") (QC RQ02-1).
+const referenceRoots=text=>[...text.matchAll(/TEXT\("(Reference\/[^/"]+)/g)].map(m=>m[1]).concat(
+  [...text.matchAll(/TEXT\("Reference\/?"\)\s*(?:,|\/)\s*TEXT\("\/?([^/"]+)/g)].map(m=>'Reference/'+m[1]));
+for(const [sample,want] of [['FPaths::Combine(FPaths::ProjectDir(), TEXT("Reference"), TEXT("minecraft-x-26.3"))','Reference/minecraft-x-26.3'],
+  ['FPaths::ProjectDir() / TEXT("Reference") / TEXT("minecraft-y-26.3/data")','Reference/minecraft-y-26.3'],
+  ['TEXT("Reference/minecraft-z-26.3/attributes.json")','Reference/minecraft-z-26.3']])
+  if(!referenceRoots(sample).includes(want))throw Error(`The runtime reference scan misses ${want} in: ${sample}`);
 const readRoots=new Map();
 const walk=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
   const p=path.join(dir,e.name);
   if(e.isDirectory()){if(p!==testsDir)walk(p);continue;}
   if(!/\.(cpp|h)$/.test(e.name))continue;
-  for(const m of fs.readFileSync(p,'utf8').matchAll(/TEXT\("(Reference\/[^/"]+)/g))readRoots.set(m[1],path.relative(root,p));
+  for(const r of referenceRoots(fs.readFileSync(p,'utf8')))readRoots.set(r,path.relative(root,p));
 }};
 walk(path.join(root,'Source/Unnamed'));
 if(!readRoots.size)throw Error('No runtime Reference/ reads found in Source/Unnamed');
