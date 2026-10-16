@@ -1,12 +1,15 @@
 #include "Misc/AutomationTest.h"
 #include "Dom/JsonObject.h"
+#include "Engine/World.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationMobAssets.h"
 #include "Foundation/FoundationMobView.h"
 #include "Foundation/FoundationMobs.h"
+#include "GameFramework/Actor.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -1600,6 +1603,79 @@ bool FFoundationMobPlayerHitTest::RunTest(const FString&)
     FVector Velocity = FVector::ZeroVector;
     FoundationMobs::ApplyKnockback(Velocity, FVector2D(-1, 0), true, FoundationMobs::KnockbackCm);
     TestEqual(TEXT("knocked 0.4 away and 0.4 up"), Velocity, FVector(-40, 0, 40));
+    return true;
+}
+
+// K-PLAYER-7 (the smear fix): a mob's parts are instanced components whose instances move, not the components, so they
+// keep per-instance previous transforms (with them the engine writes the parts' motion vectors; without them TSR took a
+// moving mob for still scenery and smeared its texture). A pig drawn in its slot again moves from last frame's
+// transform; a mob new to its slot starts still. Drawn by FFoundationMobView in a bare world from DA_Mobs' models.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobMotionVectorsTest, "Unnamed.Foundation.Mobs.MotionVectors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationMobMotionVectorsTest::RunTest(const FString&)
+{
+    MobTestsLocal::FMobLab Lab;
+    const int32 Pig = Lab.A.SpawnMob(EFoundationMobType::Pig, FVector(0, 0, 0), 90);
+    // A bare world, never begun, rooted while the test holds it (no world context, so DestroyWorld(false)).
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (World) World->AddToRoot();
+    AActor* Owner = World ? World->SpawnActor<AActor>() : nullptr;
+    if (TestNotNull(TEXT("an actor"), Owner))
+    {
+        USceneComponent* Root = NewObject<USceneComponent>(Owner);
+        Owner->SetRootComponent(Root);
+        Root->RegisterComponent();
+        FFoundationMobView View(*NewObject<UFoundationInteractionView>(Owner));
+        TArray<UInstancedStaticMeshComponent*> Parts;
+        // Each part's first slot (its first instance): its transform and previous transform, in the world.
+        auto Slot0 = [&Parts](TArray<FTransform>& OutNow, TArray<FTransform>& OutPrevious)
+        {
+            OutNow.Reset();
+            OutPrevious.Reset();
+            for (const UInstancedStaticMeshComponent* Part : Parts)
+            {
+                Part->GetInstanceTransform(0, OutNow.AddDefaulted_GetRef(), true);
+                Part->GetInstancePrevTransform(0, OutPrevious.AddDefaulted_GetRef(), true);
+            }
+        };
+        View.Update(Lab.A, nullptr, 1);
+        Owner->GetComponents(Parts);
+        if (TestTrue(TEXT("the pig is drawn by its part components"), View.GetDrawnCount() == 1 && Parts.Num() > 0))
+        {
+            for (const UInstancedStaticMeshComponent* Part : Parts)
+                TestEqual(TEXT("every instance has a previous transform"), Part->PerInstancePrevTransform.Num(),
+                    Part->GetInstanceCount());
+            TArray<FTransform> First, FirstPrevious, Now, Previous;
+            Slot0(First, FirstPrevious);
+            for (int32 Index = 0; Index < Parts.Num(); ++Index)
+                TestTrue(TEXT("drawn first: still"), FirstPrevious[Index].Equals(First[Index], 1e-3));
+            // It walks 50 cm.
+            FFoundationMob* Mob = Lab.A.FindMob(Pig);
+            Mob->PreviousLocalCm = Mob->LocalCm;
+            Mob->LocalCm += FVector(0, 50, 0);
+            View.Update(Lab.A, nullptr, 1);
+            Slot0(Now, Previous);
+            for (int32 Index = 0; Index < Parts.Num(); ++Index)
+            {
+                TestTrue(TEXT("walking: the previous transform is last frame's"),
+                    Previous[Index].Equals(First[Index], 1e-3));
+                TestEqual(TEXT("walking: 50 cm since last frame"),
+                    Now[Index].GetLocation() - Previous[Index].GetLocation(), FVector(0, 50, 0), 1e-3f);
+            }
+            // Another pig takes the slot: it starts still.
+            Lab.A.ClearMobs();
+            Lab.A.SpawnMob(EFoundationMobType::Pig, FVector(300, 0, 0), 90);
+            View.Update(Lab.A, nullptr, 1);
+            Slot0(Now, Previous);
+            for (int32 Index = 0; Index < Parts.Num(); ++Index)
+                TestTrue(TEXT("a new mob in the slot: still"), Previous[Index].Equals(Now[Index], 1e-3));
+        }
+    }
+    if (World)
+    {
+        World->RemoveFromRoot();
+        World->DestroyWorld(false);
+    }
     return true;
 }
 #endif

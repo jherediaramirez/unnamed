@@ -73,6 +73,8 @@ private:
     struct FTypeDraw
     {
         TArray<FLayerDraw> Layers;
+        // The mob each slot drew last frame (its id), for the parts' motion vectors.
+        TArray<int32> SlotMobs;
         bool bTried = false;
     };
     bool Prepare(EFoundationMobType Type);
