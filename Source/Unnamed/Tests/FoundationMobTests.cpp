@@ -7,6 +7,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationMobAssets.h"
+#include "Foundation/FoundationMobFarm.h"
 #include "Foundation/FoundationMobView.h"
 #include "Foundation/FoundationMobs.h"
 #include "GameFramework/Actor.h"
@@ -598,12 +599,12 @@ bool FFoundationMobModelTest::RunTest(const FString&)
     TestEqual(TEXT("cow texture 64 x 64"), Cow->TextureSize, FIntPoint(64, 64));
     const FFoundationMobModelAsset* Sheep = Assets->FindModel(TEXT("sheep"));
     TestTrue(TEXT("sheep texture 64 x 32"), Sheep && Sheep->TextureSize == FIntPoint(64, 32));
-    // 20b: the sheep's wool layer follows its main layer, with its own 64 x 32 texture.
+    // 20b: the sheep's wool layer follows its main layer, with its own 64 x 32 texture; 20e1: then its undercoat.
     TArray<const FFoundationMobModelAsset*> Layers;
     Assets->FindLayers(TEXT("sheep"), Layers);
-    TestTrue(TEXT("sheep layers main, wool"),
-        Layers.Num() == 2 && Layers[0]->Layer == TEXT("sheep#main") && Layers[1]->Layer == TEXT("sheep#wool") &&
-            Layers[1]->TextureSize == FIntPoint(64, 32));
+    TestTrue(TEXT("sheep layers main, wool, undercoat"),
+        Layers.Num() == 3 && Layers[0]->Layer == TEXT("sheep#main") && Layers[1]->Layer == TEXT("sheep#wool") &&
+            Layers[1]->TextureSize == FIntPoint(64, 32) && Layers[2]->Layer == TEXT("sheep#wool_undercoat"));
     return true;
 }
 
@@ -2188,6 +2189,409 @@ bool FFoundationMobMotionVectorsTest::RunTest(const FString&)
         World->RemoveFromRoot();
         World->DestroyWorld(false);
     }
+    return true;
+}
+
+// Survival T6 20e1: farm extras. Literals from the jar's data (loot_table/shearing/sheep*.json, entities/sheep.json,
+// the variant files and their biome tags) and minecraft.wiki (colour weights, dye colours; provisional).
+namespace MobTestsLocal
+{
+    // The lab with farm extras on, a sheep (or another mob) at the origin where the player aims.
+    struct FFarmLab : FMobLab
+    {
+        FFarmLab()
+        {
+            A.Options.bMobFarm = true;
+            A.Options.bToolWear = true;
+            // DA_Items has no shears yet (the items reference's 146 items lack them; an item request): a stand-in
+            // definition with the 26.3 durability [minecraft.wiki "Shears": 238] so the shearing path runs.
+            if (A.Rules.FindItem(TEXT("shears")) == INDEX_NONE)
+            {
+                FFoundationItemDefinition& Shears = A.Rules.Items.AddDefaulted_GetRef();
+                Shears.Id = TEXT("shears");
+                Shears.MaxStack = 1;
+                Shears.MaxDurability = 238;
+            }
+        }
+
+        int32 Spawn(EFoundationMobType Type)
+        {
+            A.ClearMobs();
+            return A.SpawnMob(Type, FVector::ZeroVector);
+        }
+
+        void HoldStack(FName Item, int32 Count)
+        {
+            P().Inventory.SetSlot(0, P().Inventory.MakeStack(A.Rules.FindItem(Item), Count));
+            P().Inventory.Select(0);
+        }
+
+        // A right-click on the aimed entity with the main hand.
+        FFoundationResult Use(EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival)
+        {
+            Vitals.Mode = Mode;
+            FFoundationCommand Command;
+            Command.SessionId = A.GetSessionId();
+            Command.Type = EFoundationCommandType::UseEntity;
+            Command.Hand = EFoundationHand::Main;
+            Command.Item = P().Inventory.GetHand(EFoundationHand::Main).GetRef();
+            Command.Target = A.Resolve(P().Facts);
+            Command.Sequence = Sequence++;
+            return A.Execute(Player, Command, Vitals);
+        }
+
+        int32 Dropped(FName Item) const
+        {
+            const int32 Index = A.Rules.FindItem(Item);
+            int32 Count = 0;
+            for (const FFoundationItemEntity& Entity : A.GetItemEntities())
+                Count += Entity.Item == Index ? Entity.Count : 0;
+            return Count;
+        }
+
+        bool HasSound(const TCHAR* Sound) const
+        {
+            return A.GetEvents().ContainsByPredicate([Sound](const FFoundationEvent& Event)
+                { return Event.Kind == EFoundationEventKind::MobSound && Event.Interaction == FName(Sound); });
+        }
+
+        int32 CountHeld(int32 Item)
+        {
+            int32 Count = 0;
+            for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+                if (const FFoundationItemInstance* Stack = P().Inventory.GetSlot(Slot); Stack && Stack->Item == Item)
+                    Count += Stack->Count;
+            return Count;
+        }
+
+        FName HeldId() { return A.Rules.GetItem(P().Inventory.GetHand(EFoundationHand::Main).Item).Id; }
+    };
+}
+
+// [minecraft.wiki "Sheep", "Dye"; provisional] 30,000 natural colours: white 0.81836, black, gray and light gray 0.05,
+// brown 0.03, pink 0.00164, nothing else; the dye names and the wool tints. Mutation: brown 4% (Roll < 19).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobSheepColorTest, "Unnamed.Foundation.Mobs.SheepColor",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobSheepColorTest::RunTest(const FString&)
+{
+    using namespace FoundationMobFarm;
+    TestEqual(TEXT("16 colours"), ColorCount, 16);
+    TestEqual(TEXT("colour 0 white"), GetColorName(0), FName(TEXT("white")));
+    TestEqual(TEXT("colour 14 red"), GetColorName(14), FName(TEXT("red")));
+    TestEqual(TEXT("colour 15 black"), GetColorName(15), FName(TEXT("black")));
+    TestEqual(TEXT("red_dye"), FindDyeColor(TEXT("red_dye")), 14);
+    TestEqual(TEXT("light_blue_dye"), FindDyeColor(TEXT("light_blue_dye")), 3);
+    TestEqual(TEXT("red_wool is no dye"), FindDyeColor(TEXT("red_wool")), INDEX_NONE);
+    TestEqual(TEXT("wheat is no dye"), FindDyeColor(TEXT("wheat")), INDEX_NONE);
+    int32 Counts[16] = {};
+    FRandomStream Random(2026);
+    constexpr int32 Rolls = 30000;
+    for (int32 Roll = 0; Roll < Rolls; ++Roll)
+        ++Counts[RollSheepColor(Random)];
+    TestEqual(TEXT("white"), Counts[0] / double(Rolls), .81836, .01);
+    TestEqual(TEXT("black"), Counts[15] / double(Rolls), .05, .006);
+    TestEqual(TEXT("gray"), Counts[7] / double(Rolls), .05, .006);
+    TestEqual(TEXT("light gray"), Counts[8] / double(Rolls), .05, .006);
+    TestEqual(TEXT("brown"), Counts[12] / double(Rolls), .03, .005);
+    TestEqual(TEXT("pink"), Counts[6] / double(Rolls), .00164, .0012);
+    TestEqual(
+        TEXT("no other colour"), Rolls - Counts[0] - Counts[15] - Counts[7] - Counts[8] - Counts[12] - Counts[6], 0);
+    // [minecraft.wiki "Dye"] red B02E26 x 0.75 = (132, 34, 28); white E6E6E6.
+    TestTrue(TEXT("red wool tint"), GetWoolTint(14).ToFColor(true) == FColor(132, 34, 28));
+    TestTrue(TEXT("white wool tint"), GetWoolTint(0).ToFColor(true) == FColor(230, 230, 230));
+    return true;
+}
+
+// [jar loot_table/shearing/sheep.json + sheep/red.json] shears on a red sheep with its wool: 1-3 red wool (uniform),
+// the shear sound, one point of wear; a shorn sheep passes. The table over 3,000 rolls: only red wool, 1-3 each about
+// a third; shorn: nothing. Creative shears do not wear. Mutations: shearing a shorn sheep; no wear.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobShearTest, "Unnamed.Foundation.Mobs.Shear",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobShearTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FFarmLab L;
+    const FFoundationLootTable* Table = L.A.Rules.EntityLootTables.Find(TEXT("shearing/sheep"));
+    if (!TestNotNull(TEXT("shearing/sheep from DA_Mobs"), Table)) return false;
+    const int32 Red = L.A.Rules.FindItem(TEXT("red_wool"));
+    int32 Counts[4] = {}, Other = 0;
+    FRandomStream Random(20);
+    constexpr int32 Rolls = 3000;
+    for (int32 Roll = 0; Roll < Rolls; ++Roll)
+    {
+        FFoundationLootContext Context{L.A.Rules.Hand};
+        Context.SheepColor = TEXT("red");
+        TArray<FFoundationLootDrop> Drops;
+        FoundationLoot::Roll(*Table, L.A.Rules.LootPredicates, Context, Random, Drops);
+        int32 Count = 0;
+        for (const FFoundationLootDrop& Drop : Drops)
+            (Drop.Item == Red ? Count : Other) += Drop.Count;
+        ++Counts[FMath::Min(Count, 3)];
+    }
+    TestEqual(TEXT("never none"), Counts[0], 0);
+    TestEqual(TEXT("only red wool"), Other, 0);
+    for (int32 Count = 1; Count <= 3; ++Count)
+        TestEqual(*FString::Printf(TEXT("%d wool"), Count), Counts[Count] / double(Rolls), 1 / 3., .04);
+    {
+        FFoundationLootContext Context{L.A.Rules.Hand};
+        Context.SheepColor = TEXT("red");
+        Context.bSheared = true;
+        TArray<FFoundationLootDrop> Drops;
+        FoundationLoot::Roll(*Table, L.A.Rules.LootPredicates, Context, Random, Drops);
+        TestEqual(TEXT("a shorn sheep's table drops nothing"), Drops.Num(), 0);
+    }
+    const int32 Id = L.Spawn(EFoundationMobType::Sheep);
+    L.A.FindMob(Id)->Color = 14;
+    L.Hold(TEXT("shears"));
+    const int32 MaxDurability = L.A.Rules.GetItem(L.A.Rules.FindItem(TEXT("shears"))).MaxDurability;
+    TestEqual(TEXT("shears last 238 uses"), MaxDurability, 238);
+    const FFoundationResult First = L.Use();
+    TestTrue(TEXT("shearing commits"), First.IsCommitted());
+    TestTrue(TEXT("the sheep is shorn"), L.A.FindMob(Id)->bSheared);
+    const int32 Wool = L.Dropped(TEXT("red_wool"));
+    TestTrue(TEXT("1-3 red wool"), Wool >= 1 && Wool <= 3);
+    TestTrue(TEXT("the shear sound"), L.HasSound(TEXT("entity.sheep.shear")));
+    TestEqual(TEXT("one point of wear"), L.P().Inventory.GetHand(EFoundationHand::Main).Damage, 1);
+    TestEqual(TEXT("one shear"), L.A.MobShears, 1);
+    const FFoundationResult Again = L.Use();
+    TestEqual(TEXT("a shorn sheep passes"), Again.Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("no more wool"), L.Dropped(TEXT("red_wool")), Wool);
+    TestEqual(TEXT("no more wear"), L.P().Inventory.GetHand(EFoundationHand::Main).Damage, 1);
+    // Creative: no wear.
+    const int32 Second = L.Spawn(EFoundationMobType::Sheep);
+    L.Hold(TEXT("shears"));
+    TestTrue(TEXT("creative shears"), L.Use(EFoundationPlayerMode::Creative).IsCommitted());
+    TestTrue(TEXT("creative shore it"), L.A.FindMob(Second)->bSheared);
+    TestEqual(TEXT("creative: no wear"), L.P().Inventory.GetHand(EFoundationHand::Main).Damage, 0);
+    // Shears on a cow pass.
+    L.Spawn(EFoundationMobType::Cow);
+    TestEqual(TEXT("shears on a cow pass"), L.Use().Outcome, EFoundationOutcome::Pass);
+    return true;
+}
+
+// [jar loot_table/entities/sheep.json] a player's kill of a red sheep with its wool drops one red wool and mutton; a
+// shorn one only mutton; with farm extras off no wool, as before 20e1. Grazing regrows the wool
+// [survival.r10.ai_defaults]. Mutations: the kill ignores bSheared; grazing keeps the sheep shorn.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobShearKillTest, "Unnamed.Foundation.Mobs.ShearKill",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobShearKillTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    const auto Kill = [](FFarmLab& L, bool bSheared, int32& OutWool, int32& OutMutton)
+    {
+        const int32 Id = L.Spawn(EFoundationMobType::Sheep);
+        L.A.FindMob(Id)->Color = 14;
+        L.A.FindMob(Id)->bSheared = bSheared;
+        L.A.FindMob(Id)->Health.Health = 1;
+        L.Hold(NAME_None);
+        L.Attack();
+        OutWool = L.Dropped(TEXT("red_wool"));
+        OutMutton = L.Dropped(TEXT("mutton"));
+    };
+    int32 Wool = 0, Mutton = 0;
+    {
+        FFarmLab L;
+        Kill(L, false, Wool, Mutton);
+        TestEqual(TEXT("one red wool"), Wool, 1);
+        TestTrue(TEXT("mutton"), Mutton >= 1 && Mutton <= 2);
+    }
+    {
+        FFarmLab L;
+        Kill(L, true, Wool, Mutton);
+        TestEqual(TEXT("shorn: no wool"), Wool, 0);
+        TestTrue(TEXT("shorn: mutton"), Mutton >= 1 && Mutton <= 2);
+    }
+    {
+        FFarmLab L;
+        L.A.Options.bMobFarm = false;
+        Kill(L, false, Wool, Mutton);
+        TestEqual(TEXT("farm off: no wool"), Wool + L.Dropped(TEXT("white_wool")), 0);
+    }
+    // Regrowth: a shorn sheep eating the grass block below it.
+    FFarmLab L;
+    const FIntVector Grass = SetBlock(L, FIntVector(0, 0, 0), TEXT("grass_block"));
+    L.A.ClearMobs();
+    const int32 Id = L.A.SpawnMob(EFoundationMobType::Sheep, FVector(50, 50, 100));
+    L.Steps(1);
+    L.A.FindMob(Id)->bSheared = true;
+    L.A.FindMob(Id)->GrazeTicks = 40;
+    L.Steps(35);
+    TestTrue(TEXT("still shorn before eating"), L.A.FindMob(Id)->bSheared);
+    L.Steps(1);
+    TestEqual(TEXT("the grass is eaten"), BlockAt(L, Grass), FName(TEXT("dirt")));
+    TestFalse(TEXT("the wool grew back"), L.A.FindMob(Id)->bSheared);
+    return true;
+}
+
+// [minecraft.wiki "Dye", provisional] a green dye recolours a white sheep and is used up; the same colour again, or a
+// shorn sheep, passes; creative keeps the dye. (DA_Items holds two of the 16 dyes, green and lime, since T1 8a2.)
+// Mutation: a shorn sheep takes the dye.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobDyeTest, "Unnamed.Foundation.Mobs.Dye",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobDyeTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FFarmLab L;
+    const int32 Id = L.Spawn(EFoundationMobType::Sheep);
+    L.A.FindMob(Id)->Color = 0;
+    L.HoldStack(TEXT("green_dye"), 2);
+    TestTrue(TEXT("dyeing commits"), L.Use().IsCommitted());
+    TestEqual(TEXT("green now"), int32(L.A.FindMob(Id)->Color), 13);
+    TestEqual(TEXT("one dye used"), L.P().Inventory.GetHand(EFoundationHand::Main).Count, 1);
+    TestEqual(TEXT("green on green passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("no dye used"), L.P().Inventory.GetHand(EFoundationHand::Main).Count, 1);
+    L.HoldStack(TEXT("lime_dye"), 1);
+    L.A.FindMob(Id)->bSheared = true;
+    TestEqual(TEXT("a shorn sheep passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("still green"), int32(L.A.FindMob(Id)->Color), 13);
+    L.A.FindMob(Id)->bSheared = false;
+    TestTrue(TEXT("creative dyeing"), L.Use(EFoundationPlayerMode::Creative).IsCommitted());
+    TestEqual(TEXT("lime now"), int32(L.A.FindMob(Id)->Color), 5);
+    TestEqual(TEXT("creative keeps the dye"), L.P().Inventory.GetHand(EFoundationHand::Main).Count, 1);
+    TestEqual(TEXT("two dyes"), L.A.MobDyes, 2);
+    L.Spawn(EFoundationMobType::Cow);
+    TestEqual(TEXT("dye on a cow passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    return true;
+}
+
+// [minecraft.wiki "Cow", "Bucket"; provisional] an empty bucket on a cow becomes a milk bucket with the milk sound;
+// from a stack of two, one bucket goes and the milk is added; creative keeps the bucket and adds one milk bucket; a pig
+// passes. Mutation: milk without the cow check.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobMilkTest, "Unnamed.Foundation.Mobs.Milk",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobMilkTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FFarmLab L;
+    const int32 Milk = L.A.Rules.FindItem(TEXT("milk_bucket"));
+    if (!TestTrue(TEXT("milk_bucket is an item"), Milk >= 0)) return false;
+    L.Spawn(EFoundationMobType::Cow);
+    L.Hold(TEXT("bucket"));
+    TestTrue(TEXT("milking commits"), L.Use().IsCommitted());
+    TestEqual(TEXT("a milk bucket in hand"), L.HeldId(), FName(TEXT("milk_bucket")));
+    TestTrue(TEXT("the milk sound"), L.HasSound(TEXT("entity.cow.milk")));
+    TestEqual(TEXT("one milking"), L.A.MobMilks, 1);
+    TestEqual(TEXT("a milk bucket milks nothing"), L.Use().Outcome, EFoundationOutcome::Pass);
+    L.HoldStack(TEXT("bucket"), 2);
+    TestTrue(TEXT("milking from a stack"), L.Use().IsCommitted());
+    TestEqual(TEXT("one bucket left"), L.P().Inventory.GetHand(EFoundationHand::Main).Count, 1);
+    TestEqual(TEXT("the milk went to the inventory"), L.CountHeld(Milk), 1);
+    L.HoldStack(TEXT("bucket"), 1);
+    TestTrue(TEXT("creative milking"), L.Use(EFoundationPlayerMode::Creative).IsCommitted());
+    TestEqual(TEXT("creative keeps the bucket"), L.HeldId(), FName(TEXT("bucket")));
+    TestEqual(TEXT("creative adds none while one is held"), L.CountHeld(Milk), 1);
+    L.P().Inventory.SetSlot(1, FFoundationItemInstance());
+    for (int32 Slot = 1; Slot < FFoundationInventory::Slots; ++Slot)
+        if (const FFoundationItemInstance* Stack = L.P().Inventory.GetSlot(Slot); Stack && Stack->Item == Milk)
+            L.P().Inventory.SetSlot(Slot, FFoundationItemInstance());
+    TestTrue(TEXT("creative milking again"), L.Use(EFoundationPlayerMode::Creative).IsCommitted());
+    TestEqual(TEXT("creative adds one milk bucket when none is held"), L.CountHeld(Milk), 1);
+    TestEqual(TEXT("and keeps the bucket"), L.HeldId(), FName(TEXT("bucket")));
+    L.Spawn(EFoundationMobType::Pig);
+    TestEqual(TEXT("a bucket on a pig passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("the bucket stays"), L.HeldId(), FName(TEXT("bucket")));
+    return true;
+}
+
+// [jar cow/pig/chicken_variant, tags spawns_{cold,warm}_variant_farm_animals] the biome's variant: 5 cold, 5 warm
+// (2 through #is_* tags), 3 temperate; the models (cold and warm cow, cold pig and chicken their own geometry; the warm
+// pig and chicken the main one) in DA_Mobs; a spawn takes its biome's variant, a sheep its colour stream. Farm off:
+// temperate and white. Mutations: swap cold and warm; drop the #is_savanna members.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobVariantTest, "Unnamed.Foundation.Mobs.Variant",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobVariantTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    using namespace FoundationMobFarm;
+    for (const TCHAR* Biome : {TEXT("minecraft:snowy_plains"), TEXT("minecraft:taiga"), TEXT("minecraft:grove"),
+             TEXT("minecraft:frozen_river"), TEXT("minecraft:end_highlands")})
+        TestEqual(Biome, GetVariant(Biome), EFoundationMobVariant::Cold);
+    for (const TCHAR* Biome : {TEXT("minecraft:desert"), TEXT("minecraft:savanna_plateau"), TEXT("minecraft:jungle"),
+             TEXT("minecraft:wooded_badlands"), TEXT("minecraft:mangrove_swamp")})
+        TestEqual(Biome, GetVariant(Biome), EFoundationMobVariant::Warm);
+    for (const TCHAR* Biome : {TEXT("minecraft:plains"), TEXT("minecraft:forest"), TEXT("minecraft:swamp")})
+        TestEqual(Biome, GetVariant(Biome), EFoundationMobVariant::Temperate);
+    TestEqual(TEXT("cold cow model"), GetModelId(EFoundationMobType::Cow, EFoundationMobVariant::Cold),
+        FName(TEXT("cold_cow")));
+    TestEqual(TEXT("temperate pig model"), GetModelId(EFoundationMobType::Pig, EFoundationMobVariant::Temperate),
+        FName(TEXT("pig")));
+    TestEqual(TEXT("sheep have no variant"), GetModelId(EFoundationMobType::Sheep, EFoundationMobVariant::Warm),
+        FName(TEXT("sheep")));
+    if (const UFoundationMobAssets* Assets = UFoundationMobAssets::LoadDefault(); TestNotNull(TEXT("DA_Mobs"), Assets))
+    {
+        // [facts/entity_models.json] parts per layer: cold cow 9 (horns), warm cow 7, cold pig 7, cold chicken 9.
+        const TPair<const TCHAR*, int32> Models[] = {{TEXT("cold_cow"), 9}, {TEXT("warm_cow"), 7},
+            {TEXT("cold_pig"), 7}, {TEXT("warm_pig"), 7}, {TEXT("cold_chicken"), 9}, {TEXT("warm_chicken"), 9}};
+        for (const TPair<const TCHAR*, int32>& Model : Models)
+        {
+            const FFoundationMobModelAsset* Found = Assets->FindModel(Model.Key);
+            TestTrue(*FString::Printf(TEXT("%s with %d parts"), Model.Key, Model.Value),
+                Found && Found->Parts.Num() == Model.Value);
+        }
+        const FFoundationMobModelAsset* WarmPig = Assets->FindModel(TEXT("warm_pig"));
+        TestTrue(TEXT("the warm pig keeps pig#main"), WarmPig && WarmPig->Layer == TEXT("pig#main"));
+        TArray<const FFoundationMobModelAsset*> Cow;
+        Assets->FindLayers(TEXT("cow"), Cow);
+        TestEqual(TEXT("the cow draws one layer still"), Cow.Num(), 1);
+    }
+    FFarmLab L;
+    FName Biome = TEXT("minecraft:snowy_plains");
+    L.A.GetBiomeId = [&Biome](const FIntVector&) { return Biome; };
+    TestEqual(TEXT("a cow in snowy plains is cold"), L.A.FindMob(L.Spawn(EFoundationMobType::Cow))->Variant,
+        EFoundationMobVariant::Cold);
+    Biome = TEXT("minecraft:desert");
+    TestEqual(TEXT("a pig in the desert is warm"), L.A.FindMob(L.Spawn(EFoundationMobType::Pig))->Variant,
+        EFoundationMobVariant::Warm);
+    TestEqual(TEXT("a sheep in the desert is temperate"), L.A.FindMob(L.Spawn(EFoundationMobType::Sheep))->Variant,
+        EFoundationMobVariant::Temperate);
+    Biome = TEXT("minecraft:plains");
+    TestEqual(TEXT("a chicken in plains is temperate"), L.A.FindMob(L.Spawn(EFoundationMobType::Chicken))->Variant,
+        EFoundationMobVariant::Temperate);
+    // Colours over many sheep: some not white.
+    int32 Coloured = 0;
+    for (int32 Index = 0; Index < 200; ++Index)
+        Coloured += L.A.FindMob(L.Spawn(EFoundationMobType::Sheep))->Color != 0 ? 1 : 0;
+    TestTrue(TEXT("some of 200 sheep are coloured"), Coloured > 10 && Coloured < 80);
+    L.A.Options.bMobFarm = false;
+    Biome = TEXT("minecraft:snowy_plains");
+    TestEqual(TEXT("farm off: a temperate cow"), L.A.FindMob(L.Spawn(EFoundationMobType::Cow))->Variant,
+        EFoundationMobVariant::Temperate);
+    int32 OffColoured = 0;
+    for (int32 Index = 0; Index < 200; ++Index)
+        OffColoured += L.A.FindMob(L.Spawn(EFoundationMobType::Sheep))->Color != 0 ? 1 : 0;
+    TestEqual(TEXT("farm off: white sheep"), OffColoured, 0);
+    return true;
+}
+
+// foundation.Mobs.Farm 0: shears, dye and a bucket on a mob all pass and change nothing (as before 20e1); the switch
+// defaults on. Mutation: UseEntity ignores bMobFarm.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobFarmSwitchTest, "Unnamed.Foundation.Mobs.FarmSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobFarmSwitchTest::RunTest(const FString&)
+{
+    using namespace MobTestsLocal;
+    FFarmLab L;
+    L.A.Options.bMobFarm = false;
+    const int32 Sheep = L.Spawn(EFoundationMobType::Sheep);
+    L.Hold(TEXT("shears"));
+    TestEqual(TEXT("off: shears pass"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestFalse(TEXT("off: not shorn"), L.A.FindMob(Sheep)->bSheared);
+    TestEqual(TEXT("off: no wear"), L.P().Inventory.GetHand(EFoundationHand::Main).Damage, 0);
+    L.Hold(TEXT("green_dye"));
+    TestEqual(TEXT("off: dye passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("off: still white"), int32(L.A.FindMob(Sheep)->Color), 0);
+    L.Spawn(EFoundationMobType::Cow);
+    L.Hold(TEXT("bucket"));
+    TestEqual(TEXT("off: the bucket passes"), L.Use().Outcome, EFoundationOutcome::Pass);
+    TestEqual(TEXT("off: still a bucket"), L.HeldId(), FName(TEXT("bucket")));
+    TestTrue(TEXT("the console switch defaults on"), FoundationMobFarm::IsOn());
     return true;
 }
 #endif

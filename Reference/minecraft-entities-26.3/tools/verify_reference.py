@@ -108,9 +108,16 @@ check((len(cow_model["parts"]), len(cow_model["cubes"])) == (7, 10),
 # cross_2), one cube each; its texture
 # is 32 x 32.
 arrow_model = models.get("arrow#main", {"parts": [], "cubes": []})
-check(list(models)[-1] == "arrow#main" and len(arrow_model["cubes"]) == 3 and
+check(list(models)[-5] == "arrow#main" and len(arrow_model["cubes"]) == 3 and
       [p["path"] for p in arrow_model["parts"]] == ["", "back", "cross_1", "cross_2"],
-      f"arrow#main is not the last layer with 3 cubes: {list(models)[-1:]}, {len(arrow_model['cubes'])}")
+      f"arrow#main is not the 19c layer with 3 cubes: {list(models)[-5:-4]}, {len(arrow_model['cubes'])}")
+# Survival T6 20e1: the cold and warm farm animal layers follow the arrow (APPEND), with their part / cube counts.
+variants = {"cold_cow#main": (9, 11), "warm_cow#main": (7, 12), "cold_pig#main": (7, 8), "cold_chicken#main": (9, 10)}
+check(list(models)[-4:] == list(variants), f"the variant layers are not last: {list(models)[-4:]}")
+for layer, counts in variants.items():
+    model = models.get(layer, {"parts": [], "cubes": []})
+    check((len(model["parts"]), len(model["cubes"])) == counts,
+          f"{layer} is not {counts[0]} parts / {counts[1]} cubes: {len(model['parts'])} / {len(model['cubes'])}")
 arrow_tex = by_name.get("entity/projectiles/arrow.png", {})
 check((arrow_tex.get("width"), arrow_tex.get("height")) == (32, 32), f"arrow.png is not 32 x 32: {arrow_tex}")
 for name in build.LOOT:
@@ -119,6 +126,7 @@ for name in build.LOOT:
     except ValueError as error:
         errors.append(f"{name}: not JSON ({error})")
 check(sum(1 for n in build.LOOT if n.startswith("entities/sheep/")) == 16, "not 16 sheep colour loot tables")
+check(sum(1 for n in build.LOOT if n.startswith("shearing/sheep/")) == 16, "not 16 sheep shearing loot tables")
 for name in build.RECIPES:
     recipe = json.loads((ROOT / build.RECIPE_PREFIX / name).read_text(encoding="utf-8"))
     meat = name.removeprefix("cooked_").removesuffix(".json")

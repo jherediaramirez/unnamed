@@ -1,11 +1,13 @@
 """Import the mobs (survival T6 20a) from Reference/minecraft-entities-26.3 under /Game/Entities (EntityRoot):
 
-- T_Mob_<id>: each mob's default texture (MobImportData.MOBS), and each extra layer's (MobImportData.LAYERS), a Java 26.3 stand-in (Docs/StandIns.md), sRGB,
+- T_Mob_<id>: each mob's default texture (MobImportData.MOBS), each extra layer's (MobImportData.LAYERS) and each
+  variant's (MobImportData.VARIANTS, 20e1), a Java 26.3 stand-in (Docs/StandIns.md), sRGB,
   uncompressed, nearest, one mip.
 - M_Mob: the mobs' cutout material. Its Skin parameter takes the texture (FFoundationMobView makes one instance per
   mob layer); texels below alpha 0.1 are cut, as the entity cutout does; per-instance custom data 0 is the red overlay
   [hurt.overlay]: the skin times OVERLAY_TINT (OVERLAY_MODE "multiply", the look call), or mixed toward red by
-  OVERLAY_RED ("mix"); provisional.
+  OVERLAY_RED ("mix"); provisional. Custom data 1-3 (20e1) hold one minus a tint that multiplies the skin's colour (the
+  sheep's wool), so a user that sets none (the arrows, the shield, other mobs) reads 0 and draws untinted.
 - DA_Mobs (UFoundationMobAssets): the models (parts and faces from facts/entity_models.json), the entity loot
   tables flattened by MobImportData.py, and every biome's creature and monster spawn lists and chunk-generation chance (read from
   Reference/minecraft-worldgen-26.3, hash-checked, never written).
@@ -111,13 +113,21 @@ def build_material(default_texture):
     skin.set_editor_property("texture", default_texture)
     overlay = node(unreal.MaterialExpressionPerInstanceCustomData, -800, 300)
     overlay.set_editor_property("data_index", 0)
+    # 20e1: the per-instance tint, stored as one minus it in custom data 1-3 (0 where unset: untinted), times the skin.
+    tint_in = node(unreal.MaterialExpressionPerInstanceCustomData3Vector, -1100, -200)
+    tint_in.set_editor_property("data_index", 1)
+    tint = node(unreal.MaterialExpressionOneMinus, -900, -200)
+    link(tint_in, tint, "")
+    tinted = node(unreal.MaterialExpressionMultiply, -650, -100)
+    link(skin, tinted, "A", "RGB")
+    link(tint, tinted, "B")
     mix = node(unreal.MaterialExpressionLinearInterpolate, -250, 0)
-    link(skin, mix, "A", "RGB")
+    link(tinted, mix, "A")
     if OVERLAY_MODE == "multiply":
         tint = node(unreal.MaterialExpressionConstant3Vector, -650, 150)
         tint.set_editor_property("constant", unreal.LinearColor(*OVERLAY_TINT, 1))
         hurt = node(unreal.MaterialExpressionMultiply, -500, 150)
-        link(skin, hurt, "A", "RGB")
+        link(tinted, hurt, "A")
         link(tint, hurt, "B")
         link(hurt, mix, "B")
         link(overlay, mix, "Alpha")
@@ -192,8 +202,8 @@ def spawn_struct(biome):
 def main():
     digest = Data.verify_hashes()
     models = Data.models()
-    textures = {m["layer"]: import_texture(m["texture_asset"], m["texture"], m["texture_size"]) for m in models}
-    material = build_material(textures["cow#main"])
+    textures = {m["texture_asset"]: import_texture(m["texture_asset"], m["texture"], m["texture_size"]) for m in models}
+    material = build_material(textures["T_Mob_Cow"])
     tables, left_out = Data.loot_tables()
     biomes, worldgen = Data.biome_spawns()
     if assets.does_asset_exist(REGISTRY):
@@ -207,7 +217,7 @@ def main():
     if not registry:
         fail("could not create " + REGISTRY)
     registry.set_editor_property("source_sha256", digest)
-    registry.set_editor_property("models", [model_struct(m, textures[m["layer"]]) for m in models])
+    registry.set_editor_property("models", [model_struct(m, textures[m["texture_asset"]]) for m in models])
     registry.set_editor_property("material", material)
     registry.set_editor_property("loot_tables", [loot_struct(t) for t in tables])
     registry.set_editor_property("worldgen_sha256", worldgen)

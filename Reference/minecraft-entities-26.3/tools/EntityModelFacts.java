@@ -12,7 +12,8 @@ public class EntityModelFacts {
     static final List<String> WANT = List.of("cow","pig","sheep","sheep_wool","sheep_wool_undercoat","chicken","zombie","skeleton","creeper","spider");
     // Survival T2 19c: models written after WANT's sorted layers (each model's layers sorted), so no earlier layer moves.
     // Append only.
-    static final List<String> APPEND = List.of("arrow");
+    // Survival T6 20e1: the cold and warm farm animal variants (the jar's cow/pig/chicken_variant "model").
+    static final List<String> APPEND = List.of("arrow", "cold_cow", "warm_cow", "cold_pig", "cold_chicken");
     static String f(float v){ return Float.toString(v); }
     public static void main(String[] a) {
         Map<ModelLayerLocation, LayerDefinition> roots = LayerDefinitions.createRoots();

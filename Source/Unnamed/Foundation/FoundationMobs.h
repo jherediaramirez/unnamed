@@ -26,6 +26,15 @@ enum class EFoundationMobType : uint8
     Count
 };
 
+// A farm animal's variant (survival T6 20e1; the jar's cow_variant, pig_variant, chicken_variant): its texture and,
+// for some, its model (FoundationMobFarm).
+enum class EFoundationMobVariant : uint8
+{
+    Temperate,
+    Cold,
+    Warm
+};
+
 struct FFoundationMobKind
 {
     // The entity id ("cow"): its loot table entities/<Id>, its model "<Id>#main", its sounds entity.<Id>.*.
@@ -155,6 +164,11 @@ struct FFoundationMob
     bool bAttackNow = false;
     // Its column is not loaded: it neither moves, thinks nor counts its timers, and is not drawn.
     bool bFrozen = false;
+    // Farm extras (survival T6 20e1, FoundationMobFarm): a sheep's colour (FoundationMobFarm::GetColorName) and its
+    // shorn wool; a cow's, pig's or chicken's variant.
+    uint8 Color = 0;
+    bool bSheared = false;
+    EFoundationMobVariant Variant = EFoundationMobVariant::Temperate;
     // [mobs.despawn] steps since a player was within DespawnNearCm or it was hurt (noActionTime).
     int32 NoActionTicks = 0;
     FRandomStream Random;

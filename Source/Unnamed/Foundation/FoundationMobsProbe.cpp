@@ -294,6 +294,68 @@ void UFoundationRuntimeProbe::AddMobCases()
             Shot(TEXT("11-sheep-grazes"));
         });
     Flush();
+    // 20e1: the farm extras: a pink, a black and a shorn red sheep, then a temperate, a cold and a warm cow (compared
+    // to the jar textures); the control is the same six with foundation.Mobs.Farm 0 (white, woolly sheep).
+    auto SetFarm = [](int32 Value)
+    {
+        if (IConsoleVariable* Farm = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Mobs.Farm")))
+            Farm->Set(Value, ECVF_SetByCode);
+    };
+    AddCase(
+        TEXT("mobs: farm extras"), 1.,
+        [this, SetMobs, SetFarm, Authority, Farm, LookAt]
+        {
+            SetMobs(1);
+            SetFarm(1);
+            ResetPlayer(Spot);
+            FFoundationAuthority* A = Authority();
+            if (!A) return;
+            A->ClearMobs();
+            Farm->Reset();
+            struct FFarmSubject
+            {
+                EFoundationMobType Type;
+                uint8 Color;
+                bool bSheared;
+                EFoundationMobVariant Variant;
+            };
+            const FFarmSubject Subjects[] = {{EFoundationMobType::Sheep, 6, false, EFoundationMobVariant::Temperate},
+                {EFoundationMobType::Sheep, 15, false, EFoundationMobVariant::Temperate},
+                {EFoundationMobType::Sheep, 14, true, EFoundationMobVariant::Temperate},
+                {EFoundationMobType::Cow, 0, false, EFoundationMobVariant::Temperate},
+                {EFoundationMobType::Cow, 0, false, EFoundationMobVariant::Cold},
+                {EFoundationMobType::Cow, 0, false, EFoundationMobVariant::Warm}};
+            for (int32 Index = 0; Index < 6; ++Index)
+            {
+                const FVector At = Spot + FVector(Index < 3 ? 450 : 700, 170 * (Index % 3 - 1), 0);
+                const int32 Id = A->SpawnMob(Subjects[Index].Type, At - A->World.OriginCm, 150);
+                if (FFoundationMob* Mob = A->FindMob(Id))
+                {
+                    Mob->Color = Subjects[Index].Color;
+                    Mob->bSheared = Subjects[Index].bSheared;
+                    Mob->Variant = Subjects[Index].Variant;
+                }
+                Farm->Add(Id);
+            }
+            LookAt(Spot + FVector(575, 0, 60));
+        },
+        [this, Shot, Drawn, FindFarm]
+        {
+            for (int32 Index = 0; Index < 6; ++Index)
+                if (FFoundationMob* Mob = FindFarm(Index)) Mob->bMoving = false;
+            Record(TEXT("mobs: the six farm subjects drawn"), Drawn() == 6, FString::FromInt(Drawn()));
+            Shot(TEXT("14a-farm-extras"));
+        });
+    Flush();
+    AddCase(
+        TEXT("mobs: farm extras off"), .4, [SetFarm] { SetFarm(0); },
+        [this, Shot, Drawn]
+        {
+            Record(TEXT("mobs: farm 0 still draws six"), Drawn() == 6, FString::FromInt(Drawn()));
+            Shot(TEXT("14b-farm-off"));
+        });
+    Flush();
+    AddCase(TEXT("mobs: farm restore"), .1, [SetFarm] { SetFarm(1); }, [] {});
     // 20c1: a zombie 1.3 blocks east of a survival player (in reach: the Playground's collision gives A* no path on its
     // floor, a known issue) hits it (3 a hit on Normal, every 20 steps) through the pawn's vitals, and knocks it back
     // west.

@@ -64,10 +64,12 @@ private:
         TArray<FPrimitiveInstanceId> Ids;
         int32 Shown = 0;
     };
-    // One model layer of a mob type: the main one, then those drawn over it (the sheep's wool).
+    // One model layer of a mob type: the main one, then those drawn over it (the sheep's wool and undercoat, tinted
+    // by its colour: bWool, bUndercoat).
     struct FLayerDraw
     {
         const FFoundationMobModelAsset* Model = nullptr;
+        bool bWool = false, bUndercoat = false;
         TArray<FPartDraw> Parts;
     };
     struct FTypeDraw
@@ -77,10 +79,12 @@ private:
         TArray<int32> SlotMobs;
         bool bTried = false;
     };
-    bool Prepare(EFoundationMobType Type);
+    // 20e1: one draw per type and variant (FoundationMobFarm::GetModelId's model), at Type x VariantCount + Variant.
+    static constexpr int32 VariantCount = 3;
+    bool Prepare(EFoundationMobType Type, EFoundationMobVariant Variant);
 
     UFoundationInteractionView& View;
-    TStaticArray<FTypeDraw, int32(EFoundationMobType::Count)> Types;
+    TStaticArray<FTypeDraw, int32(EFoundationMobType::Count) * VariantCount> Types;
     int32 Drawn = 0;
     TArray<float> Overlays;
 };

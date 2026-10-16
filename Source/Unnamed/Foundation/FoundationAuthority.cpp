@@ -6,6 +6,7 @@
 #include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationGrid.h"
+#include "Foundation/FoundationMobFarm.h"
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationStripping.h"
@@ -1691,6 +1692,15 @@ int32 FFoundationAuthority::SpawnMob(EFoundationMobType Type, const FVector& Loc
     Mob.Random.Initialize(int32(HashCombine(GetTypeHash(Mob.Id), GetTypeHash(Rules.LootSeed))));
     Mob.AmbientTicks = AmbientMinTicks + Mob.Random.RandHelper(AmbientRandomTicks);
     if (Type == EFoundationMobType::Chicken) Mob.EggTicks = EggMinTicks + Mob.Random.RandHelper(EggRandomTicks);
+    // 20e1: a sheep's colour and a farm animal's biome variant, from their own stream (FoundationMobFarm::MakeSeed).
+    if (Options.bMobFarm)
+    {
+        FRandomStream Farm(FoundationMobFarm::MakeSeed(Mob.Id, Rules.LootSeed));
+        if (Type == EFoundationMobType::Sheep) Mob.Color = uint8(FoundationMobFarm::RollSheepColor(Farm));
+        if (FoundationMobFarm::HasVariants(Type) && GetBiomeId)
+            Mob.Variant = FoundationMobFarm::GetVariant(
+                GetBiomeId(FoundationGrid::CellAt(World.OriginCm + LocalCm + FVector(0, 0, 1), World.OriginCm)));
+    }
     ++MobsSpawned;
     return Mob.Id;
 }
@@ -1778,6 +1788,8 @@ void FFoundationAuthority::EatGrass(const FFoundationMob& Mob)
     else
         return;
     ++MobGrazes;
+    // [survival.r10.ai_defaults] eating regrows a shorn sheep's wool (20e1).
+    if (FFoundationMob* Eater = FindMob(Mob.Id)) Eater->bSheared = false;
 }
 
 void FFoundationAuthority::StepMobs()
@@ -2517,6 +2529,13 @@ void FFoundationAuthority::DropMobLoot(const FFoundationMob& Mob)
         FFoundationLootContext Context{Rules.Hand};
         Context.bKilledByPlayer = Mob.bKilledByPlayer;
         Context.bOnFire = Mob.Health.IsOnFire();
+        // 20e1: a sheep's colour and shorn wool ([loot_table/entities/sheep.json] one wool of its colour unless shorn);
+        // with farm extras off, no colour, as before.
+        if (Options.bMobFarm && Mob.Type == EFoundationMobType::Sheep)
+        {
+            Context.SheepColor = FoundationMobFarm::GetColorName(Mob.Color);
+            Context.bSheared = Mob.bSheared;
+        }
         TArray<FFoundationLootDrop> Drops;
         FoundationLoot::Roll(*Table, Rules.LootPredicates, Context, Random, Drops);
         for (const FFoundationLootDrop& Drop : Drops)
@@ -2804,7 +2823,7 @@ FFoundationResult FFoundationAuthority::Execute(
         UseOn(*Player, Command, Result, Vitals.Mode);
         break;
     case EFoundationCommandType::UseEntity:
-        UseEntity(*Player, Command, Result);
+        UseEntity(*Player, Command, Result, Vitals.Mode);
         break;
     case EFoundationCommandType::MineStart:
         MineStart(*Player, Command, Vitals, Result);
@@ -3173,31 +3192,8 @@ bool FFoundationAuthority::UseBucket(
     // the inventory holds none, a pour changes nothing. Survival swaps a single bucket in place; from a stack, one
     // goes and the new bucket is added, or dropped at the player when nothing takes it.
     const bool bCreative = Mode == EFoundationPlayerMode::Creative;
-    const int32 HandSlot =
-        Command.Hand == EFoundationHand::Main ? Inventory.Selected : FFoundationInventory::OffhandSlot;
     auto Swap = [&](int32 NewItem, const FIntVector& Cell)
-    {
-        const int32 MaxStack = Rules.GetItem(NewItem).MaxStack;
-        if (bCreative)
-        {
-            if (Stack.Item == NewItem) return;
-            for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
-                if (const FFoundationItemInstance* Held = Inventory.GetSlot(Slot); Held && Held->Item == NewItem)
-                    return;
-            Inventory.Add(NewItem, 1, MaxStack);
-            return;
-        }
-        if (Stack.Count == 1)
-        {
-            Inventory.SetSlot(HandSlot, Inventory.MakeStack(NewItem, 1));
-            return;
-        }
-        Inventory.ConsumeOne(Command.Hand);
-        if (Inventory.Add(NewItem, 1, MaxStack) > 0) return;
-        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
-        const FFoundationLootDrop Drop{NewItem, 1};
-        SpawnDrops(Feet, MakeArrayView(&Drop, 1), FoundationLoot::MakeSeed(Rules.LootSeed, Cell, BucketUses));
-    };
+    { SwapHeldItem(Player, Command.Hand, NewItem, bCreative, Cell, BucketUses); };
     FFoundationEvent Event;
     Event.Player = Player.Id;
     Event.Step = Player.Facts.Step;
@@ -3527,8 +3523,35 @@ bool FFoundationAuthority::CancelUse(FFoundationPlayer& Player)
     return bWasActive;
 }
 
+void FFoundationAuthority::SwapHeldItem(
+    FFoundationPlayer& Player, EFoundationHand Hand, int32 NewItem, bool bCreative, const FIntVector& Cell, int32 Salt)
+{
+    FFoundationInventory& Inventory = Player.Inventory;
+    const FFoundationItemInstance Stack = Inventory.GetHand(Hand);
+    const int32 MaxStack = Rules.GetItem(NewItem).MaxStack;
+    if (bCreative)
+    {
+        if (Stack.Item == NewItem) return;
+        for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+            if (const FFoundationItemInstance* Held = Inventory.GetSlot(Slot); Held && Held->Item == NewItem) return;
+        Inventory.Add(NewItem, 1, MaxStack);
+        return;
+    }
+    if (Stack.Count == 1)
+    {
+        Inventory.SetSlot(Hand == EFoundationHand::Main ? Inventory.Selected : FFoundationInventory::OffhandSlot,
+            Inventory.MakeStack(NewItem, 1));
+        return;
+    }
+    Inventory.ConsumeOne(Hand);
+    if (Inventory.Add(NewItem, 1, MaxStack) > 0) return;
+    const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+    const FFoundationLootDrop Drop{NewItem, 1};
+    SpawnDrops(Feet, MakeArrayView(&Drop, 1), FoundationLoot::MakeSeed(Rules.LootSeed, Cell, Salt));
+}
+
 void FFoundationAuthority::UseEntity(
-    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result)
+    FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result, EFoundationPlayerMode Mode)
 {
     if (!CheckHand(Player, Command, Result)) return;
     const FFoundationHit Hit = Resolve(Player.Facts);
@@ -3537,8 +3560,13 @@ void FFoundationAuthority::UseEntity(
     else if (!Hit.bInRange)
         Reject(Result, EFoundationReason::OutOfRange);
     else
-        // Training targets have no use interaction; the caller tries the item and the other hand.
+    {
+        // Training targets have no use interaction; the caller tries the item and the other hand. Mobs (20e1): the
+        // hand's shears, dye or bucket (FoundationMobFarm.cpp).
         Result.Outcome = EFoundationOutcome::Pass;
+        if (FFoundationMob* Mob = Options.bMobs && Options.bMobFarm ? FindMob(Hit.EntityId) : nullptr)
+            UseOnMob(Player, Command, *Mob, Mode, Result);
+    }
 }
 
 void FFoundationAuthority::MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command,

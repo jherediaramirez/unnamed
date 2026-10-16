@@ -6,6 +6,7 @@
 #include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
+#include "Foundation/FoundationMobFarm.h"
 #include "Foundation/FoundationPanels.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationCoordinates.h"
@@ -465,6 +466,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bBlockUse = FoundationBlockUse::IsOn();
     Authority.Options.bMobs = FoundationMobs::IsOn();
     Authority.Options.bMobSpawn = FoundationMobs::IsSpawnOn();
+    Authority.Options.bMobFarm = FoundationMobFarm::IsOn();
     Authority.Options.bFire = CVarFire.GetValueOnGameThread() != 0;
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.Options.bBarrel = FoundationBarrel::IsOn();

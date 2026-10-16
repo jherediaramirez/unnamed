@@ -8,6 +8,7 @@
 #include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationMobAssets.h"
+#include "Foundation/FoundationMobFarm.h"
 #include "Foundation/FoundationPawn.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
@@ -275,17 +276,23 @@ FVector FFoundationMobView::GetPartAnimation(
     return FVector::ZeroVector;
 }
 
-bool FFoundationMobView::Prepare(EFoundationMobType Type)
+bool FFoundationMobView::Prepare(EFoundationMobType Type, EFoundationMobVariant Variant)
 {
-    FTypeDraw& Draw = Types[int32(Type)];
+    FTypeDraw& Draw = Types[int32(Type) * VariantCount + int32(Variant)];
     if (Draw.bTried) return !Draw.Layers.IsEmpty();
     Draw.bTried = true;
     AActor* Owner = View.GetOwner();
     const UFoundationMobAssets* Assets = UFoundationMobAssets::LoadDefault();
     if (!Owner || !Owner->GetRootComponent() || !Assets) return false;
-    const FName Id = FoundationMobs::GetKind(Type).Id;
+    // 20e1: the variant's model ("cold_cow"); a DA_Mobs from before 20e1 has none, so the main one stands in.
+    FName Id = FoundationMobFarm::GetModelId(Type, Variant);
     TArray<const FFoundationMobModelAsset*> Models;
     Assets->FindLayers(Id, Models);
+    if (Models.IsEmpty())
+    {
+        Id = FoundationMobs::GetKind(Type).Id;
+        Assets->FindLayers(Id, Models);
+    }
     UMaterialInterface* Material = Assets->Material.LoadSynchronous();
     TArray<FTransform> Hidden;
     Hidden.Init(FTransform(FQuat::Identity, FVector::ZeroVector, FVector::ZeroVector), MaxMobs);
@@ -305,6 +312,8 @@ bool FFoundationMobView::Prepare(EFoundationMobType Type)
         View.Owned.Add(Skin);
         FLayerDraw& Layer = Draw.Layers.AddDefaulted_GetRef();
         Layer.Model = Model;
+        Layer.bWool = Model->Layer == TEXT("sheep#wool");
+        Layer.bUndercoat = Model->Layer == TEXT("sheep#wool_undercoat");
         for (const FFoundationMobPartAsset& Part : Model->Parts)
         {
             FPartDraw& PartDraw = Layer.Parts.AddDefaulted_GetRef();
@@ -314,7 +323,8 @@ bool FFoundationMobView::Prepare(EFoundationMobType Type)
             UInstancedStaticMeshComponent* Component = NewObject<UInstancedStaticMeshComponent>(Owner);
             Component->SetStaticMesh(Mesh);
             Component->SetMaterial(0, Skin);
-            Component->SetNumCustomDataFloats(1);
+            // The overlay, then the tint (20e1).
+            Component->SetNumCustomDataFloats(4);
             // K-PLAYER-7: the instances move, not the component, so each keeps its previous transform: the engine then
             // writes the part's motion vectors (without them the anti-aliasing took a moving mob for still scenery and
             // smeared its texture).
@@ -346,19 +356,24 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
     const bool bOn = Authority.Options.bMobs;
     const FVector Origin = Authority.World.OriginCm;
     const FVector Viewer = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
-    for (int32 TypeIndex = 0; TypeIndex < int32(EFoundationMobType::Count); ++TypeIndex)
+    // 20e1: with farm extras off every sheep draws as before (white wool, untinted).
+    const bool bFarm = Authority.Options.bMobFarm;
+    for (int32 DrawIndex = 0; DrawIndex < Types.Num(); ++DrawIndex)
     {
-        FTypeDraw& Draw = Types[TypeIndex];
-        const bool bAny = bOn &&
-            Mobs.ContainsByPredicate([TypeIndex](const FFoundationMob& Mob) { return int32(Mob.Type) == TypeIndex; });
+        FTypeDraw& Draw = Types[DrawIndex];
+        const int32 TypeIndex = DrawIndex / VariantCount;
+        const EFoundationMobVariant Variant = EFoundationMobVariant(DrawIndex % VariantCount);
+        const auto IsDrawn = [TypeIndex, Variant](const FFoundationMob& Mob)
+        { return int32(Mob.Type) == TypeIndex && Mob.Variant == Variant; };
+        const bool bAny = bOn && Mobs.ContainsByPredicate(IsDrawn);
         if (!bAny && !Draw.bTried) continue;
-        if (bAny && !Prepare(EFoundationMobType(TypeIndex))) continue;
+        if (bAny && !Prepare(EFoundationMobType(TypeIndex), Variant)) continue;
         // The nearest MaxMobs of the type within DrawCm fill the slots (Codex review 19 #2).
         TArray<TPair<double, int32>, TInlineAllocator<MaxMobs>> Order;
         for (int32 Index = 0; bOn && Index < Mobs.Num(); ++Index)
         {
             const FFoundationMob& Mob = Mobs[Index];
-            if (int32(Mob.Type) != TypeIndex || Mob.bFrozen) continue;
+            if (!IsDrawn(Mob) || Mob.bFrozen) continue;
             const double Distance = Pawn ? FVector::DistSquared(Origin + Mob.LocalCm, Viewer) : 0;
             if (Distance <= DrawCm * DrawCm) Order.Emplace(Distance, Index);
         }
@@ -379,8 +394,14 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
             // [hurt.overlay, mobs.hurt_overlay] red while hurt or dying.
             const float Overlay = Mob.HurtTime > 0 || Mob.DeathTime > 0 ? 1.f : 0.f;
             Overlays.Add(Overlay);
+            // [jar sheep model layers; minecraft.wiki "Sheep", provisional] the wool, tinted by the colour, is gone
+            // when shorn; the tinted undercoat shows on a coloured sheep, shorn or not (a white one's is in its skin).
+            const FLinearColor Tint = bFarm ? FoundationMobFarm::GetWoolTint(Mob.Color) : FLinearColor::White;
             for (FLayerDraw& Layer : Draw.Layers)
             {
+                const bool bShown =
+                    !(Layer.bWool && bFarm && Mob.bSheared) && !(Layer.bUndercoat && (!bFarm || Mob.Color == 0));
+                const FLinearColor LayerTint = Layer.bWool || Layer.bUndercoat ? Tint : FLinearColor::White;
                 TMap<FName, FTransform> Placed;
                 for (int32 PartIndex = 0; PartIndex < Layer.Model->Parts.Num(); ++PartIndex)
                 {
@@ -393,12 +414,19 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
                     FPartDraw& PartDraw = Layer.Parts[PartIndex];
                     if (!PartDraw.Component) continue;
                     PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 0, Overlay);
-                    FTransform Previous = World;
+                    // M_Mob reads one minus the tint (0, the default, is untinted: the arrows and the shield).
+                    PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 1, 1 - LayerTint.R);
+                    PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 2, 1 - LayerTint.G);
+                    PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 3, 1 - LayerTint.B);
+                    // A hidden layer's part shrinks to nothing where it would be.
+                    const FTransform Shown =
+                        bShown ? World : FTransform(World.GetRotation(), World.GetLocation(), FVector::ZeroVector);
+                    FTransform Previous = Shown;
                     if (bSameMob)
                         PartDraw.Component->GetInstanceTransform(
                             PartDraw.Component->GetInstanceIndexForId(PartDraw.Ids[Slot]), Previous, true);
                     PartDraw.Component->SetPreviousTransformById(PartDraw.Ids[Slot], Previous, true);
-                    PartDraw.Component->UpdateInstanceTransformById(PartDraw.Ids[Slot], World, true);
+                    PartDraw.Component->UpdateInstanceTransformById(PartDraw.Ids[Slot], Shown, true);
                 }
             }
             if (Draw.SlotMobs.IsValidIndex(Slot))
@@ -428,8 +456,11 @@ void FFoundationMobView::OnSound(const FFoundationEvent& Event)
     ++Sounds;
     if (FFoundationBreakEffects* Effects = View.GetBreakEffects())
     {
-        // [survival.r5.play_calls] steps at pitch 1 (F 3582); ambient, hurt and death at a random pitch.
-        const bool bStep = Event.Interaction.ToString().EndsWith(TEXT(".step"));
+        // [survival.r5.play_calls] steps at pitch 1 (F 3582); ambient, hurt and death at a random pitch. 20e1
+        // (provisional): shearing and milking at pitch 1 too.
+        const FString Name = Event.Interaction.ToString();
+        const bool bStep =
+            Name.EndsWith(TEXT(".step")) || Name.EndsWith(TEXT(".shear")) || Name.EndsWith(TEXT(".milk"));
         Effects->PlayEvent(Event.Interaction, Event.LocationCm, Event.Amount,
             bStep ? FoundationMobs::StepPitch : FoundationMobs::GetSoundPitch(FMath::FRand(), FMath::FRand()));
     }
@@ -438,15 +469,16 @@ void FFoundationMobView::OnSound(const FFoundationEvent& Event)
 FString FFoundationMobView::Describe() const
 {
     FString Text = FString::Printf(TEXT("mobs drawn %d, sounds %d"), Drawn, Sounds);
-    for (int32 TypeIndex = 0; TypeIndex < int32(EFoundationMobType::Count); ++TypeIndex)
-        if (Types[TypeIndex].bTried)
+    for (int32 DrawIndex = 0; DrawIndex < Types.Num(); ++DrawIndex)
+        if (Types[DrawIndex].bTried)
         {
             int32 Parts = 0;
-            for (const FLayerDraw& Layer : Types[TypeIndex].Layers)
+            for (const FLayerDraw& Layer : Types[DrawIndex].Layers)
                 Parts += Layer.Parts.Num();
-            Text += FString::Printf(TEXT("; %s layers %d parts %d"),
-                *FoundationMobs::GetKind(EFoundationMobType(TypeIndex)).Id.ToString(), Types[TypeIndex].Layers.Num(),
-                Parts);
+            const FName Id = FoundationMobFarm::GetModelId(
+                EFoundationMobType(DrawIndex / VariantCount), EFoundationMobVariant(DrawIndex % VariantCount));
+            Text +=
+                FString::Printf(TEXT("; %s layers %d parts %d"), *Id.ToString(), Types[DrawIndex].Layers.Num(), Parts);
         }
     return Text;
 }

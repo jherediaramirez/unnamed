@@ -91,9 +91,23 @@ def biome_spawns():
     return biomes, hashlib.sha256(sums).hexdigest()
 
 
-# Layers drawn over a mob's main layer, listed after the eight main models (20b: the sheep's wool, white; its undercoat
-# and the other colours come with shearing, 20e): (mob, layer, texture, texture asset name).
-LAYERS = [("sheep", "sheep#wool", "entity/sheep/sheep_wool.png", "T_Mob_SheepWool")]
+# Layers drawn over a mob's main layer, listed after the eight main models (20b: the sheep's wool; 20e1: its undercoat,
+# both tinted by the sheep's colour in FFoundationMobView): (mob, layer, texture, texture asset name).
+LAYERS = [("sheep", "sheep#wool", "entity/sheep/sheep_wool.png", "T_Mob_SheepWool"),
+          ("sheep", "sheep#wool_undercoat", "entity/sheep/sheep_wool_undercoat.png", "T_Mob_SheepWoolUndercoat")]
+# Survival T6 20e1: the cold and warm farm animals [jar cow_variant, pig_variant, chicken_variant: asset_id and
+# "model"], listed after LAYERS under their own ids (FoundationMobFarm::GetModelId); the warm pig and chicken keep the
+# main geometry: (id, layer, texture, texture asset name).
+VARIANTS = [
+    ("cold_cow", "cold_cow#main", "entity/cow/cow_cold.png", "T_Mob_CowCold"),
+    ("warm_cow", "warm_cow#main", "entity/cow/cow_warm.png", "T_Mob_CowWarm"),
+    ("cold_pig", "cold_pig#main", "entity/pig/pig_cold.png", "T_Mob_PigCold"),
+    ("warm_pig", "pig#main", "entity/pig/pig_warm.png", "T_Mob_PigWarm"),
+    ("cold_chicken", "cold_chicken#main", "entity/chicken/chicken_cold.png", "T_Mob_ChickenCold"),
+    ("warm_chicken", "chicken#main", "entity/chicken/chicken_warm.png", "T_Mob_ChickenWarm"),
+]
+# Survival T6 20e1: tables rolled for something other than a death, by name below loot_table/.
+EXTRA_TABLES = ["shearing/sheep"]
 
 
 def texture_name(mob):
@@ -104,7 +118,7 @@ def models():
     facts = json.loads((REF / "facts/entity_models.json").read_text(encoding="utf-8"))
     sizes = {t["name"]: (t["width"], t["height"])
              for t in json.loads((REF / "textures.json").read_text(encoding="utf-8"))["textures"]}
-    layers = [(mob, f"{mob}#main", texture, texture_name(mob)) for mob, texture in MOBS.items()] + LAYERS
+    layers = [(mob, f"{mob}#main", texture, texture_name(mob)) for mob, texture in MOBS.items()] + LAYERS + VARIANTS
     out = []
     for mob, name, texture, asset in layers:
         layer = facts[name]
@@ -259,10 +273,19 @@ class Table:
                 raise Unsupported(f"loot_table entry {entry['value']} with its own modifiers")
             sub = json.loads((LOOT.parent / (bare(entry["value"]) + ".json")).read_text(encoding="utf-8"))
             pools = sub["pools"]
-            if len(pools) != 1 or len(pools[0]["entries"]) != 1 or pools[0].get("rolls", 1) != 1 or \
-                    conditions_of(pools[0]) or bare(pools[0]["entries"][0]["type"]) != "item":
+            if len(pools) != 1 or len(pools[0]["entries"]) != 1 or conditions_of(pools[0]) or \
+                    bare(pools[0]["entries"][0]["type"]) != "item":
+                raise Unsupported(f"loot_table entry {entry['value']}")
+            rolls = pools[0].get("rolls", 1)
+            # 20e1: a table rolling one plain item a uniform number of times (the shearing colours, 1-3) is that item
+            # with a uniform count.
+            if rolls != 1 and (isinstance(rolls, (int, float)) or functions_of(pools[0]) or
+                               functions_of(pools[0]["entries"][0]) or conditions_of(pools[0]["entries"][0])):
                 raise Unsupported(f"loot_table entry {entry['value']}")
             inner = self.candidates(pools[0]["entries"][0])[0]
+            if rolls != 1:
+                low, high = count_range(rolls)
+                inner["modifiers"].append({"type": "set_count", "tests": [], "min": low, "max": high, "add": False})
             inner["tests"] = [self.node(c) for c in conditions_of(entry)] + inner["tests"]
             return [inner]
         raise Unsupported(f"entry {kind}")
@@ -303,6 +326,12 @@ def loot_tables():
             tables.append(Table(mob, furnace).build(data))
         except Unsupported as why:
             left_out[mob] = str(why)
+    for name in EXTRA_TABLES:
+        data = json.loads((LOOT.parent / f"{name}.json").read_text(encoding="utf-8"))
+        try:
+            tables.append(Table(name, furnace).build(data))
+        except Unsupported as why:
+            left_out[name] = str(why)
     return tables, left_out
 
 

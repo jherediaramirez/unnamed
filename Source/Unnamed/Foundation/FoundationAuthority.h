@@ -264,6 +264,10 @@ struct FFoundationLabOptions
     // Passive spawning (survival T6 20b2): with bMobs and GetBiomeId set, a column first seen loaded may spawn a
     // creature pack. The pawn copies foundation.Mobs.Spawn in before each step.
     bool bMobSpawn = false;
+    // Farm extras (survival T6 20e1, FoundationMobFarm): sheep colours, shearing, dyeing, milking and the cold/warm
+    // variants. Off, as before: white sheep, temperate animals, a use on a mob passes. The pawn copies
+    // foundation.Mobs.Farm in before each step.
+    bool bMobFarm = false;
     // Fire (step 16a): mobs take lava contact and burning damage, as the pawn does. The pawn copies foundation.Fire in.
     bool bFire = false;
     // Furnaces (T1 steps 8a, 8b; smokers and blast furnaces too): a right-click opens the block's menu, and every one
@@ -756,6 +760,8 @@ public:
           Strips = 0, BucketUses = 0, AttacksBlocked = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
+    // Farm extras (20e1): sheep shorn, cows milked, sheep dyed.
+    int32 MobShears = 0, MobMilks = 0, MobDyes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
     int32 MobColumnsSeen = 0, MobPacks = 0, MobsPackSpawned = 0;
     // The creature cycle (20b2b): cycles run (under the cap), the mobs they spawned.
@@ -841,7 +847,17 @@ private:
     // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled). Adventure passes.
     bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
         FFoundationResult& Result, EFoundationPlayerMode Mode);
-    void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
+    void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result,
+        EFoundationPlayerMode Mode);
+    // Farm extras (survival T6 20e1; FoundationMobFarm.cpp): shears, a dye or an empty bucket on a mob. True when the
+    // hand's item did something (Result filled); false passes.
+    bool UseOnMob(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationMob& Mob,
+        EFoundationPlayerMode Mode, FFoundationResult& Result);
+    // A used item becomes NewItem in the hand (a bucket filled or emptied, a cow milked): creative keeps the used item
+    // and adds NewItem when the inventory holds none; survival swaps a single item in place; from a stack, one goes
+    // and NewItem is added, or dropped at the player's feet when nothing takes it (seeded by Cell and Salt).
+    void SwapHeldItem(FFoundationPlayer& Player, EFoundationHand Hand, int32 NewItem, bool bCreative,
+        const FIntVector& Cell, int32 Salt);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
     void MineContinue(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,

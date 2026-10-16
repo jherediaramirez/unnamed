@@ -270,6 +270,10 @@ An empty bucket takes a water or lava source; a water or lava bucket pours one (
 - **Fluid timing** (value-swaps `extra.fluids`): `VoxelFluidRules::GetParams` already matches: water 5 ticks, drop-off 1; lava 30 ticks, drop-off 2. Its search distances (5 and 3, counted from the spreading cell with the cell beside it as 1) are the report's slope distances 4 and 2 counted from the cell beside it, and were pinned by probe captures (W1). Fast lava (10 ticks) is for ultrawarm dimensions only, which do not exist. Nothing changed, so no world hash or golden moves.
 - **Known issues:** a plant a pour replaces goes without its drop. Vanilla's rising-spread lava delay (x4 on a 3/4 roll, `extra.fluids`) is not modelled (a seeded roll in `UnnamedVoxel`; the fluids track). Pouring water into an ultrawarm dimension (evaporation) and the bucket's arm swing (first person, no hands) do not apply. Cauldrons, milk and the mob buckets wait for T5 B1 and the mobs.
 
+## Shears, dyes and buckets on mobs (survival T6 20e1)
+
+A right-click on a mob sends `UseEntity`, which the authority answers before the item's own use (`FFoundationAuthority::UseOnMob`, `FoundationMobFarm.cpp`; `foundation.Mobs.Farm`, 0 passes as before): shears on a sheep with its wool drop 1-3 wool of its colour (the jar's `loot_table/shearing/sheep.json`) and wear 1 point (none in creative); a dye recolours a sheep with its wool and another colour (used up, kept in creative); an empty bucket on a cow becomes a milk bucket with the bucket's swap rules (`SwapHeldItem`, hoisted from `UseBucket`). DA_Items has no shears yet and only the green and lime dyes (an item request for 20e2), so in the game today only dyeing with those two and milking can be done. The rules and the provisional values are in [the 20e1 record](Records/2026-10-15-Mobs-20e1.md).
+
 ## Combat (items S7)
 
 The authority's `Attack` follows the wiki's melee rules ("Damage", "Sweep attack", "Knockback"):

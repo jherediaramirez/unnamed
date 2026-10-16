@@ -53,6 +53,11 @@ LOOT = [
     *(f"entities/sheep/{colour}.json" for colour in (
         "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple",
         "blue", "brown", "green", "red", "black")),
+    # Survival T6 20e1 (shearing): the shears' sheep table and its 16 colour tables.
+    "shearing/sheep.json",
+    *(f"shearing/sheep/{colour}.json" for colour in (
+        "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple",
+        "blue", "brown", "green", "red", "black")),
 ]
 RECIPE_PREFIX = "data/minecraft/recipe/"
 # Jar entries under data/minecraft/recipe/, copied to the same path here. Append only.
