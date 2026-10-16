@@ -6,6 +6,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UnrealClient.h"
@@ -87,6 +89,11 @@ void UFoundationRuntimeProbe::AddBodyCases()
                     TEXT("no player body: run Scripts/Editor/ImportUnnamedPlayer.py and ImportBetterSteve.py (see the "
                          "log's Player body line)"));
             });
+        return;
+    }
+    if (FParse::Param(FCommandLine::Get(), TEXT("FoundationBodySweep")))
+    {
+        AddFirstPersonBodySweep();
         return;
     }
     AddCase(

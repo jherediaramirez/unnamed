@@ -151,6 +151,33 @@ bool FFoundationBodyFirstPersonTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("crouched: hips back 15"), Result.PelvisBackCm, 15., 1e-6);
         TestEqual(TEXT("crouched: neck at 22"), Result.NeckBehindEyeCm, 22., .01);
     }
+    {
+        // Crouched, the extra drop lowers the hips at every pitch with the feet still planted, and the chest turns
+        // toward a view 60 degrees off the body (capped at 50); standing, neither applies.
+        FFoundationFirstPersonTuning Crouched;
+        Crouched.CrouchDropCm = 10;
+        Crouched.CrouchTwist = 1;
+        View.PitchDeg = 0;
+        View.Forward = FVector(0, 1, 0).RotateAngleAxis(60, FVector::UpVector);
+        for (const double Crouch : {0., 1.})
+        {
+            View.CrouchAmount = Crouch;
+            FTestSkeleton Skeleton = MakeTestSkeleton();
+            const TArray<FTransform> Before = Skeleton.Component();
+            const FFoundationFirstPersonResult Result =
+                FoundationBodyPose::Apply(Skeleton.Local, Skeleton.Parents, Skeleton.Bones, View, Crouched);
+            const TArray<FTransform> After = Skeleton.Component();
+            const FString Name = FString::Printf(TEXT("crouch %g: "), Crouch);
+            TestEqual(
+                Name + TEXT("hips lower"), Before[1].GetLocation().Z - After[1].GetLocation().Z, 10 * Crouch, .01);
+            TestEqual(Name + TEXT("chest twist"), Result.TwistDeg, 50 * Crouch, 1e-6);
+            TestTrue(Name + TEXT("feet planted"),
+                Result.FootErrorCm < .01 && FVector::Dist(Before[13].GetLocation(), After[13].GetLocation()) < .01);
+            TestEqual(Name + TEXT("neck still at the anchor"), Result.NeckBehindEyeCm, Crouch ? 10. : 4., .05);
+        }
+        View.Forward = FVector(0, 1, 0);
+        View.CrouchAmount = 0;
+    }
     return true;
 }
 #endif

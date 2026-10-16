@@ -35,12 +35,18 @@ struct FFoundationFirstPersonTuning
     double AnchorStandCm[2] = {4, 16}, AnchorCrouchCm[2] = {10, 22};
     // The chest lean is shared by spine_01 and spine_02, each at most this much (degrees).
     double MaxSpineBendDeg = 35;
+    // Crouched only (scaled by the eyes' crouch, at every pitch): the hips this much lower with the legs re-solved to
+    // the base pose's feet, so the shoulders and arms sit further under the low eye (cm) ...
+    double CrouchDropCm = 0;
+    // ... and the chest turned this fraction of the way toward the view (spine_02, at most MaxTwistDeg), so the near
+    // shoulder does not swing into the eye when the view is off the body.
+    double CrouchTwist = 0, MaxTwistDeg = 50;
 };
 
 // What one frame's corrections did, for the probe and the tests.
 struct FFoundationFirstPersonResult
 {
-    double Blend = 0, PelvisBackCm = 0, PelvisDropCm = 0, SpineBendDeg[2] = {0, 0};
+    double Blend = 0, PelvisBackCm = 0, PelvisDropCm = 0, SpineBendDeg[2] = {0, 0}, TwistDeg = 0;
     // neck_01 after the corrections: how far behind the eye along the view, and how far below it (cm).
     double NeckBehindEyeCm = 0, NeckBelowEyeCm = 0;
     // The worst leg's ankle miss after the leg re-solve (cm; 0 when every foot reached its base pose's place).

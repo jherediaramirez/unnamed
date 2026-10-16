@@ -213,6 +213,165 @@ namespace
 }
 #endif
 
+void UFoundationRuntimeProbe::AddFirstPersonBodySweep()
+{
+#if WITH_DEV_AUTOMATION_TESTS
+    // The crouched first-person corrections over a grid of their crouch settings (foundation.Body.FP.*): for each,
+    // the least clearance over the 21 views and the toe caps seen looking straight down, plus two shots.
+    const FVector Spot(20000, 22000, 0);
+    struct FSetting
+    {
+        double Drop, AnchorMin, Anchor, Back, Twist;
+        FString Name() const
+        {
+            return FString::Printf(TEXT("drop%g-anchor%g-%g-back%g-twist%g"), Drop, AnchorMin, Anchor, Back, Twist);
+        }
+    };
+    TArray<FSetting> Settings;
+    for (const double Drop : {0., 8., 14.})
+        for (const TPair<double, double> Anchor : {TPair<double, double>(10, 22), TPair<double, double>(18, 30)})
+            for (const double Back : {15., 22.})
+                for (const double Twist : {0., 1.})
+                    Settings.Add({Drop, Anchor.Key, Anchor.Value, Back, Twist});
+    auto Apply = [](const FSetting& Setting)
+    {
+        auto Set = [](const TCHAR* Name, double Value)
+        {
+            if (IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name))
+                Variable->Set(float(Value), ECVF_SetByCode);
+        };
+        Set(TEXT("foundation.Body.FP.CrouchDrop"), Setting.Drop);
+        Set(TEXT("foundation.Body.FP.AnchorCrouchMin"), Setting.AnchorMin);
+        Set(TEXT("foundation.Body.FP.AnchorCrouch"), Setting.Anchor);
+        Set(TEXT("foundation.Body.FP.PelvisBackCrouch"), Setting.Back);
+        Set(TEXT("foundation.Body.FP.CrouchTwist"), Setting.Twist);
+    };
+    auto Shot = [this](const FString& Name)
+    {
+        FScreenshotRequest::RequestScreenshot(
+            FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-body-sweep-") + Name + TEXT(".png"), true, false);
+    };
+    TSharedRef<FString> Table = MakeShared<FString>(TEXT("setting,drop,anchor_min,anchor,back,twist,min_cm,worst_pitch,"
+                                                         "worst_yaw_offset,worst_bone,min_yaw0_cm,toes_l,toes_r\n"));
+    AddCase(
+        TEXT("body sweep settle"), .8,
+        [this, Spot]
+        {
+            Pawn->SetSimulationEnabled(true);
+            ResetPlayer(Spot);
+            Pawn->SetPerspective(0);
+            Pawn->ResetBody();
+            PressKey(Controller->GetInputSubsystem()->GetCurrentKey(TEXT("key.sneak")), true);
+        },
+        [this]
+        {
+            Pawn->SetSimulationEnabled(false);
+            Record(TEXT("body sweep: crouched"), Pawn->Simulation.bCrouched,
+                FString::Printf(TEXT("eye %.1f cm"), Pawn->Simulation.EyeCm));
+        });
+    for (const FSetting& Setting : Settings)
+    {
+        struct FSweep
+        {
+            int32 Sample = 0, Wait = 0, WorstBone = INDEX_NONE, ToesL = 0, ToesR = 0;
+            double Min = TNumericLimits<double>::Max(), MinYaw0 = TNumericLimits<double>::Max(), WorstPitch = 0,
+                   WorstOffset = 0;
+        };
+        TSharedRef<FSweep> State = MakeShared<FSweep>();
+        AddCase(
+            TEXT("body sweep ") + Setting.Name(), .1,
+            [this, Setting, Apply, State]
+            {
+                Apply(Setting);
+                *State = FSweep();
+                bHoldCase = true;
+                FrameHook = [this, State]
+                {
+                    static const double Pitches[] = {-89.9, -60, -30, 0, 30, 60, 89.9};
+                    static const double Offsets[] = {-60, 0, 60};
+                    if (State->Sample >= 21)
+                    {
+                        bHoldCase = false;
+                        return;
+                    }
+                    const double Pitch = Pitches[State->Sample / 3], Offset = Offsets[State->Sample % 3];
+                    if (State->Wait++ == 0)
+                    {
+                        Controller->SetControlRotation(FRotator(Pitch, 0, 0));
+                        Pawn->BodyTurn.Yaw = Pawn->BodyTurn.PreviousYaw = -Offset;
+                        return;
+                    }
+                    if (State->Wait < 4) return;
+                    State->Wait = 0;
+                    ++State->Sample;
+                    USkeletalMeshComponent* Copy = Pawn->GetFirstPersonBodyMesh();
+                    const FVector Eye = Pawn->GetCamera()->GetComponentLocation();
+                    FBodySurface Surface;
+                    if (!GatherBodySurface(Copy, true, Surface)) return;
+                    int32 Bone = INDEX_NONE;
+                    const double Distance = NearestSurface(Surface, Eye, Bone);
+                    if (Distance < State->Min)
+                    {
+                        State->Min = Distance;
+                        State->WorstBone = Bone;
+                        State->WorstPitch = Pitch;
+                        State->WorstOffset = Offset;
+                    }
+                    if (Offset == 0) State->MinYaw0 = FMath::Min(State->MinYaw0, Distance);
+                    if (Offset == 0 && Pitch == -89.9)
+                    {
+                        int32 Width = 16, Height = 9;
+                        Controller->GetViewportSize(Width, Height);
+                        const double Aspect = double(Width) / FMath::Max(Height, 1);
+                        const FRotator View = Pawn->GetCamera()->GetComponentRotation();
+                        State->ToesL =
+                            CountVisible(Surface, Copy->GetBoneIndex(TEXT("ball_l")), Eye, View, 110, Aspect);
+                        State->ToesR =
+                            CountVisible(Surface, Copy->GetBoneIndex(TEXT("ball_r")), Eye, View, 110, Aspect);
+                    }
+                };
+            },
+            [this, Setting, State, Table]
+            {
+                *Table += FString::Printf(TEXT("%s,%g,%g,%g,%g,%g,%.3f,%.1f,%.0f,%s,%.3f,%d,%d\n"), *Setting.Name(),
+                    Setting.Drop, Setting.AnchorMin, Setting.Anchor, Setting.Back, Setting.Twist, State->Min,
+                    State->WorstPitch, State->WorstOffset,
+                    *Pawn->GetFirstPersonBodyMesh()->GetBoneName(State->WorstBone).ToString(), State->MinYaw0,
+                    State->ToesL, State->ToesR);
+            });
+        for (const TPair<double, double> View : {TPair<double, double>(-60, 0), TPair<double, double>(-89.9, 50)})
+        {
+            const FString ShotName =
+                FString::Printf(TEXT("%s-pitch%d-off%d"), *Setting.Name(), int32(View.Key), int32(View.Value));
+            AddCase(
+                TEXT("body sweep shot ") + ShotName, .3,
+                [this, View]
+                {
+                    Controller->SetControlRotation(FRotator(View.Key, 0, 0));
+                    Pawn->BodyTurn.Yaw = Pawn->BodyTurn.PreviousYaw = -View.Value;
+                },
+                [Shot, ShotName] { Shot(ShotName); });
+        }
+    }
+    AddCase(
+        TEXT("body sweep report"), .2,
+        [this, Apply]
+        {
+            Apply({0, 10, 22, 15, 0});
+            auto Keys = DownKeys;
+            for (FKey Down : Keys)
+                PressKey(Down, false);
+            Pawn->SetSimulationEnabled(true);
+        },
+        [this, Table]
+        {
+            FFileHelper::SaveStringToFile(
+                *Table, *(FPaths::ChangeExtension(Output, TEXT("")) + TEXT("-body-sweep.csv")));
+            Record(TEXT("body sweep: table written"), true, Table->Replace(TEXT("\n"), TEXT(" | ")));
+        });
+#endif
+}
+
 void UFoundationRuntimeProbe::AddFirstPersonBodyCases()
 {
 #if WITH_DEV_AUTOMATION_TESTS

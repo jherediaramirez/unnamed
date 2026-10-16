@@ -55,8 +55,9 @@ FFoundationFirstPersonResult FoundationBodyPose::Apply(TArrayView<FTransform> Lo
     ToComponentSpace(Local, Parents, Component);
     const FTransform FootTarget[2] = {Component[Bones.Foot[0]], Component[Bones.Foot[1]]};
 
-    // 1. The hips back, and down only as far as the legs need to still reach the base pose's feet.
-    double Drop = 0;
+    // 1. The hips back, and down as far as the legs need to still reach the base pose's feet (crouched, at least
+    // CrouchDropCm).
+    double Drop = Crouch * FMath::Max(Tuning.CrouchDropCm, 0.);
     for (int32 Side = 0; Side < 2; ++Side)
     {
         const FVector Hip = Component[Bones.Thigh[Side]].GetLocation(),
@@ -95,6 +96,19 @@ FFoundationFirstPersonResult FoundationBodyPose::Apply(TArrayView<FTransform> Lo
         Local[Bones.Foot[Side]] = Foot.GetRelativeTransform(Calf);
     }
     ToComponentSpace(Local, Parents, Component);
+
+    // 2b. Crouched, the chest turns toward the view about its own vertical (spine_02), the arms with it.
+    const double ViewYaw = FMath::Atan2(-View.Forward.X, View.Forward.Y);
+    const double Twist = FMath::Clamp(ViewYaw * Crouch * FMath::Clamp(Tuning.CrouchTwist, 0., 1.),
+        -FMath::DegreesToRadians(Tuning.MaxTwistDeg), FMath::DegreesToRadians(Tuning.MaxTwistDeg));
+    if (FMath::Abs(Twist) > 1e-6)
+    {
+        FTransform Chest = Component[Bones.Spine[1]];
+        Chest.SetRotation(FQuat(FVector::UpVector, Twist) * Chest.GetRotation());
+        SetComponent(Local, Parents, Component, Bones.Spine[1], Chest);
+        ToComponentSpace(Local, Parents, Component);
+    }
+    Result.TwistDeg = FMath::RadiansToDegrees(Twist);
 
     // 3. The chest leans back (about the axis across the view) until neck_01 is Anchor behind the eye: half the way
     // at spine_01, the rest at spine_02, never forward, each bone at most MaxSpineBendDeg.

@@ -42,7 +42,17 @@ namespace
         TEXT("First-person body: neck_01 this far behind the eye at full blend, standing (cm; 4 at no blend)."),
         ECVF_Default);
     TAutoConsoleVariable<float> CVarFpAnchorCrouch(TEXT("foundation.Body.FP.AnchorCrouch"), 22,
-        TEXT("First-person body: neck_01 this far behind the eye at full blend, crouched (cm; 10 at no blend)."),
+        TEXT("First-person body: neck_01 this far behind the eye at full blend, crouched (cm)."), ECVF_Default);
+    TAutoConsoleVariable<float> CVarFpAnchorCrouchMin(TEXT("foundation.Body.FP.AnchorCrouchMin"), 10,
+        TEXT("First-person body: neck_01 this far behind the eye looking ahead (no blend), crouched (cm)."),
+        ECVF_Default);
+    TAutoConsoleVariable<float> CVarFpCrouchDrop(TEXT("foundation.Body.FP.CrouchDrop"), 0,
+        TEXT("First-person body, crouched: the hips this much lower at every pitch, the legs re-solved to the feet "
+             "(cm)."),
+        ECVF_Default);
+    TAutoConsoleVariable<float> CVarFpCrouchTwist(TEXT("foundation.Body.FP.CrouchTwist"), 0,
+        TEXT("First-person body, crouched: the chest turns this fraction (0..1) of the way toward the view, at most 50 "
+             "degrees."),
         ECVF_Default);
 
     // Closer than this to the eyes the camera would sit inside the head: the world body is no longer drawn for the
@@ -87,6 +97,9 @@ FFoundationFirstPersonTuning AFoundationPawn::GetFirstPersonTuning()
     Tuning.PelvisBackCrouchCm = CVarFpPelvisBackCrouch.GetValueOnGameThread();
     Tuning.AnchorStandCm[1] = CVarFpAnchor.GetValueOnGameThread();
     Tuning.AnchorCrouchCm[1] = CVarFpAnchorCrouch.GetValueOnGameThread();
+    Tuning.AnchorCrouchCm[0] = CVarFpAnchorCrouchMin.GetValueOnGameThread();
+    Tuning.CrouchDropCm = CVarFpCrouchDrop.GetValueOnGameThread();
+    Tuning.CrouchTwist = CVarFpCrouchTwist.GetValueOnGameThread();
     return Tuning;
 }
 
