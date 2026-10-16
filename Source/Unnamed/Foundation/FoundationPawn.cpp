@@ -1,4 +1,5 @@
 #include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationBlockFamilies.h"
 #include "Foundation/FoundationBodyAnimInstance.h"
 #include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationController.h"
@@ -325,6 +326,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bBodyInWater = bBodyInWater;
     Facts.bEyesInWater = bEyesInWater;
+    Facts.bClimbing = Simulation.bClimbing;
     Facts.bAlive = !Vitals.IsDead();
     Facts.Mode = Vitals.Mode;
     Facts.bSecondaryUse = LastIntent.bCrouch;
@@ -415,6 +417,7 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bJumped = Simulation.bJumped;
     Facts.bSprintJumped = Simulation.bSprintJumped;
+    Facts.bClimbing = Simulation.bClimbing;
     const FBox Body = FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm);
     // Swimming tells lava from water; without it lava counts as water, as before.
     const bool bSwim = CVarSwim.GetValueOnGameThread() != 0;
@@ -648,6 +651,10 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
             Eligibility.bSwimPose = CVarSwimPose.GetValueOnGameThread() != 0;
+            // Climbing (survival B4b): the block holding the feet, through the authority's world.
+            Eligibility.bOnClimbable = Authority && FoundationBlockFamilies::IsClimbOn() &&
+                FoundationBlockFamilies::IsClimbable(
+                    Authority->World, FoundationGrid::CellAt(Simulation.Feet, Authority->World.OriginCm));
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;

@@ -2,9 +2,9 @@
 report SURVIVAL-RUN2-FINDINGS-26.3.md, R13 "Every requested block state", Appendix A (survival2.r13.shapes,
 survival2.r13.connections).
 
-The output keeps the box dictionary (pixels) and the shape rows of the families B3 touches (doors, trapdoors, gates,
-buttons, levers), and every connection row. States are named without the "minecraft:" prefix and stored once in
-"states"; rows index into it. Shape rows: [state, collision box id, outline box id]. Connection rows: [subject,
+The output keeps the box dictionary (pixels) and the shape rows of the families B3 and B4b touch (doors, trapdoors,
+gates, buttons, levers, ladders), and every connection row. States are named without the "minecraft:" prefix and
+stored once in "states"; rows index into it. Shape rows: [state, collision box id, outline box id]. Connection rows: [subject,
 neighbour, side, result] with side 0 north, 1 east, 2 south, 3 west. It records the input's SHA-256.
 
 usage: uv run --no-project --python 3.13 python -I Scripts/MakeR13Oracles.py [<SURVIVAL-RUN2-FINDINGS-26.3.md>]
@@ -19,7 +19,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "Source" / "Unnamed" / "Tests" / "BlockR13Oracles.json"
 FINDINGS = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(
     r"C:\dev\projects\value-holder\SURVIVAL-RUN2-FINDINGS-26.3.md")
-FAMILIES = ("doors", "trapdoors", "gates", "buttons", "levers")
+# B4b adds the ladders; R13's vines list some boxes in another order than block_state_facts.json (B3b's offline note).
+FAMILIES = ("doors", "trapdoors", "gates", "buttons", "levers", "ladders")
 SIDES = ("north", "east", "south", "west")
 
 
