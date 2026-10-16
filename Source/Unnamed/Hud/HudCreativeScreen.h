@@ -35,6 +35,9 @@ public:
     SLATE_ARGUMENT(FHudCreativeInventory, GetInventory)
     SLATE_ARGUMENT(FHudCreativeWriter, OnWrite)
     SLATE_ARGUMENT(TFunction<void()>, OnClose)
+    // The player's current key for a binding id (key.inventory, key.hotbar.1-9), as SHudContainerScreen's. Unset, the
+    // default keys (E, 1-9).
+    SLATE_ARGUMENT(TFunction<FKey(FName)>, GetKey)
     // Options > GUI Scale (0 Auto), read every frame so a change in the open menu applies at once.
     SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
@@ -87,6 +90,7 @@ private:
     FHudCreativeInventory GetInventory;
     FHudCreativeWriter OnWrite;
     TFunction<void()> OnClose;
+    TFunction<FKey(FName)> GetKey;
     FIntPoint Mouse = FIntPoint(-1000, -1000);
     bool bDraggingScroller = false;
     double FocusTime = 0;

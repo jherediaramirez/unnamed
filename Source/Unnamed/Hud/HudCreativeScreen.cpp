@@ -54,6 +54,7 @@ void SHudCreativeScreen::Construct(const FArguments& Arguments)
     GetInventory = Arguments._GetInventory;
     OnWrite = Arguments._OnWrite;
     OnClose = Arguments._OnClose;
+    GetKey = Arguments._GetKey;
     FocusTime = FPlatformTime::Seconds();
     Art.Init(Arguments._Registry, Arguments._HudAssets, Arguments._Items);
     const UFoundationBlockAssets* Assets = Art.Registry ? Art.Registry->GetAssets() : nullptr;
@@ -165,7 +166,9 @@ FReply SHudCreativeScreen::OnMouseWheel(const FGeometry& Geometry, const FPointe
 FReply SHudCreativeScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
-    if (Key == EKeys::Escape || (Key == EKeys::E && !Model.IsSearch()))
+    // The inventory and hotbar keys are the player's bindings, as the survival screens' (QC RA1-4).
+    auto Bound = [this](const TCHAR* Id, const FKey& Default) { return GetKey ? GetKey(FName(Id)) : Default; };
+    if (Key == EKeys::Escape || (Key == Bound(TEXT("key.inventory"), EKeys::E) && !Model.IsSearch()))
     {
         if (OnClose) OnClose();
         return FReply::Handled();
@@ -187,7 +190,7 @@ FReply SHudCreativeScreen::OnKeyDown(const FGeometry& Geometry, const FKeyEvent&
     static const FKey Numbers[] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six,
         EKeys::Seven, EKeys::Eight, EKeys::Nine};
     for (int32 Number = 0; Number < 9; ++Number)
-        if (Key == Numbers[Number])
+        if (Key == Bound(*FString::Printf(TEXT("key.hotbar.%d"), Number + 1), Numbers[Number]))
         {
             Model.bFullInventory = FoundationInventory::IsFull();
             Write(Model.PressNumber(

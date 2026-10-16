@@ -658,7 +658,12 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
                 WeakPawn->Interaction.SetCreativeSlot(*WeakLab->GetAuthority(), WeakPawn->Vitals, Write.Slot,
                     Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage).IsCommitted();
         })
-        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
+        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); })
+        .GetKey([WeakInput = TWeakObjectPtr<UUnnamedInputSubsystem>(GetFoundationController()->GetInputSubsystem())]
+            (FName Id)
+        {
+            return WeakInput.IsValid() ? WeakInput->GetCurrentKey(Id) : FKey();
+        });
     // clang-format on
 }
 

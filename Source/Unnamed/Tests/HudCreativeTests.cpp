@@ -393,6 +393,57 @@ bool FHudCreativeOutsideTest::RunTest(const FString&)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeKeysTest, "Unnamed.Hud.Creative.Keys", CreativeTestFlags)
+
+bool FHudCreativeKeysTest::RunTest(const FString&)
+{
+    // QC RA1-4: the screen follows the player's inventory and hotbar bindings, as SHudContainerScreen does: with the
+    // inventory on I and hotbar 4 on Z, I closes and E does not; Z over a hotbar slot swaps it with hotbar 4, 4 does
+    // nothing.
+    TMap<FName, FKey> Bindings = {{TEXT("key.inventory"), EKeys::I}, {TEXT("key.hotbar.4"), EKeys::Z}};
+    for (int32 Number = 1; Number <= 9; ++Number)
+        if (Number != 4) Bindings.Add(FName(*FString::Printf(TEXT("key.hotbar.%d"), Number)), EKeys::Invalid);
+    bool bClosed = false;
+    TArray<FHudCreativeWrite> Writes;
+    TArray<FHudCreativeStack> Inventory;
+    Inventory.SetNum(FFoundationInventory::Slots);
+    Inventory[0] = {TEXT("stone"), 5, 0};
+    // clang-format off
+    const TSharedRef<SHudCreativeScreen> Screen = SNew(SHudCreativeScreen)
+        .GetInventory([&Inventory] { return Inventory; })
+        .OnWrite([&Writes](const FHudCreativeWrite& Write) { Writes.Add(Write); return true; })
+        .OnClose([&bClosed] { bClosed = true; })
+        .GetKey([&Bindings](FName Id) { return Bindings.FindRef(Id); });
+    // clang-format on
+    const FGeometry Geometry = FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform());
+    auto Press = [&Screen, &Geometry](FKey Key)
+    { Screen->OnKeyDown(Geometry, FKeyEvent(Key, FModifierKeysState(), 0, false, 0, 0)); };
+    Screen->SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Hotbar, 0) + FIntPoint(8, 8));
+    Press(EKeys::Four);
+    TestTrue(TEXT("the default hotbar key no longer swaps"), Writes.IsEmpty());
+    Writes.Reset();
+    Press(EKeys::Z);
+    TestTrue(TEXT("the bound hotbar key swaps with hotbar 4"),
+        Writes.Num() == 2 &&
+            Writes.ContainsByPredicate([](const FHudCreativeWrite& Write)
+                { return Write.Slot == 3 && Write.Stack == FHudCreativeStack{TEXT("stone"), 5}; }));
+    Press(EKeys::E);
+    TestFalse(TEXT("E no longer closes"), bClosed);
+    bClosed = false;
+    Press(EKeys::I);
+    TestTrue(TEXT("the bound inventory key closes"), bClosed);
+    bClosed = false;
+    Press(EKeys::Escape);
+    TestTrue(TEXT("Escape still closes"), bClosed);
+    // Unset, the default keys.
+    bool bDefaultClosed = false;
+    const TSharedRef<SHudCreativeScreen> Default =
+        SNew(SHudCreativeScreen).OnClose([&bDefaultClosed] { bDefaultClosed = true; });
+    Default->OnKeyDown(Geometry, FKeyEvent(EKeys::E, FModifierKeysState(), 0, false, 0, 0));
+    TestTrue(TEXT("unbound: E closes"), bDefaultClosed);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeRefusedThrowTest, "Unnamed.Hud.Creative.RefusedThrow", CreativeTestFlags)
 
 bool FHudCreativeRefusedThrowTest::RunTest(const FString&)
