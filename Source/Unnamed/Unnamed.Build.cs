@@ -41,5 +41,9 @@ public class Unnamed : ModuleRules
         RuntimeDependencies.Add(
             "$(ProjectDir)/Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/dry_foliage.png",
             StagedFileType.NonUFS);
+        // Monsters read the sky reference's day timeline and the sky light level beneath it (VoxelSkyReference, from
+        // VoxelWorld): without them a package's monsters never burn and its night sky light stays 15 (QC R35-3).
+        RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/data/...", StagedFileType.NonUFS);
+        RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/attributes.json", StagedFileType.NonUFS);
     }
 }

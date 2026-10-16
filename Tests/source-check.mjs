@@ -34,4 +34,29 @@ for(const name of fs.readdirSync(testsDir).filter(n=>n.endsWith('.cpp'))){
   guards+=(text.match(/AddError\(\s*TEXT\(\s*"DA_Blocks is missing/g)||[]).length;
 }
 if(!guards)throw Error('No missing-asset guards found in Source/Unnamed/Tests');
-console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test.`);
+// Packages only hold the Reference/ files Unnamed.Build.cs stages: every reference root the game module reads at runtime
+// from the project folder needs a RuntimeDependencies line, and the files it reads must be covered (QC R35-3: the sky
+// reference wasn't staged, so a package's monsters never burned and its night sky light stayed 15).
+const buildCs=fs.readFileSync(path.join(root,'Source/Unnamed/Unnamed.Build.cs'),'utf8');
+const staged=[...buildCs.matchAll(/RuntimeDependencies\.Add\(\s*"\$\(ProjectDir\)\/(Reference\/[^"]+)"/g)].map(m=>m[1]);
+const covers=file=>staged.some(s=>s.endsWith('/...')?file.startsWith(s.slice(0,-3)):file===s);
+const readRoots=new Map();
+const walk=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+  const p=path.join(dir,e.name);
+  if(e.isDirectory()){if(p!==testsDir)walk(p);continue;}
+  if(!/\.(cpp|h)$/.test(e.name))continue;
+  for(const m of fs.readFileSync(p,'utf8').matchAll(/TEXT\("(Reference\/[^/"]+)/g))readRoots.set(m[1],path.relative(root,p));
+}};
+walk(path.join(root,'Source/Unnamed'));
+if(!readRoots.size)throw Error('No runtime Reference/ reads found in Source/Unnamed');
+for(const [refRoot,file] of readRoots)if(!staged.some(s=>s.startsWith(refRoot+'/')))throw Error(`${file} reads ${refRoot} at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
+// The files those roots' readers open (VoxelWorldgen, VoxelTerrainFactory::ReadInputs, VoxelSkyReference).
+const runtimeReads=['Reference/minecraft-worldgen-26.3/data/minecraft/worldgen/noise_settings/overworld.json',
+  'Reference/minecraft-worldgen-26.3/facts/biome_parameters.json',
+  ...['grass','foliage','dry_foliage'].map(n=>`Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/${n}.png`),
+  'Reference/minecraft-sky-26.3/data/minecraft/timeline/day.json','Reference/minecraft-sky-26.3/attributes.json'];
+for(const f of runtimeReads){
+  if(!fs.existsSync(path.join(root,f)))throw Error(`${f} is missing`);
+  if(!covers(f))throw Error(`${f} is read at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
+}
+console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test, ${readRoots.size} runtime reference roots and ${runtimeReads.length} runtime reference files staged.`);
