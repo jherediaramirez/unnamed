@@ -7,10 +7,10 @@
 | | |
 |---|---|
 | Git | Main repository folder (`.git` lives here). Remote `origin` = github.com/jherediaramirez/unnamed |
-| Branch | `feature/survival` |
-| Latest commit | `feature/survival` on GitHub: eb52cea7 + the three QC fixes below + a RunChecks fix + these docs. Pushed 2026-10-16 |
-| Build | Editor built here at `0c8d9a74` on 2026-10-16 |
-| Checks | Final profile GREEN on the committed code. Results are in `_STATUS\LATEST-REPORT.md` |
+| Branch | `main`, the only branch, here and on GitHub (since 2026-10-16 evening). Unmerged old work is kept as `archive/*` tags |
+| Latest commit | `main` on GitHub: the three QC fixes below, the 12 low fixes (`fix/qc-low-editor-12`), K-WORLD-3 (the dev seed's world starts in Creative) and chat command suggestions. Pushed 2026-10-16 evening |
+| Build | Editor built here at the `main` tip on 2026-10-16 evening |
+| Checks | Native suite 585/585 on the `main` tip (2026-10-16 evening; the full RunChecks profile last ran at `0c8d9a74`). Results are in `_STATUS\LATEST-REPORT.md` |
 | Engine | UE 5.8 (`C:\Program Files\Epic Games\UE_5.8`) |
 
 Open it with: double-click `Unnamed.uproject`, or play directly:
@@ -45,12 +45,12 @@ The old program folder `C:\dev\tools\shift-managers\survival\` is frozen history
 
 | Patch | What | Why |
 |---|---|---|
-| `pending-work\ATMOSPHERE-T7a-parked-WIP.patch` | Day/night look: twilight haze, stars (branch `feature/survival-atmosphere`) | A feature, deferred until after QC |
+| `pending-work\ATMOSPHERE-T7a-parked-WIP.patch` | Day/night look: twilight haze, stars (tag `archive/survival-atmosphere`) | A feature, deferred until after QC |
 | `pending-work\Unnamed-body-DefaultEditor-ini.patch` | Editor settings from the old player-body lane | Noise, probably never needed |
 
 ## Retired folders
 
-Everything was moved, not deleted, to `C:\dev\sandbox\retired-unnamed-worktrees-2026-10-16\`, including ignored test evidence, `Saved` data and old builds. Every branch is kept.
+Everything was moved, not deleted, to `C:\dev\sandbox\retired-unnamed-worktrees-2026-10-16\`, including ignored test evidence, `Saved` data and old builds. Every branch was kept until 2026-10-16 evening; since then `main` is the only branch, and the unmerged work is kept as tags: `archive/survival-atmosphere`, `archive/wip-b1-park`, `archive/wip-b4a`, `archive/wip-b4b`, `archive/wip-b5`, `archive/brave-cray-hqtasg` (`git switch -c <name> archive/<tag>` brings one back).
 
 | Folder | What it was | Its work is now |
 |---|---|---|
@@ -60,7 +60,7 @@ Everything was moved, not deleted, to `C:\dev\sandbox\retired-unnamed-worktrees-
 | Unnamed-codex-low-02 | LOW02 (R40-4) | In this build (`1d81fbf6`) |
 | Unnamed-mobs | Q06 and LOW03 (R17-1, R47-4) | In this build (`e8275a71`, `1215000b`) |
 | Unnamed-codex, -play, -use, -inv, -blocks, -ent | Old QC review, play copy, survival lanes T1-T5 | Already merged |
-| Unnamed-atmos | Parked T7a atmosphere | Branch `feature/survival-atmosphere` + pending patch |
+| Unnamed-atmos | Parked T7a atmosphere | Tag `archive/survival-atmosphere` + pending patch |
 | Unnamed-body | Player body lane | Archive copy keeps the untracked `Art\Characters\BetterSteve\SK_BetterSteve.fbm` |
 | Unnamed-scout, -qol, -water, -lod3, -s11, -review, 3 agent worktrees | Pre-survival voxel-world lanes | Already merged |
 
@@ -70,5 +70,5 @@ Everything was moved, not deleted, to `C:\dev\sandbox\retired-unnamed-worktrees-
 
 1. Work happens here. No new `Unnamed-*` lanes or worktrees without updating this file.
 2. No new features until the open bugs in `_STATUS\LATEST-REPORT.md` are decided.
-3. Only `feature/survival` is pushed. The final merge into `feature/voxel-world` happens only on Jesus's word.
+3. `main` is the only branch, here and on GitHub (Jesus, 2026-10-16). `feature/survival` and `feature/voxel-world` were folded into it.
 4. When a bug is fixed, update `_STATUS\KNOWN-ISSUES.md` and `_STATUS\LATEST-REPORT.md` in the same commit.
