@@ -654,11 +654,16 @@ TSharedRef<SHudCreativeScreen> UFoundationPanels::MakeCreative(AFoundationLab& L
         })
         .OnWrite([WeakLab, WeakPawn](const FHudCreativeWrite& Write)
         {
-            if (WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority())
+            return WeakLab.IsValid() && WeakPawn.IsValid() && WeakLab->GetAuthority() &&
                 WeakPawn->Interaction.SetCreativeSlot(*WeakLab->GetAuthority(), WeakPawn->Vitals, Write.Slot,
-                    Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage);
+                    Write.Stack.Item, Write.Stack.Count, Write.Stack.Damage).IsCommitted();
         })
-        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); });
+        .OnClose([WeakThis] { if (WeakThis.IsValid()) WeakThis->Close(); })
+        .GetKey([WeakInput = TWeakObjectPtr<UUnnamedInputSubsystem>(GetFoundationController()->GetInputSubsystem())]
+            (FName Id)
+        {
+            return WeakInput.IsValid() ? WeakInput->GetCurrentKey(Id) : FKey();
+        });
     // clang-format on
 }
 
@@ -717,6 +722,10 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
         .RequestedGuiScale(MakeGuiScale(Controller))
         .Kind(Kind)
+        .Creative_Lambda([WeakPawn]
+        {
+            return WeakPawn.IsValid() && WeakPawn->Vitals.Mode == EFoundationPlayerMode::Creative;
+        })
         .Items(MakeScreenItems(Authority))
         .FuelItems(MoveTemp(FuelItems))
         .GetView([WeakLab, WeakPawn, ContainerId]

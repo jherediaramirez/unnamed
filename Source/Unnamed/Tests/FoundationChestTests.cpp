@@ -579,6 +579,20 @@ bool FFoundationChestSwitchTest::RunTest(const FString&)
     TestFalse(TEXT("off: no menu"), L.P().OpenMenu.IsOpen());
     TestNull(TEXT("off: no entity"), L.A.BlockEntities.Find(L.Aimed));
     TestEqual(TEXT("off: no sound"), L.TakeUsed().Num(), 0);
+    // QC RA1-2: switched off with its menu open, the menu closes at the next step and a click on it is refused.
+    {
+        FChestLab Open;
+        Open.Inv().SetSlot(0, Open.Stack(TEXT("dirt"), 3));
+        const int32 Id = Open.Open();
+        TestTrue(TEXT("open"), Id > 0 && Open.P().OpenMenu.IsOpen());
+        Open.A.Options.bChest = false;
+        // Menu 54 is hotbar 0, holding the dirt.
+        TestFalse(TEXT("off: a click on it is refused before the step"),
+            Open.Click(Id, 54, 0, EFoundationClickType::Pickup).IsCommitted());
+        TestTrue(TEXT("off: the dirt stays put"), Open.Holds(*Open.Inv().GetSlot(0), TEXT("dirt"), 3));
+        Open.Steps(1);
+        TestFalse(TEXT("off: the open menu closes"), Open.P().OpenMenu.IsOpen());
+    }
     return true;
 }
 #endif

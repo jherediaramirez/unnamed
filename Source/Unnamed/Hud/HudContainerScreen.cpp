@@ -68,6 +68,7 @@ void SHudContainerScreen::Construct(const FArguments& Arguments)
     Model.Items = Arguments._Items;
     Model.FuelItems = Arguments._FuelItems;
     Model.Kind = Arguments._Kind;
+    Creative = Arguments._Creative;
     Model.bFullInventory = FoundationInventory::IsFull();
     Art.Init(Arguments._Registry, Arguments._HudAssets, Arguments._Items);
     // The screen's own art (ImportContainerGui.py), the shared slot highlight (ImportBlocks.py), item sprites and
@@ -133,6 +134,7 @@ void SHudContainerScreen::Press(FIntPoint Point, int32 Button, bool bShift, doub
 {
     Mouse = Point;
     Model.bFullInventory = FoundationInventory::IsFull();
+    Model.bCreative = Creative.Get(false);
     Send(Model.MouseDown(Point, Button, bShift, GetCurrentView(), Time));
 }
 

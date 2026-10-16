@@ -9,7 +9,8 @@ class FFoundationBlockRegistry;
 class UHudAssets;
 
 using FHudCreativeInventory = TFunction<TArray<FHudCreativeStack>()>;
-using FHudCreativeWriter = TFunction<void(const FHudCreativeWrite&)>;
+// Sends one write to the authority; whether it was accepted.
+using FHudCreativeWriter = TFunction<bool(const FHudCreativeWrite&)>;
 
 // The creative inventory screen over the game viewport: Java 26.3's CreativeModeInventoryScreen art, layout and
 // clicks (FHudCreativeModel) at the HUD's GUI scale, with the dark backdrop container screens draw. The owner
@@ -34,6 +35,9 @@ public:
     SLATE_ARGUMENT(FHudCreativeInventory, GetInventory)
     SLATE_ARGUMENT(FHudCreativeWriter, OnWrite)
     SLATE_ARGUMENT(TFunction<void()>, OnClose)
+    // The player's current key for a binding id (key.inventory, key.hotbar.1-9), as SHudContainerScreen's. Unset, the
+    // default keys (E, 1-9).
+    SLATE_ARGUMENT(TFunction<FKey(FName)>, GetKey)
     // Options > GUI Scale (0 Auto), read every frame so a change in the open menu applies at once.
     SLATE_ATTRIBUTE(int32, RequestedGuiScale)
     SLATE_END_ARGS()
@@ -74,7 +78,12 @@ private:
     };
     FFrame GetFrame(const FGeometry& Geometry) const;
     FIntPoint ToGui(const FGeometry& Geometry, const FPointerEvent& Event) const;
-    void Write(const TArray<FHudCreativeWrite>& Writes);
+    // Sends the writes; false when the authority refused a throw (a write to the outside slot).
+    bool Write(const TArray<FHudCreativeWrite>& Writes);
+    FKey GetBoundKey(const TCHAR* Id, const FKey& Default) const;
+    // The inventory key closes; a hotbar key swaps the hovered slot with that hotbar slot. Whether Key was one.
+    bool PressInventory(const FKey& Key);
+    bool PressHotbar(const FKey& Key);
     const FSlateBrush* FindBrush(const FString& Id) const { return Art.Find(Id); }
 
     FHudCreativeModel Model;
@@ -85,6 +94,7 @@ private:
     FHudCreativeInventory GetInventory;
     FHudCreativeWriter OnWrite;
     TFunction<void()> OnClose;
+    TFunction<FKey(FName)> GetKey;
     FIntPoint Mouse = FIntPoint(-1000, -1000);
     bool bDraggingScroller = false;
     double FocusTime = 0;

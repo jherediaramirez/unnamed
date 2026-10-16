@@ -671,6 +671,12 @@ bool FFoundationAuthority::IsMenuValid(const FFoundationPlayer& Player) const
     const FFoundationOpenMenu& Open = Player.OpenMenu;
     if (!Open.IsOpen() || !World.IsKnown(Open.Cell) || World.GetBlock(World.Get(Open.Cell).State).Id != Open.Block)
         return false;
+    // A container's switch at 0 takes its menu away, as it takes the block's use (QC RA1-2): the next step closes it,
+    // and a click on it is refused.
+    if ((IsFurnaceMenu(Open.Kind) && !Options.bFurnace) ||
+        (Open.Kind == EFoundationMenuKind::Barrel && !Options.bBarrel) ||
+        ((Open.Kind == EFoundationMenuKind::Chest || Open.Kind == EFoundationMenuKind::LargeChest) && !Options.bChest))
+        return false;
     // Every block entity the menu's slots live in (a double chest: both halves, still paired; T1 step 18-chest).
     TArray<FIntVector, TInlineAllocator<2>> Cells;
     if (UsesBlockEntity(Open.Kind) &&
@@ -840,15 +846,18 @@ void FFoundationAuthority::StepFurnaces()
             Gone.Add(Cell);
             continue;
         }
-        if (Entity.Kind != EFoundationBlockEntityKind::Furnace || !Options.bFurnace) continue;
-        FoundationFurnace::Tick(Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
+        if (Entity.Kind != EFoundationBlockEntityKind::Furnace) continue;
+        if (Options.bFurnace)
+            FoundationFurnace::Tick(
+                Entity, FurnaceRules, BlockEntities, FoundationFurnace::GetCookingKind(Entity.Block));
         // The block's lit state follows the fuel on the same tick (survival.r3.furnace_ticks: lit at tick 1, unlit at
         // fuel + 1; its light comes with the state). Same block id, so the entity stays; a plain state change, as an
         // axe's strip is, with no place event. Written after the loop, so no world hook runs mid-iteration. Switched
-        // off mid-burn, a block keeps its last lit state, as its entity keeps its timers.
+        // off mid-burn, the block goes unlit (QC RA1-2) while its entity keeps its timers; back on, it lights again.
         const FFoundationBlockState State = World.Get(Cell).State;
         static const FName Lit(TEXT("lit")), True(TEXT("true")), False(TEXT("false"));
-        const FFoundationBlockState Want = World.GetRegistry().WithValue(State, Lit, Entity.IsLit() ? True : False);
+        const FFoundationBlockState Want =
+            World.GetRegistry().WithValue(State, Lit, Options.bFurnace && Entity.IsLit() ? True : False);
         if (Want != State) Relit.Add({Cell, Want});
     }
     for (const FIntVector& Cell : Gone)
@@ -2915,15 +2924,36 @@ FFoundationResult FFoundationAuthority::Execute(
     {
         const int32 Item = Rules.FindItem(Command.CreativeItem);
         const bool bClear = Command.CreativeItem.IsNone() || Command.CreativeCount <= 0;
+        // The slot outside the window throws the stack (the creative screen's outside click, as the survival screens'
+        // throws; QC RA1-1). With foundation.Items.Entities 0 it is refused, as their throw is.
+        const bool bThrow = Command.Slot == FFoundationContainerMenu::Outside;
         if (!Options.bCreativeInventory)
             Reject(Result, EFoundationReason::InvalidSlot);
-        else if (!Player->Inventory.GetSlot(Command.Slot))
+        else if (bThrow && bClear)
+            Reject(Result, EFoundationReason::NoItem);
+        else if (!bThrow && !Player->Inventory.GetSlot(Command.Slot))
             Reject(Result, EFoundationReason::InvalidSlot);
         else if (!bClear && (Item == INDEX_NONE || Command.CreativeCount > Rules.Items[Item].MaxStack))
             Reject(Result, EFoundationReason::NoItem);
         // Damage runs from 0 to the max damage, the durability bar's range (facts/durability_bar.json).
         else if (!bClear && (Command.CreativeDamage < 0 || Command.CreativeDamage > Rules.Items[Item].MaxDurability))
             Reject(Result, EFoundationReason::InvalidDamage);
+        else if (bThrow)
+        {
+            // Never in a slot, so it takes no instance id.
+            FFoundationItemInstance Stack;
+            Stack.Item = Item;
+            Stack.Count = Command.CreativeCount;
+            Stack.Damage = Command.CreativeDamage;
+            if (!Options.bItemEntities)
+                Reject(Result, EFoundationReason::DropDeferred);
+            else if (!Player->Facts.bAlive)
+                Reject(Result, EFoundationReason::Dead);
+            else if (!Throw(*Player, Stack, Stack.Count))
+                Reject(Result, EFoundationReason::NoSupply);
+            else
+                Result.Outcome = EFoundationOutcome::Committed;
+        }
         else
         {
             FFoundationInventory& Inventory = Player->Inventory;

@@ -16,9 +16,14 @@ class UHudAssets;
 class UNNAMED_API SHudContainerScreen : public SLeafWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SHudContainerScreen) : _Kind(EFoundationMenuKind::Inventory), _RequestedGuiScale(0) {}
+    SLATE_BEGIN_ARGS(SHudContainerScreen)
+        : _Kind(EFoundationMenuKind::Inventory), _Creative(false), _RequestedGuiScale(0)
+    {
+    }
     // The menu: the player's inventory, or a crafting table's (survival step 7).
     SLATE_ARGUMENT(EFoundationMenuKind, Kind)
+    // The player is in creative (FHudContainerModel::bCreative), read at each press so a mode change applies at once.
+    SLATE_ATTRIBUTE(bool, Creative)
     SLATE_ARGUMENT(TSharedPtr<const FFoundationBlockRegistry>, Registry)
     SLATE_ARGUMENT(TWeakObjectPtr<const UHudAssets>, HudAssets)
     // Every item the player could hold: names, stack sizes, equipment, tooltip lines.
@@ -82,6 +87,7 @@ private:
 
     FHudContainerModel Model;
     TAttribute<int32> RequestedGuiScale;
+    TAttribute<bool> Creative;
     mutable int32 LastFrameScale = 0;
     FHudGuiArt Art;
     TFunction<FHudContainerView()> GetView;

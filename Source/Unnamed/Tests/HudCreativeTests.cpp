@@ -2,6 +2,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Hud/HudCreative.h"
+#include "Hud/HudCreativeScreen.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -329,8 +330,163 @@ bool FHudCreativeAuthorityTest::RunTest(const FString&)
     TestEqual(TEXT("past the offhand"), Write(41, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
     TestEqual(TEXT("over the stack size"), Write(0, TEXT("stone"), 65).Reason, EFoundationReason::NoItem);
     TestEqual(TEXT("unknown item"), Write(0, TEXT("dummy_block_item"), 1).Reason, EFoundationReason::NoItem);
+    // QC RA1-1: the slot outside the window throws the stack as an item entity (the creative screen's outside click,
+    // as the survival screens' outside click throws; minecraft.wiki "Inventory"); no slot changes.
+    A.Options.bItemEntities = true;
+    const int32 Before = A.GetItemEntities().Num();
+    TArray<int32> CountsBefore;
+    for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+        CountsBefore.Add(Inventory.GetSlot(Slot) ? Inventory.GetSlot(Slot)->Count : -1);
+    const bool bThrown = Write(FFoundationContainerMenu::Outside, TEXT("stone"), 5).IsCommitted();
+    TestTrue(TEXT("outside throws the stack"),
+        bThrown && A.GetItemEntities().Num() == Before + 1 &&
+            A.Rules.GetItem(A.GetItemEntities().Last().Item).Id == TEXT("stone") &&
+            A.GetItemEntities().Last().Count == 5);
+    bool bSlotsKept = true;
+    for (int32 Slot = 0; Slot < FFoundationInventory::Slots; ++Slot)
+        bSlotsKept &= CountsBefore[Slot] == (Inventory.GetSlot(Slot) ? Inventory.GetSlot(Slot)->Count : -1);
+    TestTrue(TEXT("outside writes no slot"), bSlotsKept);
+    TestEqual(TEXT("outside: over the stack size"), Write(FFoundationContainerMenu::Outside, TEXT("stone"), 65).Reason,
+        EFoundationReason::NoItem);
+    TestEqual(TEXT("outside: nothing to throw"), Write(FFoundationContainerMenu::Outside, NAME_None, 0).Reason,
+        EFoundationReason::NoItem);
+    A.Options.bItemEntities = false;
+    TestEqual(TEXT("outside with foundation.Items.Entities 0: deferred, as the survival screens' throw"),
+        Write(FFoundationContainerMenu::Outside, TEXT("stone"), 5).Reason, EFoundationReason::DropDeferred);
+    TestEqual(TEXT("outside with foundation.Items.Entities 0: nothing spawned"), A.GetItemEntities().Num(), Before + 1);
     A.Options.bCreativeInventory = false;
     TestEqual(TEXT("only while the lab allows it"), Write(0, TEXT("stone"), 1).Reason, EFoundationReason::InvalidSlot);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeOutsideTest, "Unnamed.Hud.Creative.Outside", CreativeTestFlags)
+
+bool FHudCreativeOutsideTest::RunTest(const FString&)
+{
+    // QC RA1-1: a click outside the window with a stack on the cursor throws it, left the stack and right one item, as
+    // the survival screens' outside click (minecraft.wiki "Inventory"): a write to the outside slot, never a deletion.
+    FHudCreativeModel Model;
+    FFoundationRules Rules;
+    if (!TestTrue(TEXT("block registry asset"), MakeModel(Model, Rules))) return false;
+    TArray<FHudCreativeStack> Inventory;
+    Inventory.SetNum(FFoundationInventory::Slots);
+    const FHudCreativeHit Outside{EHudCreativeHit::Outside};
+    Model.Carried = {TEXT("stone"), 5, 0};
+    TArray<FHudCreativeWrite> Writes = Model.Click(Outside, 1, false, Inventory);
+    TestTrue(TEXT("right outside throws one"),
+        Writes.Num() == 1 && Writes[0].Slot == FFoundationContainerMenu::Outside &&
+            Writes[0].Stack == FHudCreativeStack{TEXT("stone"), 1} &&
+            Model.Carried == FHudCreativeStack{TEXT("stone"), 4});
+    Writes = Model.Click(Outside, 0, false, Inventory);
+    TestTrue(TEXT("left outside throws the stack"),
+        Writes.Num() == 1 && Writes[0].Slot == FFoundationContainerMenu::Outside &&
+            Writes[0].Stack == FHudCreativeStack{TEXT("stone"), 4} && Model.Carried.IsEmpty());
+    const FHudCreativeStack Pickaxe{TEXT("iron_pickaxe"), 1, 37};
+    Model.Carried = Pickaxe;
+    Writes = Model.Click(Outside, 0, false, Inventory);
+    TestTrue(TEXT("a thrown tool keeps its damage"), Writes.Num() == 1 && Writes[0].Stack == Pickaxe);
+    TestTrue(TEXT("an empty cursor throws nothing"), Model.Click(Outside, 0, false, Inventory).IsEmpty());
+    // The bin still deletes.
+    Model.Carried = {TEXT("stone"), 5, 0};
+    TestTrue(TEXT("the bin writes nothing"),
+        Model.Click({EHudCreativeHit::Destroy, 0}, 0, false, Inventory).IsEmpty() && Model.Carried.IsEmpty());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeKeysTest, "Unnamed.Hud.Creative.Keys", CreativeTestFlags)
+
+bool FHudCreativeKeysTest::RunTest(const FString&)
+{
+    // QC RA1-4: the screen follows the player's inventory and hotbar bindings, as SHudContainerScreen does: with the
+    // inventory on I and hotbar 4 on Z, I closes and E does not; Z over a hotbar slot swaps it with hotbar 4, 4 does
+    // nothing.
+    TMap<FName, FKey> Bindings = {{TEXT("key.inventory"), EKeys::I}, {TEXT("key.hotbar.4"), EKeys::Z}};
+    for (int32 Number = 1; Number <= 9; ++Number)
+        if (Number != 4) Bindings.Add(FName(*FString::Printf(TEXT("key.hotbar.%d"), Number)), EKeys::Invalid);
+    bool bClosed = false;
+    TArray<FHudCreativeWrite> Writes;
+    TArray<FHudCreativeStack> Inventory;
+    Inventory.SetNum(FFoundationInventory::Slots);
+    Inventory[0] = {TEXT("stone"), 5, 0};
+    // clang-format off
+    const TSharedRef<SHudCreativeScreen> Screen = SNew(SHudCreativeScreen)
+        .GetInventory([&Inventory] { return Inventory; })
+        .OnWrite([&Writes](const FHudCreativeWrite& Write) { Writes.Add(Write); return true; })
+        .OnClose([&bClosed] { bClosed = true; })
+        .GetKey([&Bindings](FName Id) { return Bindings.FindRef(Id); });
+    // clang-format on
+    const FGeometry Geometry = FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform());
+    auto Press = [&Screen, &Geometry](FKey Key)
+    { Screen->OnKeyDown(Geometry, FKeyEvent(Key, FModifierKeysState(), 0, false, 0, 0)); };
+    Screen->SetMouse(FHudCreativeModel::GetSlotPosition(EHudCreativeHit::Hotbar, 0) + FIntPoint(8, 8));
+    Press(EKeys::Four);
+    TestTrue(TEXT("the default hotbar key no longer swaps"), Writes.IsEmpty());
+    Writes.Reset();
+    Press(EKeys::Z);
+    TestTrue(TEXT("the bound hotbar key swaps with hotbar 4"),
+        Writes.Num() == 2 &&
+            Writes.ContainsByPredicate([](const FHudCreativeWrite& Write)
+                { return Write.Slot == 3 && Write.Stack == FHudCreativeStack{TEXT("stone"), 5}; }));
+    // A hotbar key bound to a thumb button works as the key does (as SHudContainerScreen's).
+    Bindings.Add(TEXT("key.hotbar.5"), EKeys::ThumbMouseButton);
+    Writes.Reset();
+    Screen->OnMouseButtonDown(Geometry,
+        FPointerEvent(0, FVector2D::ZeroVector, FVector2D::ZeroVector, {EKeys::ThumbMouseButton},
+            EKeys::ThumbMouseButton, 0, FModifierKeysState()));
+    TestTrue(TEXT("a thumb button bound to hotbar 5 swaps with it"),
+        Writes.ContainsByPredicate([](const FHudCreativeWrite& Write) { return Write.Slot == 4; }));
+    Press(EKeys::E);
+    TestFalse(TEXT("E no longer closes"), bClosed);
+    bClosed = false;
+    Press(EKeys::I);
+    TestTrue(TEXT("the bound inventory key closes"), bClosed);
+    bClosed = false;
+    Press(EKeys::Escape);
+    TestTrue(TEXT("Escape still closes"), bClosed);
+    // Unset, the default keys.
+    bool bDefaultClosed = false;
+    const TSharedRef<SHudCreativeScreen> Default =
+        SNew(SHudCreativeScreen).OnClose([&bDefaultClosed] { bDefaultClosed = true; });
+    Default->OnKeyDown(Geometry, FKeyEvent(EKeys::E, FModifierKeysState(), 0, false, 0, 0));
+    TestTrue(TEXT("unbound: E closes"), bDefaultClosed);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHudCreativeRefusedThrowTest, "Unnamed.Hud.Creative.RefusedThrow", CreativeTestFlags)
+
+bool FHudCreativeRefusedThrowTest::RunTest(const FString&)
+{
+    // QC RA1-1: the screen keeps the stack on the cursor when the authority refuses the throw
+    // (foundation.Items.Entities 0, a dead player), as the survival screens do; an accepted throw empties it.
+    bool bAccept = false;
+    TArray<FHudCreativeWrite> Sent;
+    const TSharedRef<SHudCreativeScreen> Screen = SNew(SHudCreativeScreen)
+                                                      .OnWrite(
+                                                          [&bAccept, &Sent](const FHudCreativeWrite& Write)
+                                                          {
+                                                              Sent.Add(Write);
+                                                              return bAccept;
+                                                          });
+    const FGeometry Geometry = FGeometry::MakeRoot(FVector2D(1280, 720), FSlateLayoutTransform());
+    // The viewport's corner is outside the centred window.
+    auto ClickOutside = [&Screen, &Geometry]
+    {
+        TSet<FKey> Pressed = {EKeys::LeftMouseButton};
+        Screen->OnMouseButtonDown(Geometry,
+            FPointerEvent(
+                0, FVector2D(2, 2), FVector2D(2, 2), Pressed, EKeys::LeftMouseButton, 0, FModifierKeysState()));
+        Screen->OnMouseButtonUp(Geometry,
+            FPointerEvent(
+                0, FVector2D(2, 2), FVector2D(2, 2), TSet<FKey>(), EKeys::LeftMouseButton, 0, FModifierKeysState()));
+    };
+    const FHudCreativeStack Stone{TEXT("stone"), 64, 0};
+    Screen->GetModel().Carried = Stone;
+    ClickOutside();
+    TestTrue(TEXT("refused: the throw was sent, the stack stays on the cursor"),
+        Sent.Num() == 1 && Sent[0].Slot == FFoundationContainerMenu::Outside && Screen->GetModel().Carried == Stone);
+    bAccept = true;
+    ClickOutside();
+    TestTrue(TEXT("accepted: the cursor empties"), Sent.Num() == 2 && Screen->GetModel().Carried.IsEmpty());
     return true;
 }
 #endif

@@ -250,10 +250,14 @@ TArray<FHudCreativeWrite> FHudCreativeModel::Click(
                 if (!Inventory[Slot].IsEmpty()) Writes.Add({Slot, {}});
         break;
     case EHudCreativeHit::Outside:
-        // Thrown: there are no item entities here, so the stack (or one item) is discarded.
-        if (!Carried.IsEmpty())
+        // Thrown, left the stack and right one item, as the survival screens' outside click (minecraft.wiki
+        // "Inventory"; QC RA1-1): a write to the outside slot, which the authority throws as an item entity.
+        if (!Carried.IsEmpty() && Button <= 1)
         {
-            Carried.Count = Button == 1 ? Carried.Count - 1 : 0;
+            FHudCreativeStack Thrown = Carried;
+            Thrown.Count = Button == 1 ? 1 : Carried.Count;
+            Writes.Add({FFoundationContainerMenu::Outside, Thrown});
+            Carried.Count -= Thrown.Count;
             if (Carried.Count <= 0) Carried = {};
         }
         break;
