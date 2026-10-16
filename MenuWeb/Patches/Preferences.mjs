@@ -1,8 +1,8 @@
-// Native menu preferences (MenuPreferences): 101 saved options, language, pack order and
+// Native menu preferences (MenuPreferences): 102 saved options, language, pack order and
 // two flags. Language and packs commit on Done; navigation waits for a running commit.
 export const name = 'Preferences';
 
-const liveInFoundation = "['sensitivity','invertXMouse','invertYMouse','mouseWheelSensitivity','discreteMouseScroll','fov','fovEffectScale','autoJump','sprintWindow','toggleAttack','toggleUse']";
+const liveInFoundation = "['sensitivity','invertXMouse','invertYMouse','mouseWheelSensitivity','discreteMouseScroll','fov','fovEffectScale','autoJump','sprintWindow','toggleAttack','toggleUse','sound_master','sound_bass']";
 
 export function apply(patch) {
   patch.edit('function refreshSettings()', 'function refreshSettings(){', 'function refreshSettings(){window.MenuPreferences?.refreshAdditional();');
@@ -32,4 +32,13 @@ export function apply(patch) {
 
   // New players start at the slider's maximum, "Quake Pro" (Jesus, 2026-10-11); saved profiles keep their value.
   patch.data(data => { data.definitions.fov.default = 110; });
+
+  // Bass (survival step 13a2, beyond vanilla by Jesus's choice): a low shelf on all game sounds, value x 5 dB at
+  // 175 Hz (UMenuAudioSettings). On by default for every profile; OFF is vanilla's sound.
+  patch.data(data => {
+    data.labels['unnamed.options.bass'] = 'Bass';
+    data.definitions.sound_bass = {key:'unnamed.options.bass',label:'Bass',kind:'slider',min:0,max:1,step:0.01,default:1,
+      format:'volume',tip:'Boosts the low end of every sound (up to +5 dB below 175 Hz). OFF is the vanilla sound.'};
+  });
+  patch.text("'sound_ambient','sound_voice','sound_ui'],c,y)", "'sound_ambient','sound_voice','sound_ui','sound_bass'],c,y)");
 }

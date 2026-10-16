@@ -26,7 +26,7 @@ namespace
         {TEXT("zombie"), 20, .23f, 2, 0, 0, 60, 195, 174, 0, 0, 1, 90, 5, 5, true, 3, 3500, 800, TEXT("Zombie")},
         {TEXT("skeleton"), 20, .25f, 0, 0, 0, 60, 199, 174, 0, 0, 1, 90, 5, 5, false, 2, 1600, 800, TEXT("Skeleton")},
         {TEXT("creeper"), 20, .25f, 0, 0, 0, 60, 170, 144.5, 0, 0, 1, 90, 5, 5, false, 2, 1600, 800, TEXT("Creeper")},
-        {TEXT("spider"), 16, .3f, 0, 0, 0, 140, 90, 65, 0, 0, 1, 180, 5, 5, false, 2, 1600, 800, TEXT("Spider")},
+        {TEXT("spider"), 16, .3f, 0, 0, 0, 140, 90, 65, 0, 0, 1, 180, 5, 5, true, 2, 1600, 800, TEXT("Spider"), .8f},
     };
     static_assert(UE_ARRAY_COUNT(MobKinds) == int32(EFoundationMobType::Count));
 
@@ -157,12 +157,18 @@ void FoundationMobs::ApplyKnockback(FVector& VelocityCm, const FVector2D& Away, 
 
 const FFoundationMobSpawn* FoundationMobs::PickSpawn(const FFoundationBiomeSpawns& Biome, FRandomStream& Random)
 {
+    return PickSpawn(Biome.Creatures, Random);
+}
+
+const FFoundationMobSpawn* FoundationMobs::PickSpawn(
+    TConstArrayView<FFoundationMobSpawn> Entries, FRandomStream& Random)
+{
     int32 Total = 0;
-    for (const FFoundationMobSpawn& Entry : Biome.Creatures)
+    for (const FFoundationMobSpawn& Entry : Entries)
         Total += FMath::Max(0, Entry.Weight);
     if (Total <= 0) return nullptr;
     int32 Draw = Random.RandHelper(Total);
-    for (const FFoundationMobSpawn& Entry : Biome.Creatures)
+    for (const FFoundationMobSpawn& Entry : Entries)
         if ((Draw -= FMath::Max(0, Entry.Weight)) < 0) return &Entry;
     return nullptr;
 }
@@ -209,7 +215,8 @@ bool FoundationMobs::IsInMeleeReach(
 }
 
 void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
-    TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee)
+    TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee,
+    float Brightness)
 {
     Mob.bAttackNow = false;
     if (Mob.AttackSwing < AttackSwingTicks) ++Mob.AttackSwing;
@@ -230,9 +237,12 @@ void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
     // Only a target in range is looked for (the line of sight is a grid walk).
     const bool bInRange = Target && InRange(*Target);
     bool bSees = bInRange && CanSee(Eye, Target->EyeCm);
-    if (bInRange)
-        Mob.UnseenTicks = bSees ? 0 : Mob.UnseenTicks + 1;
-    if (Mob.Target != 0 && (!bInRange || Mob.UnseenTicks > UnseenMemoryTicks))
+    if (bInRange) Mob.UnseenTicks = bSees ? 0 : Mob.UnseenTicks + 1;
+    // The spider: SpiderTargetGoal takes a target only in the dark; in the light it forgets one now and then.
+    const bool bSpider = Mob.Type == EFoundationMobType::Spider;
+    const bool bDark = !bSpider || Brightness < SpiderDarkBrightness;
+    const bool bForget = !bDark && Mob.Target != 0 && Mob.Random.RandHelper(SpiderForgetChance) == 0;
+    if (Mob.Target != 0 && (!bInRange || Mob.UnseenTicks > UnseenMemoryTicks || bForget))
     {
         Mob.Target = 0;
         Target = nullptr;
@@ -240,7 +250,7 @@ void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
         if (Mob.bMoving) MobStopMove(Mob);
     }
     // A new target: the nearest player in range that it sees.
-    if (!Target && Mob.Age % 2 == 0 && Mob.Random.RandHelper(TargetChance) == 0)
+    if (!Target && bDark && Mob.Age % 2 == 0 && Mob.Random.RandHelper(TargetChance) == 0)
     {
         double Best = MAX_dbl;
         for (const FFoundationMobPlayer& Player : Players)
@@ -263,18 +273,33 @@ void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
     // The melee goal: chase it (a fresh path when the delay ran out and it can see it), look at it, and hit it when
     // the swing is due and it is in reach and in sight.
     const FVector Goal = Target->FeetCm - OriginCm;
-    if (Mob.RepathTicks <= 0 && (bSees || !Mob.bMoving))
+    // SpiderAttackGoal follows a target it does not see.
+    if (Mob.RepathTicks <= 0 && (bSees || bSpider || !Mob.bMoving))
     {
         MobStartMove(Mob, Goal, 1, false, 0);
         // Farther targets wait longer (squared blocks).
         const double Distance = FVector::DistSquared(Target->FeetCm, Feet) / 1e4;
         Mob.RepathTicks = RepathMinTicks + Mob.Random.RandHelper(RepathRandomTicks) +
-            (Distance > 1024 ? 10 : Distance > 256 ? 5 : 0);
+            (Distance > 1024         ? 10
+                    : Distance > 256 ? 5
+                                     : 0);
     }
     else if (Mob.bMoving)
         Mob.TargetCm = Goal;
     Mob.LookTicks = FMath::Max(Mob.LookTicks, 1);
     Mob.LookAtCm = Target->EyeCm - OriginCm;
+    // LeapAtTargetGoal: on the ground, the target a few blocks away.
+    if (bSpider && Mob.bOnGround)
+    {
+        const double Distance = FVector::Dist(Target->FeetCm, Feet);
+        if (Distance >= LeapMinCm && Distance <= LeapMaxCm && Mob.Random.RandHelper(LeapChance) == 0)
+        {
+            const FVector2D Push = MobHorizontal(Target->FeetCm - Feet).GetSafeNormal() * LeapPushCm;
+            Mob.VelocityCm.X = Push.X + Mob.VelocityCm.X * LeapKeep;
+            Mob.VelocityCm.Y = Push.Y + Mob.VelocityCm.Y * LeapKeep;
+            Mob.VelocityCm.Z = LeapUpCm;
+        }
+    }
     Mob.AttackCooldown = FMath::Max(Mob.AttackCooldown - 1, 0);
     if (Mob.AttackCooldown <= 0 && bSees && IsInMeleeReach(Mob, OriginCm, *Target))
     {
@@ -286,7 +311,58 @@ void FoundationMobs::ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
 
 int32 FoundationMobs::GetCreatureCap(int32 EligibleColumns)
 {
-    return CreatureBaseCap * FMath::Max(0, EligibleColumns) / CapChunks;
+    return GetCategoryCap(EFoundationMobCategory::Creature, EligibleColumns);
+}
+
+EFoundationMobCategory FoundationMobs::GetCategory(EFoundationMobType Type)
+{
+    return IsMonster(Type) ? EFoundationMobCategory::Monster : EFoundationMobCategory::Creature;
+}
+
+int32 FoundationMobs::GetBaseCap(EFoundationMobCategory Category)
+{
+    return Category == EFoundationMobCategory::Monster ? MonsterBaseCap : CreatureBaseCap;
+}
+
+int32 FoundationMobs::GetCategoryCap(EFoundationMobCategory Category, int32 EligibleColumns)
+{
+    return GetBaseCap(Category) * FMath::Max(0, EligibleColumns) / CapChunks;
+}
+
+bool FoundationMobs::RollSkyLight(FRandomStream& Random, int32 SkyLight)
+{
+    return SkyLight <= Random.RandHelper(SkyLightRandom);
+}
+
+bool FoundationMobs::RollMonsterLight(FRandomStream& Random, int32 BlockLight, int32 Light)
+{
+    if (BlockLight > MonsterBlockLightLimit) return false;
+    return Light <= Random.RandRange(0, MonsterLightMax);
+}
+
+bool FoundationMobs::ShouldDespawn(FFoundationMob& Mob, double NearestCm)
+{
+    if (NearestCm > DespawnFarCm) return true;
+    if (NearestCm <= DespawnNearCm)
+    {
+        Mob.NoActionTicks = 0;
+        return false;
+    }
+    return Mob.NoActionTicks > DespawnIdleTicks && Mob.Random.RandHelper(DespawnChance) == 0;
+}
+
+bool FoundationMobs::CanClimb(EFoundationMobType Type)
+{
+    return Type == EFoundationMobType::Spider;
+}
+
+FVector2D FoundationMobs::GetSpiderLegSwing(int32 Pair, float Position, float Speed)
+{
+    static constexpr float Offsets[] = {0, UE_PI, UE_HALF_PI, UE_PI * 1.5f};
+    const float Offset = Offsets[FMath::Clamp(Pair, 0, 3)];
+    const float Yaw = -FMath::Cos(Position * LegPhase * 2 + Offset) * SpiderLegSwing * Speed;
+    const float Roll = FMath::Abs(FMath::Sin(Position * LegPhase + Offset) * SpiderLegSwing) * Speed;
+    return FVector2D(Yaw, Roll);
 }
 
 void FoundationMobs::OnHurt(FFoundationMob& Mob, const FVector& OriginCm, const FVector& AttackerWorldCm,
@@ -303,6 +379,7 @@ void FoundationMobs::OnHurt(FFoundationMob& Mob, const FVector& OriginCm, const 
     }
     Mob.bHurtByEntity = true;
     Mob.HurtFromCm = AttackerWorldCm - OriginCm;
+    Mob.NoActionTicks = 0;
     // [survival.r10.ai_defaults] HurtByTargetGoal: a monster turns on the player that hit it (ThinkHostile drops a
     // player it may not target). Alerting the others of its type waits.
     if (bByPlayer && IsMonster(Mob.Type) && Mob.Target != Player)
@@ -394,10 +471,9 @@ void FoundationMobs::Think(
         Mob.GrazeTicks = GrazeLengthTicks;
         MobStopMove(Mob);
     }
-    if (!Mob.bMoving && Mob.GrazeTicks == 0 && !Tempter && Mob.Target == 0 &&
-        Mob.Random.RandHelper(StrollChance) == 0)
-        MobStartMove(
-            Mob, MobRandomTarget(Mob, Mob.LocalCm, StrollRangeCells, StrollRangeUpCells), 1, false, StrollRangeUpCells);
+    if (!Mob.bMoving && Mob.GrazeTicks == 0 && !Tempter && Mob.Target == 0 && Mob.Random.RandHelper(StrollChance) == 0)
+        MobStartMove(Mob, MobRandomTarget(Mob, Mob.LocalCm, StrollRangeCells, StrollRangeUpCells), Kind.StrollSpeed,
+            false, StrollRangeUpCells);
     // Look-at-player (priority 6) runs beside the movement goals; a tempted mob looks at its player.
     const FVector Eye = Feet + FVector(0, 0, Kind.EyeCm);
     const FVector* Nearest = nullptr;
@@ -423,8 +499,8 @@ void FoundationMobs::Think(
     }
     // A monster with a target looks at it (ThinkHostile set the point).
     if (Mob.Target != 0)
-        if (const FFoundationMobPlayer* Target = Players.FindByPredicate(
-                [&Mob](const FFoundationMobPlayer& Player) { return Player.Id == Mob.Target; }))
+        if (const FFoundationMobPlayer* Target =
+                Players.FindByPredicate([&Mob](const FFoundationMobPlayer& Player) { return Player.Id == Mob.Target; }))
         {
             Mob.LookTicks = FMath::Max(Mob.LookTicks, 1);
             Mob.LookAtCm = Target->EyeCm - OriginCm;
@@ -500,7 +576,7 @@ FVector2D FoundationMobs::Steer(FFoundationMob& Mob, const FVector& OriginCm, bo
     const float Heading = FMath::RadiansToDegrees(FMath::Atan2(ToTarget.Y, ToTarget.X));
     Mob.Yaw = FMath::UnwindDegrees(MobTurnToward(Mob.Yaw, Heading, BodyTurnDegrees));
     // Blocked on the ground past the step-up: jump.
-    bOutJump = Mob.bOnGround && Mob.bHorizontalCollision;
+    bOutJump = Mob.bOnGround && Mob.bHorizontalCollision && !CanClimb(Mob.Type);
     return ToTarget / Distance;
 }
 
@@ -512,6 +588,9 @@ void FoundationMobs::Move(
     FVector& Velocity = Mob.VelocityCm;
     // [survival.r10.idle_and_sun] a chicken in the air falls slowly: its downward speed x0.6 before the move.
     if (Mob.Type == EFoundationMobType::Chicken && !bWasGrounded && Velocity.Z < 0) Velocity.Z *= ChickenFallFactor;
+    // A climber against a wall (since the last step) falls slowly (Codex 02 C, provisional).
+    const bool bClimbing = CanClimb(Mob.Type) && Mob.bHorizontalCollision;
+    if (bClimbing) Velocity.Z = FMath::Max(Velocity.Z, -ClimbFallCm);
     const double Drive = GetKind(Mob.Type).Speed * Mob.SpeedModifier;
     const FVector2D Push = InputCm * (bWasGrounded ? Drive * Drive * WalkAccelCm : AirAccelCm);
     Velocity.X += Push.X;
@@ -543,6 +622,8 @@ void FoundationMobs::Move(
     if (Moved.Y != Velocity.Y && !bStepped) Velocity.Y = 0;
     if (Moved.Z != Velocity.Z && !bStepped) Velocity.Z = 0;
     if (bStepped) Velocity.Z = 0;
+    // Still pressed against the wall it was climbing, it goes up.
+    if (bClimbing && Mob.bHorizontalCollision) Velocity.Z = ClimbUpCm;
     // The ground's retention follows where the step began (the scout's kb_probe: 0.546 for the step the hit landed on
     // the ground, then 0.91 in the air).
     const double Retention = bWasGrounded ? GroundRetention : AirRetention;

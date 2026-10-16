@@ -289,6 +289,10 @@ public:
     // event's attenuation, logged like the block sounds. DA_Sounds loads on the first call. Silent for an unknown event
     // or with foundation.Sound.Events 0.
     void PlayEvent(FName Event, const FVector& Location, float Volume = 1, float Pitch = 1);
+    // A player footstep at FeetCm (step 13a2, FoundationFootsteps): the step event of the block stepped on at its sound
+    // type's volume x 0.15 and pitch, a carpet's or snow layer's with the block below it quieter; drawn from its own
+    // stream, so footsteps never shift the other events' draws. False when nothing plays.
+    bool PlayFootstep(const FFoundationAuthority& Authority, const FVector& FeetCm);
     // Eating crumbs (FoundationBreak::SpawnCrumb): Count particles of Item's sprite (T_ItemTextures) from the eye,
     // turned with View. False when they cannot draw (no M_BreakParticle, item sprites or 16 x 16 sprite for Item).
     bool SpawnCrumbs(FName Item, const FVector& EyeCm, const FRotator& View, int32 Count);
@@ -368,6 +372,9 @@ private:
     void UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime);
     void UpdateFurnaceParticles(double DeltaTime);
     void UpdatePops(double DeltaTime);
+    // DA_Sounds on the first sound event, then PlayEvent's body with the caller's stream.
+    void LoadSoundAssets();
+    void PlayEventFrom(FName EventName, const FVector& Location, float Volume, float Pitch, FRandomStream& Stream);
 
     UFoundationInteractionView& View;
     FoundationBreak::FSwitches Switches;
@@ -453,6 +460,7 @@ private:
     bool bTriedSoundAssets = false;
     TMap<FName, int32> SoundEventIndex;
     FRandomStream EventRandom;
+    FRandomStream FootstepRandom;
     TArray<FoundationBreak::FSoundLogEntry> SoundLog;
     static constexpr int32 MaxSoundLog = 4096;
 };

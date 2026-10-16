@@ -64,6 +64,15 @@ struct FFoundationItemModelCaseAsset
     // A using_item condition's case (the shield, step 19b): 1 while the item is in use, 0 when not; -1 for any.
     UPROPERTY(EditAnywhere, Category = "Item")
     int32 UsingItem = -1;
+
+    // A use_duration range_dispatch's case (the bow's pulling models, step 19c): the property's scale (0 for any other
+    // case) and the entry's threshold, -1 for the fallback. The case with the highest threshold at most use ticks x
+    // scale is chosen.
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float RangeScale = 0;
+
+    UPROPERTY(EditAnywhere, Category = "Item")
+    float RangeThreshold = 0;
 };
 
 // One attribute modifier, verbatim from the item's attribute_modifiers ("attack_damage", "base_attack_damage",
@@ -620,8 +629,10 @@ public:
     const FFoundationItemAsset* FindItem(FName Id) const;
     // The item's model in a display context ("firstperson_righthand"): a select's case that lists the context, else
     // its fallback (the case with no contexts). False when the item, its model or the model's first layer is missing.
-    // bUsingItem picks a using_item condition's case (the shield's raised model).
-    bool FindModelView(FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem = false) const;
+    // bUsingItem picks a using_item condition's case (the shield's raised model); UseTicks a use_duration range case
+    // (the bow's pulling models).
+    bool FindModelView(
+        FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem = false, int32 UseTicks = 0) const;
     // A special model's view (the shield, step 19b): the case's base model (its display transforms), the special type,
     // its entity texture and scale. False for every other item (FindModelView draws those).
     bool FindSpecialView(FName Id, FName Context, FFoundationItemModelView& View, bool bUsingItem = false) const;

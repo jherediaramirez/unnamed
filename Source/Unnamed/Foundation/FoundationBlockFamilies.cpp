@@ -26,6 +26,7 @@ namespace
         FGameplayTag Trapdoors = FGameplayTag::RequestGameplayTag(TEXT("Block.Trapdoors"), false);
         FGameplayTag Buttons = FGameplayTag::RequestGameplayTag(TEXT("Block.Buttons"), false);
         FGameplayTag WoodenButtons = FGameplayTag::RequestGameplayTag(TEXT("Block.WoodenButtons"), false);
+        FGameplayTag Climbable = FGameplayTag::RequestGameplayTag(TEXT("Block.Climbable"), false);
     };
 
     const FFamilyTags& GetTags()
@@ -269,6 +270,28 @@ namespace
              "needs "
              "a sturdy block below. 0: no hand use, and doors and trapdoors place as before B3a."));
 
+    TAutoConsoleVariable<int32> CVarBlocksClimb(TEXT("foundation.Blocks.Climb"), 1,
+        TEXT("1: the player climbs ladders, vines and the other #minecraft:climbable blocks (survival B4b). 0: no "
+             "climbing; movement as before B4b."));
+
+    // B4b's growing vines: the vine's head id and the side its support is on.
+    bool GetVineSupport(FName Id, FName& OutHead, EFoundationFace& OutToward)
+    {
+        if (Id == TEXT("twisting_vines") || Id == TEXT("twisting_vines_plant"))
+        {
+            OutHead = TEXT("twisting_vines");
+            OutToward = EFoundationFace::Down;
+            return true;
+        }
+        if (Id == TEXT("weeping_vines") || Id == TEXT("weeping_vines_plant"))
+        {
+            OutHead = TEXT("weeping_vines");
+            OutToward = EFoundationFace::Up;
+            return true;
+        }
+        return false;
+    }
+
     const TCHAR* OpenValueName(bool bValue)
     {
         return bValue ? TEXT("true") : TEXT("false");
@@ -334,6 +357,7 @@ EFoundationBlockFamily FoundationBlockFamilies::GetFamily(const FFoundationBlock
     if (HasTag(Block, Tags.Trapdoors)) return EFoundationBlockFamily::Trapdoor;
     if (HasTag(Block, Tags.Buttons)) return EFoundationBlockFamily::Button;
     if (Block.Id == TEXT("lever")) return EFoundationBlockFamily::Lever;
+    if (Block.Id == TEXT("ladder")) return EFoundationBlockFamily::Ladder;
     // Panes and bars: exactly north, east, south, west and waterlogged, as a fence without the tag.
     if (Block.Properties.Num() == 5)
     {
@@ -476,6 +500,30 @@ FFoundationBlockState FoundationBlockFamilies::GetStateForPlacement(const FFound
         State = Registry.WithValue(
             State, TEXT("waterlogged"), Fluid.bWater && Fluid.bSource ? TEXT("true") : TEXT("false"));
     }
+    // A ladder on the first side look where it survives, facing away from that wall; on a ladder's own front face, a
+    // state that cannot survive (it hangs on the clicked ladder), which the authority refuses. The probe's parts A, B
+    // and D.
+    if (Family == EFoundationBlockFamily::Ladder)
+    {
+        const FFoundationBlockState Clicked =
+            World.IsKnown(Context.ClickedCell) ? World.Get(Context.ClickedCell).State : FFoundationBlockState();
+        if (!Context.bReplaceClicked && Registry.GetBlock(Clicked).Id == Block.Id &&
+            GetFacing(Registry, Clicked) == Context.ClickedFace)
+            return Registry.WithValue(State, TEXT("facing"), SideName(Context.ClickedFace));
+        FFoundationBlockState First = State;
+        bool bFirst = true;
+        for (const EFoundationFace Toward : FoundationBlockPlacement::GetClickLooks(Context))
+        {
+            if (!IsSide(Toward)) continue;
+            const FFoundationBlockState Attached =
+                Registry.WithValue(State, TEXT("facing"), SideName(FoundationBlockPlacement::GetOpposite(Toward)));
+            if (GetSurvival(World, Context.Destination, Attached) == EFoundationFamilySurvival::Survives)
+                return Attached;
+            if (bFirst) First = Attached;
+            bFirst = false;
+        }
+        return First;
+    }
     return SettleShape(Registry, State, Context.Destination, [&World](const FIntVector& Cell)
         { return World.IsKnown(Cell) ? World.Get(Cell).State : FFoundationBlockState(); });
 }
@@ -515,7 +563,8 @@ bool FoundationBlockFamilies::UsesFamilyPlacement(const FFoundationBlockType& Bl
     if (FoundationChests::IsChest(Block.Id)) return FoundationChests::IsOn();
     const EFoundationBlockFamily Family = GetFamily(Block);
     if (Family == EFoundationBlockFamily::Door || Family == EFoundationBlockFamily::Trapdoor ||
-        Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+        Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever ||
+        Family == EFoundationBlockFamily::Ladder)
         return IsInteractOn();
     return Family != EFoundationBlockFamily::None;
 }
@@ -656,11 +705,28 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
-    if (!IsInteractOn()) return EFoundationFamilySurvival::NoRule;
-    // A button or lever: the face of the block it hangs on, sturdy (family_survival.json).
-    if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever)
+    // Twisting and weeping vines (B4b): their own vine or a sturdy face on the side they grow from.
+    FName VineHead;
+    EFoundationFace VineToward = EFoundationFace::None;
+    if (GetVineSupport(Registry.GetBlock(State).Id, VineHead, VineToward))
     {
-        const FName Face = Registry.GetValue(State, TEXT("face"));
+        const FIntVector At = Cell + FoundationGrid::FaceOffset(VineToward);
+        if (!World.IsKnown(At)) return EFoundationFamilySurvival::Unknown;
+        const FFoundationBlockState Support = World.Get(At).State;
+        FName SupportHead;
+        EFoundationFace SupportToward = EFoundationFace::None;
+        const bool bSurvives =
+            (GetVineSupport(Registry.GetBlock(Support).Id, SupportHead, SupportToward) && SupportHead == VineHead) ||
+            IsFaceSturdy(Registry, Support, FoundationBlockPlacement::GetOpposite(VineToward));
+        return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
+    }
+    if (!IsInteractOn()) return EFoundationFamilySurvival::NoRule;
+    // A button, lever or ladder: the face of the block it hangs on, sturdy (family_survival.json).
+    if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever ||
+        Family == EFoundationBlockFamily::Ladder)
+    {
+        const FName Face =
+            Family == EFoundationBlockFamily::Ladder ? FName(TEXT("wall")) : Registry.GetValue(State, TEXT("face"));
         const EFoundationFace Toward = Face == TEXT("floor") ? EFoundationFace::Down
             : Face == TEXT("ceiling")                        ? EFoundationFace::Up
                                       : FoundationBlockPlacement::GetOpposite(GetFacing(Registry, State));
@@ -678,4 +744,26 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
         ? Registry.GetBlock(State).Contains(Support)
         : IsFaceSturdy(Registry, Support, EFoundationFace::Up);
     return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
+}
+
+bool FoundationBlockFamilies::IsClimbOn()
+{
+    return CVarBlocksClimb.GetValueOnAnyThread() != 0;
+}
+
+bool FoundationBlockFamilies::IsClimbable(const FFoundationBlockWorld& World, const FIntVector& Cell)
+{
+    if (!World.IsKnown(Cell)) return false;
+    const FFoundationBlockRegistry& Registry = World.GetRegistry();
+    const FFoundationBlockState State = World.Get(Cell).State;
+    if (HasTag(Registry.GetBlock(State), GetTags().Climbable)) return true;
+    // An open trapdoor over a ladder facing the same way (minecraft.wiki "Trapdoor"; provisional).
+    if (GetStateFamily(Registry, State) != EFoundationBlockFamily::Trapdoor ||
+        Registry.GetValue(State, TEXT("open")) != TEXT("true"))
+        return false;
+    const FIntVector Below = Cell - FIntVector(0, 0, 1);
+    if (!World.IsKnown(Below)) return false;
+    const FFoundationBlockState Ladder = World.Get(Below).State;
+    return GetStateFamily(Registry, Ladder) == EFoundationBlockFamily::Ladder &&
+        GetFacing(Registry, Ladder) == GetFacing(Registry, State);
 }

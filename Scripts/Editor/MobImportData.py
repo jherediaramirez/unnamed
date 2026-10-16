@@ -57,7 +57,7 @@ def verify_hashes():
 
 
 def biome_spawns():
-    """Each biome's creature spawn entries and chunk-generation chance, every entity kept (the game skips the mobs it
+    """Each biome's creature and monster spawn entries and chunk-generation chance, every entity kept (the game skips the mobs it
     has not built), after checking the biome files against the worldgen reference's SHA256SUMS.txt. Returns
     (biomes, digest of the worldgen SHA256SUMS.txt)."""
     sums = (WORLDGEN / "SHA256SUMS.txt").read_bytes()
@@ -72,19 +72,22 @@ def biome_spawns():
             raise SystemExit(f"MOB_IMPORT FAIL: {name} differs from the worldgen reference's SHA256SUMS.txt")
         attributes = json.loads(path.read_text(encoding="utf-8")).get("attributes", {})
         spawns = attributes.get("minecraft:gameplay/natural_mob_spawns", {}).get("argument", {})
-        creatures = []
-        for entry in spawns.get("spawns_by_category", {}).get("creature", []):
-            count = entry["count"]
-            if isinstance(count, int):
-                low = high = count
-            elif count.get("type") == "minecraft:uniform":
-                low, high = count["min_inclusive"], count["max_inclusive"]
-            else:
-                raise SystemExit(f"MOB_IMPORT FAIL: {name}: count {count}")
-            creatures.append({"mob": bare(entry["type"]), "weight": entry["weight"], "min_count": low,
-                              "max_count": high})
+        by_category = {}
+        for category in ("creature", "monster"):
+            entries = by_category[category] = []
+            for entry in spawns.get("spawns_by_category", {}).get(category, []):
+                count = entry["count"]
+                if isinstance(count, int):
+                    low = high = count
+                elif count.get("type") == "minecraft:uniform":
+                    low, high = count["min_inclusive"], count["max_inclusive"]
+                else:
+                    raise SystemExit(f"MOB_IMPORT FAIL: {name}: count {count}")
+                entries.append({"mob": bare(entry["type"]), "weight": entry["weight"], "min_count": low,
+                                "max_count": high})
         chance = attributes.get("minecraft:gameplay/creature_world_gen_spawn_probability", DEFAULT_GEN_CHANCE)
-        biomes.append({"biome": "minecraft:" + path.stem, "chance": float(chance), "creatures": creatures})
+        biomes.append({"biome": "minecraft:" + path.stem, "chance": float(chance),
+                       "creatures": by_category["creature"], "monsters": by_category["monster"]})
     return biomes, hashlib.sha256(sums).hexdigest()
 
 

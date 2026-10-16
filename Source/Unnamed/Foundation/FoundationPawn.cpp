@@ -1,4 +1,5 @@
 #include "Foundation/FoundationPawn.h"
+#include "Foundation/FoundationBlockFamilies.h"
 #include "Foundation/FoundationBodyAnimInstance.h"
 #include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationController.h"
@@ -325,8 +326,10 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bBodyInWater = bBodyInWater;
     Facts.bEyesInWater = bEyesInWater;
+    Facts.bClimbing = Simulation.bClimbing;
     Facts.bAlive = !Vitals.IsDead();
     Facts.Mode = Vitals.Mode;
+    Facts.Difficulty = Vitals.Difficulty;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;
@@ -415,6 +418,7 @@ void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
     Facts.bSprinting = Simulation.bSprinting;
     Facts.bJumped = Simulation.bJumped;
     Facts.bSprintJumped = Simulation.bSprintJumped;
+    Facts.bClimbing = Simulation.bClimbing;
     const FBox Body = FFoundationSimulation::Bounds(Simulation.Feet, Simulation.HeightCm, Profile.WidthCm);
     // Swimming tells lava from water; without it lava counts as water, as before.
     const bool bSwim = CVarSwim.GetValueOnGameThread() != 0;
@@ -494,6 +498,17 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         const bool bFresh = !Vitals.IsInHurtWindow();
         if (!Vitals.Hurt(EFoundationDamage::MobAttack, Hit.Damage, Hit.Attacker) || !bFresh) continue;
         FVector2D Away(Simulation.Feet - Hit.FromCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
+    }
+    // Survival step 19c: arrow hits through HurtPlayer (a raised shield facing the arrow blocks it); a fresh hit knocks
+    // the player back from where the arrow struck, as a mob's melee (provisional).
+    for (const FFoundationAttack& Hit : Authority.TakeArrowHits(Interaction.PlayerId))
+    {
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Authority.HurtPlayer(Interaction.PlayerId, Vitals, Hit) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.SourceCm);
         if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
         FoundationMobs::ApplyKnockback(
             Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
@@ -623,6 +638,12 @@ void AFoundationPawn::Tick(float DeltaSeconds)
         PlayerController->SetControlRotation(View);
         LastIntent = MakeSimulationIntent(Request, ReadBool(TEXT("autoJump"), false),
             FMath::Clamp(int32(ReadNumber(TEXT("sprintWindow"), Profile.SprintWindowTicks)), 0, 10));
+        // A drawn bow zooms (step 19c; survival2.r18.fov_rule): its target multiplies the movement FOV's, smoothed
+        // with it, and the FOV-effects setting scales the result as before.
+        if (const FFoundationAuthority* BowAuthority = GetAuthority(); BowAuthority && Interaction.bUsingItem)
+            if (const FFoundationPlayer* Player = BowAuthority->FindPlayer(Interaction.PlayerId);
+                Player && Player->Use.bActive && Player->Use.bDraws)
+                LastIntent.ItemFovMultiplier = FoundationBow::GetFovTarget(Player->Use.Ticks);
         // Per reference step: movement against already committed collision, vitals (each step's eligibility
         // and death come from the state the previous step left), then interaction against the resulting
         // pose. Its commits reach the collision provider before the next movement step.
@@ -648,6 +669,10 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             Lab->GatherCollision(GetStepRegion(Simulation, Profile), StepCollision);
             Lab->GetFluidFacts(CVarSwim.GetValueOnGameThread() != 0, Simulation, Profile, Eligibility);
             Eligibility.bSwimPose = CVarSwimPose.GetValueOnGameThread() != 0;
+            // Climbing (survival B4b): the block holding the feet, through the authority's world.
+            Eligibility.bOnClimbable = Authority && FoundationBlockFamilies::IsClimbOn() &&
+                FoundationBlockFamilies::IsClimbable(
+                    Authority->World, FoundationGrid::CellAt(Simulation.Feet, Authority->World.OriginCm));
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
             Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;
@@ -657,6 +682,21 @@ void AFoundationPawn::Tick(float DeltaSeconds)
             if (Simulation.bJumped) ++BodyJumps;
             StepVitals(Profile);
             if (Simulation.bFlying) Vitals.ResetFall(); // No fall distance builds while flying.
+            // Footsteps (step 13a2): the interaction view plays each one counted here.
+            if (FoundationFootsteps::IsOn() && !Vitals.IsDead() && Vitals.Mode != EFoundationPlayerMode::Spectator)
+            {
+                FoundationFootsteps::FFacts Step;
+                Step.HorizontalCm = Simulation.LastDisplacement.Size2D();
+                Step.bGrounded = Simulation.bGrounded;
+                Step.bSneaking = Simulation.bCrouched;
+                Step.bFlying = Simulation.bFlying;
+                Step.bInWater = bBodyInWater;
+                if (FoundationFootsteps::Advance(Footsteps, Step) == FoundationFootsteps::EStep::Play)
+                {
+                    ++FootstepCount;
+                    LastFootstepFeet = Simulation.Feet;
+                }
+            }
             if (Authority)
             {
                 const double InteractionStart = FPlatformTime::Seconds();

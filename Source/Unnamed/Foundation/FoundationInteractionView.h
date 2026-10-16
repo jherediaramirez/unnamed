@@ -9,6 +9,7 @@ class AFoundationLab;
 class AFoundationPawn;
 struct FFoundationPreview;
 class FFoundationBreakEffects;
+class FFoundationArrowView;
 class FFoundationExperienceOrbView;
 class FFoundationMobView;
 class FFoundationItemEntityView;
@@ -147,11 +148,13 @@ public:
     FFoundationItemEntityView* GetItemEntityView() const { return ItemEntityView.Get(); }
     // The experience orbs' look (survival step 12; null before BeginPlay).
     FFoundationExperienceOrbView* GetExperienceOrbView() const { return ExperienceOrbView.Get(); }
+    FFoundationArrowView* GetArrowView() const { return ArrowView.Get(); }
     FFoundationMobView* GetMobView() const { return MobView.Get(); }
 
 private:
     friend class FFoundationBreakEffects;
     friend class FFoundationExperienceOrbView;
+    friend class FFoundationArrowView;
     friend class FFoundationMobView;
     friend class FFoundationItemEntityView;
     struct FSectionKey
@@ -224,6 +227,8 @@ private:
     void HandleEvents(const FFoundationAuthority& Authority);
     // Lava and burning sounds (step 16) from the local pawn's fire counters.
     void PlayFireSounds(const AFoundationPawn* Pawn);
+    // The local player's footsteps (step 13a2): one PlayFootstep for each step the pawn counted since the last frame.
+    void PlayFootsteps(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn);
     // A lit furnace's, smoker's or blast furnace's sound, smoke and flame near the local pawn (T1 steps 8b and 8b2b,
     // foundation.Furnace.Ambience): one display callback drives both.
     void PlayFurnaceAmbience(const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime);
@@ -240,7 +245,8 @@ private:
     // Shows an item's first-person model on the held item component (nothing for None or an item without one).
     // bUsing: that hand is in use (the shield's raised pose). Hand picks the display context (FoundationHeldPose) and
     // the component: the main-hand item or the mirrored offhand item.
-    void SetHeldItem(FName Id, bool bUsing = false, EFoundationHand Hand = EFoundationHand::Main);
+    // UseTicks picks a use_duration case (the drawn bow's pulling models, step 19c).
+    void SetHeldItem(FName Id, bool bUsing = false, EFoundationHand Hand = EFoundationHand::Main, int32 UseTicks = 0);
     // The meshes that draw a block state (its mesh kind, or one per part of its model, each part's first alternative)
     // and the box they draw in mesh space: the held block and item entities.
     void GetStateMeshes(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
@@ -312,6 +318,8 @@ private:
     FName OffItemId;
     bool bOffSpecial = false;
     bool bOffUsing = false;
+    // Each hand's drawn model (a layered one): a drawn bow redraws when its pulling model changes (step 19c).
+    FName HeldModel, OffModel;
     // foundation.Hand.Fit as last applied to the pivot and the held blocks (-1: not yet).
     int32 AppliedHandFit = -1;
     // foundation.Held.Glow as last set on ItemMaterials.
@@ -357,10 +365,14 @@ private:
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
     int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
+    TWeakObjectPtr<const AFoundationPawn> FootstepOwner;
+    int32 HeardFootsteps = 0;
     // Seconds not yet spent on the furnaces' 20 Hz display ticks.
     float FurnaceSoundClock = 0;
     TSharedPtr<FFoundationBreakEffects> BreakEffects;
     TSharedPtr<FFoundationItemEntityView> ItemEntityView;
     TSharedPtr<FFoundationExperienceOrbView> ExperienceOrbView;
+    // The arrows (step 19c).
+    TSharedPtr<FFoundationArrowView> ArrowView;
     TSharedPtr<FFoundationMobView> MobView;
 };

@@ -33,6 +33,8 @@ enum class EFoundationBlockFamily : uint8
     Button,
     // The lever (B3b): face, facing, powered.
     Lever,
+    // The ladder (B4b): facing, waterlogged.
+    Ladder,
 };
 
 // A family block's survival where it stands (FoundationBlockFamilies::GetSurvival).
@@ -80,6 +82,8 @@ namespace FoundationBlockFamilies
     // survives (GetSurvival): up hangs it from the ceiling, down stands it on the floor, both facing the horizontal
     // look; a side puts it on that wall, facing away from it (Tests/Probes/switch-placement-26.3.json). None survives:
     // the floor state, which the authority's survival check refuses.
+    // B4b: a ladder takes the first side look where it survives, facing away from that wall, waterlogged in a water
+    // source; a ladder clicked on its own front face places nothing (Tests/Probes/ladder-placement-26.3.json).
     UNNAMED_API FFoundationBlockState GetStateForPlacement(const FFoundationBlockWorld& World,
         const FFoundationBlockType& Block, const FFoundationPlacementContext& Context, bool bTopHalf);
     // After Cell changed: each family block among its 4 horizontal neighbours, and a wall below it, takes one
@@ -112,8 +116,16 @@ namespace FoundationBlockFamilies
     // click_off. The authority only calls it while the cell still holds the pressed state it scheduled.
     UNNAMED_API void ReleaseButton(FFoundationAuthority& Authority, const FIntVector& Cell);
     // A door half's survival at Cell (family_survival.json): the lower half needs a sturdy top below it, the upper half
-    // the same door below; a button or lever the sturdy face of the block it hangs on. Other blocks: NoRule. Nothing
-    // while IsInteractOn is off.
+    // the same door below; a button, lever or ladder the sturdy face of the block it hangs on. Other blocks: NoRule.
+    // Nothing while IsInteractOn is off, apart from the B4b vines: twisting vines need below them, weeping vines above
+    // them, the same vine (head or body) or a sturdy face toward them (family_survival.json signatures 88 and 89).
     UNNAMED_API EFoundationFamilySurvival GetSurvival(
         const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State);
+
+    // Survival B4b, behind foundation.Blocks.Climb (default 1): the player climbs in a climbable block.
+    UNNAMED_API bool IsClimbOn();
+    // Whether the block at Cell is climbed (minecraft.wiki "Ladder", "Trapdoor"): #minecraft:climbable
+    // (Block.Climbable), or an open trapdoor over a ladder facing the same way. Unknown cells are not. The cell is the
+    // one holding the player's feet (provisional, provisional-values.md).
+    UNNAMED_API bool IsClimbable(const FFoundationBlockWorld& World, const FIntVector& Cell);
 }

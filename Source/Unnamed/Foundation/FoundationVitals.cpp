@@ -26,6 +26,7 @@ namespace
             {TEXT("player"), false, false, false, .1f, {TEXT("death.attack.player"), TEXT("%1$s was slain by %2$s")}},
             {TEXT("lava"), false, false, false, .1f, {TEXT("death.attack.lava"), TEXT("%1$s tried to swim in lava")}},
             {TEXT("onFire"), true, false, false, 0.f, {TEXT("death.attack.onFire"), TEXT("%1$s burned to death")}},
+            {TEXT("arrow"), false, false, false, .1f, {TEXT("death.attack.arrow"), TEXT("%1$s was shot by %2$s")}},
         };
         return Rules[int32(Type)];
     }
@@ -45,9 +46,9 @@ namespace
 
 void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFallImmune)
 {
-    // Falls accumulate only downward movement outside water and land once.
+    // Falls accumulate only downward movement outside water and climbing, and land once.
     const FVector& Moved = Facts.DisplacementCm;
-    if (Facts.bBodyInWater)
+    if (Facts.bBodyInWater || Facts.bClimbing)
         FallDistanceCm = 0;
     else if (Moved.Z < 0)
         FallDistanceCm -= Moved.Z;
@@ -244,7 +245,9 @@ FFoundationVitals::FDeathText FFoundationVitals::GetDeathText(
     EFoundationDamage Type, double FallDistanceCm, const FString& Attacker)
 {
     if (Type == EFoundationDamage::Fall && FallDistanceCm > HighFallCm) return FellText;
-    if ((Type == EFoundationDamage::MobAttack || Type == EFoundationDamage::PlayerAttack) && Attacker.IsEmpty())
+    if ((Type == EFoundationDamage::MobAttack || Type == EFoundationDamage::PlayerAttack ||
+            Type == EFoundationDamage::Arrow) &&
+        Attacker.IsEmpty())
         return GetRule(EFoundationDamage::Generic).Death;
     return GetRule(Type).Death;
 }

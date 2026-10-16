@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Foundation/FoundationArrows.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationContainer.h"
@@ -196,11 +197,13 @@ struct FFoundationPlayerFacts
     // Horizontal distance moved over the last reference step (the sweep's movement rule).
     double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
-    // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
+    // Climbing since B4b; no mounts or effects yet, kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
+    // The world's difficulty (survival T6 20c2: Peaceful removes monsters and spawns none).
+    EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -392,7 +395,10 @@ enum class EFoundationEventKind : uint8
     Blocked,
     // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
     // sound, Amount the cooldown in ticks.
-    BlockingDisabled
+    BlockingDisabled,
+    // An arrow's sound (step 19c): Interaction entity.arrow.shoot, .hit or .hit_player, LocationCm where (world cm),
+    // Amount the volume, Pitch the pitch, EntityId the arrow.
+    ArrowSound
 };
 
 // What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
@@ -438,6 +444,8 @@ struct FFoundationItemUse
     int64 LastStep = -1;
     // A blocks_attacks use (the shield, step 19b): raised, not eaten; no effects and no finish.
     bool bBlocks = false;
+    // A bow's draw (step 19c): no effects and no finish; the release shoots (ReleaseBow).
+    bool bDraws = false;
 };
 
 // A hit with a source on a player (survival step 19b): where it came from (world cm, the block world's frame) and the
@@ -448,6 +456,8 @@ struct FFoundationAttack
     float Amount = 0;
     FVector SourceCm = FVector::ZeroVector;
     float DisableBlockingSeconds = 0;
+    // The attacker's name in the death message (an arrow's shooter, step 19c); empty for none.
+    FString Attacker;
 };
 
 namespace FoundationBucket
@@ -524,6 +534,8 @@ struct FFoundationPlayer
     int32 ExperienceDelay = 0, PendingExperience = 0;
     // Mob hits since its owner last took them (TakeMobHits).
     TArray<FFoundationMobHit> MobHits;
+    // Arrow hits since its owner last took them (TakeArrowHits; step 19c): each goes through HurtPlayer.
+    TArray<FFoundationAttack> ArrowHits;
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
@@ -676,6 +688,13 @@ public:
     int32 TakeExperience(int32 Player);
     // The mob hits on a player since the last call (survival T6 20c; its owner hurts its vitals with each).
     TArray<FFoundationMobHit> TakeMobHits(int32 Player);
+    // Arrows (survival step 19c), oldest first; Reset clears them. ShootArrow launches one (the bow's release; T6 20d's
+    // skeleton): its id, with an entity.arrow.shoot ArrowSound only from a player; 0 with foundation.Items.Bow 0.
+    const TArray<FFoundationArrow>& GetArrows() const { return Arrows; }
+    int32 ShootArrow(const FFoundationArrowShot& Shot);
+    // The arrow hits on a player since the last call: its owner applies each through HurtPlayer.
+    TArray<FFoundationAttack> TakeArrowHits(int32 Player);
+    int32 RemoveArrows();
     // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
     // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
     void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
@@ -698,7 +717,18 @@ public:
     // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
     // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
     void RunCreatureCycle();
-    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle,
+        EFoundationMobCategory Category = EFoundationMobCategory::Creature);
+    // Survival T6 20c2: a category's cycle (the monsters' runs every MonsterCycleTicks steps).
+    void RunSpawnCycle(EFoundationMobCategory Category);
+    // The settled light proxy at a cell (provisional-values.md, T6 20c2): block light, the max over emitters within
+    // 15 of their emission minus the Manhattan distance (no occlusion); the light, the open-sky light of the day where
+    // the sky is visible (above the column's top motion-blocking block) or the block light if higher; OutSky: the
+    // raw sky light (15 or 0).
+    // bBudgeted (the spawn cycle): -1 when a stale section's list waits for a later step's rebuild budget.
+    int32 GetBlockLightProxy(const FIntVector& Cell, bool bBudgeted = false);
+    int32 GetLightProxy(
+        const FIntVector& Cell, int32* OutSky = nullptr, int32* OutBlock = nullptr, bool bBudgeted = false);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
@@ -732,8 +762,14 @@ public:
     int32 MobCycles = 0, MobsCycleSpawned = 0;
     // Survival T6 20c: melee hits monsters landed on players; sun ignitions.
     int32 MobMeleeHits = 0, MobSunBurns = 0;
+    // Survival step 19c: arrows shot, arrows that hit an entity, arrows picked up.
+    int32 ArrowsShot = 0, ArrowHits = 0, ArrowsPickedUp = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    // Survival T6 20c2: the monster cycle's runs (under the cap) and spawns, its last census and cap; monsters
+    // despawned (distance, idle roll or Peaceful); the monster cycle's wall time, total and worst (ms).
+    int32 MonsterCycles = 0, MonstersCycleSpawned = 0, MonsterCycleCount = 0, MonsterCycleCap = 0, MobsDespawned = 0;
+    double MonsterCycleMsTotal = 0, MonsterCycleMsMax = 0;
     int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
@@ -892,7 +928,40 @@ private:
     // A cell a passive mob of Type may stand in at the top of its column (X, Y): the feet cell above the top
     // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
     bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
+    // Survival T6 20c2: a monster's feet at Feet: a full block top below (not leaves), room for the box, no fluid,
+    // and the light rule (RollMonsterLight's draws from Random).
+    bool FindMonsterCell(EFoundationMobType Type, const FIntVector& Feet, FRandomStream& Random);
+    // No collision box and no fluid in the box of a mob of Type standing at Feet (shrunk a hair off the floor).
+    bool HasMobRoom(EFoundationMobType Type, const FIntVector& Feet);
+    // Any player reports Peaceful.
+    bool IsPeaceful() const;
+    // A cell column's top non-air and top motion-blocking heights (below BoundsMin.Z: none, or not loaded), reused for
+    // LightCacheTicks steps.
+    struct FMobColumnTops
+    {
+        int32 NonAir = 0, Blocking = 0;
+        int64 Step = -1;
+    };
+    FMobColumnTops GetColumnTops(int32 X, int32 Y);
+    // A 16-cube section's light emitters (cell, emission), reused for LightCacheTicks steps.
+    struct FMobEmitters
+    {
+        TArray<TPair<FIntVector, int32>> Emitters;
+        int64 Step = -1;
+    };
+    // Null when bBudgeted and the list is stale with this step's rebuilds spent.
+    const FMobEmitters* GetSectionEmitters(const FIntVector& Section, bool bBudgeted);
+    int32 EmitterRebuilds = 0;
+    TMap<FIntPoint, FMobColumnTops> MobColumnTops;
+    TMap<FIntVector, FMobEmitters> MobEmitters;
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
+    // Survival step 19c: the bow's release (power from the draw; an arrow, a durability, the shoot sound), the
+    // inventory slot an arrow is taken from (vanilla's order: the offhand, the main hand, then slots 0-35; INDEX_NONE
+    // for none), the arrows' flight, hits, sticking, pickup and despawn, and their sounds.
+    void ReleaseBow(FFoundationPlayer& Player, int32 UseTicks, const FFoundationVitals& Vitals);
+    int32 FindArrowSlot(const FFoundationPlayer& Player) const;
+    void StepArrows();
+    void AddArrowSound(const FFoundationArrow& Arrow, const TCHAR* Sound, float Volume, float Pitch);
     // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
     // goes, or the block turns to dirt).
     bool CanGraze(const FFoundationMob& Mob) const;
@@ -912,7 +981,10 @@ private:
     TArray<FFoundationItemEntity> ItemEntities;
     TArray<FFoundationExperienceOrb> ExperienceOrbs;
     TArray<FFoundationMob> Mobs;
-    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId;
+    TArray<FFoundationArrow> Arrows;
+    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId, NextArrowId = 1;
+    // The arrows' spread, crits and sound pitches (deterministic per session).
+    FRandomStream ArrowRandom = FRandomStream(19);
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;

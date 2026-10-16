@@ -4577,6 +4577,151 @@
     "0000",
     "0000"
    ]
+  },
+  {
+   "name": "item/arrow",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "fe76b2e0c79e09ddd037111cfc1d0510e1e13f2c2ff71bbf23e9c48b98d9030c",
+   "rgba_sha256": "ff0a24e1fdb5a9e391d27dcdd866bf4289dff9fbc96488a09af3683927158da0",
+   "alpha": "cutout",
+   "opaque_pixels": 38,
+   "mask": [
+    "0000",
+    "0000",
+    "000e",
+    "003e",
+    "003c",
+    "003c",
+    "0068",
+    "00c0",
+    "0180",
+    "0300",
+    "0600",
+    "1c00",
+    "3c00",
+    "3800",
+    "1000",
+    "0000"
+   ]
+  },
+  {
+   "name": "item/bow",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "1e2cb18545e4ed9286e1120686c3f835d6619b8bd853970f1011163b68426a54",
+   "rgba_sha256": "c126f643aa088076b67dcc0e11405ebfde21b0a7aabc3440d2a2c0dceab255ec",
+   "alpha": "cutout",
+   "opaque_pixels": 70,
+   "mask": [
+    "0000",
+    "001e",
+    "00ff",
+    "03fe",
+    "07e4",
+    "0f08",
+    "1e10",
+    "1c20",
+    "3840",
+    "3880",
+    "3900",
+    "7200",
+    "7400",
+    "7800",
+    "7000",
+    "2000"
+   ]
+  },
+  {
+   "name": "item/bow_pulling_0",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "6ddd0fa3bccd38fd6d6cae5139354f2371b942a6e6d5131182a60cc07a4cc9aa",
+   "rgba_sha256": "377e17dd5fee676dced32c1cce77aeff5754a6a781ba9164f8137a8f183e1726",
+   "alpha": "cutout",
+   "opaque_pixels": 88,
+   "mask": [
+    "4000",
+    "601e",
+    "30ff",
+    "1bfe",
+    "0fe2",
+    "0f04",
+    "1f04",
+    "1d88",
+    "38d0",
+    "3870",
+    "3820",
+    "70c0",
+    "7100",
+    "7600",
+    "7800",
+    "2000"
+   ]
+  },
+  {
+   "name": "item/bow_pulling_1",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "0e791b2a6dbda98be5309dd97efcef2f111b426eaf06080411f5ed18cc42f6d6",
+   "rgba_sha256": "4cec8af19cd1594c51ef94f79eedd3979dd2867ac1c8e58111059798330889da",
+   "alpha": "cutout",
+   "opaque_pixels": 88,
+   "mask": [
+    "0000",
+    "200e",
+    "30ff",
+    "1bfe",
+    "0ff2",
+    "0f02",
+    "1f04",
+    "1d84",
+    "38c8",
+    "3868",
+    "3830",
+    "3820",
+    "70c0",
+    "7300",
+    "7c00",
+    "2000"
+   ]
+  },
+  {
+   "name": "item/bow_pulling_2",
+   "size": [
+    16,
+    16
+   ],
+   "png_sha256": "4c1c286346283a7422b9da30473da7bb71434cb190dd351daa9eb121275b3bb4",
+   "rgba_sha256": "ad88a63aaf9f9db648843290526374344f66dafecaeeccddb2e00704ce1c0992",
+   "alpha": "cutout",
+   "opaque_pixels": 88,
+   "mask": [
+    "0000",
+    "0000",
+    "10fe",
+    "1bff",
+    "0ffe",
+    "0f02",
+    "1f02",
+    "1d84",
+    "38c4",
+    "3864",
+    "3834",
+    "3818",
+    "3810",
+    "39e0",
+    "3e00",
+    "1000"
+   ]
   }
  ]
 }

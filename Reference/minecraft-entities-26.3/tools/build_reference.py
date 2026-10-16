@@ -40,6 +40,8 @@ TEXTURES = [
     "entity/chicken/chicken_temperate.png", "entity/chicken/chicken_cold.png", "entity/chicken/chicken_warm.png",
     "entity/zombie/zombie.png", "entity/skeleton/skeleton.png", "entity/creeper/creeper.png",
     "entity/spider/spider.png", "entity/spider/spider_eyes.png",
+    # Survival T2 19c (bow): the arrow entity's 32 x 32 texture (plain arrows only).
+    "entity/projectiles/arrow.png",
 ]
 SERVER_SHA1 = "cc3964451a3b32a0488110d5e3e6ad8d75fe6a66"  # server-26.3.jar of the probe; recorded in facts/mob_attributes.json
 PREFIX = "assets/minecraft/textures/"

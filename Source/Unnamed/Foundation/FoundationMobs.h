@@ -51,6 +51,15 @@ struct FFoundationMobKind
     double FollowRangeCm = 1600, LookCm = 600;
     // en_us.json entity.minecraft.<id>: the attacker name in death messages.
     const TCHAR* Name = TEXT("");
+    // [survival.r10.ai_defaults S 5447] the stroll goal's speed modifier (spider 0.8).
+    float StrollSpeed = 1;
+};
+
+// The spawn categories built so far [survival.r10.spawn_caps]: the farm animals are creatures, the hostiles monsters.
+enum class EFoundationMobCategory : uint8
+{
+    Creature,
+    Monster
 };
 
 // A live player as the mobs' AI sees it (world cm): its eyes, its feet and the item ids in its hands.
@@ -64,20 +73,23 @@ struct FFoundationMobPlayer
     bool bTargetable = true;
 };
 
-// One creature spawn entry of a biome (survival T6 20b2; DA_Mobs from the worldgen reference's natural_mob_spawns):
-// a built, spawnable mob, its weight and its pack size bounds (inclusive).
+// One spawn entry of a biome (survival T6 20b2; DA_Mobs from the worldgen reference's natural_mob_spawns): a built,
+// spawnable mob, its weight and its pack size bounds (inclusive). bBlank (monsters, 20c2, SM decision): a mob not
+// built yet keeps its weight, and a round that picks it spawns nothing.
 struct FFoundationMobSpawn
 {
     EFoundationMobType Type = EFoundationMobType::Cow;
     int32 Weight = 0, MinCount = 1, MaxCount = 1;
+    bool bBlank = false;
 };
 
-// A biome's creature spawning: creature_world_gen_spawn_probability and the entries of the mobs that are built (O9:
-// plains keeps sheep 12, pig 10, chicken 10, cow 8 of its six).
+// A biome's spawning: creature_world_gen_spawn_probability, the creature entries of the mobs that are built (O9:
+// plains keeps sheep 12, pig 10, chicken 10, cow 8 of its six) and every monster entry (unbuilt ones blank: plains
+// spider 100 and zombie 90 of 515).
 struct FFoundationBiomeSpawns
 {
     float Chance = .1f;
-    TArray<FFoundationMobSpawn> Creatures;
+    TArray<FFoundationMobSpawn> Creatures, Monsters;
 };
 
 struct FFoundationMob
@@ -137,11 +149,14 @@ struct FFoundationMob
     int32 Age = 0;
     bool bOnGround = false, bHorizontalCollision = false;
     // Monsters (survival T6 20c): the player it targets (0: none) and the steps since it last saw it; steps to its
-    // next melee hit; bAttackNow: hit the target this step; the arm swing's steps since the hit (AttackSwingTicks: none).
+    // next melee hit; bAttackNow: hit the target this step; the arm swing's steps since the hit (AttackSwingTicks:
+    // none).
     int32 Target = 0, UnseenTicks = 0, AttackCooldown = 0, AttackSwing = MAX_int32 / 2;
     bool bAttackNow = false;
     // Its column is not loaded: it neither moves, thinks nor counts its timers, and is not drawn.
     bool bFrozen = false;
+    // [mobs.despawn] steps since a player was within DespawnNearCm or it was hurt (noActionTime).
+    int32 NoActionTicks = 0;
     FRandomStream Random;
 
     bool IsAlive() const { return !Health.IsDead(); }
@@ -295,12 +310,70 @@ namespace FoundationMobs
     // A monster's targeting and melee for this step, before Think: keeps, drops or picks its target among Players
     // (CanSee: an unblocked line from one world point to another), chases it, and sets bAttackNow when its swing is
     // due and the target is in reach and in sight.
+    // Brightness: at its eyes (the spider's targeting).
     UNNAMED_API void ThinkHostile(FFoundationMob& Mob, const FVector& OriginCm,
-        TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee);
+        TConstArrayView<FFoundationMobPlayer> Players, TFunctionRef<bool(const FVector&, const FVector&)> CanSee,
+        float Brightness = 0);
     // Whether the mob's box grown MeleeReachCm horizontally touches the player's.
-    UNNAMED_API bool IsInMeleeReach(const FFoundationMob& Mob, const FVector& OriginCm, const FFoundationMobPlayer& Player);
+    UNNAMED_API bool IsInMeleeReach(
+        const FFoundationMob& Mob, const FVector& OriginCm, const FFoundationMobPlayer& Player);
     // floor(CreatureBaseCap x EligibleColumns / CapChunks).
     UNNAMED_API int32 GetCreatureCap(int32 EligibleColumns);
+
+    // The monster cycle (survival T6 20c2). [survival.r10.spawn_caps F 5461-5470; survival2.r20 population runs:
+    // monsters are considered every tick] cap floor(MonsterBaseCap x eligible / CapChunks), each player's local cap
+    // MonsterBaseCap. [survival.r10.spawning_rules S 5472; Codex 02 C, provisional: vertical sampling] a column's
+    // round starts at a random height from the world's bottom to one above its top block and skips the column when
+    // that cell is a full solid; attempts keep the height. The feet stand on a full block top (not leaves:
+    // provisional) with room for the box and no fluid. [mobs.spawn_light V:469-471] the light rule: the sky light
+    // above a random 0-31 fails, any block light (overworld limit 0) fails, then the light must be at most a random
+    // 0-7. The light is the settled proxy (provisional-values.md): sky-visible cells have raw sky light 15 and the
+    // day's open-sky light; block light is the max over emitters of emission minus the Manhattan distance.
+    constexpr int32 MonsterBaseCap = 70, MonsterCycleTicks = 1;
+    constexpr int32 MonsterBlockLightLimit = 0, MonsterLightMax = 7, SkyLightRandom = 32, FullSkyLight = 15;
+    // Provisional (cost, SM 20c2: about 0.5 ms a step): a section's emitter list and a column's tops are reused for
+    // LightCacheTicks steps (the voxel world's own heightmaps and section palettes make both cheap); at most
+    // EmitterRebuildsPerStep sections with an emitter in their palette are scanned a step (a spot whose light it cannot
+    // settle spawns nothing that step); the monster cycle visits MonsterColumnsPerStep of its shuffled columns a step
+    // (289: one player's whole square every step, as vanilla; lower it to spread a pass over several steps).
+    constexpr int32 LightCacheTicks = 20, MonsterColumnsPerStep = 289, EmitterRebuildsPerStep = 8;
+    UNNAMED_API EFoundationMobCategory GetCategory(EFoundationMobType Type);
+    // The category's per-player cap (10 or 70) and its global cap over EligibleColumns.
+    UNNAMED_API int32 GetBaseCap(EFoundationMobCategory Category);
+    UNNAMED_API int32 GetCategoryCap(EFoundationMobCategory Category, int32 EligibleColumns);
+    // The light rule in two parts, as the spawn applies it: the sky draw first (true: passed), then the block light
+    // test and the 0-7 draw (true: dark enough for a monster).
+    UNNAMED_API bool RollSkyLight(FRandomStream& Random, int32 SkyLight);
+    UNNAMED_API bool RollMonsterLight(FRandomStream& Random, int32 BlockLight, int32 Light);
+    // The entry a round spawns among Entries (null when none weigh anything).
+    UNNAMED_API const FFoundationMobSpawn* PickSpawn(
+        TConstArrayView<FFoundationMobSpawn> Entries, FRandomStream& Random);
+
+    // Despawn [mobs.despawn; survival.r10.spawning_rules S 5472]: a monster beyond DespawnFarCm of every player goes at
+    // once; beyond DespawnNearCm after NoActionTicks > DespawnIdleTicks, with a 1 in DespawnChance roll a step; within
+    // DespawnNearCm its idle count restarts. Peaceful removes every monster (minecraft.wiki "Difficulty").
+    constexpr double DespawnFarCm = 12800, DespawnNearCm = 3200;
+    constexpr int32 DespawnIdleTicks = 600, DespawnChance = 800;
+    // Whether the monster despawns this step, NearestCm from the nearest player (draws only past the idle time).
+    UNNAMED_API bool ShouldDespawn(FFoundationMob& Mob, double NearestCm);
+
+    // The spider (survival T6 20c2). [survival.r10.ai_defaults S 5420-5432] LeapAtTargetGoal yd 0.4, SpiderAttackGoal
+    // (a melee goal that follows a target it does not see), SpiderTargetGoal. Provisional (Codex 02 C, no reference):
+    // it takes a target only while the brightness at its eyes is below SpiderDarkBrightness (hostile at light 11 and
+    // below) and, in the light, drops one with a 1 in SpiderForgetChance roll a step; the leap triggers on the ground
+    // with a 1 in LeapChance roll when the target is LeapMinCm-LeapMaxCm away and pushes LeapPushCm toward it plus
+    // LeapKeep of its velocity; pressed against a wall it climbs at ClimbUpCm a step, falling at most ClimbFallCm.
+    constexpr double LeapUpCm = 40, LeapPushCm = 40, LeapKeep = .2, LeapMinCm = 200, LeapMaxCm = 400;
+    constexpr int32 LeapChance = 5, SpiderForgetChance = 100;
+    constexpr float SpiderDarkBrightness = .5f;
+    constexpr double ClimbUpCm = 20, ClimbFallCm = 15;
+    UNNAMED_API bool CanClimb(EFoundationMobType Type);
+    // [survival.r10.model_motion F 5264-5299] a spider leg pair's swing added to its rest pose (radians: yaw, roll of
+    // the right leg; the left's are negated): yaw 0.4 x speed (the measured 45 -> 67.9 degrees at speed 1), roll toward
+    // the rest by up to 0.4 x speed (the measured roll stays within 45). Pairs 0-3: hind, middle hind, middle front,
+    // front. Provisional: the pairs a quarter cycle apart, yaw at twice the walk phase.
+    constexpr float SpiderLegSwing = .4f;
+    UNNAMED_API FVector2D GetSpiderLegSwing(int32 Pair, float Position, float Speed);
 
     // The box of a mob standing at a world position (its bottom centre).
     UNNAMED_API FBox GetBox(EFoundationMobType Type, const FVector& WorldCm);

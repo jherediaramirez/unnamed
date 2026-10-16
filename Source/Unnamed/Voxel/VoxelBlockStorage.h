@@ -28,6 +28,9 @@ public:
     // The edits; the columns themselves are counted by the streaming stats.
     virtual SIZE_T GetAllocatedSize() const override;
     virtual bool IsLoaded(const FIntVector& Cell) const override;
+    // The column's WorldSurface and MotionBlocking heightmaps; a section's palette.
+    virtual int32 GetTopZ(int32 X, int32 Y, bool bMotionBlocking) const override;
+    virtual bool MayHold(const FIntVector& SectionMin, TFunctionRef<bool(FFoundationBlockState)> Test) const override;
     // One FVoxelColumnPipeline::SetCells per column, each column's cells in the order given.
     virtual void SetMany(TConstArrayView<TPair<FIntVector, FFoundationCell>> Cells) override;
 

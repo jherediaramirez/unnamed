@@ -128,6 +128,13 @@
    "size": 130,
    "width": 64,
    "height": 32
+  },
+  {
+   "name": "entity/projectiles/arrow.png",
+   "sha1": "38d8df11d81c579d0f4b3b9c900f604dc9bb784a",
+   "size": 186,
+   "width": 32,
+   "height": 32
   }
  ]
 }
