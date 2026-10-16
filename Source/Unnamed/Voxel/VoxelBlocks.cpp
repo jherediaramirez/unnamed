@@ -120,8 +120,10 @@ TSharedRef<const FVoxelBlockTable> VoxelBlocks::MakeTable(const FFoundationBlock
         Info.Block = uint16(Block.ProtocolId);
         Info.LightEmission = uint8(FMath::Clamp(Registry.GetLightEmission(State), 0, 15));
         Info.bLeaves = Leaves.IsValid() && Block.Tags.HasTag(Leaves);
-        Info.Tint = PackRgb(Block.Tint);
-        Info.TintSource = GetTintSource(Block.Tint);
+        // The state's tint: a stem's follows its age (survival B6a, Codex review 15 #5).
+        const FColor Tint = Registry.GetTint(State);
+        Info.Tint = PackRgb(Tint);
+        Info.TintSource = GetTintSource(Tint);
         if (Block.IsWater())
         {
             // Still texture on top and bottom, the flow texture (its own array) on the sides; tinted, never culled

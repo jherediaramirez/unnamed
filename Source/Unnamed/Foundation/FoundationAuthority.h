@@ -111,6 +111,10 @@ UNNAMED_API const TCHAR* LexToString(EFoundationOutcome Outcome);
 UNNAMED_API const TCHAR* LexToString(EFoundationCommandType Type);
 
 class FVoxelPlantSurvival;
+namespace FoundationGrowth
+{
+    struct FGrowthTable;
+}
 
 // One request across the authority boundary. Target, destination, revisions and item are the caller's
 // claims; the authority re-resolves and re-validates everything from its own state.
@@ -278,6 +282,10 @@ struct FFoundationLabOptions
     // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
     // foundation.Chest in before each step.
     bool bChest = false;
+    // Random ticks (survival B6a, FoundationGrowth): crops and stems grow and farmland wets and dries in the sections
+    // around each player. Off, nothing random-ticks, as before. The pawn copies foundation.Blocks.Growth in before each
+    // step; tests set it themselves.
+    bool bGrowth = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -325,6 +333,11 @@ struct UNNAMED_API FFoundationRules
     TMap<FName, FFoundationBiomeSpawns> BiomeSpawns;
     // Crafting recipes (survival step 6; BuildRules, from DA_Recipes), resolved against Items.
     FFoundationRecipeBook Recipes;
+    // Random ticks (survival B6a): picks per 16-cell section per step (vanilla's randomTickSpeed, 3), in the sections
+    // within RandomTickRadius sections of a player horizontally, over the build height (provisional: vanilla's
+    // simulation distance is not in our data). The picks are a pure function of LootSeed, the section and the step.
+    int32 RandomTickSpeed = 3;
+    int32 RandomTickRadius = 4;
 
     int32 FindItem(FName Id) const;
     // The definition for an inventory index; an invalid index is the bare hand.
@@ -748,6 +761,8 @@ public:
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
           Strips = 0, BucketUses = 0, AttacksBlocked = 0, Tills = 0;
+    // Survival B6a: random ticks picked, and those that changed a block.
+    int64 RandomTicks = 0, RandomTickChanges = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
@@ -798,6 +813,11 @@ private:
     };
     TArray<FBlockTick> BlockTicks;
     void StepBlockTicks();
+    // Survival B6a: with Options.bGrowth, Rules.RandomTickSpeed picks in every section near a player run
+    // FoundationGrowth::RandomTick, and its writes are settled as edits. The table is rebuilt for a new registry.
+    void StepRandomTicks();
+    TSharedPtr<FoundationGrowth::FGrowthTable> GrowthTable;
+    int64 RandomTickStep = 0;
     // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
     // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
     // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel

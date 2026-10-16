@@ -275,6 +275,8 @@ public:
     void GetCollisionBoxes(FFoundationBlockState State, TArray<FBox>& OutBoxes) const;
     // The state's own light (sea pickles, cave vines, a lit furnace or redstone ore vary by state).
     int32 GetLightEmission(FFoundationBlockState State) const;
+    // The state's own tint (a stem's follows its age; survival B6a); every other state has its block's Tint.
+    FColor GetTint(FFoundationBlockState State) const;
     // The faces of a state that hold a torch, a bit per EFoundationFace (FFoundationBlockAsset::StateSupport); a
     // project block's full cube holds one on top and on every side.
     uint8 GetTorchSupport(FFoundationBlockState State) const;
@@ -312,6 +314,8 @@ private:
     TArray<FBox> Boxes;
     TArray<int32> StateLight;
     TArray<int32> StateWater;
+    // Every state (indexed like Shapes): the tint (GetTint).
+    TArray<FColor> StateTint;
     // Every state (indexed like Shapes): the faces that hold a torch.
     TArray<uint8> StateSupport;
     // Decoded baked models: quad range and ambient occlusion.

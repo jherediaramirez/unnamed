@@ -9,6 +9,7 @@
 #include "Foundation/FoundationPlantRules.h"
 #include "Foundation/FoundationSimulation.h"
 #include "Foundation/FoundationStripping.h"
+#include "Foundation/FoundationGrowth.h"
 #include "Foundation/FoundationTilling.h"
 #include "HAL/IConsoleManager.h"
 #include "Sky/VoxelTimeline.h"
@@ -445,6 +446,55 @@ void FFoundationAuthority::StepBlockTicks()
     }
 }
 
+void FFoundationAuthority::StepRandomTicks()
+{
+    using namespace FoundationGrowth;
+    const int64 Tick = RandomTickStep++;
+    if (!Options.bGrowth || Rules.RandomTickSpeed <= 0) return;
+    if (!GrowthTable || !GrowthTable->IsFor(World.GetRegistry()))
+        GrowthTable = MakeShared<FGrowthTable>(World.GetRegistry());
+    // The sections near any player, once each (survival B6a; the radius is provisional).
+    TSet<FIntPoint> Columns;
+    const int32 Radius = FMath::Max(Rules.RandomTickRadius, 0);
+    for (const FFoundationPlayer& Player : Players)
+    {
+        if (!Player.bHasFacts) continue;
+        const FIntVector Feet = FoundationGrid::CellAt(Player.Facts.FeetCm, World.OriginCm);
+        const FIntPoint Center(
+            FoundationGrid::FloorDivide(Feet.X, SectionCells), FoundationGrid::FloorDivide(Feet.Y, SectionCells));
+        for (int32 DY = -Radius; DY <= Radius; ++DY)
+            for (int32 DX = -Radius; DX <= Radius; ++DX)
+                Columns.Add(Center + FIntPoint(DX, DY));
+    }
+    const int32 MinZ = FoundationGrid::FloorDivide(World.BoundsMin.Z, SectionCells);
+    const int32 MaxZ = FoundationGrid::FloorDivide(World.BoundsMax.Z, SectionCells);
+    auto SeesSky = [this](const FIntVector& At) { return IsSkyVisible(At + FIntVector(0, 0, 1)); };
+    static const FFoundationPlayer Nobody;
+    TArray<TPair<FIntVector, FFoundationBlockState>, TInlineAllocator<2>> Writes;
+    for (const FIntPoint& Column : Columns)
+        for (int32 Z = MinZ; Z <= MaxZ; ++Z)
+            for (int32 Index = 0; Index < Rules.RandomTickSpeed; ++Index)
+            {
+                FGrowthRoll Roll;
+                const FIntVector Cell =
+                    GetRandomTickCell(Rules.LootSeed, FIntVector(Column.X, Column.Y, Z), Tick, Index, Roll);
+                ++RandomTicks;
+                if (!World.IsKnown(Cell) || GrowthTable->Get(World.Get(Cell).State).Kind == EGrowthKind::None) continue;
+                Writes.Reset();
+                RandomTick(World, *GrowthTable, Cell, Roll, SeesSky, Writes);
+                if (Writes.IsEmpty()) continue;
+                ++RandomTickChanges;
+                // Every cell is written before any settles, so a pitcher crop's two halves still pair.
+                TArray<FFoundationBlockState, TInlineAllocator<2>> Before;
+                for (const TPair<FIntVector, FFoundationBlockState>& Write : Writes)
+                {
+                    Before.Add(World.Get(Write.Key).State);
+                    World.Set(Write.Key, Write.Value);
+                }
+                for (int32 Write = 0; Write < Writes.Num(); ++Write)
+                    SettlePlants(Writes[Write].Key, Before[Write], Nobody, false);
+            }
+}
 bool FFoundationAuthority::HasBlockUse(const FIntVector& Cell) const
 {
     return World.IsKnown(Cell) && FindBlockUse(World.GetBlock(World.Get(Cell).State).Id) != nullptr;
@@ -594,6 +644,7 @@ void FFoundationAuthority::Step()
     for (FFoundationPlayer& Player : Players)
         if (Player.Use.bActive && Player.Facts.Step - Player.Use.LastStep > 1) CancelUse(Player);
     StepBlockTicks();
+    StepRandomTicks();
     StepItemEntities();
     StepMobs();
     StepMobSpawns();

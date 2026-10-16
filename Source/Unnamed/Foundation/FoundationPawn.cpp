@@ -4,6 +4,7 @@
 #include "Foundation/FoundationChests.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationExperienceOrbs.h"
+#include "Foundation/FoundationGrowth.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationLab.h"
 #include "Foundation/FoundationPanels.h"
@@ -468,6 +469,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
     Authority.Options.bFurnace = FoundationFurnace::IsOn();
     Authority.Options.bBarrel = FoundationBarrel::IsOn();
     Authority.Options.bChest = FoundationChests::IsOn();
+    Authority.Options.bGrowth = FoundationGrowth::IsOn();
     Authority.SetFacts(Interaction.PlayerId, MakeInteractionFacts());
     // Armor (survival step 19a): the hurts since the last step wear the worn pieces, then what is worn now counts.
     if (Vitals.PendingArmorWear > 0)

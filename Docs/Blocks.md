@@ -310,6 +310,45 @@ moves only as an item.
   design note); farmland and dirt paths still drop themselves when mined (their loot tables are held back in the items
   reference, B8).
 
+## Random ticks, crops, stems and farmland moisture (B6a)
+
+Survival B6a (track T5), behind `foundation.Blocks.Growth` (default 1; the pawn copies it into
+`FFoundationLabOptions::bGrowth`, which tests set themselves; 0: nothing random-ticks and crops have no soil rule, as
+before B6a). Logic in `FoundationGrowth.h/.cpp`; the authority's `StepRandomTicks` (right after `StepBlockTicks`) picks
+the cells and writes the changes, each settled as an edit (`SettlePlants`).
+
+- **Random ticks:** `Rules.RandomTickSpeed` (3, vanilla's `random_tick_speed`) picks per 16-cell section per step, in
+  the sections within `Rules.RandomTickRadius` (4, provisional) sections of each player horizontally, over the whole
+  build height. A pick and its rolls are a pure function of (`Rules.LootSeed`, section, step, pick)
+  (`FoundationGrowth::GetRandomTickCell`). Cells nobody knows are skipped. Worldgen never ticks, so no world hash moves.
+  A step costs about 0.03 ms around one player (`.Authority`'s `GROWTH_COST` figure).
+- **Crops** (wheat, carrots, potatoes 0-7; beetroots 0-3; torchflower crop 0-1; pitcher crop 0-4): at light 9 or more,
+  one age per success of 1 / (floor(25 / f) + 1); f is 1, plus the farmland below (1 dry, 3 wet), plus a quarter of each
+  of the 8 farmland cells around it, halved when the same crop grows beside it on both axes or else on a diagonal
+  (VALUES "Crop growth": an isolated dry farmland 1/13, wet 1/7). Beetroots skip a third of their ticks (wiki "Beetroot
+  Seeds"). The pitcher crop's halves age together; growing tall needs its upper half or air above (provisional).
+  Torchflower and pitcher rates use the crop formula (provisional: no source names them).
+- **Light** (provisional proxy): a plant under the open sky has 15 at any time of day (wiki "Crop farming": crops grow
+  at night under the sky); else the brightest block emitting 9 or more within a 9x9x9 box lights it.
+- **Stems** (R22): the same chance with the stem's f; below 7 the age goes up; at 7 a success picks one of the four
+  sides uniformly and places the fruit there if the cell is air and the block below is in
+  `#minecraft:supports_pumpkin_stem_fruit` or `supports_melon_stem_fruit`; a blocked pick is not retried. The attached
+  stems are not in the block table yet, so a stem stays at 7 and can fruit again into its other sides (B6b adds them).
+- **Farmland moisture** (VALUES "Watering farmland"): water (a source, flowing, or a block holding water) within 4
+  cells on X and Y, at its level or one above, sets moisture 7; otherwise a tick takes 1 off; at 0 it turns to dirt
+  (no drop, no `Popped`) unless the block above is in `#minecraft:maintains_farmland` (crops, stems,
+  fence gates). Freshly tilled farmland with no water near and nothing on it reverts on its first tick, as in vanilla.
+  No rain yet (no weather).
+- **Soil rule** (`FoundationBlockFamilies::GetSurvival`): crops stand only on `#minecraft:supports_crops`, stems on
+  `supports_pumpkin_stem` / `supports_melon_stem` (farmland alone in each); a pitcher crop's upper half pairs with its
+  lower half. Placement refuses elsewhere and a settle pops them. Darkness does not pop a crop yet (QC-KNOWN-BUGS).
+- **Planting:** `wheat_seeds` places wheat (a place link in `UFoundationInteractionSettings::BuildRules`; DA_Items
+  holds none). Carrots, potatoes and the five seed items DA_Items lacks come with B6b.
+- **Stem tint:** a stem's states take their age's colour (`FFoundationBlockAsset::StateTint`, imported from
+  `block_manifest.json`'s `color_by_age`; `FFoundationBlockRegistry::GetTint`; `VoxelBlocks.cpp` reads it per state).
+  RUN2 R23 (`survival2.r23.stem_color_rule`) confirms the colours: (32a, 255 - 8a, 4a). Codex review 15 #5.
+- **Not saved:** growth is a block edit, and edits are session-only, like every edit.
+
 ## Placement
 
 `FoundationBlockPlacement` ports `BlockPlaceContext` and each family's `getStateForPlacement`: clicked face, `Direction.orderedByNearest` (with Minecraft's sine table) and `fromYRot`. Every placement goes through `FFoundationAuthority`.
@@ -469,4 +508,13 @@ In the Playground, the inventory key (E) opens a reproduction of the 26.3 creati
     hanging roots, wear off, the breaking last point, the three switches), `.TillRevert` (stone placed on farmland and a
     path turns them to dirt with no pop or drop, a fence gate keeps farmland, farmland placed under stone places dirt,
     switch 0).
+  - B6a: `Unnamed.Foundation.Growth.Picks` (a pick is a pure function, stays in its section, uniform per axis, no
+    stream repeats across steps), `.Points` (11 hand-computed f cases from VALUES and the wiki, another crop on a
+    diagonal, moisture 1), `.Rates` (10^5 seeded ticks per crop and stem against 1/13, 1/7 and beetroots' 2/21 within 4
+    sigma), `.Crops` (max ages, `maintains_farmland`, one age at a time, light: roof, a torch 4 and 5 cells away, the
+    brightest emitter below 9 and one of exactly 9; the pitcher crop's halves, stone above, air above under a roof), `.Stems` (fruit rate 1/7, the four sides uniform, no retry and no block replaced, soil,
+    ages), `.Farmland` (the water box's edges, waterlogged water, drying, `maintains_farmland`), `.Authority` (243
+    picks per step, wheat by water grows to 7, bare dry farmland turns to dirt, both off switches, the cost figure),
+    `.StemTint` (the voxel table's per-state tint against R23 for both stems, ages 0-7), `.Plant` (wheat_seeds on
+    farmland, dirt and grass; the soil rule for every crop and stem; switch 0).
 - **Runtime:** `TestFoundationRuntime.ps1 -Suite tour` shots 09-23 cover the gallery and the creative screen (17p and 17q: the plant row). The interaction suite covers stone placement and mining and the hotbar block icon, and checks the drawn cells and the exact instance count (one per part, plus held water) against the world. Its plants group (S7) places a dandelion on grass and mines the grass (the dandelion pops), refuses a dandelion on stone, and places and mines tall grass (both halves go).

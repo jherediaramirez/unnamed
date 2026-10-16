@@ -4,6 +4,7 @@
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationChests.h"
+#include "Foundation/FoundationGrowth.h"
 #include "Foundation/FoundationProfile.h"
 #include "GameplayTagContainer.h"
 #include "HAL/IConsoleManager.h"
@@ -277,6 +278,17 @@ namespace
     TAutoConsoleVariable<int32> CVarBlocksFarmland(TEXT("foundation.Blocks.Farmland"), 1,
         TEXT("1: hoes till and shovels flatten (with foundation.Items.Use), and farmland and dirt paths turn to dirt "
              "under a block they do not survive (survival B5). 0: neither, as before B5."));
+
+    // B6a: the tag a crop or stem needs on the block below it (block_manifest.json: #minecraft:supports_crops,
+    // supports_pumpkin_stem, supports_melon_stem; farmland alone in each); None for every other block.
+    FName GetFamilyCropSoilTag(FName Id)
+    {
+        if (Id == TEXT("pumpkin_stem")) return TEXT("Block.SupportsPumpkinStem");
+        if (Id == TEXT("melon_stem")) return TEXT("Block.SupportsMelonStem");
+        const bool bCrop = Id == TEXT("wheat") || Id == TEXT("carrots") || Id == TEXT("potatoes") ||
+            Id == TEXT("beetroots") || Id == TEXT("torchflower_crop") || Id == TEXT("pitcher_crop");
+        return bCrop ? FName(TEXT("Block.SupportsCrops")) : NAME_None;
+    }
 
     // B5: the blocks that turn to dirt under a block they do not survive (FarmBlock, DirtPathBlock).
     bool IsTurnedToDirt(FName Id)
@@ -766,6 +778,18 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
         if (!World.IsKnown(Above)) return EFoundationFamilySurvival::Unknown;
         return DoesKeepFarmland(Registry.GetBlock(World.Get(Above).State).Id) ? EFoundationFamilySurvival::Survives
                                                                               : EFoundationFamilySurvival::Fails;
+    }
+    // Crops and stems (B6a, behind foundation.Blocks.Growth): their soil tag below. A pitcher crop's upper half stands
+    // on its lower half (the plant rules pair them). Light is not a survival rule yet (QC-KNOWN-BUGS).
+    if (const FName SoilTag = GetFamilyCropSoilTag(Registry.GetBlock(State).Id);
+        !SoilTag.IsNone() && FoundationGrowth::IsOn() && Registry.GetValue(State, TEXT("half")) != TEXT("upper"))
+    {
+        const FIntVector Below = Cell - FIntVector(0, 0, 1);
+        if (!World.IsKnown(Below)) return EFoundationFamilySurvival::Unknown;
+        const FGameplayTag Soil = FGameplayTag::RequestGameplayTag(SoilTag, false);
+        return Soil.IsValid() && Registry.GetBlock(World.Get(Below).State).Tags.HasTag(Soil)
+            ? EFoundationFamilySurvival::Survives
+            : EFoundationFamilySurvival::Fails;
     }
     // Twisting and weeping vines (B4b): their own vine or a sturdy face on the side they grow from.
     FName VineHead;

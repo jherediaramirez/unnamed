@@ -208,6 +208,11 @@ struct FFoundationBlockAsset
     UPROPERTY(EditAnywhere, Category = "Block")
     TArray<int32> StateWater;
 
+    // Per state: the tint, for a block whose tint follows its age (the pumpkin and melon stems; survival B6a). Empty:
+    // every state takes the block's Tint.
+    UPROPERTY(EditAnywhere, Category = "Block")
+    TArray<FColor> StateTint;
+
     UPROPERTY(EditAnywhere, Category = "Block")
     EFoundationOffsetKind OffsetKind = EFoundationOffsetKind::None;
 
