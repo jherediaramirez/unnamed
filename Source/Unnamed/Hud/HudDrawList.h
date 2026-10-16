@@ -33,6 +33,8 @@ namespace HudDrawList
     constexpr int32 FireFrames = 32;
     // The caret's blink: 300 ms on, 300 ms off [survival.r4.caret].
     constexpr int32 CaretBlinkMs = 300;
+    // The chat's command suggestion list shows at most this many rows (CommandSuggestions' line limit in chat).
+    constexpr int32 SuggestionRows = 10;
     // The death screen's buttons (step 11a) in GUI pixels of a LogicalSize screen, one source for drawing and clicks
     // [survival.r6.death_layout]: 200 x 20 at (width / 2 - 100, height / 4 + 72) (Respawn) and height / 4 + 96 (Title
     // Screen); 640 x 360 gives (220, 162) and (220, 186). None: an empty rectangle.

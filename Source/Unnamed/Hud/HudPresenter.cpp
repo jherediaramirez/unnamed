@@ -15,6 +15,7 @@
 #include "Menu/MenuVideoSettings.h"
 #include "UnnamedLog.h"
 #include "UnnamedProjectSettings.h"
+#include "Algo/Compare.h"
 #include "Dom/JsonValue.h"
 #include "Misc/PackageName.h"
 #include "Engine/GameInstance.h"
@@ -293,9 +294,19 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     const int32 CaretIndex = bChatOpen ? FMath::Clamp(Controller.GetPanels()->GetTypedCaret(), 0, ChatInput.Len()) : 0;
     const bool bCaretVisible =
         !bChatOpen || FMath::FloorToInt64((Now - ChatOpenedAt) * 1000 / HudDrawList::CaretBlinkMs) % 2 == 0;
+    // The command suggestions over the input bar (vanilla's CommandSuggestions).
+    const UFoundationPanels::FChatSuggestions Suggestions =
+        bChatOpen ? Controller.GetPanels()->GetChatSuggestions() : UFoundationPanels::FChatSuggestions();
+    const bool bSuggestionsChanged = Suggestions.Selected != Snapshot.ChatSuggestionSelected ||
+        Suggestions.Start != Snapshot.ChatSuggestionStart ||
+        !Suggestions.Usage.Equals(Snapshot.ChatUsage, ESearchCase::CaseSensitive) ||
+        !Suggestions.Inline.Equals(Snapshot.ChatInlineSuggestion, ESearchCase::CaseSensitive) ||
+        Suggestions.Items.Num() != Snapshot.ChatSuggestions.Num() ||
+        !Algo::Compare(Suggestions.Items, Snapshot.ChatSuggestions,
+            [](const FString& A, const FString& B) { return A.Equals(B, ESearchCase::CaseSensitive); });
     const bool bChatChanged = bChatOpen != Snapshot.bChatOpen || Chat.GetRevision() != ChatRevision ||
         ChatStep != LastChatStep || !ChatInput.Equals(Snapshot.ChatInput, ESearchCase::CaseSensitive) ||
-        CaretIndex != Snapshot.CaretIndex || bCaretVisible != Snapshot.bCaretVisible;
+        CaretIndex != Snapshot.CaretIndex || bCaretVisible != Snapshot.bCaretVisible || bSuggestionsChanged;
     if (bChatChanged)
     {
         ChatLines.Reset();
@@ -327,6 +338,11 @@ void UHudPresenter::Refresh(AFoundationController& Controller, double Now)
     Snapshot.DeathScore = bDeath ? DeathPawn->GetDeathScore() : 0;
     Snapshot.Chat = ChatLines;
     Snapshot.ChatInput = ChatInput;
+    Snapshot.ChatSuggestions = Suggestions.Items;
+    Snapshot.ChatSuggestionSelected = Suggestions.Selected;
+    Snapshot.ChatSuggestionStart = Suggestions.Start;
+    Snapshot.ChatUsage = Suggestions.Usage;
+    Snapshot.ChatInlineSuggestion = Suggestions.Inline;
     Snapshot.CaretIndex = CaretIndex;
     Snapshot.bCaretVisible = bCaretVisible;
     Snapshot.FireFrame = Snapshot.bOnFire ? int32(HudTick % HudDrawList::FireFrames) : 0;

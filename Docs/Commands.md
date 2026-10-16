@@ -42,6 +42,16 @@ Colours are vanilla's named chat colours: red FF5555, gray AAAAAA.
 
 Targets: `@s @p @a @r` and the player's name (any case). `@e @n` work for `/kill` and `/tp` (they find the player; `/kill @e` also the item entities and orbs, the world's only other entities); `/tp`'s destination is one entity, so `/tp @a`, `/tp @e` and `/tp @s @e` refuse with vanilla's "Only one entity is allowed..." line; `/gamemode` and `/give` refuse them with vanilla's "Only players may be affected..." line.
 
+## Suggestions
+
+While a command is typed, the open chat shows vanilla's command suggestions (`CommandSuggestions`; `FoundationCommands::Suggest`, kept by `UFoundationPanels`, drawn by `HudDrawList`):
+- **Candidates** for the word at the caret, above the input bar from that word's x: up to 10 rows of 12 px on 0xD0 black, the selected row yellow (FFFF00), the rest gray (AAAAAA), white dotted edges when rows are hidden. Sorted ignoring case. `/` lists every command; `/t` gives `teleport`, `time`, `tp`.
+- **Keys:** Tab puts the selected candidate in, and further Tabs cycle (Shift+Tab backwards); Up and Down move the selection. The selected candidate's rest shows in gray (808080) after a caret at the end.
+- **Usage:** with no candidate, one gray row of what is still to come, e.g. `[<count>]` after `/give @s apple `, `<time>` after `/time add `.
+- **What is offered:** command names; `creative`/`survival`; targets `@a @p @r @s` and the player's name for `/gamemode` and `/give`, plus `@e @n` for `/kill` and `/tp`; every registry item as `minecraft:<id>`, matched by its start, the start of any `_` part (`pick` finds `iron_pickaxe`) or the full id; `~` coordinates for `/tp`; `/time`'s verbs, markers and query names.
+- Nothing shows for plain chat or in a world without "Allow Cheats", as vanilla.
+- `Unnamed.Foundation.Commands.Suggest` pins the candidates, starts and usage.
+
 ## Known differences (flagged; easy to change)
 
 - **Adventure and Spectator** are refused with `Adventure Mode isn't available in this build`, which isn't vanilla. The modes aren't modelled yet.
@@ -60,5 +70,6 @@ Targets: `@s @p @a @r` and the player's name (any case). `@e @n` work for `/kill
   - the band 328 px wide;
   - 10 s visible, then a linear fade over the last second. Vanilla's exact curve exists only in client code.
   - the input bar: x 2 to width-2, y height-14, 12 px tall, 50% black. The typed text is at (4, height-12) in light gray E0E0E0. The `_` caret is always at the end of the line; it doesn't blink or follow the cursor, there is no selection, and a long line isn't scrolled.
+- **Suggestions:** Adventure and Spectator are not offered (refused above). Vanilla also suggests the aimed-at block's coordinates for `/tp`, shows a red error preview while typing and hides the list on the first Escape; none of these is built (Escape closes the chat).
 - **Not echoed:** commands don't print the typed line, as vanilla. Death messages in chat are step 11.
 - **Errors:** an empty argument after a trailing space reports "Unknown or incomplete command" (vanilla may name the argument's own error).

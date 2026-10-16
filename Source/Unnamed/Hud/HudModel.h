@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Algo/Compare.h"
 
 enum class EHudMode : uint8
 {
@@ -130,6 +131,12 @@ struct FHudSnapshot
     // The typed line's caret (a character index); -1 = at the end.
     int32 CaretIndex = -1;
     bool bCaretVisible = true;
+    // The open chat's command suggestions (vanilla's CommandSuggestions): the candidates above the input bar from the
+    // typed line's index ChatSuggestionStart, the selected one in yellow; with none, the usage line; the selected
+    // candidate's rest in gray after the caret.
+    TArray<FString> ChatSuggestions;
+    int32 ChatSuggestionSelected = 0, ChatSuggestionStart = 0;
+    FString ChatUsage, ChatInlineSuggestion;
     // F1 (hide GUI): with the chat open only the chat draws; the death screen draws regardless.
     bool bHideHud = false;
     // The death screen (step 11a, foundation.Death.Screen 1), over the HUD: its buttons are enabled 20 ticks after
@@ -155,8 +162,9 @@ struct FHudSnapshot
             Experience, AttackStrength, AttackDelay, bUnderwater, bHardcore, bPoison, bWither, bFrozen, bHunger,
             bRegeneration, bDamageCooldown, bLivingTarget, bTargetAlive, bTargetInRange, bSpectatorTarget,
             bDebugCrosshair3D, bFirstPerson, bVisible, bMainHandLeft, SelectedSlot, OffhandCount, Counts, ItemViews,
-            OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, CaretIndex, bCaretVisible, bHideHud,
-            bDeathScreen, bDeathButtonsEnabled, DeathScore, DeathHover, bDamageTint, bOnFire, FireFrame, CameraOverlay);
+            OffhandView, NotificationTime, AttackIndicator, Chat, bChatOpen, CaretIndex, bCaretVisible,
+            ChatSuggestionSelected, ChatSuggestionStart, bHideHud, bDeathScreen, bDeathButtonsEnabled, DeathScore,
+            DeathHover, bDamageTint, bOnFire, FireFrame, CameraOverlay);
     }
     // Hand-written because a defaulted == compares FStrings ignoring case (a case-only edit of the typed line would
     // not redraw): the strings compare case-sensitively, everything else through GetFields. A new member must be
@@ -166,6 +174,11 @@ struct FHudSnapshot
     {
         return GetFields() == Other.GetFields() && ItemName.Equals(Other.ItemName, ESearchCase::CaseSensitive) &&
             ChatInput.Equals(Other.ChatInput, ESearchCase::CaseSensitive) &&
+            ChatUsage.Equals(Other.ChatUsage, ESearchCase::CaseSensitive) &&
+            ChatInlineSuggestion.Equals(Other.ChatInlineSuggestion, ESearchCase::CaseSensitive) &&
+            ChatSuggestions.Num() == Other.ChatSuggestions.Num() &&
+            Algo::Compare(ChatSuggestions, Other.ChatSuggestions,
+                [](const FString& A, const FString& B) { return A.Equals(B, ESearchCase::CaseSensitive); }) &&
             DeathMessage.Equals(Other.DeathMessage, ESearchCase::CaseSensitive);
     }
 };
