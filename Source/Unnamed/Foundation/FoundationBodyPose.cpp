@@ -36,6 +36,49 @@ void FoundationBodyPose::ToComponentSpace(
         OutComponent[Bone] = Parents[Bone] == INDEX_NONE ? Local[Bone] : Local[Bone] * OutComponent[Parents[Bone]];
 }
 
+void FoundationBodyPose::BlendUpperBody(TArrayView<FTransform> Local, TConstArrayView<FTransform> Action,
+    TConstArrayView<int32> Parents, TConstArrayView<float> Weights, TConstArrayView<bool> MeshSpace)
+{
+    TArray<FTransform> Base, Acting, Blended;
+    ToComponentSpace(Local, Parents, Base);
+    ToComponentSpace(Action, Parents, Acting);
+    Blended.SetNumUninitialized(Local.Num());
+    for (int32 Bone = 0; Bone < Local.Num(); ++Bone)
+    {
+        const int32 Parent = Parents[Bone];
+        const float Weight = FMath::Clamp(Weights[Bone], 0.f, 1.f);
+        if (Weight > 0)
+        {
+            FTransform Mixed = Local[Bone];
+            Mixed.BlendWith(Action[Bone], Weight);
+            if (MeshSpace[Bone])
+            {
+                // The component-space rotation blended, then expressed under the parent as it is now blended.
+                const FQuat Rotation =
+                    FQuat::Slerp(Base[Bone].GetRotation(), Acting[Bone].GetRotation(), Weight).GetNormalized();
+                const FQuat ParentRotation = Parent == INDEX_NONE ? FQuat::Identity : Blended[Parent].GetRotation();
+                Mixed.SetRotation((ParentRotation.Inverse() * Rotation).GetNormalized());
+            }
+            Local[Bone] = Mixed;
+        }
+        Blended[Bone] = Parent == INDEX_NONE ? Local[Bone] : Local[Bone] * Blended[Parent];
+    }
+}
+
+void FoundationBodyPose::ApplyAim(
+    TArrayView<FTransform> Local, TConstArrayView<int32> Parents, int32 Chest, double PitchDeg, double YawDeg)
+{
+    if (Chest == INDEX_NONE || (FMath::Abs(PitchDeg) < 1e-6 && FMath::Abs(YawDeg) < 1e-6)) return;
+    TArray<FTransform> Component;
+    ToComponentSpace(Local, Parents, Component);
+    // The mesh faces +Y: pitch turns +Y toward +Z about +X; yaw turns it toward the body's right about +Z.
+    const FQuat Aim = FQuat(FVector::UpVector, FMath::DegreesToRadians(YawDeg)) *
+        FQuat(FVector::ForwardVector, FMath::DegreesToRadians(PitchDeg));
+    FTransform Turned = Component[Chest];
+    Turned.SetRotation((Aim * Turned.GetRotation()).GetNormalized());
+    SetComponent(Local, Parents, Component, Chest, Turned);
+}
+
 FFoundationFirstPersonResult FoundationBodyPose::Apply(TArrayView<FTransform> Local, TConstArrayView<int32> Parents,
     const FBones& Bones, const FFoundationFirstPersonView& View, const FFoundationFirstPersonTuning& Tuning)
 {

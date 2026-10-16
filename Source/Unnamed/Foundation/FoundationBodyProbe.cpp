@@ -315,7 +315,11 @@ void UFoundationRuntimeProbe::AddBodyCases()
             Record(TEXT("body spring arm pulled in by the ground"), Camera.Z >= 4.9 && Distance < 250,
                 FString::Printf(TEXT("camera z %.1f cm, %.1f cm from the eyes"), Camera.Z, Distance));
         });
-    if (Pawn->GetBodySet() == EFoundationBodySet::UnnamedPlayer) AddFirstPersonBodyCases();
+    if (Pawn->GetBodySet() == EFoundationBodySet::UnnamedPlayer)
+    {
+        AddFirstPersonBodyCases();
+        AddStrikeBodyCases();
+    }
     AddCase(
         TEXT("body restore"), .3,
         [this]

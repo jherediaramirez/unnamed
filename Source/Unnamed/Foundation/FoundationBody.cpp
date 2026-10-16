@@ -36,6 +36,8 @@ FString FoundationBodyClip::GetName(int32 Clip, EFoundationBodySet Set)
         if (Clip >= Look && Clip < CrouchLook) return FString(TEXT("UP_Look_")) + BodyLookNames[Clip - Look];
         if (Clip >= CrouchLook && Clip < Low) return FString(TEXT("UP_CrouchLook_")) + BodyLookNames[Clip - CrouchLook];
         if (Clip == Low) return TEXT("UP_Low_Pose");
+        if (Clip == PickaxeHold) return TEXT("UP_Pickaxe_Hold");
+        if (Clip == StrikeA) return TEXT("UP_Pickaxe_StrikeA");
         return FString();
     }
     if (Clip >= CrouchLook && Clip < Low) return GetName(Look + Clip - CrouchLook, Set);
@@ -67,10 +69,11 @@ double FoundationBodyClip::GetDefaultLength(int32 Clip, EFoundationBodySet Set)
         if (Clip == JumpStart) return 18 / 60.;
         if (Clip == JumpLoop) return 48 / 60.;
         if (Clip == JumpLand) return 12 / 60.;
-        if (Clip >= Look && Clip <= Low) return 2 / 60.;
+        if (Clip >= Look && Clip <= PickaxeHold) return 2 / 60.;
+        if (Clip == StrikeA) return 18 / 60.;
         return 0;
     }
-    if (Clip == Low) return 0;
+    if (Clip >= Low) return 0;
     if (Clip >= Walk && Clip < Walk + 8) return 18 / 30.;
     if (Clip >= Sprint && Clip < Sprint + 8) return 16 / 30.;
     if (Clip >= CrouchWalk && Clip < CrouchWalk + 8) return 32 / 30.;
@@ -104,6 +107,8 @@ double FoundationBodyClip::GetSampleSpeed(int32 Gait, int32 Direction)
 float FFoundationBodyPose::GetWeight(int32 Clip) const
 {
     float Weight = 0;
+    for (const FFoundationBodyLayer& Layer : Action)
+        if (Layer.Clip == Clip) Weight += Layer.Weight * ActionWeight;
     for (const FFoundationBodyLayer& Layer : Base)
         if (Layer.Clip == Clip) Weight += Layer.Weight;
     for (const FFoundationBodyLayer& Layer : Look)

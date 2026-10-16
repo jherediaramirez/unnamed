@@ -50,6 +50,9 @@ namespace FoundationBodyClip
         CrouchLook = Look + 9,
         // The low box's pose (swimming); the Unnamed Player only (Better Steve keeps its air loop there).
         Low = CrouchLook + 9,
+        // The pickaxe held (the strikes' link pose) and the first strike; the Unnamed Player only (FoundationBodyGrip).
+        PickaxeHold,
+        StrikeA,
         Count
     };
     // The asset name under the set's root, e.g. "BS_Walk_FR" or "UP_Crouch_FR"; empty when the set has no such clip.
@@ -98,6 +101,10 @@ struct FFoundationBodyPose
     TArray<FFoundationBodyLayer, TInlineAllocator<8>> Look;
     // How far the low pose has faded in (0..1): the first-person corrections fade out with it.
     float LowWeight = 0;
+    // The upper body's action (FFoundationBodyAction): its clips (weights sum to 1), how much of the upper body they
+    // take (0..1, the hold's fade), and the chest's aim toward the view (degrees, + up and right).
+    TArray<FFoundationBodyLayer, TInlineAllocator<3>> Action;
+    float ActionWeight = 0, AimPitchDeg = 0, AimYawDeg = 0;
     float GetWeight(int32 Clip) const;
 };
 

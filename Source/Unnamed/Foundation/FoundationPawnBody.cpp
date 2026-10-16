@@ -4,6 +4,11 @@
 #include "Foundation/FoundationBodyAnimInstance.h"
 #include "Foundation/FoundationProfile.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Foundation/FoundationAuthority.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "UnnamedProjectSettings.h"
 #include "Engine/SkeletalMesh.h"
 #include "Rendering/SkeletalMeshRenderData.h"
 #include "UnnamedLog.h"
@@ -125,6 +130,34 @@ USkeletalMeshComponent* AFoundationPawn::MakeBodyComponent(USkeletalMesh* Mesh, 
     return nullptr;
 }
 
+UStaticMeshComponent* AFoundationPawn::MakeBodyTool(USkeletalMeshComponent* Body, FName Name)
+{
+    auto* Mesh = Cast<UStaticMesh>(
+        FoundationBodyClip::GetAssetPath(EFoundationBodySet::UnnamedPlayer, TEXT("SM_UP_Pickaxe")).TryLoad());
+    if (!Body || !Mesh) return nullptr;
+    auto* Tool = NewObject<UStaticMeshComponent>(this, Name);
+    Tool->SetupAttachment(Body, FoundationBodyGrip::GetGripSocket());
+    Tool->SetStaticMesh(Mesh);
+    Tool->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Tool->SetGenerateOverlapEvents(false);
+    Tool->SetHiddenInGame(true);
+    Tool->RegisterComponent();
+    // Flat colours on the dev grid material, its lines off (the tool's two sections: handle, head; provisional until
+    // the tool has a texture).
+    if (UMaterialInterface* Grid = UUnnamedProjectSettings::Get().DevGridMaterial.LoadSynchronous())
+        for (int32 Slot = 0; Slot < Tool->GetNumMaterials(); ++Slot)
+        {
+            UMaterialInstanceDynamic* Flat = UMaterialInstanceDynamic::Create(Grid, Tool);
+            for (const TCHAR* Line : {TEXT("SeamOpacity"), TEXT("LabelOpacity"), TEXT("CrossOpacity"),
+                     TEXT("MajorLineOpacity"), TEXT("AxisLines"), TEXT("TileVariation"), TEXT("ClearCoat")})
+                Flat->SetScalarParameterValue(Line, 0);
+            Flat->SetVectorParameterValue(TEXT("Color"),
+                Slot == 0 ? FoundationBodyGrip::GetHandleColor() : FoundationBodyGrip::GetHeadColor(NAME_None));
+            Tool->SetMaterial(Slot, Flat);
+        }
+    return Tool;
+}
+
 void AFoundationPawn::CreateBody()
 {
     RequestedBodySet = GetRequestedBodySet();
@@ -163,6 +196,19 @@ void AFoundationPawn::CreateBody()
                         UE_LOG(LogUnnamedFoundation, Warning,
                             TEXT("Player body: no %s section to hide in first person"), *BodyHeadMaterial.ToString());
                 }
+                // The tool in each body's hand; the copy's is owner-only and shadowless like the copy.
+                BodyTool = MakeBodyTool(BodyMesh, TEXT("BodyTool"));
+                FirstPersonBodyTool = MakeBodyTool(FirstPersonBodyMesh, TEXT("FirstPersonBodyTool"));
+                if (UStaticMeshComponent* Tool = FirstPersonBodyTool)
+                {
+                    Tool->SetOnlyOwnerSee(true);
+                    Tool->SetCastShadow(false);
+                    Tool->SetVisibleInRayTracing(false);
+                    Tool->bVisibleInReflectionCaptures = false;
+                    Tool->bVisibleInRealTimeSkyCaptures = false;
+                    Tool->SetHiddenInSceneCapture(true);
+                }
+                BodyToolItem = NAME_None;
             }
             break;
         }
@@ -175,13 +221,19 @@ void AFoundationPawn::CreateBody()
 
 void AFoundationPawn::DestroyBody()
 {
+    for (TObjectPtr<UStaticMeshComponent>* Tool : {&BodyTool, &FirstPersonBodyTool})
+        if (*Tool)
+        {
+            (*Tool)->DestroyComponent();
+            *Tool = nullptr;
+        }
     for (TObjectPtr<USkeletalMeshComponent>* Mesh : {&BodyMesh, &FirstPersonBodyMesh})
         if (*Mesh)
         {
             (*Mesh)->DestroyComponent();
             *Mesh = nullptr;
         }
-    bBodyOwnerHidden = false;
+    bBodyOwnerHidden = bMainItemInBody = false;
 }
 
 void AFoundationPawn::ResetBody()
@@ -191,6 +243,9 @@ void AFoundationPawn::ResetBody()
         BodyAnimator.SetLengths(Anim->GetClipLengths());
     BodyTurn.Reset(GetControlRotation().Yaw);
     BodyJumps = 0;
+    // A respawn or reset clears the strike in flight; the hold follows the item from the next frame.
+    BodyAction.Reset();
+    BodyAction.StrikeLength = BodyAnimator.Lengths[FoundationBodyClip::StrikeA];
 }
 
 bool AFoundationPawn::IsBodyShown() const
@@ -234,6 +289,30 @@ void AFoundationPawn::UpdateBody(
     Frame.Jumps = BodyJumps;
     BodyJumps = 0;
     BodyAnimator.Advance(Seconds, Frame);
+    // The upper body's action (the Unnamed Player): a body-held item in the main hand, and its strike on the swing
+    // clock from the interaction's presses and steps, at this frame's alpha.
+    FName Item = NAME_None;
+    if (const FFoundationAuthority* Authority = GetAuthority())
+        if (const FFoundationPlayer* Player = Authority->FindPlayer(Interaction.PlayerId))
+        {
+            const FFoundationItemInstance& Main = Player->Inventory.GetHand(EFoundationHand::Main);
+            if (!Main.IsEmpty()) Item = Authority->Rules.GetItem(Main.Item).Id;
+        }
+    const bool bHolding = BodySet == EFoundationBodySet::UnnamedPlayer && BodyTool &&
+        FoundationBodyGrip::IsBodyHeld(Item) && !Vitals.IsDead();
+    if (BodySet == EFoundationBodySet::UnnamedPlayer)
+    {
+        FFoundationBodyActionFrame Action;
+        Action.bHolding = bHolding;
+        Action.PressSerial = Interaction.PressSerial;
+        Action.Step = Interaction.Step;
+        Action.Alpha = Alpha;
+        Action.bRepeating = Interaction.bAttackHeld && (Interaction.bMining || Interaction.MiningDelay > 0);
+        Action.ViewPitchDeg = FRotator::NormalizeAxis(Control.Pitch);
+        Action.ViewYawOffsetDeg = FMath::FindDeltaAngleDegrees(Frame.BodyYaw, Control.Yaw);
+        BodyAction.Advance(Seconds, Action);
+        BodyAction.Write(BodyAnimator.Pose);
+    }
     // The mesh faces +Y; its origin is the feet.
     const FTransform Placement(
         FRotator(0, Frame.BodyYaw - 90, 0), FMath::Lerp(Simulation.PreviousFeet, Simulation.Feet, Alpha));
@@ -275,10 +354,35 @@ void AFoundationPawn::UpdateBody(
     if (bOwnerHidden != bBodyOwnerHidden)
     {
         bBodyOwnerHidden = bOwnerHidden;
-        BodyMesh->SetFirstPersonPrimitiveType(
-            bOwnerHidden ? EFirstPersonPrimitiveType::WorldSpaceRepresentation : EFirstPersonPrimitiveType::None);
+        const EFirstPersonPrimitiveType Type =
+            bOwnerHidden ? EFirstPersonPrimitiveType::WorldSpaceRepresentation : EFirstPersonPrimitiveType::None;
+        BodyMesh->SetFirstPersonPrimitiveType(Type);
+        if (BodyTool) BodyTool->SetFirstPersonPrimitiveType(Type);
     }
     ShowBody(BodyMesh, bWorldShown, bBody);
-    if (FirstPersonBodyMesh)
-        ShowBody(FirstPersonBodyMesh, bBody && bFirstPerson && Perspective == 0 && !Vitals.IsDead(), bBody);
+    const bool bCopyShown = FirstPersonBodyMesh && bBody && bFirstPerson && Perspective == 0 && !Vitals.IsDead();
+    if (FirstPersonBodyMesh) ShowBody(FirstPersonBodyMesh, bCopyShown, bBody);
+
+    // The tool follows its body: the world one as the world body (the owner's shadow in first person), the copy's
+    // with the copy; the head tinted for the item. While the owner sees it in the body's hand the view hides its
+    // camera copy (no item is drawn twice).
+    if (bHolding && Item != BodyToolItem)
+    {
+        BodyToolItem = Item;
+        for (UStaticMeshComponent* Tool : {BodyTool.Get(), FirstPersonBodyTool.Get()})
+            if (auto* Head = Tool && Tool->GetNumMaterials() > 1 ? Cast<UMaterialInstanceDynamic>(Tool->GetMaterial(1))
+                                                                 : nullptr)
+                Head->SetVectorParameterValue(TEXT("Color"), FoundationBodyGrip::GetHeadColor(Item));
+    }
+    if (BodyTool)
+    {
+        const bool bShowTool = bHolding && bWorldShown;
+        if (BodyTool->bHiddenInGame == bShowTool) BodyTool->SetHiddenInGame(!bShowTool);
+    }
+    if (FirstPersonBodyTool)
+    {
+        const bool bShowTool = bHolding && bCopyShown;
+        if (FirstPersonBodyTool->bHiddenInGame == bShowTool) FirstPersonBodyTool->SetHiddenInGame(!bShowTool);
+    }
+    bMainItemInBody = bHolding && (Perspective == 0 ? bCopyShown : bWorldShown && !bOwnerHidden);
 }

@@ -73,4 +73,14 @@ namespace FoundationBodyPose
     // Applies the corrections to Local (parent-relative transforms, parents before children) in place.
     UNNAMED_API FFoundationFirstPersonResult Apply(TArrayView<FTransform> Local, TConstArrayView<int32> Parents,
         const FBones& Bones, const FFoundationFirstPersonView& View, const FFoundationFirstPersonTuning& Tuning);
+
+    // The action layer over the base pose (PLAN 5's mask): each bone toward Action by its weight, in component space
+    // where MeshSpace says so (the spine: the upper body takes the action's orientation, not the gait's lean), else
+    // parent-relative. Local and Action are parent-relative, parents before children.
+    UNNAMED_API void BlendUpperBody(TArrayView<FTransform> Local, TConstArrayView<FTransform> Action,
+        TConstArrayView<int32> Parents, TConstArrayView<float> Weights, TConstArrayView<bool> MeshSpace);
+    // The chest's aim: Chest turned in component space (about its own head) by PitchDeg about the body's lateral axis
+    // (+ up) and then YawDeg about the vertical (+ toward the body's right, as the view's yaw).
+    UNNAMED_API void ApplyAim(
+        TArrayView<FTransform> Local, TConstArrayView<int32> Parents, int32 Chest, double PitchDeg, double YawDeg);
 }

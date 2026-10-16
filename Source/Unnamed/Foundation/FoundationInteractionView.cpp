@@ -1200,7 +1200,9 @@ void UFoundationInteractionView::UpdateHeldItem(
                 Material->SetScalarParameterValue(TEXT("LightGlow"), LightGlow);
             }
     }
-    HeldItem->SetVisibility(bShow && HeldItem->GetStaticMesh() != nullptr);
+    // An item the body holds in its real hand (the Unnamed Player's pickaxe, FoundationBodyGrip) is not drawn again
+    // on the camera.
+    HeldItem->SetVisibility(bShow && HeldItem->GetStaticMesh() != nullptr && !Pawn->IsMainItemInBody());
     HandPivot->SetVisibility(bShow, false);
     OffItem->SetVisibility(bShow && OffItem->GetStaticMesh() != nullptr);
     OffPivot->SetVisibility(bShow, false);

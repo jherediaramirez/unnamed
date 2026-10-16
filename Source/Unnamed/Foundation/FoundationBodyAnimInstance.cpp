@@ -49,29 +49,80 @@ namespace
         return true;
     }
 
+    // A compact pose as a parent-ordered bone array (FoundationBodyPose's form), and its bones by name.
+    struct FBoneArrays
+    {
+        explicit FBoneArrays(const FCompactPose& Pose) : Container(Pose.GetBoneContainer())
+        {
+            const int32 Count = Container.GetCompactPoseNumBones();
+            Local.SetNum(Count);
+            Parents.SetNum(Count);
+            for (int32 Index = 0; Index < Count; ++Index)
+            {
+                const FCompactPoseBoneIndex Bone(Index);
+                Local[Index] = Pose[Bone];
+                Parents[Index] = Container.GetParentBoneIndex(Bone).GetInt();
+            }
+        }
+        int32 Find(const TCHAR* Name) const
+        {
+            const int32 MeshIndex = Container.GetPoseBoneIndexForBoneName(FName(Name));
+            return MeshIndex == INDEX_NONE ? INDEX_NONE
+                                           : Container.MakeCompactPoseIndex(FMeshPoseBoneIndex(MeshIndex)).GetInt();
+        }
+        void WriteTo(FCompactPose& Pose) const
+        {
+            for (int32 Index = 0; Index < Local.Num(); ++Index)
+                Pose[FCompactPoseBoneIndex(Index)] = Local[Index];
+        }
+        const FBoneContainer& Container;
+        TArray<FTransform, TInlineAllocator<32>> Local;
+        TArray<int32, TInlineAllocator<32>> Parents;
+    };
+
+    // PLAN 5's action mask: spine_01 half and spine_02 whole in component space, the neck, head, clavicles, arms and
+    // hands whole; the pelvis and legs keep the gait.
+    void BlendActionLayer(FCompactPose& Pose, const FCompactPose& Action, float Weight)
+    {
+        FBoneArrays Bones(Pose);
+        const FBoneArrays Acting(Action);
+        TArray<float, TInlineAllocator<32>> Weights;
+        TArray<bool, TInlineAllocator<32>> MeshSpace;
+        Weights.Init(0.f, Bones.Local.Num());
+        MeshSpace.Init(false, Bones.Local.Num());
+        auto Mask = [&](const TCHAR* Name, float Share, bool bMeshSpace)
+        {
+            const int32 Bone = Bones.Find(Name);
+            if (Bone == INDEX_NONE) return;
+            Weights[Bone] = Share * Weight;
+            MeshSpace[Bone] = bMeshSpace;
+        };
+        Mask(TEXT("spine_01"), .5f, true);
+        Mask(TEXT("spine_02"), 1, true);
+        for (const TCHAR* Name :
+            {TEXT("neck_01"), TEXT("head"), TEXT("clavicle_l"), TEXT("upperarm_l"), TEXT("lowerarm_l"), TEXT("hand_l"),
+                TEXT("clavicle_r"), TEXT("upperarm_r"), TEXT("lowerarm_r"), TEXT("hand_r")})
+            Mask(Name, 1, false);
+        FoundationBodyPose::BlendUpperBody(Bones.Local, Acting.Local, Bones.Parents, Weights, MeshSpace);
+        Bones.WriteTo(Pose);
+    }
+
+    void ApplyChestAim(FCompactPose& Pose, double PitchDeg, double YawDeg)
+    {
+        FBoneArrays Bones(Pose);
+        FoundationBodyPose::ApplyAim(Bones.Local, Bones.Parents, Bones.Find(TEXT("spine_02")), PitchDeg, YawDeg);
+        Bones.WriteTo(Pose);
+    }
+
     // The first-person corrections on a compact pose: its bones as a parent-ordered array, FoundationBodyPose::Apply,
     // then back.
     FFoundationFirstPersonResult ApplyFirstPerson(
         FCompactPose& Pose, const FFoundationFirstPersonView& View, const FFoundationFirstPersonTuning& Tuning)
     {
-        const FBoneContainer& Container = Pose.GetBoneContainer();
-        const int32 Count = Container.GetCompactPoseNumBones();
-        TArray<FTransform, TInlineAllocator<32>> Local;
-        TArray<int32, TInlineAllocator<32>> Parents;
-        Local.SetNum(Count);
-        Parents.SetNum(Count);
-        for (int32 Index = 0; Index < Count; ++Index)
-        {
-            const FCompactPoseBoneIndex Bone(Index);
-            Local[Index] = Pose[Bone];
-            Parents[Index] = Container.GetParentBoneIndex(Bone).GetInt();
-        }
-        auto Find = [&Container](const TCHAR* Name)
-        {
-            const int32 MeshIndex = Container.GetPoseBoneIndexForBoneName(FName(Name));
-            return MeshIndex == INDEX_NONE ? INDEX_NONE
-                                           : Container.MakeCompactPoseIndex(FMeshPoseBoneIndex(MeshIndex)).GetInt();
-        };
+        FBoneArrays Arrays(Pose);
+        TArray<FTransform, TInlineAllocator<32>>& Local = Arrays.Local;
+        const TArray<int32, TInlineAllocator<32>>& Parents = Arrays.Parents;
+        auto Find = [&Arrays](const TCHAR* Name) { return Arrays.Find(Name); };
         FoundationBodyPose::FBones Bones;
         Bones.Pelvis = Find(TEXT("pelvis"));
         Bones.Spine[0] = Find(TEXT("spine_01"));
@@ -85,8 +136,7 @@ namespace
             Bones.Foot[Side] = Find(*(FString(TEXT("foot_")) + Sides[Side]));
         }
         const FFoundationFirstPersonResult Result = FoundationBodyPose::Apply(Local, Parents, Bones, View, Tuning);
-        for (int32 Index = 0; Index < Count; ++Index)
-            Pose[FCompactPoseBoneIndex(Index)] = Local[Index];
+        Arrays.WriteTo(Pose);
         return Result;
     }
 }
@@ -115,21 +165,45 @@ struct FFoundationBodyAnimProxy : public FAnimInstanceProxy
         Output.ResetToRefPose();
         if (SampleBodyLayers(Pose.Base, Clips, Output.Pose, Output.Curve, Output.CustomAttributes))
         {
+            // The upper body's action (the pickaxe hold and strikes) over the gait.
+            const float Action = Pose.ActionWeight;
+            if (Action > 0)
+            {
+                FPoseContext Acting(this);
+                Acting.ResetToRefPose();
+                if (SampleBodyLayers(Pose.Action, Clips, Acting.Pose, Acting.Curve, Acting.CustomAttributes))
+                    BlendActionLayer(Output.Pose, Acting.Pose, Action);
+            }
             if (bFirstPerson)
-                // The first-person copy: no head look (the head is hidden; its pitch would bend the spine), the
-                // corrections instead.
+            {
+                // The first-person copy: no head look (the head is hidden; its pitch would bend the spine); the aim,
+                // then the corrections.
+                ApplyChestAim(Output.Pose, Pose.AimPitchDeg * Action, Pose.AimYawDeg * Action);
                 Result = ApplyFirstPerson(Output.Pose, View, Tuning);
+            }
             else
             {
                 FPoseContext Look(this, true);
                 Look.ResetToAdditiveIdentity();
                 if (SampleBodyLayers(Pose.Look, Clips, Look.Pose, Look.Curve, Look.CustomAttributes))
                 {
+                    // During an action the aim, not the look, turns the spine (PLAN 5: the two never stack).
+                    if (Action > 0)
+                        for (const TCHAR* Name : {TEXT("spine_01"), TEXT("spine_02")})
+                        {
+                            const int32 MeshIndex =
+                                Look.Pose.GetBoneContainer().GetPoseBoneIndexForBoneName(FName(Name));
+                            if (MeshIndex == INDEX_NONE) continue;
+                            FTransform& Bone = Look.Pose[Look.Pose.GetBoneContainer().MakeCompactPoseIndex(
+                                FMeshPoseBoneIndex(MeshIndex))];
+                            Bone.SetRotation(FQuat::Slerp(FQuat::Identity, Bone.GetRotation(), 1 - Action));
+                        }
                     FAnimationPoseData Base(Output);
                     const FAnimationPoseData Additive(Look);
                     FAnimationRuntime::AccumulateMeshSpaceRotationAdditiveToLocalPose(Base, Additive, 1.f);
                     Output.Pose.NormalizeRotations();
                 }
+                ApplyChestAim(Output.Pose, Pose.AimPitchDeg * Action, Pose.AimYawDeg * Action);
             }
         }
         const int32 Mode = bFirstPerson ? 1 : 0;

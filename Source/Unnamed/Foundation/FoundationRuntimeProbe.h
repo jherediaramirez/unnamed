@@ -91,6 +91,9 @@ private:
     // -FoundationBodySweep (with -FoundationSuite=body): only the crouched first-person corrections over a grid of
     // their settings, with a table and shots (FoundationBodyFirstPersonProbe.cpp).
     void AddFirstPersonBodySweep();
+    // M1b in the body suite: the pickaxe in the real hand and StrikeA on the swing clock
+    // (FoundationBodyStrikeProbe.cpp).
+    void AddStrikeBodyCases();
     // -FoundationSuite=mobs: a summoned cow walking, hit and dying into its drops, and the foundation.Mobs control
     // pair, with shots (FoundationMobsProbe.cpp).
     void AddMobCases();
