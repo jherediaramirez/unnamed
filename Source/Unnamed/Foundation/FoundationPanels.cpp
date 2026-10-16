@@ -444,6 +444,8 @@ void UFoundationPanels::OpenText(bool bCommand)
             .SetBackgroundImageReadOnly(FSlateNoResource());
     // The box, for the change handler (assigned below).
     const TSharedRef<TWeakPtr<SEditableTextBox>> EditRef = MakeShared<TWeakPtr<SEditableTextBox>>();
+    // The last text within the limit, to fit an insertion against.
+    const TSharedRef<FString> Accepted = MakeShared<FString>(bCommand ? TEXT("/") : TEXT(""));
     // clang-format off
     const TSharedRef<SVerticalBox> List = SNew(SVerticalBox);
     List->AddSlot().AutoHeight()[Label(TEXT("Local chat/command fixture — Enter records text, Escape cancels"))];
@@ -452,13 +454,30 @@ void UFoundationPanels::OpenText(bool bCommand)
         SAssignNew(Edit, SEditableTextBox).MinDesiredWidth(600)
             .Style(bChat ? &ChatStyle : &FCoreStyle::Get().GetWidgetStyle<FEditableTextBoxStyle>("NormalEditableTextBox"))
             .Text(FText::FromString(bCommand ? TEXT("/") : TEXT("")))
-            // [survival.r4.open_fields] the chat line takes 256 characters (switch 1).
-            .OnTextChanged_Lambda([bChat, EditRef](const FText& Text)
+            // [survival.r4.open_fields] the chat line takes 256 characters (switch 1). Like vanilla's edit box, an
+            // insertion keeps only what fits and the rest of the line stays (QC R24-2: it used to cut the line's end).
+            .OnTextChanged_Lambda([bChat, EditRef, Accepted](const FText& Text)
             {
+                constexpr int32 MaxChat = 256;
                 const TSharedPtr<SEditableTextBox> Box = EditRef->Pin();
-                if (!bChat || !Box || Text.ToString().Len() <= 256) return;
-                Box->SetText(FText::FromString(Text.ToString().Left(256)));
-                Box->GoTo(ETextLocation::EndOfDocument);
+                const FString New = Text.ToString();
+                if (!bChat || !Box || New.Len() <= MaxChat)
+                {
+                    *Accepted = New;
+                    return;
+                }
+                const FString& Old = *Accepted;
+                int32 Prefix = 0;
+                while (Prefix < Old.Len() && Prefix < New.Len() && Old[Prefix] == New[Prefix]) ++Prefix;
+                int32 Suffix = 0;
+                while (Suffix < Old.Len() - Prefix && Suffix < New.Len() - Prefix &&
+                    Old[Old.Len() - 1 - Suffix] == New[New.Len() - 1 - Suffix])
+                    ++Suffix;
+                const FString Inserted = New.Mid(Prefix, New.Len() - Prefix - Suffix);
+                const FString Fit = Inserted.Left(FMath::Max(0, MaxChat - Prefix - Suffix));
+                *Accepted = Old.Left(Prefix) + Fit + Old.Right(Suffix);
+                Box->SetText(FText::FromString(*Accepted));
+                Box->GoTo(FTextLocation(0, Prefix + Fit.Len()));
             })
             .OnCursorMovedWithSelection_Lambda([WeakThis](const FTextLocation& Location, const FTextSelection&)
             {

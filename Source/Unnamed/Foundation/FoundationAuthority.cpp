@@ -1287,9 +1287,11 @@ void FFoundationAuthority::StepArrows()
             {
                 bool bTaken = false;
                 const FBox Body(From - FVector(HalfSizeCm), From + FVector(HalfSizeCm));
+                // The shake counts this step: the first pickup is the 7th step after the hit.
+                const bool bShaking = Arrow.InGroundTicks + 1 < ShakeTicks;
                 for (FFoundationPlayer& Player : Players)
                 {
-                    if (bTaken || !Player.bHasFacts || !Player.Facts.bAlive ||
+                    if (bTaken || bShaking || !Player.bHasFacts || !Player.Facts.bAlive ||
                         Player.Facts.Mode == EFoundationPlayerMode::Spectator ||
                         !FoundationItemEntities::GetPickupBox(Player.Facts.GetBody()).Intersect(Body))
                         continue;
@@ -2466,6 +2468,9 @@ bool FFoundationAuthority::FindMonsterCell(EFoundationMobType Type, const FIntVe
     if (Floor.bAvoid || !FMath::IsNearlyEqual(Floor.Solid, 1.f, 1e-3f)) return false;
     static const FGameplayTag Leaves = FGameplayTag::RequestGameplayTag(TEXT("Block.Leaves"), false);
     if (Leaves.IsValid() && World.GetBlock(World.Get(Below).State).Tags.HasTag(Leaves)) return false;
+    // QC K-MOB-9: nor glass (#minecraft:impermeable: glass, stained and tinted glass, barrier; isValidSpawn never).
+    static const FGameplayTag Impermeable = FGameplayTag::RequestGameplayTag(TEXT("Block.Impermeable"), false);
+    if (Impermeable.IsValid() && World.GetBlock(World.Get(Below).State).Tags.HasTag(Impermeable)) return false;
     if (!HasMobRoom(Type, Feet)) return false;
     // The sky draw first: the block light is the costly part.
     const bool bSky = IsSkyVisible(Feet);
@@ -3403,12 +3408,18 @@ bool FFoundationAuthority::UseCauldron(FFoundationPlayer& Player, const FFoundat
     }
     else
     {
-        After = Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
+        // QC R44-2 (MC-203748, fixed 24w33a): a lava bucket on a cauldron under water is consumed with no change; the
+        // bucket is kept and nothing is placed.
+        const FIntVector Above = Hit.Cell + FoundationGrid::FaceOffset(EFoundationFace::Up);
+        if (Id == LavaBucketId && World.IsKnown(Above) && Registry.GetFluid(World.Get(Above).State).bWater) return true;
+        After =
+            Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
         NewItem = Rules.FindItem(BucketId);
         if (NewItem == INDEX_NONE) return false;
     }
     if (After != Before) World.Set(Hit.Cell, After);
-    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is held.
+    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is
+    // held.
     if (bTake || !bCreative) SwapBucket(Player, Command.Hand, Stack, NewItem, Hit.Cell, bCreative);
     ++BucketUses;
     Result.Outcome = EFoundationOutcome::Committed;
@@ -3806,7 +3817,9 @@ void FFoundationAuthority::UseEntity(
     {
         // Training targets have no use interaction; the caller tries the item and the other hand. Mobs (20e1): the
         // hand's shears, dye or bucket (FoundationMobFarm.cpp).
+        // A spectator uses no item on a mob (QC R47-1), as UseOn refuses one on a block.
         Result.Outcome = EFoundationOutcome::Pass;
+        if (Mode == EFoundationPlayerMode::Spectator) return;
         if (FFoundationMob* Mob = Options.bMobs && Options.bMobFarm ? FindMob(Hit.EntityId) : nullptr)
             UseOnMob(Player, Command, *Mob, Mode, Result);
     }

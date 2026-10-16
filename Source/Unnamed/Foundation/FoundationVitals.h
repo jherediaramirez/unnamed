@@ -114,6 +114,8 @@ struct UNNAMED_API FFoundationVitals
     int32 LavaHurts = 0, BurnHurts = 0, Extinguishes = 0;
     // Fire block (in_fire) hits taken (step 16c).
     int32 FireBlockHurts = 0;
+    // Drowning hits taken; the view plays entity.player.hurt_drown for them (QC R24-4).
+    int32 DrownHurts = 0;
     // The last death (step 11a), kept across respawn: its message as vanilla's chat and death screen show it, the
     // en_us.json key it came from, and the death screen's score (the experience points held at death).
     FString LastDamage = TEXT("none"), DeathMessage, DeathKey;

@@ -263,7 +263,9 @@ namespace FoundationMobs
     // [survival.r5.play_calls] steps play at pitch 1 (F 3582); ambient, hurt and death at GetSoundPitch.
     constexpr float StepPitch = 1;
     constexpr int32 AmbientMinTicks = 80, AmbientRandomTicks = 120;
-    constexpr double StepSoundCm = 100;
+    // QC K-MOB-4: vanilla's Entity.move adds 0.6 x the horizontal distance to moveDist and steps at each whole 1, so a
+    // step every 1 / 0.6 blocks (about 167 cm), not every block.
+    constexpr double StepSoundCm = 100 / .6;
 
     // Passive spawning (survival T6 20b2). Chunk generation [minecraft.wiki "Mob spawning"; the biome's
     // creature_world_gen_spawn_probability, data]: when a column is first seen loaded, one creature pack with the

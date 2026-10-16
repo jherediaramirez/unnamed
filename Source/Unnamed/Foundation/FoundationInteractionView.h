@@ -364,7 +364,8 @@ private:
     TWeakObjectPtr<AFoundationPawn> HeldOwner;
     // The fire counters last heard, and whose.
     TWeakObjectPtr<const AFoundationPawn> FireSoundOwner;
-    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardFireBlockHurts = 0, HeardExtinguishes = 0, HeardDamageEvents = 0, HeardDeaths = 0;
+    int32 HeardLavaHurts = 0, HeardBurnHurts = 0, HeardFireBlockHurts = 0, HeardDrownHurts = 0, HeardExtinguishes = 0,
+          HeardDamageEvents = 0, HeardDeaths = 0;
     TWeakObjectPtr<const AFoundationPawn> FootstepOwner;
     int32 HeardFootsteps = 0;
     // Seconds not yet spent on the furnaces' 20 Hz display ticks.

@@ -475,7 +475,11 @@ bool FFoundationArrowPickupTest::RunTest(const FString&)
         L.NextStep();
         if (!TestEqual(*(Label + TEXT(": one arrow stuck")), L.A.GetArrows().Num(), 1)) continue;
         TestTrue(*(Label + TEXT(": in the ground")), L.A.GetArrows()[0].bInGround);
-        L.NextStep();
+        // QC R40-5: it shakes for 7 steps first (vanilla's shakeTime); the 7th step after the hit takes it.
+        for (int32 Step = 1; Step < FoundationArrows::ShakeTicks; ++Step)
+            L.NextStep();
+        TestEqual(*(Label + TEXT(": not taken while shaking")), L.A.GetArrows().Num(), 1);
+        TestEqual(*(Label + TEXT(": no arrow while shaking")), L.CountArrows(), 0);
         L.NextStep();
         TestEqual(*(Label + TEXT(": arrow entity removed")), L.A.GetArrows().Num(), Case.bTaken ? 0 : 1);
         TestEqual(*(Label + TEXT(": inventory arrows")), L.CountArrows(), Case.ArrowsAfter);

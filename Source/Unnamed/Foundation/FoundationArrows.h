@@ -82,6 +82,8 @@ namespace FoundationArrows
     constexpr double HalfSizeCm = 25;
     // A stuck arrow despawns 1,200 ticks after it stuck (survival2.r18.arrow_rule).
     constexpr int32 DespawnTicks = 1200;
+    // A stuck arrow shakes for 7 steps (vanilla's shakeTime) and cannot be picked up until it stops (QC R40-5).
+    constexpr int32 ShakeTicks = 7;
     // Its shooter is safe from it for this many steps (minecraft.wiki "Arrow"; provisional, R24).
     constexpr int32 OwnerGraceTicks = 5;
     // Entity boxes grow by this much for the hit test (minecraft.wiki "Arrow"; provisional).

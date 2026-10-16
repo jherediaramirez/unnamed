@@ -11,6 +11,27 @@
 
 Evidence is in `Tests\Evidence\2026-10-16\` (`Checks-final-20261016-141746`, `Checks-final-20261016-143002`, `Minecraft-26.3-fixes\`). The radius-8 hash step failed on the first run only because `RunChecks.ps1` didn't quote the project path, which now contains a space (fixed in 0c8d9a74).
 
+## 2026-10-16 evening: 12 low fixes for an editor check (branch `fix/qc-low-editor-12`, merged into `feature/survival`)
+
+Jesus asked for the low-severity bugs that are quick to fix and that he can check himself in the editor. Twelve were fixed on `fix/qc-low-editor-12` (from `feature/survival` at 48e5d18d). Build GREEN; native `Unnamed.Foundation` 313/313 and `Unnamed.Hud`+`Unnamed.Vitals`+`Unnamed.Mobs` 38/38 (logs under `%TEMP%\claude\qc12-*.log`). The full RunChecks gate was not run, and nothing is merged. Each fix waits on Jesus's editor check.
+
+| ID | Fix | Source of the value |
+|---|---|---|
+| R24-4 | Drowning hits play `entity.player.hurt_drown` (a drown-hit counter in vitals) | 26.3 `damage_type/drown.json` |
+| RAX-3 | A breaking tool plays `entity.item.break` at volume 0.8, pitch 0.8-1.2 | vanilla `LivingEntity.breakItem` (provisional, not measured) |
+| RA3-6 | `entity.player.hurt_on_fire` plays at pitch 1 | `survival2.r23.fire_sounds` (run 2 measured 1.0) |
+| R37-1 | A chest opens under glowstone, redstone block, observer, soul sand and mud | wiki "Conductivity"; Chest.Blocked test adds glowstone |
+| R47-1 | A spectator uses no item on a mob (no dye, milk or shears) | as `UseOn` for blocks |
+| R44-2 | A lava bucket on a cauldron with water above does nothing | MC-203748 (fixed 24w33a) |
+| RA2-7 | XP orb billboard centre 17.5 cm up (was 10) | `survival2.r23.xp_quad` (edges 0.025 and 0.325) |
+| R40-5 | A stuck arrow can be picked up from the 7th step after it hits | vanilla `shakeTime` 7; Arrows.Pickup test checks the shake |
+| R43-1 | Furnace particles hold still while paused | wiki (Esc pauses) |
+| K-MOB-4 | Mob footsteps every 1/0.6 blocks (about 167 cm), not every block | vanilla `Entity.move` moveDist x 0.6 |
+| R24-2 | A full 256-character chat line keeps its text; an insertion keeps only what fits | `survival.r4.open_fields`; vanilla edit box |
+| K-MOB-9 | Monsters do not spawn on glass, stained or tinted glass, or barrier (`Block.Impermeable`) | vanilla `isValidSpawn(never)` |
+
+Totals with these: 28 landed + 12 fixed on the branch, 1 scope closure, 115 remaining (97 bug/probe rows, 18 deferred/post-QC).
+
 Before this update, everything was stopped at `eb52cea7` (landing 54); see [reference/QC-STOP-2026-10-16.md](reference/QC-STOP-2026-10-16.md) for that snapshot.
 
 ## Reconciled totals
@@ -28,7 +49,7 @@ Before this update, everything was stopped at `eb52cea7` (landing 54); see [refe
 
 The original inventory audit was completed at 13:34 EDT on eb52cea7. Original discovery evidence and plausible `(P)` markers are retained; they are not labels for the quality of the later fix verification. Historical entries outside the main table are listed separately below. No new bug investigation or fix was started for this report.
 
-## 2026-10-16 evening: the dev seed's world starts in Creative (branch `fix/dev-world-mode-agreement`, not merged)
+## 2026-10-16 evening: the dev seed's world starts in Creative (4df5eab1 on `feature/survival`, pushed)
 
 New row K-WORLD-3 (low), found while setting up editor checks for `fix/qc-low-editor-12`: `L_Generated` opened plainly gave a Survival player (hearts, hunger) the creative lab rules (infinite supply, no tool wear, creative inventory), so `/gamemode survival` printed nothing and tool wear could not be checked there. Docs/VoxelWorld.md says the bare map plays by the Playground's lab defaults (infinite supply), so the player's mode now follows them: `AVoxelWorld::GetStartMode` gives Creative for the bare map (Survival with `bInfiniteSupplyDefault` off), and both `ConfigurePlayer` and the lab rules (`ApplyStartRules`) read it. Saved worlds are unchanged. To check tool wear in the dev world: `/gamemode survival` now switches mode and rules together. Native test `Unnamed.Foundation.Commands.StartMode` pins the agreement (dev seed, Creative, Survival and Hardcore worlds, and `/gamemode survival` from the dev start). Build GREEN; native `Unnamed.Foundation` 314/314. RED: with the old `ConfigurePlayer` (no mode for the bare map) the test fails on "dev seed: the player's mode". Human check: open L_Generated plainly; no hearts or hunger, ∞ on stacks; `/gamemode survival` prints "Set own game mode to Survival Mode".
 
