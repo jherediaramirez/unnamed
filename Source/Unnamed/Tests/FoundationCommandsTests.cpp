@@ -58,6 +58,17 @@ namespace CommandsTestsLocal
             return FoundationCommands::Run(Line, Context);
         }
 
+        // The suggestions for Line typed with the caret at its end.
+        FoundationCommands::FSuggestions Suggest(const FString& Line)
+        {
+            FFoundationCommandContext Context;
+            Context.Authority = &A;
+            Context.PlayerId = Player;
+            Context.Vitals = &Vitals;
+            Context.bCommands = bCommands;
+            return FoundationCommands::Suggest(Line, Line.Len(), Context);
+        }
+
         // The lines' text, one per line.
         FString Run(const FString& Line)
         {
@@ -234,6 +245,55 @@ bool FFoundationCommandsCheatsOffTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("time refused"), Lab.Run(TEXT("/time set night")),
         FString(UnknownCommand) + TEXT("\ntime set night<--[HERE]"));
     TestEqual(TEXT("clock unchanged"), Lab.Clock.GetDayClock().TotalTicks, int64(0));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationCommandsSuggestTest, "Unnamed.Foundation.Commands.Suggest",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationCommandsSuggestTest::RunTest(const FString& Parameters)
+{
+    // Vanilla's CommandSuggestions: the candidates for the word at the caret, sorted ignoring case, replacing from
+    // that word's start; with none, the usage still to come. Catches a wrong start, filter, order or argument.
+    FCommandLab Lab;
+    auto Items = [&Lab](const TCHAR* Line) { return FString::Join(Lab.Suggest(Line).Items, TEXT(",")); };
+    TestEqual(TEXT("/ lists every command"), Items(TEXT("/")), FString(TEXT("gamemode,give,kill,teleport,time,tp")));
+    TestEqual(TEXT("/t"), Items(TEXT("/t")), FString(TEXT("teleport,time,tp")));
+    TestEqual(TEXT("/t replaces from 1"), Lab.Suggest(TEXT("/t")).Start, 1);
+    TestEqual(TEXT("case ignored"), Items(TEXT("/TI")), FString(TEXT("time")));
+    TestEqual(TEXT("a full word still shows"), Items(TEXT("/give")), FString(TEXT("give")));
+    TestEqual(TEXT("unknown command: nothing"), Items(TEXT("/xyz ")), FString());
+    TestEqual(TEXT("give targets (players only)"), Items(TEXT("/give ")), FString(TEXT("@a,@p,@r,@s,Player")));
+    TestEqual(TEXT("give targets start"), Lab.Suggest(TEXT("/give ")).Start, 6);
+    TestEqual(TEXT("kill targets"), Items(TEXT("/kill @")), FString(TEXT("@a,@e,@n,@p,@r,@s")));
+    const FoundationCommands::FSuggestions Apple = Lab.Suggest(TEXT("/give @s app"));
+    TestTrue(TEXT("item by path"), Apple.Items.Contains(TEXT("minecraft:apple")));
+    TestEqual(TEXT("item start"), Apple.Start, 9);
+    TestTrue(
+        TEXT("item by full id"), Lab.Suggest(TEXT("/give @s minecraft:app")).Items.Contains(TEXT("minecraft:apple")));
+    const TArray<FString> Pick = Lab.Suggest(TEXT("/give @s pick")).Items;
+    TestTrue(TEXT("a '_' part matches"), Pick.Contains(TEXT("minecraft:iron_pickaxe")));
+    for (const FString& Item : Pick)
+        TestTrue(
+            TEXT("only a word start matches"), Item.StartsWith(TEXT("minecraft:pick")) || Item.Contains(TEXT("_pick")));
+    const FoundationCommands::FSuggestions Count = Lab.Suggest(TEXT("/give @s apple "));
+    TestEqual(TEXT("count: no candidates"), Count.Items.Num(), 0);
+    TestEqual(TEXT("count usage"), Count.Usage, FString(TEXT("[<count>]")));
+    TestEqual(TEXT("past the last argument"), Lab.Suggest(TEXT("/give @s apple 3 ")).Usage, FString());
+    TestEqual(TEXT("unmatched word: usage"), Lab.Suggest(TEXT("/give zz")).Usage,
+        FString(TEXT("<targets> <item> [<count>]")));
+    TestEqual(TEXT("gamemode"), Items(TEXT("/gamemode ")), FString(TEXT("creative,survival")));
+    TestEqual(TEXT("time verbs"), Items(TEXT("/time ")), FString(TEXT("add,pause,query,resume,set")));
+    TestEqual(TEXT("time set n"), Items(TEXT("/time set n")), FString(TEXT("night,noon")));
+    TestEqual(TEXT("time query"), Items(TEXT("/time query ")), FString(TEXT("day,gametime,time")));
+    TestEqual(TEXT("time add usage"), Lab.Suggest(TEXT("/time add ")).Usage, FString(TEXT("<time>")));
+    TestEqual(TEXT("tp first"), Items(TEXT("/tp ")), FString(TEXT("@a,@e,@n,@p,@r,@s,Player,~,~ ~,~ ~ ~")));
+    TestEqual(TEXT("tp second coordinate"), Items(TEXT("/tp ~ ")), FString(TEXT("~,~ ~")));
+    TestEqual(TEXT("tp after a target"), Items(TEXT("/tp @s ~ ~ ")), FString(TEXT("~")));
+    TestEqual(TEXT("tp complete"), Items(TEXT("/tp 1 2 3 ")), FString());
+    TestEqual(TEXT("plain chat: nothing"), Items(TEXT("hello")), FString());
+    Lab.bCommands = false;
+    TestEqual(TEXT("cheats off: nothing"), Items(TEXT("/")), FString());
+    TestEqual(TEXT("cheats off: no usage"), Lab.Suggest(TEXT("/give @s apple ")).Usage, FString());
     return true;
 }
 

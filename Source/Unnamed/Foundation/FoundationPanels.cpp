@@ -481,7 +481,24 @@ void UFoundationPanels::OpenText(bool bCommand)
             })
             .OnCursorMovedWithSelection_Lambda([WeakThis](const FTextLocation& Location, const FTextSelection&)
             {
-                if (WeakThis.IsValid()) WeakThis->TypedCaret = Location.GetOffset();
+                if (!WeakThis.IsValid()) return;
+                WeakThis->TypedCaret = Location.GetOffset();
+                WeakThis->UpdateSuggestions();
+            })
+            // Vanilla's suggestion keys: Tab and Shift+Tab put a candidate in and cycle, Up and Down move the
+            // selection. Tab never leaves the box.
+            .OnKeyDownHandler_Lambda([WeakThis, bChat](const FGeometry&, const FKeyEvent& Key)
+            {
+                if (!bChat || !WeakThis.IsValid()) return FReply::Unhandled();
+                if (Key.GetKey() == EKeys::Tab)
+                {
+                    WeakThis->CycleSuggestion(Key.IsShiftDown() ? -1 : 1, true);
+                    return FReply::Handled();
+                }
+                if (Key.GetKey() == EKeys::Up || Key.GetKey() == EKeys::Down)
+                    return WeakThis->CycleSuggestion(Key.GetKey() == EKeys::Up ? -1 : 1, false) ? FReply::Handled()
+                                                                                            : FReply::Unhandled();
+                return FReply::Unhandled();
             })
             .OnTextCommitted_Lambda([WeakThis](const FText& Text, ETextCommit::Type Type)
             {
@@ -503,6 +520,9 @@ void UFoundationPanels::OpenText(bool bCommand)
     // clang-format on
     *EditRef = Edit;
     TypedCaret = INDEX_NONE;
+    Suggestions = {};
+    SuggestionSelected = 0;
+    bSuggestionApplied = false;
     if (bChat)
     {
         // Vanilla's input bar is the HUD's (FHudSnapshot::ChatInput); the box only takes the keys, unseen.
@@ -517,6 +537,60 @@ void UFoundationPanels::OpenText(bool bCommand)
     FSlateApplication::Get().SetKeyboardFocus(Edit);
     // Typing goes after a prefilled "/", where the HUD draws its caret.
     Edit->GoTo(ETextLocation::EndOfDocument);
+    UpdateSuggestions();
+}
+
+void UFoundationPanels::UpdateSuggestions()
+{
+    const FString Line = GetTypedText();
+    const int32 Caret = GetTypedCaret();
+    if (bSuggestionApplied && Line.Equals(AppliedLine, ESearchCase::CaseSensitive) && Caret == AppliedEnd) return;
+    bSuggestionApplied = false;
+    SuggestionSelected = 0;
+    AFoundationController* Controller = GetFoundationController();
+    Suggestions = bTextOpen && Controller && FoundationChat::AreCommandsEnabled() ? Controller->SuggestChat(Line, Caret)
+                                                                                  : FoundationCommands::FSuggestions();
+}
+
+bool UFoundationPanels::CycleSuggestion(int32 Delta, bool bApply)
+{
+    const int32 Count = Suggestions.Items.Num();
+    if (Count == 0 || !TextBox) return false;
+    // The first Tab puts the selected one in; later ones (and the arrows after a Tab) move on first.
+    if (!bApply || bSuggestionApplied) SuggestionSelected = (SuggestionSelected + Delta + Count) % Count;
+    if (!bApply && !bSuggestionApplied) return true;
+    const FString Line = GetTypedText();
+    const int32 End = bSuggestionApplied ? AppliedEnd : GetTypedCaret();
+    const FString& Item = Suggestions.Items[SuggestionSelected];
+    AppliedLine = Line.Left(Suggestions.Start) + Item + Line.Mid(End);
+    AppliedEnd = Suggestions.Start + Item.Len();
+    bSuggestionApplied = true;
+    // The box reports the change and the caret (UpdateSuggestions), which keeps this list while the line is ours.
+    TextBox->SetText(FText::FromString(AppliedLine));
+    TextBox->GoTo(FTextLocation(0, AppliedEnd));
+    TypedCaret = AppliedEnd;
+    return true;
+}
+
+UFoundationPanels::FChatSuggestions UFoundationPanels::GetChatSuggestions() const
+{
+    FChatSuggestions Out;
+    if (!bTextOpen) return Out;
+    Out.Start = Suggestions.Start;
+    Out.Items = Suggestions.Items;
+    Out.Selected = SuggestionSelected;
+    Out.Usage = Suggestions.Usage;
+    // The selected candidate's rest after a caret at the end of what it would replace (EditBox.setSuggestion).
+    const FString Line = GetTypedText();
+    const int32 Caret = GetTypedCaret();
+    if (!bSuggestionApplied && Out.Items.IsValidIndex(Out.Selected) && Caret == Line.Len())
+    {
+        const FString Typed = Line.Mid(Out.Start, Caret - Out.Start);
+        const FString& Item = Out.Items[Out.Selected];
+        if (Item.Len() > Typed.Len() && Item.StartsWith(Typed, ESearchCase::IgnoreCase))
+            Out.Inline = Item.Mid(Typed.Len());
+    }
+    return Out;
 }
 
 FString UFoundationPanels::GetTypedText() const

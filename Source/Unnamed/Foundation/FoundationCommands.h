@@ -36,6 +36,19 @@ namespace FoundationCommands
     // vanilla's gray context line). A command that changes nothing (the mode already set) prints nothing, as vanilla.
     UNNAMED_API TArray<TArray<FHudChatRun>> Run(const FString& Line, FFoundationCommandContext& Context);
 
+    // What vanilla's chat offers while a command is typed (CommandSuggestions): the candidates for the word at the
+    // caret, which replace the line from Start to the caret, sorted as brigadier sorts them; with none, the usage of
+    // the arguments still to come ("[<count>]"), drawn from Start.
+    struct FSuggestions
+    {
+        int32 Start = 0;
+        TArray<FString> Items;
+        FString Usage;
+    };
+    // The suggestions for a chat line typed up to Caret (a character index). Nothing for plain chat, for a world
+    // without "Allow Cheats" (vanilla hides commands above the player's permission level) or past the last argument.
+    UNNAMED_API FSuggestions Suggest(const FString& Line, int32 Caret, const FFoundationCommandContext& Context);
+
     // The vanilla strings the commands print, by en_us.json key (Unnamed.Foundation.Commands.Lang pins them).
     struct FLangString
     {

@@ -574,13 +574,26 @@ void AFoundationController::SubmitChat(const FString& Text)
     while (Line.ReplaceInline(TEXT("  "), TEXT(" ")))
         ;
     if (Line.IsEmpty()) return;
-    FFoundationCommandContext Context;
     if (!Line.StartsWith(TEXT("/")))
     {
-        Chat.AddText(FoundationCommands::Format(TEXT("chat.type.text"), {Context.PlayerName, Line}),
+        Chat.AddText(FoundationCommands::Format(TEXT("chat.type.text"), {FFoundationCommandContext().PlayerName, Line}),
             FoundationChat::White(), Now);
         return;
     }
+    FFoundationCommandContext Context = MakeCommandContext();
+    for (TArray<FHudChatRun>& Runs : FoundationCommands::Run(Line, Context))
+        Chat.Add(MoveTemp(Runs), Now);
+    Hud->LogEvent(TEXT("command: ") + Line);
+}
+
+FoundationCommands::FSuggestions AFoundationController::SuggestChat(const FString& Text, int32 Caret)
+{
+    return FoundationCommands::Suggest(Text, Caret, MakeCommandContext());
+}
+
+FFoundationCommandContext AFoundationController::MakeCommandContext()
+{
+    FFoundationCommandContext Context;
     AFoundationPawn* FoundationPawn = GetFoundationPawn();
     Context.Authority = FoundationPawn ? FoundationPawn->GetAuthority() : nullptr;
     Context.PlayerId = FoundationPawn ? FoundationPawn->Interaction.PlayerId : 0;
@@ -601,9 +614,7 @@ void AFoundationController::SubmitChat(const FString& Text)
         // The saved world's "Allow Cheats"; the dev world (no saved world) allows them.
         if (const FUnnamedSavedWorld* Saved = Voxels->GetSavedWorld()) Context.bCommands = Saved->bCommands;
     }
-    for (TArray<FHudChatRun>& Runs : FoundationCommands::Run(Line, Context))
-        Chat.Add(MoveTemp(Runs), Now);
-    Hud->LogEvent(TEXT("command: ") + Line);
+    return Context;
 }
 
 void AFoundationController::HandleFocusChanged(bool bActive)

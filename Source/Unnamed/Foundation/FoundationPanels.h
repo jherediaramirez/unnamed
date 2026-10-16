@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Foundation/FoundationCommands.h"
 #include "FoundationPanels.generated.h"
 
 class AFoundationController;
@@ -34,6 +35,18 @@ public:
     FString GetTypedText() const;
     // The caret's character index in the typed line (0 to its length; the length when the box has not reported one).
     int32 GetTypedCaret() const;
+    // The open chat's command suggestions (vanilla's CommandSuggestions): the candidates and the selected one, the
+    // typed line's index they replace from, the usage shown when there are none, and the selected candidate's rest
+    // drawn in gray after the caret.
+    struct FChatSuggestions
+    {
+        int32 Start = 0;
+        TArray<FString> Items;
+        int32 Selected = 0;
+        FString Usage;
+        FString Inline;
+    };
+    FChatSuggestions GetChatSuggestions() const;
     bool IsInventoryOpen() const { return bInventoryOpen; }
     // The creative screen's search tab takes typed text: the inventory key types instead of closing.
     bool IsTypingInInventory() const;
@@ -81,5 +94,16 @@ private:
     TSharedPtr<SEditableTextBox> TextBox;
     // The box's last reported caret offset (OnCursorMovedWithSelection); INDEX_NONE until it reports.
     int32 TypedCaret = INDEX_NONE;
+    // Recomputes the suggestions for the typed line and caret, unless they are what the last Tab left.
+    void UpdateSuggestions();
+    // Tab (Delta 1, Shift+Tab -1) puts the selected candidate in, then cycles; Up/Down move the selection (bApply
+    // false, until a Tab has put one in). False with no candidates.
+    bool CycleSuggestion(int32 Delta, bool bApply);
+    FoundationCommands::FSuggestions Suggestions;
+    int32 SuggestionSelected = 0;
+    // A Tab put a candidate in: the line it left and the candidate's end; a further Tab replaces it with the next.
+    bool bSuggestionApplied = false;
+    FString AppliedLine;
+    int32 AppliedEnd = 0;
     bool bInventoryOpen = false;
 };

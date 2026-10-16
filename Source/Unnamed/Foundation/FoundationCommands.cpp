@@ -759,3 +759,188 @@ TArray<TArray<FHudChatRun>> FoundationCommands::Run(const FString& Line, FFounda
     }
     return Out;
 }
+
+namespace
+{
+    // brigadier's literal and selector match: the candidate starts with the typed text, ignoring case (nothing typed
+    // matches all; FString::StartsWith refuses an empty prefix).
+    bool StartsWithTyped(const FString& Candidate, const FString& Typed)
+    {
+        return Typed.IsEmpty() || Candidate.StartsWith(Typed, ESearchCase::IgnoreCase);
+    }
+
+    // SharedSuggestionProvider.matchesSubStr: the typed text starts the candidate or one of its '_' parts ("pick"
+    // finds diamond_pickaxe).
+    bool MatchesSubStr(const FString& Candidate, const FString& Typed)
+    {
+        for (int32 At = 0;;)
+        {
+            if (FCString::Strnicmp(*Candidate + At, *Typed, Typed.Len()) == 0) return true;
+            At = Candidate.Find(TEXT("_"), ESearchCase::CaseSensitive, ESearchDir::FromStart, At);
+            if (At == INDEX_NONE) return false;
+            ++At;
+        }
+    }
+
+    bool IsCoordinate(const FString& Word)
+    {
+        return !Word.IsEmpty() && (Word[0] == '~' || Word[0] == '^' || FReader::IsNumber(Word[0]));
+    }
+
+    // One argument position: its candidates (unfiltered) and the usage of it and what follows.
+    struct FArgument
+    {
+        TArray<FString> Candidates;
+        FString Usage;
+        // An item id: matched as a resource (its path's '_' parts or the full id), not by prefix.
+        bool bResource = false;
+    };
+
+    TArray<FString> Targets(const FFoundationCommandContext& Context, bool bPlayersOnly)
+    {
+        // Players-only arguments (/gamemode, /give) suggest only the player selectors.
+        TArray<FString> Out = bPlayersOnly
+            ? TArray<FString>{TEXT("@a"), TEXT("@p"), TEXT("@r"), TEXT("@s")}
+            : TArray<FString>{TEXT("@a"), TEXT("@e"), TEXT("@n"), TEXT("@p"), TEXT("@r"), TEXT("@s")};
+        Out.Add(Context.PlayerName);
+        return Out;
+    }
+
+    // vanilla's coordinate suggestions with nothing aimed at: "~" for this and each following coordinate of a
+    // position (Index 0 to 2 within it).
+    TArray<FString> Tildes(int32 Index)
+    {
+        TArray<FString> Out;
+        FString Tilde = TEXT("~");
+        for (int32 Left = 3 - Index; Left > 0; --Left)
+        {
+            Out.Add(Tilde);
+            Tilde += TEXT(" ~");
+        }
+        return Out;
+    }
+
+    // The argument at Index after the command name, given the complete words before it; false past the last.
+    bool GetArgument(const FString& Name, const TArray<FString>& Before, int32 Index,
+        const FFoundationCommandContext& Context, FArgument& Out)
+    {
+        if (Name == TEXT("gamemode"))
+        {
+            // Adventure and Spectator are refused in this build (Docs/Commands.md): only the two that work.
+            if (Index == 0)
+                Out = {{TEXT("creative"), TEXT("survival")}, TEXT("<gamemode> [<target>]")};
+            else if (Index == 1)
+                Out = {Targets(Context, true), TEXT("[<target>]")};
+            else
+                return false;
+            return true;
+        }
+        if (Name == TEXT("give"))
+        {
+            if (Index == 0)
+                Out = {Targets(Context, true), TEXT("<targets> <item> [<count>]")};
+            else if (Index == 1)
+            {
+                Out.Usage = TEXT("<item> [<count>]");
+                Out.bResource = true;
+                if (Context.Authority)
+                    for (const FFoundationItemDefinition& Item : Context.Authority->Rules.Items)
+                        if (!Item.Id.IsNone()) Out.Candidates.Add(TEXT("minecraft:") + Item.Id.ToString());
+            }
+            else if (Index == 2)
+                Out = {{}, TEXT("[<count>]")};
+            else
+                return false;
+            return true;
+        }
+        if (Name == TEXT("kill"))
+        {
+            if (Index != 0) return false;
+            Out = {Targets(Context, false), TEXT("[<targets>]")};
+            return true;
+        }
+        if (Name == TEXT("tp") || Name == TEXT("teleport"))
+        {
+            // <location>, <destination>, <targets> <location> or <targets> <destination>: a coordinate starts a
+            // position; a target first may be followed by either.
+            int32 Coordinates = 0;
+            for (const FString& Word : Before)
+                if (IsCoordinate(Word)) ++Coordinates;
+            if (Coordinates > 0)
+            {
+                if (Coordinates >= 3) return false;
+                Out = {Tildes(Coordinates), TEXT("<location>")};
+                return true;
+            }
+            if (Index > 1) return false;
+            Out = {Tildes(0),
+                Index == 0 ? TEXT("<location> | <destination> | <targets>") : TEXT("<location> | <destination>")};
+            Out.Candidates.Append(Targets(Context, false));
+            return true;
+        }
+        if (Name == TEXT("time"))
+        {
+            if (Index == 0)
+            {
+                Out = {{TEXT("add"), TEXT("pause"), TEXT("query"), TEXT("resume"), TEXT("set")},
+                    TEXT("(add|pause|query|resume|set)")};
+                return true;
+            }
+            if (Index != 1) return false;
+            const FString& Verb = Before[0];
+            if (Verb == TEXT("set"))
+                Out = {{TEXT("day"), TEXT("midnight"), TEXT("night"), TEXT("noon")},
+                    TEXT("(day|midnight|night|noon|<time>)")};
+            else if (Verb == TEXT("add"))
+                Out = {{}, TEXT("<time>")};
+            else if (Verb == TEXT("query"))
+                Out = {{TEXT("day"), TEXT("gametime"), TEXT("time")}, TEXT("(day|gametime|time)")};
+            else
+                return false;
+            return true;
+        }
+        return false;
+    }
+}
+
+FoundationCommands::FSuggestions FoundationCommands::Suggest(
+    const FString& Line, int32 Caret, const FFoundationCommandContext& Context)
+{
+    FSuggestions Out;
+    const FString Typed = Line.Left(FMath::Clamp(Caret, 0, Line.Len()));
+    if (!Context.bCommands || !Typed.StartsWith(TEXT("/"))) return Out;
+    // The words before the caret, each with its start in the line; the last is the one being typed (empty after a
+    // space).
+    TArray<FString> Words;
+    TArray<int32> Starts;
+    for (int32 Start = 1, Index = 1; Index <= Typed.Len(); ++Index)
+        if (Index == Typed.Len() || Typed[Index] == ' ')
+        {
+            Words.Add(Typed.Mid(Start, Index - Start));
+            Starts.Add(Start);
+            Start = Index + 1;
+        }
+    const FString& Partial = Words.Last();
+    Out.Start = Starts.Last();
+    FArgument Argument;
+    if (Words.Num() == 1)
+        Argument.Candidates = {
+            TEXT("gamemode"), TEXT("give"), TEXT("kill"), TEXT("teleport"), TEXT("time"), TEXT("tp")};
+    else
+    {
+        const TArray<FString> Before(Words.GetData() + 1, Words.Num() - 2);
+        if (!GetArgument(Words[0], Before, Words.Num() - 2, Context, Argument)) return Out;
+    }
+    static const int32 Namespace = FString(TEXT("minecraft:")).Len();
+    for (const FString& Candidate : Argument.Candidates)
+    {
+        // A word already typed in full still shows, as vanilla's.
+        const bool bMatch = Argument.bResource
+            ? MatchesSubStr(Candidate.RightChop(Namespace), Partial) || StartsWithTyped(Candidate, Partial)
+            : StartsWithTyped(Candidate, Partial);
+        if (bMatch) Out.Items.Add(Candidate);
+    }
+    Out.Items.Sort([](const FString& A, const FString& B) { return A.Compare(B, ESearchCase::IgnoreCase) < 0; });
+    if (Out.Items.IsEmpty()) Out.Usage = Argument.Usage;
+    return Out;
+}

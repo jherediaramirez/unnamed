@@ -434,11 +434,51 @@ TArray<FHudDraw> HudDrawList::Build(
             Typed.LeftChopInline(1);
         // The blink [survival.r4.caret]: a "_" after the text at the end, otherwise a 1 px bar, line height, at the
         // caret.
+        // The selected suggestion's rest, in gray right after the text (EditBox.setSuggestion, 0x808080, 1 px in).
+        if (bAtEnd && !S.ChatInlineSuggestion.IsEmpty())
+            B.Text(S.ChatInlineSuggestion, {4 + MeasureText(Typed, Glyphs) - 1, L.Size.Y - 12},
+                FLinearColor(FColor(0x80, 0x80, 0x80)));
         if (bAtEnd && S.bCaretVisible) Typed += TEXT("_");
         if (!bAtEnd && S.bCaretVisible)
             B.Rect({4 + MeasureText(S.ChatInput.Mid(Cut, Caret - Cut), Glyphs), L.Size.Y - 13}, {1, 10},
                 FLinearColor(FColor(0xE0, 0xE0, 0xE0)));
         B.Text(Typed, {4, L.Size.Y - 12}, FLinearColor(FColor(0xE0, 0xE0, 0xE0)));
+        // Vanilla's CommandSuggestions over the bar: up to 10 rows of 12 px whose bottom is 3 px above the bar's top
+        // line (screen height - 15), from the replaced word's x, on 0xD0 black; the selected row yellow, the rest
+        // gray; white dotted edges when rows are hidden above or below. With no candidates, the usage row there.
+        const int32 Anchor = 4 + MeasureText(S.ChatInput.Mid(Cut, FMath::Max(0, S.ChatSuggestionStart - Cut)), Glyphs);
+        const FLinearColor Back(0, 0, 0, float(0xD0) / 255.f);
+        if (!S.ChatSuggestions.IsEmpty())
+        {
+            int32 Width = 0;
+            for (const FString& Item : S.ChatSuggestions)
+                Width = FMath::Max(Width, MeasureText(Item, Glyphs));
+            const int32 X = FMath::Clamp(Anchor, 0, FMath::Max(0, 4 + L.Size.X - 8 - Width));
+            const int32 Total = S.ChatSuggestions.Num(), Visible = FMath::Min(Total, HudDrawList::SuggestionRows);
+            const int32 Selected = FMath::Clamp(S.ChatSuggestionSelected, 0, Total - 1);
+            const int32 Offset = FMath::Clamp(Selected - Visible + 1, 0, Total - Visible);
+            const int32 Top = L.Size.Y - 15 - Visible * 12;
+            B.Rect({X - 1, Top}, {Width + 1, Visible * 12}, Back);
+            for (int32 Row = 0; Row < Visible; ++Row)
+            {
+                const int32 Index = Offset + Row;
+                B.Text(S.ChatSuggestions[Index], {X, Top + 2 + Row * 12},
+                    Index == Selected ? FLinearColor(FColor(0xFF, 0xFF, 0x00))
+                                      : FLinearColor(FColor(0xAA, 0xAA, 0xAA)));
+            }
+            for (int32 Dot = 0; Dot < Width + 1; Dot += 2)
+            {
+                if (Offset > 0) B.Rect({X - 1 + Dot, Top - 1}, {1, 1}, FLinearColor::White);
+                if (Offset + Visible < Total) B.Rect({X - 1 + Dot, Top + Visible * 12}, {1, 1}, FLinearColor::White);
+            }
+        }
+        else if (!S.ChatUsage.IsEmpty())
+        {
+            const int32 Width = MeasureText(S.ChatUsage, Glyphs);
+            const int32 X = FMath::Clamp(Anchor, 0, FMath::Max(0, 4 + L.Size.X - 8 - Width));
+            B.Rect({X - 1, L.Size.Y - 27}, {Width + 1, 12}, Back);
+            B.Text(S.ChatUsage, {X, L.Size.Y - 25}, FLinearColor(FColor(0xAA, 0xAA, 0xAA)));
+        }
     }
     // Fixture data is always labelled: the whole cluster, or only the token hotbar beside real vitals.
     // The open chat's input bar takes their place.

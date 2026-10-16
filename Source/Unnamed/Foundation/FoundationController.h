@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationChat.h"
+#include "Foundation/FoundationCommands.h"
 #include "Hud/HudModel.h"
 #include "FoundationController.generated.h"
 
@@ -61,6 +62,9 @@ public:
     // A line typed in the chat (step 15, foundation.Chat.Commands 1): '/' runs a command and shows its feedback,
     // other text shows as "<Player> text". Times are FPlatformTime seconds.
     void SubmitChat(const FString& Text);
+    // The open chat's command suggestions for the line typed up to Caret (vanilla's CommandSuggestions), with the
+    // same context a submitted command gets.
+    FoundationCommands::FSuggestions SuggestChat(const FString& Text, int32 Caret);
     const FFoundationChat& GetChat() const { return Chat; }
     // A game message in white, as vanilla's death messages (step 11a: the pawn adds one per death).
     void AddChatText(const FString& Text) { Chat.AddText(Text, FoundationChat::White(), FPlatformTime::Seconds()); }
@@ -79,6 +83,8 @@ protected:
     virtual void OnUnPossess() override;
 
 private:
+    // The context a chat command runs in: the pawn, its authority and vitals, the world clock, "Allow Cheats".
+    FFoundationCommandContext MakeCommandContext();
     // Menus, panels, HUD toggles, screenshot, fullscreen, perspective and hotbar; false for world actions.
     bool HandleInterfaceAction(const FString& Name);
     // In the Playground, world actions and the hotbar go to the pawn's interaction; false otherwise.
