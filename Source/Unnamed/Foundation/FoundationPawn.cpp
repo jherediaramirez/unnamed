@@ -47,15 +47,6 @@ namespace
              "in a 0.6 x 0.6 box with the eyes at 0.4, kept while sprinting in water; it stands up only where the "
              "standing (else crouching) box fits."),
         ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBody(TEXT("foundation.Body"), 1,
-        TEXT("The player body (Better Steve) in the third-person views: 0 none (the hitbox outline as before), 1 "
-             "shown in F5's back and front views, hidden in first person."),
-        ECVF_Default);
-    TAutoConsoleVariable<int32> CVarBodyYaw(TEXT("foundation.Body.Yaw"), 1,
-        TEXT("Where the body faces: 0 always the view (sideways and backward travel play the strafe and backward "
-             "clips), 1 vanilla (turns toward travel, backward travel keeps facing forward, the head at most 50 "
-             "degrees off the body), 2 the travel direction, backward too (third-person orient-to-movement)."),
-        ECVF_Default);
     TAutoConsoleVariable<int32> CVarSpringArm(TEXT("foundation.View.SpringArm"), 0,
         TEXT("Third-person preview: 1 turns F5's back view into an over-the-shoulder spring arm (325 cm arm, 55 cm "
              "right, 30 cm up, smoothed, pulled in by the world's blocks); 0 vanilla's back view."),
@@ -78,9 +69,6 @@ namespace
         // The camera's half-size against the world's boxes, as the vanilla views'.
         constexpr double ProbeCm = 5;
     }
-
-    // Closer than this to the eyes the camera would sit inside the head: the body hides.
-    constexpr double BodyHideCameraCm = 40;
 
     // FUnnamedInputIntent is the input layer's request; the simulation takes its own struct so it
     // never depends on input or preference systems.
@@ -138,98 +126,9 @@ void AFoundationPawn::BeginPlay()
     CreateBody();
 }
 
-void AFoundationPawn::CreateBody()
-{
-    const FSoftObjectPath MeshPath = UUnnamedProjectSettings::GetPlayerBodyAssetPath(TEXT("SK_BetterSteve"));
-    auto* Mesh = Cast<USkeletalMesh>(MeshPath.TryLoad());
-    if (!Mesh)
-    {
-        UE_LOG(LogUnnamedFoundation, Warning, TEXT("Player body: %s is missing; no body in the third-person views"),
-            *MeshPath.ToString());
-        return;
-    }
-    BodyMesh = NewObject<USkeletalMeshComponent>(this, TEXT("Body"));
-    BodyMesh->SetupAttachment(RootComponent);
-    // Placed every frame at the rendered feet (the actor stands at the simulation's latest step).
-    BodyMesh->SetUsingAbsoluteLocation(true);
-    BodyMesh->SetUsingAbsoluteRotation(true);
-    BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    BodyMesh->SetGenerateOverlapEvents(false);
-    BodyMesh->SetSkeletalMeshAsset(Mesh);
-    // Hidden (first person) it is not posed; UpdateBody switches to posing every frame while it shows.
-    BodyMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-    BodyMesh->SetAnimInstanceClass(UFoundationBodyAnimInstance::StaticClass());
-    BodyMesh->SetHiddenInGame(true);
-    BodyMesh->SetTickGroup(PrimaryActorTick.TickGroup);
-    BodyMesh->PrimaryComponentTick.AddPrerequisite(this, PrimaryActorTick);
-    BodyMesh->RegisterComponent();
-    const auto* Anim = Cast<UFoundationBodyAnimInstance>(BodyMesh->GetAnimInstance());
-    if (!Anim || !Anim->HasClips())
-    {
-        BodyMesh->DestroyComponent();
-        BodyMesh = nullptr;
-        return;
-    }
-    BodyAnimator.SetLengths(Anim->GetClipLengths());
-}
-
-void AFoundationPawn::ResetBody()
-{
-    BodyAnimator = FFoundationBodyAnimator();
-    if (const auto* Anim = BodyMesh ? Cast<UFoundationBodyAnimInstance>(BodyMesh->GetAnimInstance()) : nullptr)
-        BodyAnimator.SetLengths(Anim->GetClipLengths());
-    BodyTurn.Reset(GetControlRotation().Yaw);
-    BodyJumps = 0;
-}
-
-bool AFoundationPawn::IsBodyShown() const
-{
-    return BodyMesh && !BodyMesh->bHiddenInGame;
-}
-
-EFoundationBodyYaw AFoundationPawn::GetBodyYawMode()
-{
-    return EFoundationBodyYaw(FMath::Clamp(CVarBodyYaw.GetValueOnGameThread(), 0, 2));
-}
-
 bool AFoundationPawn::IsSpringArmView() const
 {
     return Perspective == 1 && CVarSpringArm.GetValueOnGameThread() != 0;
-}
-
-void AFoundationPawn::UpdateBody(
-    double Alpha, double Seconds, const FRotator& Control, const FVector& Eye, const FVector& CameraLocation)
-{
-    if (!BodyMesh) return;
-    const UFoundationProfile& Profile = *GetDefault<UFoundationProfile>();
-    const EFoundationBodyYaw Mode = GetBodyYawMode();
-    FFoundationBodyFrame Frame;
-    Frame.Velocity = FVector2D(Simulation.Feet - Simulation.PreviousFeet) / Profile.TickSeconds;
-    Frame.ViewYaw = Control.Yaw;
-    Frame.ViewPitch = Control.Pitch;
-    Frame.BodyYaw = BodyTurn.GetYaw(Alpha, Control.Yaw, Mode);
-    const double EyeCm = FMath::Lerp(Simulation.PreviousEyeCm, Simulation.EyeCm, Alpha);
-    Frame.CrouchAmount = (Profile.StandingEyesCm - EyeCm) / (Profile.StandingEyesCm - Profile.CrouchingEyesCm);
-    Frame.bCrouched = Simulation.bCrouched;
-    Frame.bGrounded = Simulation.bGrounded;
-    Frame.bFlying = Simulation.bFlying;
-    Frame.Jumps = BodyJumps;
-    BodyJumps = 0;
-    BodyAnimator.Advance(Seconds, Frame);
-    // The mesh faces +Y; its origin is the feet.
-    BodyMesh->SetWorldLocationAndRotation(
-        FMath::Lerp(Simulation.PreviousFeet, Simulation.Feet, Alpha), FRotator(0, Frame.BodyYaw - 90, 0));
-    if (auto* Anim = Cast<UFoundationBodyAnimInstance>(BodyMesh->GetAnimInstance())) Anim->SetPose(BodyAnimator.Pose);
-    const bool bShow = CVarBody.GetValueOnGameThread() != 0 && Perspective != 0 &&
-        FVector::DistSquared(CameraLocation, Eye) > FMath::Square(BodyHideCameraCm);
-    if (BodyMesh->bHiddenInGame == bShow)
-    {
-        BodyMesh->SetHiddenInGame(!bShow);
-        // The mesh ticks after the pawn, so a body shown this frame is posed this frame (never a stale or reference
-        // pose, as "only when rendered" would draw on its first frame).
-        BodyMesh->VisibilityBasedAnimTickOption = bShow ? EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones
-                                                        : EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-    }
 }
 
 FVector AFoundationPawn::PlaceSpringArm(const FVector& Eye, FRotator& View, double Seconds)
@@ -715,11 +614,13 @@ void AFoundationPawn::Tick(float DeltaSeconds)
                 FoundationBlockFamilies::IsClimbable(
                     Authority->World, FoundationGrid::CellAt(Simulation.Feet, Authority->World.OriginCm));
             InteractionSeconds += FPlatformTime::Seconds() - GatherStart;
-            Simulation.Step(LastIntent, View.Yaw, Profile, StepCollision, Eligibility);
+            double StepYaw = View.Yaw;
+            if (ScriptedStep) ScriptedStep(ReferenceSteps, LastIntent, StepYaw);
+            Simulation.Step(LastIntent, StepYaw, Profile, StepCollision, Eligibility);
             ++ReferenceSteps;
-            if (!bBodyTurnStarted) BodyTurn.Reset(View.Yaw);
+            if (!bBodyTurnStarted) BodyTurn.Reset(StepYaw);
             bBodyTurnStarted = true;
-            BodyTurn.Step(FVector2D(Simulation.Feet - Simulation.PreviousFeet), View.Yaw, GetBodyYawMode());
+            BodyTurn.Step(FVector2D(Simulation.Feet - Simulation.PreviousFeet), StepYaw, GetBodyYawMode());
             if (Simulation.bJumped) ++BodyJumps;
             StepVitals(Profile);
             if (Simulation.bFlying) Vitals.ResetFall(); // No fall distance builds while flying.

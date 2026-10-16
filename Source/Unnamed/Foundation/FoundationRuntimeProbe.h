@@ -85,6 +85,9 @@ private:
     void AddSwimCases();
     // -FoundationSuite=body: the player body and the spring arm preview, with shots (FoundationBodyProbe.cpp).
     void AddBodyCases();
+    // The Unnamed Player's first-person body, in the body suite: the M1a acceptance rows (clearance, toes, head,
+    // shadow, view switching, planted feet, the simulation unchanged, cost; FoundationBodyFirstPersonProbe.cpp).
+    void AddFirstPersonBodyCases();
     // -FoundationSuite=mobs: a summoned cow walking, hit and dying into its drops, and the foundation.Mobs control
     // pair, with shots (FoundationMobsProbe.cpp).
     void AddMobCases();

@@ -16,6 +16,8 @@ public class Unnamed : ModuleRules
         PrivateDependencyModuleNames.AddRange(new[] { "MeshDescription", "StaticMeshDescription", "ImageWrapper", "AssetRegistry" });
         // The voxel world: its plain C++ core (Source/UnnamedVoxel) and the vendored chunk mesh component.
         PrivateDependencyModuleNames.AddRange(new[] { "UnnamedVoxel", "RealtimeMeshComponent" });
+        // The first-person body re-solves its legs with the engine's two-bone IK (Foundation/FoundationBodyPose).
+        PrivateDependencyModuleNames.Add("AnimationCore");
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // Regenerate build/staging metadata when the native preference contract changes.
         ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));

@@ -2,9 +2,18 @@
 
 #include "CoreMinimal.h"
 
-// The player's body (Better Steve) in the third-person views: where it faces and which clips play at what time and
-// weight. Pure, so the native tests drive it without a mesh. AFoundationPawn steps the turn with the simulation and
-// advances the animator once per rendered frame; UFoundationBodyAnimInstance samples the clips it names.
+// The player's body: where it faces and which clips play at what time and weight. Pure, so the native tests drive it
+// without a mesh. AFoundationPawn steps the turn with the simulation and advances the animator once per rendered
+// frame; UFoundationBodyAnimInstance samples the clips it names.
+
+// foundation.Body.Set: which character the body is. Both use the same clip indices (FoundationBodyClip).
+enum class EFoundationBodySet : uint8
+{
+    // Better Steve (UUnnamedProjectSettings::PlayerBodyRoot): the third-person views only.
+    BetterSteve,
+    // The Unnamed Player (UnnamedPlayerRoot): both views, with a first-person copy (FoundationBodyPose.h).
+    UnnamedPlayer
+};
 
 // foundation.Body.Yaw: where the body faces.
 enum class EFoundationBodyYaw : uint8
@@ -37,12 +46,22 @@ namespace FoundationBodyClip
         JumpLand,
         // The 9 look poses, a row per pitch from looking down: DL D DR, L C R, UL U UR.
         Look,
-        Count = Look + 9
+        // The crouching look poses, the same grid (Better Steve has one grid: these name its standing poses).
+        CrouchLook = Look + 9,
+        // The low box's pose (swimming); the Unnamed Player only (Better Steve keeps its air loop there).
+        Low = CrouchLook + 9,
+        Count
     };
-    // The asset name under UUnnamedProjectSettings::PlayerBodyRoot, e.g. "BS_Walk_FR".
-    UNNAMED_API FString GetName(int32 Clip);
-    // The authored length (s, 30 fps); the anim instance hands the animator the assets' own lengths.
-    UNNAMED_API double GetDefaultLength(int32 Clip);
+    // The asset name under the set's root, e.g. "BS_Walk_FR" or "UP_Crouch_FR"; empty when the set has no such clip.
+    UNNAMED_API FString GetName(int32 Clip, EFoundationBodySet Set = EFoundationBodySet::BetterSteve);
+    // The authored length (s; Better Steve at 30 fps, the Unnamed Player at 60), 0 for a clip the set lacks; the anim
+    // instance hands the animator the assets' own lengths.
+    UNNAMED_API double GetDefaultLength(int32 Clip, EFoundationBodySet Set = EFoundationBodySet::BetterSteve);
+    // The skeletal mesh's name under the set's root: "SK_BetterSteve" or "SK_UnnamedPlayer".
+    UNNAMED_API FString GetMeshName(EFoundationBodySet Set);
+    // The package of an asset of the set (UUnnamedProjectSettings::GetPlayerBodyAssetPath or
+    // GetUnnamedPlayerAssetPath).
+    UNNAMED_API FSoftObjectPath GetAssetPath(EFoundationBodySet Set, const FString& AssetName);
     // The ground speed (cm/s) a gait (Walk, Sprint or CrouchWalk) is authored at in Direction (0..7): the game's
     // straight and diagonal speeds, so keyboard input lands exactly on a clip.
     UNNAMED_API double GetSampleSpeed(int32 Gait, int32 Direction);
@@ -58,6 +77,8 @@ struct FFoundationBodyFrame
     // 0 at the standing eye height, 1 at the crouching one (the simulation's smoothed eyes).
     double CrouchAmount = 0;
     bool bCrouched = false, bGrounded = true, bFlying = false;
+    // The simulation's low box (swimming): the Low pose where the set has one.
+    bool bLowPose = false;
     // Jumps started since the last frame.
     int32 Jumps = 0;
 };
@@ -72,8 +93,11 @@ struct FFoundationBodyPose
 {
     // The base pose; the weights sum to 1.
     TArray<FFoundationBodyLayer, TInlineAllocator<12>> Base;
-    // The head look: mesh-space additive look poses over the base; the weights sum to 1.
-    TArray<FFoundationBodyLayer, TInlineAllocator<4>> Look;
+    // The head look: mesh-space additive look poses over the base, from the standing and crouching grids; the weights
+    // sum to 1.
+    TArray<FFoundationBodyLayer, TInlineAllocator<8>> Look;
+    // How far the low pose has faded in (0..1): the first-person corrections fade out with it.
+    float LowWeight = 0;
     float GetWeight(int32 Clip) const;
 };
 
@@ -105,7 +129,8 @@ struct UNNAMED_API FFoundationBodyAnimator
     // the crouch transition clips are eased the same way.
     static constexpr double EyeHalfLifeSeconds = .05;
 
-    FFoundationBodyAnimator();
+    explicit FFoundationBodyAnimator(EFoundationBodySet Set = EFoundationBodySet::BetterSteve);
+    // The clips' lengths (s); a clip of length 0 is one the body lacks (the Low pose on Better Steve).
     void SetLengths(const TArray<double>& InLengths);
     void Advance(double Seconds, const FFoundationBodyFrame& Frame);
 
@@ -129,5 +154,5 @@ struct UNNAMED_API FFoundationBodyAnimator
     // AirClipTime is Start's time, LoopTime the loop's, LandTime Land's; StartTime is where Start stopped when it
     // landed early.
     double AirClipTime = 0, LoopTime = 0, LandTime = 0, StartTime = 0, AirborneSeconds = 0, AirWeight = 0,
-           LandWeight = 0;
+           LandWeight = 0, LowWeight = 0;
 };
