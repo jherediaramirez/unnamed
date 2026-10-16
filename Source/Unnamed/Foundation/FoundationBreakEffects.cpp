@@ -1178,7 +1178,8 @@ void FFoundationBreakEffects::PlayEvent(FName EventName, const FVector& Location
 bool FFoundationBreakEffects::PlayFootstep(const FFoundationAuthority& Authority, const FVector& FeetCm)
 {
     FoundationFootsteps::FStepBlocks Blocks;
-    if (CVarSoundEvents.GetValueOnGameThread() == 0 || !FoundationFootsteps::FindStepBlocks(Authority.World, FeetCm, Blocks))
+    if (CVarSoundEvents.GetValueOnGameThread() == 0 ||
+        !FoundationFootsteps::FindStepBlocks(Authority.World, FeetCm, Blocks))
         return false;
     LoadSoundAssets();
     if (!Assets || !SoundAssets) return false;
@@ -1355,10 +1356,10 @@ bool FFoundationBreakEffects::GetSwing(double& OutSwing) const
     return true;
 }
 
-void FFoundationBreakEffects::EndFrame(const FFoundationAuthority& Authority, double DeltaTime)
+void FFoundationBreakEffects::EndFrame(const FFoundationAuthority& Authority, double DeltaTime, bool bPaused)
 {
     DrawOutlineStrips();
-    UpdateParticles(Authority, DeltaTime);
+    UpdateParticles(Authority, DeltaTime, bPaused);
     UpdatePops(DeltaTime);
 }
 
@@ -1506,11 +1507,12 @@ void FFoundationBreakEffects::DrawOutlineStrips()
     if (bOutlineVisible) bDrawnHighContrast = bHighContrast;
 }
 
-void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime)
+void FFoundationBreakEffects::UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime, bool bPaused)
 {
     UpdatePool(ParticleMesh, Particles, ParticleIds, Authority, DeltaTime);
     UpdatePool(CrumbMesh, Crumbs, CrumbIds, Authority, DeltaTime, FoundationBreak::CrumbNearCm);
-    UpdateFurnaceParticles(DeltaTime);
+    // Furnace particles age with the furnace ambience's clock, which stops while paused; they still face the camera.
+    UpdateFurnaceParticles(bPaused ? 0. : DeltaTime);
 }
 
 void FFoundationBreakEffects::UpdateFurnaceParticles(double DeltaTime)

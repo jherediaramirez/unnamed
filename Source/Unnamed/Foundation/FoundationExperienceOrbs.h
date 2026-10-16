@@ -53,9 +53,10 @@ namespace FoundationExperienceOrbs
     constexpr double RewardSearchCm = 100;
     // [xp.value_icons] the icons' lower thresholds (icon 0 from 1 point to icon 10 from 2477).
     constexpr int32 IconThresholds[] = {1, 3, 7, 17, 37, 73, 149, 307, 617, 1237, 2477};
-    // [xp.value_icons, xp.value] the look: a 0.3-block billboard from a 16 x 16 tile of a 64 x 64 texture, moved up 0.1
-    // blocks; vertex alpha 128.
-    constexpr double QuadCm = 30, QuadUpCm = 10;
+    // [xp.value_icons, xp.value] the look: a 0.3-block billboard from a 16 x 16 tile of a 64 x 64 texture, vertex alpha
+    // 128. [survival2.r23.xp_quad] its edges sit 0.025 and 0.325 blocks above the orb (moved up 0.1 with its vertices
+    // from -0.25 to 0.75 of its size), so its centre is 17.5 cm up (QC RA2-7).
+    constexpr double QuadCm = 30, QuadUpCm = 17.5;
 
     // Provisional (minecraft.wiki "Experience orb", not in the report): orbs despawn at 6,000 ticks of age; a player
     // takes one orb every 2 ticks; an orb merges with same-value orbs whose box meets its own grown 0.5 blocks on every

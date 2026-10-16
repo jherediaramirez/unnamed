@@ -821,8 +821,15 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             break;
         case EFoundationEventKind::ToolBroke:
             if (const AFoundationPawn* Pawn = GetLocalPawn())
+            {
                 Burst(Pawn->GetEyePosition() + Pawn->GetControlRotation().Vector() * 60, FLinearColor(.7f, .7f, .72f),
                     8, 4, 150, uint32(Event.Serial));
+                // QC RAX-3: entity.item.break at volume 0.8, pitch 0.8 + 0.4U (vanilla LivingEntity.breakItem;
+                // provisional, no report measured it).
+                if (BreakEffects)
+                    BreakEffects->PlayEvent(
+                        TEXT("entity.item.break"), Pawn->GetActorLocation(), .8f, .8f + .4f * FMath::FRand());
+            }
             break;
         default:
             break;
@@ -1465,42 +1472,47 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
         HeardLavaHurts = Vitals.LavaHurts;
         HeardBurnHurts = Vitals.BurnHurts;
         HeardFireBlockHurts = Vitals.FireBlockHurts;
+        HeardDrownHurts = Vitals.DrownHurts;
         HeardExtinguishes = Vitals.Extinguishes;
         HeardDamageEvents = Vitals.DamageEvents;
         HeardDeaths = Vitals.Deaths;
     }
-    // Wiki values (provisional): a fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 +- 0.2; lava's
+    // A fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 (QC RA3-6, [survival2.r23.fire_sounds]); lava's
     // hit adds entity.generic.burn at 0.4, pitch 2 to 2.4; water putting it out plays entity.generic.extinguish_fire
     // at 0.7, pitch 1.6 to 2.4.
     // A fire block's hit (step 16c) plays as burning's [survival2.r23.fire_sounds: hurt_on_fire only].
     const bool bLava = Vitals.LavaHurts != HeardLavaHurts,
                bBurn = Vitals.BurnHurts != HeardBurnHurts || Vitals.FireBlockHurts != HeardFireBlockHurts;
     const bool bOut = Vitals.Extinguishes != HeardExtinguishes;
+    const bool bDrown = Vitals.DrownHurts != HeardDrownHurts;
     const bool bHurt = Vitals.DamageEvents != HeardDamageEvents, bDied = Vitals.Deaths != HeardDeaths;
     HeardDamageEvents = Vitals.DamageEvents;
     HeardDeaths = Vitals.Deaths;
     HeardLavaHurts = Vitals.LavaHurts;
     HeardBurnHurts = Vitals.BurnHurts;
     HeardFireBlockHurts = Vitals.FireBlockHurts;
+    HeardDrownHurts = Vitals.DrownHurts;
     HeardExtinguishes = Vitals.Extinguishes;
     if (!BreakEffects) return;
     const FVector At = Pawn->GetActorLocation();
     // Under step 11b the killing hit plays entity.player.death only (below).
     if ((bLava || bBurn) && !(bDied && FoundationDeath::IsScreenEnabled()))
-        BreakEffects->PlayEvent(
-            TEXT("entity.player.hurt_on_fire"), At, 1.f, (FMath::FRand() - FMath::FRand()) * .2f + 1.f);
+        BreakEffects->PlayEvent(TEXT("entity.player.hurt_on_fire"), At, 1.f, 1.f);
     if (bLava) BreakEffects->PlayEvent(TEXT("entity.generic.burn"), At, .4f, 2.f + FMath::FRand() * .4f);
     if (bOut)
         BreakEffects->PlayEvent(
             TEXT("entity.generic.extinguish_fire"), At, .7f, 1.6f + (FMath::FRand() - FMath::FRand()) * .4f);
     // Survival step 11b (foundation.Death.Screen 1) [survival.r5.play_calls]: a hit plays entity.player.hurt, a death
     // entity.player.death instead (not both), at volume 1, pitch 1; a lava or fire hurt already played hurt_on_fire.
+    // A drowning hit plays entity.player.hurt_drown instead [26.3 damage_type/drown.json effects "drowning"] (QC
+    // R24-4).
     if (FoundationDeath::IsScreenEnabled())
     {
         if (bDied)
             BreakEffects->PlayEvent(TEXT("entity.player.death"), At, 1.f, 1.f);
         else if (bHurt && !bLava && !bBurn)
-            BreakEffects->PlayEvent(TEXT("entity.player.hurt"), At, 1.f, 1.f);
+            BreakEffects->PlayEvent(
+                bDrown ? TEXT("entity.player.hurt_drown") : TEXT("entity.player.hurt"), At, 1.f, 1.f);
     }
 }
 
@@ -1621,6 +1633,6 @@ void UFoundationInteractionView::TickComponent(
     if (ExperienceOrbView) ExperienceOrbView->Update(Authority, Pawn, StepAlpha);
     if (ArrowView) ArrowView->Update(Authority, Pawn, StepAlpha);
     if (MobView) MobView->Update(Authority, Pawn, StepAlpha);
-    if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
+    if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime, Pawn && !Pawn->IsSimulationEnabled());
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;
 }

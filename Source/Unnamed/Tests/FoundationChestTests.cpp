@@ -551,7 +551,8 @@ bool FFoundationChestBlockedTest::RunTest(const FString&)
         TestNull(FString::Printf(TEXT("%s: none for the other half"), Case), L.A.BlockEntities.Find(L.Partner));
         TestEqual(FString::Printf(TEXT("%s: no sound"), Case), L.TakeUsed().Num(), 0);
     }
-    for (const TCHAR* Above : {TEXT("stone_slab"), TEXT("torch"), TEXT("glass")})
+    // QC R37-1: an opaque cube that is no redstone conductor (glowstone) does not block either.
+    for (const TCHAR* Above : {TEXT("stone_slab"), TEXT("torch"), TEXT("glass"), TEXT("glowstone")})
     {
         FChestLab L;
         L.SetBlock(L.Aimed + FIntVector(0, 0, 1), Above);

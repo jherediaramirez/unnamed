@@ -141,7 +141,7 @@ void FFoundationVitals::Step(const FFoundationVitalsStep& Facts)
         if (!IsInvulnerable() && --Air <= -20)
         {
             Air = 0;
-            Hurt(EFoundationDamage::Drown, 2.f);
+            if (Hurt(EFoundationDamage::Drown, 2.f)) ++DrownHurts;
         }
     }
     else if (Air < MaxAir)
@@ -372,6 +372,7 @@ void FFoundationVitals::Respawn()
     Fresh.LavaHurts = LavaHurts;
     Fresh.BurnHurts = BurnHurts;
     Fresh.FireBlockHurts = FireBlockHurts;
+    Fresh.DrownHurts = DrownHurts;
     Fresh.Extinguishes = Extinguishes;
     Fresh.LastDamage = LastDamage;
     Fresh.DeathMessage = DeathMessage;

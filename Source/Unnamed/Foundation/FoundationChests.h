@@ -47,7 +47,9 @@ namespace FoundationChests
     UNNAMED_API FFoundationBlockState UpdateShape(const FFoundationBlockRegistry& Registry, FFoundationBlockState State,
         EFoundationFace Toward, FFoundationBlockState Neighbour);
     // A chest does not open under a redstone conductor (minecraft.wiki "Chest"), approximated as a full opaque cube
-    // (provisional: isRedstoneConductor is code only). Unknown cells do not block.
+    // (provisional: isRedstoneConductor is code only) less the opaque cubes vanilla leaves non-conductive: glowstone,
+    // redstone_block and observer (isRedstoneConductor never), soul_sand and mud (collision lower than a full block)
+    // (QC R37-1, minecraft.wiki "Conductivity"). Unknown cells do not block.
     UNNAMED_API bool IsBlockedAbove(const FFoundationBlockWorld& World, const FIntVector& Cell);
 
     // The open and close sounds' volume (value-swaps.md l.261, survival.r5.play_calls): 0.5. The view adds the pitch

@@ -303,8 +303,9 @@ public:
     // The held item's swing (0-1, today's pose curve sin(phase x pi)) from the swing clock, when Swing is on; false
     // keeps the view's own swing.
     bool GetSwing(double& OutSwing) const;
-    // Last thing in the view's tick: the outline instances, the particles' flight and the pop.
-    void EndFrame(const FFoundationAuthority& Authority, double DeltaTime);
+    // Last thing in the view's tick: the outline instances, the particles' flight and the pop. bPaused (the pause menu)
+    // holds the furnace particles still (QC R43-1).
+    void EndFrame(const FFoundationAuthority& Authority, double DeltaTime, bool bPaused = false);
 
     // Probes and tests.
     const FoundationBreak::FSwingClock& GetSwingClock() const { return Swing; }
@@ -369,7 +370,7 @@ private:
     void UpdateCracks(const FFoundationAuthority& Authority, const FFoundationInteraction& Mining);
     void HideCracks();
     void DrawOutlineStrips();
-    void UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime);
+    void UpdateParticles(const FFoundationAuthority& Authority, double DeltaTime, bool bPaused);
     void UpdateFurnaceParticles(double DeltaTime);
     void UpdatePops(double DeltaTime);
     // DA_Sounds on the first sound event, then PlayEvent's body with the caller's stream.

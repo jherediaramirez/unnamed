@@ -176,6 +176,11 @@ bool FoundationChests::IsBlockedAbove(const FFoundationBlockWorld& World, const 
     const FIntVector Above = Cell + FoundationGrid::FaceOffset(EFoundationFace::Up);
     if (!World.IsKnown(Above)) return false;
     const FFoundationBlockState State = World.Get(Above).State;
+    static const FName NonConductors[] = {
+        TEXT("glowstone"), TEXT("redstone_block"), TEXT("observer"), TEXT("soul_sand"), TEXT("mud")};
+    const FFoundationBlockType& Block = World.GetBlock(State);
+    for (const FName& Id : NonConductors)
+        if (Block.Id == Id) return false;
     return World.GetRegistry().GetShape(State) == EFoundationBlockShape::Full &&
-        World.GetBlock(State).Layer == EFoundationRenderLayer::Opaque;
+        Block.Layer == EFoundationRenderLayer::Opaque;
 }
