@@ -118,11 +118,12 @@ namespace FoundationBlockFamilies
     UNNAMED_API void ReleaseButton(FFoundationAuthority& Authority, const FIntVector& Cell);
     // A door half's survival at Cell (family_survival.json): the lower half needs a sturdy top below it, the upper half
     // the same door below; a button, lever or ladder the sturdy face of the block it hangs on. Other blocks: NoRule.
-    // Nothing while IsInteractOn is off, apart from the B4b vines: twisting vines need below them, weeping vines above
-    // them, the same vine (head or body) or a sturdy face toward them (family_survival.json signatures 88 and 89), and
-    // the B5 farmland and dirt path (IsFarmlandOn).
-    UNNAMED_API EFoundationFamilySurvival GetSurvival(
-        const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State);
+    // With IsInteractOn off, bExistingBlock retains button and lever support checks; placement keeps its default-state
+    // fallback, and doors and ladders have NoRule. The B4b vines remain active: twisting vines need below them, weeping
+    // vines above them, the same vine (head or body) or a sturdy face toward them (family_survival.json signatures 88
+    // and 89). The B5 farmland and dirt path rules follow IsFarmlandOn independently of IsInteractOn.
+    UNNAMED_API EFoundationFamilySurvival GetSurvival(const FFoundationBlockWorld& World, const FIntVector& Cell,
+        FFoundationBlockState State, bool bExistingBlock = false);
 
     // Survival B5, behind foundation.Blocks.Farmland (default 1): hoes till and shovels flatten
     // (FFoundationAuthority::TillOn, also behind foundation.Items.Use); farmland and dirt paths survive only under the

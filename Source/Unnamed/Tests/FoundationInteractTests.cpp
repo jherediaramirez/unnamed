@@ -1347,6 +1347,68 @@ bool FFoundationInteractSwitchSurvivalTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractSwitchSupportTest, "Unnamed.Foundation.Interact.SwitchSupport", InteractTestFlags)
+bool FFoundationInteractSwitchSupportTest::RunTest(const FString& Parameters)
+{
+    // K-BLOCK-4: disabling hand use and family placement must not leave existing switches floating. Exercise the
+    // same support removal with interaction on, and check both powered states.
+    struct FSwitchSupportCase
+    {
+        const TCHAR* Face;
+        FIntVector TowardSupport;
+    };
+    const FSwitchSupportCase Supports[] = {{TEXT("floor"), FIntVector(0, 0, -1)}, {TEXT("wall"), FIntVector(0, 1, 0)},
+        {TEXT("ceiling"), FIntVector(0, 0, 1)}};
+    const FIntVector Support(0, 0, 3), KeptSwitch(-1, 0, 3);
+    for (const int32 Interact : {0, 1})
+    {
+        FInteractCVarScope Interaction(TEXT("foundation.Blocks.Interact"), Interact);
+        if (!TestNotNull(TEXT("the interaction switch exists"), Interaction.Variable)) return false;
+        for (const TCHAR* Id : {TEXT("oak_button"), TEXT("stone_button"), TEXT("lever")})
+            for (const FSwitchSupportCase& Case : Supports)
+                for (const bool bPowered : {false, true})
+                {
+                    FInteractLab Lab;
+                    Lab.A.Options.bItemEntities = true;
+                    Lab.Vitals.Mode = EFoundationPlayerMode::Survival;
+                    Lab.P().Inventory.bInfiniteSupply = false;
+                    const FString StateText = FString::Printf(TEXT("%s[face=%s,facing=north,powered=%s]"), Id,
+                        Case.Face, bPowered ? TEXT("true") : TEXT("false"));
+                    const FString Label = FString::Printf(TEXT("Interact %d %s: "), Interact, *StateText);
+                    const FFoundationBlockState State = Lab.State(StateText), Stone = Lab.State(TEXT("stone"));
+                    const FIntVector Switch = Support - Case.TowardSupport;
+                    const FIntVector KeptSupport = KeptSwitch + Case.TowardSupport;
+                    Lab.A.World.Set(Support, Stone);
+                    Lab.A.World.Set(Switch, State);
+                    // This control is also a direct neighbour of the mined support, so the same settling pass must
+                    // check it. Its own sturdy support stays in place.
+                    Lab.A.World.Set(KeptSupport, Stone);
+                    Lab.A.World.Set(KeptSwitch, State);
+                    const int64 Serial = Lab.A.GetEventSerial();
+                    const FFoundationResult Mined = Lab.Break(Support);
+                    if (!TestTrue(Label + TEXT("the support was mined through the authority"),
+                            Mined.bBroken && Lab.A.World.Get(Support).State.IsAir()))
+                        continue;
+                    TestTrue(Label + TEXT("the unsupported switch is gone"), Lab.A.World.Get(Switch).State.IsAir());
+                    TestEqual(
+                        Label + TEXT("one switch popped"), Lab.CountEvents(EFoundationEventKind::Popped, Serial), 1);
+                    const FFoundationEvent* Popped = Lab.LastEvent(EFoundationEventKind::Popped);
+                    TestTrue(Label + TEXT("the pop identifies the unsupported switch"),
+                        Popped && Popped->Serial > Serial && Popped->Cell == Switch && Popped->State == State);
+                    int32 SwitchDrops = 0;
+                    const int32 SwitchItem = Lab.A.Rules.FindItem(Id);
+                    for (const FFoundationItemEntity& Drop : Lab.A.GetItemEntities())
+                        if (Drop.Item == SwitchItem) SwitchDrops += Drop.Count;
+                    TestEqual(Label + TEXT("the popped switch drops its item once"), SwitchDrops, 1);
+                    TestEqual(Label + TEXT("the supported neighbour keeps its state"), Lab.At(KeptSwitch), StateText);
+                    TestEqual(
+                        Label + TEXT("the neighbour's support stays"), Lab.At(KeptSupport), FString(TEXT("stone")));
+                }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationInteractClimbSurvivalTest, "Unnamed.Foundation.Interact.ClimbSurvival", InteractTestFlags)
 bool FFoundationInteractClimbSurvivalTest::RunTest(const FString& Parameters)
 {

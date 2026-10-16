@@ -767,7 +767,7 @@ FName FoundationBlockFamilies::GetUseSound(const FFoundationBlockType& Block, bo
 }
 
 EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
-    const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State)
+    const FFoundationBlockWorld& World, const FIntVector& Cell, FFoundationBlockState State, bool bExistingBlock)
 {
     const FFoundationBlockRegistry& Registry = World.GetRegistry();
     const EFoundationBlockFamily Family = GetStateFamily(Registry, State);
@@ -806,7 +806,9 @@ EFoundationFamilySurvival FoundationBlockFamilies::GetSurvival(
             IsFaceSturdy(Registry, Support, FoundationBlockPlacement::GetOpposite(VineToward));
         return bSurvives ? EFoundationFamilySurvival::Survives : EFoundationFamilySurvival::Fails;
     }
-    if (!IsInteractOn()) return EFoundationFamilySurvival::NoRule;
+    const bool bCheckExistingSwitch =
+        bExistingBlock && (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever);
+    if (!IsInteractOn() && !bCheckExistingSwitch) return EFoundationFamilySurvival::NoRule;
     // A button, lever or ladder: the face of the block it hangs on, sturdy (family_survival.json).
     if (Family == EFoundationBlockFamily::Button || Family == EFoundationBlockFamily::Lever ||
         Family == EFoundationBlockFamily::Ladder)

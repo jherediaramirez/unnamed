@@ -4112,7 +4112,7 @@ bool FFoundationAuthority::CanPlantSurvive(const FIntVector& Cell, FFoundationBl
         return FoundationBlockPlacement::IsTorchSupported(World, State, Cell, &Support) || !World.IsKnown(Support);
     }
     // Door halves (survival B3a): an unknown support keeps them.
-    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Cell, State);
+    if (const EFoundationFamilySurvival Family = FoundationBlockFamilies::GetSurvival(World, Cell, State, true);
         Family != EFoundationFamilySurvival::NoRule)
         return Family != EFoundationFamilySurvival::Fails;
     if (!PlantSurvival) return true;
