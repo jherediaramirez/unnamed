@@ -12,16 +12,15 @@ Status words: **BUILT** = in and meant to work (bugs go to QC-KNOWN-BUGS.md). **
 - **Day/night look:** the world clock runs, but the sky stays daytime unless `voxel.Atmosphere.Cycle 1` (console, F12 in the play copy). Twilight, square sun/moon and dusk water are parked (T7).
 - **Deferred by Jesus:** Adventure mode, survival pick-block, view bobbing (13b), second sound batch, item extras (P5), beyond-vanilla mob AI, per-part hitboxes (idea only).
 
-## The full-body player (M1a, 2026-10-16, after QC by Jesus's decision)
+## The full-body player (M1, 2026-10-16, after QC by Jesus's decision)
 
-- **BUILT:** the Unnamed Player (a real Steve) in every view (`foundation.Body.Set 1`, default; 0 = Better Steve as before): idle, walk, sprint, crouch, crouch-walk, jump/fall/land (Soft), the head look on standing and crouching grids, a swim pose. In first person you see your own body with no head, legs and feet looking down, and your shadow keeps the head (`foundation.Body.FirstPerson`). Record: `Docs/Records/2026-10-16-Player-Body-M1.md`.
+- **BUILT:** the Unnamed Player (a real Steve) in every view (`foundation.Body.Set 1`, default; 0 = Better Steve as before): idle, walk, sprint, crouch, crouch-walk, jump/fall/land (Soft), the head look on standing and crouching grids, a swim pose. In first person you see your own body with no head, legs and feet looking down, and your shadow keeps the head (`foundation.Body.FirstPerson`). A pickaxe is held in the body's own right hand and swings with the strike on the mining clock (M1b). Record: `Docs/Records/2026-10-16-Player-Body-M1.md`.
 - **PARTIAL:**
   - The first-person corrections' standing values are PLAN's proposal, not yet tuned by Jesus. Crouch uses his setting B.
-  - Held items still draw at the camera, not in the body's hand (LEGACY-HAND).
+  - Only the pickaxes are in the body's hand; other held items still draw at the camera (LEGACY-HAND). The body's pickaxe is flat-coloured blocks (provisional), and every swing is StrikeA (the A-B-A-C chain is M2).
   - Swimming and flying use placeholders.
   - The dead player's world body stands.
 - **NOT BUILT:**
-  - The pickaxe strike through the real hand (M1b, next).
   - Rise/Firm landings, turn-in-place clips, the strike chain, other tools (M2).
   - New clips such as swim strokes, eat, use and death (M3; the swim clips are being authored).
   - Armor on the body.
