@@ -37,6 +37,9 @@ public:
     // Bound to every map load: the engine resets the transient primary volume to 1 as it loads a map
     // (UnrealEngine.cpp LoadMap), so the saved Master Volume goes back on.
     void HandleMapLoaded(UWorld* World);
+    // Gives the preset GainDb for every instance: the live ones (UpdateSettings) and the first one, which the engine
+    // initialises from the preset's Settings property (USoundEffectPreset::AddEffectInstance).
+    static void SetBassPresetGain(UMenuBassShelfPreset& Preset, float GainDb);
 
 private:
     // Removes the shelf from the device it was added to (by id, so it works without a world).

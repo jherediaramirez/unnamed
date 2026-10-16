@@ -9,6 +9,7 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Sound/SoundEffectPreset.h"
 #include "UObject/UObjectGlobals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -155,6 +156,50 @@ bool FMenuAudioBassPreferenceTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("max"), (*Bass)->GetNumberField(TEXT("max")), 1.);
     TestEqual(TEXT("step"), (*Bass)->GetNumberField(TEXT("step")), .01);
     TestEqual(TEXT("on by default (+5 dB)"), (*Bass)->GetNumberField(TEXT("default")), 1.);
+    return true;
+}
+
+// R38-2: the first shelf the engine creates plays the gain Apply set (Bass at 50%: +2.5 dB), not the preset's unedited
+// +5 dB. The engine's first AddEffectInstance re-initialises the preset from its Settings property.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FMenuAudioBassFirstAttachTest, "Unnamed.Menu.Audio.BassFirstAttach", MenuAudioTestFlags)
+
+bool FMenuAudioBassFirstAttachTest::RunTest(const FString& Parameters)
+{
+    UMenuBassShelfPreset* Preset = NewObject<UMenuBassShelfPreset>();
+    constexpr float HalfDb = MenuBass::MaxGainDb / 2;
+    UMenuAudioSettings::SetBassPresetGain(*Preset, HalfDb);
+    FSoundEffectSubmixInitData Init;
+    Init.SampleRate = AudioRate;
+    Init.ParentPresetUniqueId = Preset->GetUniqueID();
+    const TSharedPtr<FSoundEffectSubmix, ESPMode::ThreadSafe> Effect =
+        USoundEffectPreset::CreateInstance<FSoundEffectSubmixInitData, FSoundEffectSubmix>(Init, *Preset);
+    if (!TestTrue(TEXT("first instance created"), Effect.IsValid())) return false;
+    TestEqual(TEXT("the preset keeps +2.5 dB after the first instance"), Preset->GetSettings().GainDb, HalfDb);
+    // The submix pumps the effect before each block: its first update reads the preset.
+    Effect->Update();
+    const double Gain = MeasureGainDb(50, 1,
+        [&Effect](const TArray<float>& In, TArray<float>& Out, int32 Frames)
+        {
+            Audio::FAlignedFloatBuffer InBuffer, OutBuffer;
+            InBuffer.Append(In.GetData(), Frames);
+            OutBuffer.SetNumZeroed(Frames);
+            FSoundEffectSubmixInputData InData;
+            InData.NumFrames = Frames;
+            InData.NumChannels = 1;
+            InData.AudioBuffer = &InBuffer;
+            FSoundEffectSubmixOutputData OutData;
+            OutData.AudioBuffer = &OutBuffer;
+            OutData.NumChannels = 1;
+            Effect->OnProcessAudio(InData, OutData);
+            FMemory::Memcpy(Out.GetData(), OutBuffer.GetData(), Frames * sizeof(float));
+        });
+    MenuBass::FShelf Reference;
+    Reference.Init(AudioRate, 1, HalfDb);
+    const double Expected = MeasureGainDb(50, 1, [&Reference](const TArray<float>& In, TArray<float>& Out, int32 Frames)
+        { Reference.Process(In.GetData(), Out.GetData(), Frames); });
+    AddInfo(FString::Printf(TEXT("first attach at 50 Hz: %+.3f dB (a +2.5 dB shelf: %+.3f)"), Gain, Expected));
+    TestEqual(TEXT("first attach plays the saved +2.5 dB"), Gain, Expected, .1);
     return true;
 }
 
