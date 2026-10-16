@@ -1,0 +1,821 @@
+{
+ "note": "Blender round trip only; Unreal import/runtime acceptance still untested",
+ "raw_SK": {
+  "fbx_version": 7400,
+  "global": {
+   "UpAxis": [
+    1
+   ],
+   "UpAxisSign": [
+    1
+   ],
+   "FrontAxis": [
+    2
+   ],
+   "FrontAxisSign": [
+    1
+   ],
+   "CoordAxis": [
+    0
+   ],
+   "CoordAxisSign": [
+    1
+   ],
+   "UnitScaleFactor": [
+    1.0
+   ],
+   "OriginalUnitScaleFactor": [
+    1.0
+   ]
+  },
+  "limb_nodes": 22,
+  "limb_scale_max_dev": 4.76837158203125e-07,
+  "null_nodes": [
+   [
+    "UP_Skeleton",
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ]
+  ],
+  "takes": []
+ },
+ "raw_SM_Pickaxe": {
+  "fbx_version": 7400,
+  "global": {
+   "UpAxis": [
+    1
+   ],
+   "UpAxisSign": [
+    1
+   ],
+   "FrontAxis": [
+    2
+   ],
+   "FrontAxisSign": [
+    1
+   ],
+   "CoordAxis": [
+    0
+   ],
+   "CoordAxisSign": [
+    1
+   ],
+   "UnitScaleFactor": [
+    1.0
+   ],
+   "OriginalUnitScaleFactor": [
+    1.0
+   ]
+  },
+  "limb_nodes": 0,
+  "limb_scale_max_dev": null,
+  "null_nodes": [],
+  "takes": []
+ },
+ "raw_AllClips": {
+  "takes": 66,
+  "limb_scale_max_dev": 3.5762786865234375e-07,
+  "global": {
+   "UpAxis": [
+    1
+   ],
+   "UpAxisSign": [
+    1
+   ],
+   "FrontAxis": [
+    2
+   ],
+   "FrontAxisSign": [
+    1
+   ],
+   "CoordAxis": [
+    0
+   ],
+   "CoordAxisSign": [
+    1
+   ],
+   "UnitScaleFactor": [
+    1.0
+   ],
+   "OriginalUnitScaleFactor": [
+    1.0
+   ]
+  },
+  "take_names_sample": [
+   "UP_Skeleton|UP_Death_Placeholder",
+   "UP_Skeleton|UP_Flight_Placeholder",
+   "UP_Skeleton|UP_Idle",
+   "UP_Skeleton|UP_Jump_Fall",
+   "UP_Skeleton|UP_Jump_Rise"
+  ],
+  "non_clip_takes": []
+ },
+ "SK": {
+  "armature_object_scale": [
+   0.009999999776482582,
+   0.009999999776482582,
+   0.009999999776482582
+  ],
+  "bones": 22,
+  "bone_names_match": true,
+  "parentless": [
+   "root"
+  ],
+  "hierarchy_match": true,
+  "height_m": 1.799999899159669,
+  "soles_z_m": 5.3156615109628547e-08,
+  "bounds_min": [
+   -0.3999999165534973,
+   -0.19999989867210388,
+   5.3156615109628547e-08
+  ],
+  "bounds_max": [
+   0.3999999165534973,
+   0.2000001221895218,
+   1.7999999523162842
+  ],
+  "rest_head_max_dev_vs_manifest_m": 4.2180174151268426e-07,
+  "meshes": [
+   "SK_UnnamedPlayer_Body",
+   "SK_UnnamedPlayer_Head"
+  ],
+  "materials": [
+   "M_UP_Body",
+   "M_UP_Head"
+  ],
+  "images": [
+   [
+    "T_UP_Skin_1024.png",
+    [
+     1024,
+     1024
+    ],
+    true
+   ]
+  ],
+  "vertex_groups": [
+   "ball_l",
+   "ball_r",
+   "calf_l",
+   "calf_r",
+   "foot_l",
+   "foot_r",
+   "hand_l",
+   "hand_r",
+   "head",
+   "lowerarm_l",
+   "lowerarm_r",
+   "pelvis",
+   "spine_01",
+   "spine_02",
+   "thigh_l",
+   "thigh_r",
+   "upperarm_l",
+   "upperarm_r"
+  ]
+ },
+ "anims": {
+  "UP_Death_Placeholder": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 30,
+   "expected_frames": 30,
+   "action": "UP_Skeleton|UP_Death_Placeholder",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06
+  },
+  "UP_Flight_Placeholder": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 60,
+   "expected_frames": 60,
+   "action": "UP_Skeleton|UP_Flight_Placeholder",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06
+  },
+  "UP_Idle": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 120,
+   "expected_frames": 120,
+   "action": "UP_Skeleton|UP_Idle",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.430511474609375e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Jump_Fall": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 48,
+   "expected_frames": 48,
+   "action": "UP_Skeleton|UP_Jump_Fall",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06
+  },
+  "UP_Jump_Rise": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Jump_Rise",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.344650268554688e-07
+  },
+  "UP_Jump_Start": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Jump_Start",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06
+  },
+  "UP_Land_Firm": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 24,
+   "expected_frames": 24,
+   "action": "UP_Skeleton|UP_Land_Firm",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.3113021850585938e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Land_Soft": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 12,
+   "expected_frames": 12,
+   "action": "UP_Skeleton|UP_Land_Soft",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Look_C": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_C",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.344650268554688e-07
+  },
+  "UP_Look_D": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_D",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.940696716308594e-07
+  },
+  "UP_Look_DL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_DL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06
+  },
+  "UP_Look_DR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_DR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06
+  },
+  "UP_Look_L": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_L",
+   "root_motion_m": 0.0,
+   "scale_dev": 9.5367431640625e-07
+  },
+  "UP_Look_R": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_R",
+   "root_motion_m": 0.0,
+   "scale_dev": 7.748603820800781e-07
+  },
+  "UP_Look_U": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_U",
+   "root_motion_m": 0.0,
+   "scale_dev": 7.152557373046875e-07
+  },
+  "UP_Look_UL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_UL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06
+  },
+  "UP_Look_UR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Look_UR",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.344650268554688e-07
+  },
+  "UP_Low_Pose": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Low_Pose",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06
+  },
+  "UP_Pickaxe_Hold": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_Pickaxe_Hold",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.344650268554688e-07
+  },
+  "UP_Pickaxe_StrikeA": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Pickaxe_StrikeA",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.940696716308594e-07
+  },
+  "UP_Pickaxe_StrikeB": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Pickaxe_StrikeB",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06
+  },
+  "UP_Pickaxe_StrikeC": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Pickaxe_StrikeC",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06
+  },
+  "UP_SneakIdle": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 120,
+   "expected_frames": 120,
+   "action": "UP_Skeleton|UP_SneakIdle",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_SneakLook_C": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_C",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.344650268554688e-07
+  },
+  "UP_SneakLook_D": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_D",
+   "root_motion_m": 0.0,
+   "scale_dev": 9.5367431640625e-07
+  },
+  "UP_SneakLook_DL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_DL",
+   "root_motion_m": 0.0,
+   "scale_dev": 9.5367431640625e-07
+  },
+  "UP_SneakLook_DR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_DR",
+   "root_motion_m": 0.0,
+   "scale_dev": 8.940696716308594e-07
+  },
+  "UP_SneakLook_L": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_L",
+   "root_motion_m": 0.0,
+   "scale_dev": 5.960464477539062e-07
+  },
+  "UP_SneakLook_R": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_R",
+   "root_motion_m": 0.0,
+   "scale_dev": 7.748603820800781e-07
+  },
+  "UP_SneakLook_U": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_U",
+   "root_motion_m": 0.0,
+   "scale_dev": 6.556510925292969e-07
+  },
+  "UP_SneakLook_UL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_UL",
+   "root_motion_m": 0.0,
+   "scale_dev": 5.960464477539062e-07
+  },
+  "UP_SneakLook_UR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 0,
+   "expected_frames": 0,
+   "action": "UP_Skeleton|UP_SneakLook_UR",
+   "root_motion_m": 0.0,
+   "scale_dev": 6.556510925292969e-07
+  },
+  "UP_SneakToStand": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 16,
+   "expected_frames": 16,
+   "action": "UP_Skeleton|UP_SneakToStand",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06
+  },
+  "UP_SneakTurn_L45": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_SneakTurn_L45",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_SneakTurn_L90": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 30,
+   "expected_frames": 30,
+   "action": "UP_Skeleton|UP_SneakTurn_L90",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_SneakTurn_R45": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_SneakTurn_R45",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_SneakTurn_R90": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 30,
+   "expected_frames": 30,
+   "action": "UP_Skeleton|UP_SneakTurn_R90",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Sneak_B": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_B",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.08
+  },
+  "UP_Sneak_BL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_BL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.076
+  },
+  "UP_Sneak_BR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_BR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.430511474609375e-06,
+   "planted_drift_cm": 0.076
+  },
+  "UP_Sneak_F": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_F",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.046
+  },
+  "UP_Sneak_FL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_FL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06,
+   "planted_drift_cm": 0.049
+  },
+  "UP_Sneak_FR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_FR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.049
+  },
+  "UP_Sneak_L": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_L",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06,
+   "planted_drift_cm": 0.071
+  },
+  "UP_Sneak_R": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 54,
+   "expected_frames": 54,
+   "action": "UP_Skeleton|UP_Sneak_R",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06,
+   "planted_drift_cm": 0.071
+  },
+  "UP_Sprint_B": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_B",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.3113021850585938e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Sprint_BL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_BL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.430511474609375e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Sprint_BR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_BR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Sprint_F": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_F",
+   "root_motion_m": 0.0,
+   "scale_dev": 9.5367431640625e-07,
+   "planted_drift_cm": 0.002
+  },
+  "UP_Sprint_FL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_FL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.3113021850585938e-06,
+   "planted_drift_cm": 0.002
+  },
+  "UP_Sprint_FR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_FR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.002
+  },
+  "UP_Sprint_L": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_L",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.430511474609375e-06,
+   "planted_drift_cm": 0.001
+  },
+  "UP_Sprint_R": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 32,
+   "expected_frames": 32,
+   "action": "UP_Skeleton|UP_Sprint_R",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.001
+  },
+  "UP_StandToSneak": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 16,
+   "expected_frames": 16,
+   "action": "UP_Skeleton|UP_StandToSneak",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0728836059570312e-06
+  },
+  "UP_Turn_L45": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Turn_L45",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Turn_L90": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 30,
+   "expected_frames": 30,
+   "action": "UP_Skeleton|UP_Turn_L90",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Turn_R45": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 18,
+   "expected_frames": 18,
+   "action": "UP_Skeleton|UP_Turn_R45",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Turn_R90": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 30,
+   "expected_frames": 30,
+   "action": "UP_Skeleton|UP_Turn_R90",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.0
+  },
+  "UP_Walk_B": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_B",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.004
+  },
+  "UP_Walk_BL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_BL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.074
+  },
+  "UP_Walk_BR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_BR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1324882507324219e-06,
+   "planted_drift_cm": 0.074
+  },
+  "UP_Walk_F": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_F",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.2516975402832031e-06,
+   "planted_drift_cm": 0.078
+  },
+  "UP_Walk_FL": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_FL",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.071
+  },
+  "UP_Walk_FR": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_FR",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.071
+  },
+  "UP_Walk_L": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_L",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.0132789611816406e-06,
+   "planted_drift_cm": 0.05
+  },
+  "UP_Walk_R": {
+   "bones": 22,
+   "rest_dev_vs_SK_m": 0.0,
+   "frames": 36,
+   "expected_frames": 36,
+   "action": "UP_Skeleton|UP_Walk_R",
+   "root_motion_m": 0.0,
+   "scale_dev": 1.1920928955078125e-06,
+   "planted_drift_cm": 0.05
+  }
+ },
+ "anims_summary": {
+  "files": 66,
+  "rest_dev_m": 0.0,
+  "root_motion": 0.0,
+  "scale_dev": 1.430511474609375e-06,
+  "frame_mismatch": [],
+  "max_planted_drift_cm": 0.08,
+  "bones_all_match": true
+ }
+}

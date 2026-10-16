@@ -1,0 +1,1343 @@
+{
+ "SK_UnnamedPlayer.fbx": {
+  "fbx_version": 7400,
+  "global": {
+   "UpAxis": [
+    1
+   ],
+   "UpAxisSign": [
+    1
+   ],
+   "FrontAxis": [
+    2
+   ],
+   "FrontAxisSign": [
+    1
+   ],
+   "CoordAxis": [
+    0
+   ],
+   "CoordAxisSign": [
+    1
+   ],
+   "UnitScaleFactor": [
+    1.0
+   ],
+   "OriginalUnitScaleFactor": [
+    1.0
+   ]
+  },
+  "takes": [],
+  "limb_nodes": 22,
+  "limb_names": [
+   "ball_l",
+   "ball_r",
+   "calf_l",
+   "calf_r",
+   "clavicle_l",
+   "clavicle_r",
+   "foot_l",
+   "foot_r",
+   "hand_l",
+   "hand_r",
+   "head",
+   "lowerarm_l",
+   "lowerarm_r",
+   "neck_01",
+   "pelvis",
+   "root",
+   "spine_01",
+   "spine_02",
+   "thigh_l",
+   "thigh_r",
+   "upperarm_l",
+   "upperarm_r"
+  ],
+  "limb_scale_max_dev": 4.76837158203125e-07,
+  "leaf_bone_like": [],
+  "null_nodes": [
+   [
+    "Armature",
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   [
+    "SOCKET_hand_l_grip",
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   [
+    "SOCKET_hand_r_grip",
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   [
+    "SOCKET_head_eye",
+    [
+     1.0,
+     1.0,
+     1.0
+    ]
+   ]
+  ],
+  "root_models": [
+   "Armature",
+   "SK_UnnamedPlayer_Body",
+   "SK_UnnamedPlayer_Head"
+  ],
+  "sockets": [
+   {
+    "name": "SOCKET_hand_l_grip",
+    "kind": "Null",
+    "parent": "hand_l",
+    "parent_kind": "LimbNode",
+    "leaf": true,
+    "lcl_t": [
+     0.0,
+     8.000005722045898,
+     0.0
+    ],
+    "lcl_r": [
+     90.00000933466734,
+     -0.0,
+     179.999991348578
+    ],
+    "lcl_s": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "name": "SOCKET_hand_r_grip",
+    "kind": "Null",
+    "parent": "hand_r",
+    "parent_kind": "LimbNode",
+    "leaf": true,
+    "lcl_t": [
+     0.0,
+     8.000005722045898,
+     0.0
+    ],
+    "lcl_r": [
+     90.00000933466734,
+     -0.0,
+     -179.999991348578
+    ],
+    "lcl_s": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "name": "SOCKET_head_eye",
+    "kind": "Null",
+    "parent": "head",
+    "parent_kind": "LimbNode",
+    "leaf": true,
+    "lcl_t": [
+     0.0,
+     17.5,
+     20.0
+    ],
+    "lcl_r": [
+     -90.00000933466734,
+     0.0,
+     0.0
+    ],
+    "lcl_s": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ "SM_UP_Pickaxe.fbx": {
+  "fbx_version": 7400,
+  "global": {
+   "UpAxis": [
+    1
+   ],
+   "UpAxisSign": [
+    1
+   ],
+   "FrontAxis": [
+    2
+   ],
+   "FrontAxisSign": [
+    1
+   ],
+   "CoordAxis": [
+    0
+   ],
+   "CoordAxisSign": [
+    1
+   ],
+   "UnitScaleFactor": [
+    1.0
+   ],
+   "OriginalUnitScaleFactor": [
+    1.0
+   ]
+  },
+  "takes": [],
+  "limb_nodes": 0,
+  "limb_names": [],
+  "limb_scale_max_dev": null,
+  "leaf_bone_like": [],
+  "null_nodes": [],
+  "root_models": [
+   "UP_Pickaxe"
+  ],
+  "sockets": []
+ },
+ "anims": {
+  "UP_Death_Placeholder": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Death_Placeholder"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Flight_Placeholder": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Flight_Placeholder"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Idle": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Idle"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Jump_Fall": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 3.5762786865234375e-07,
+   "takes": [
+    "UP_Jump_Fall"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Jump_Rise": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 3.5762786865234375e-07,
+   "takes": [
+    "UP_Jump_Rise"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Jump_Start": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Jump_Start"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Land_Firm": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 3.5762786865234375e-07,
+   "takes": [
+    "UP_Land_Firm"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Land_Soft": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Land_Soft"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_C": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_C"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_D": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_D"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_DL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_DL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_DR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_DR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_L": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_L"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_R": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_R"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_U": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_U"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_UL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_UL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Look_UR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Look_UR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Low_Pose": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Low_Pose"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Pickaxe_Hold": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Pickaxe_Hold"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Pickaxe_StrikeA": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Pickaxe_StrikeA"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Pickaxe_StrikeB": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Pickaxe_StrikeB"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Pickaxe_StrikeC": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Pickaxe_StrikeC"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakIdle": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakIdle"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_C": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_C"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_D": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_D"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_DL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_DL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_DR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_DR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_L": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_L"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_R": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_R"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_U": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_U"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_UL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_UL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakLook_UR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakLook_UR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakToStand": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakToStand"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakTurn_L45": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakTurn_L45"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakTurn_L90": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakTurn_L90"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakTurn_R45": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakTurn_R45"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_SneakTurn_R90": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_SneakTurn_R90"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_B": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Sneak_B"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_BL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sneak_BL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_BR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sneak_BR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_F": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sneak_F"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_FL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Sneak_FL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_FR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sneak_FR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_L": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 2.384185791015625e-07,
+   "takes": [
+    "UP_Sneak_L"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sneak_R": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sneak_R"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_B": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 3.5762786865234375e-07,
+   "takes": [
+    "UP_Sprint_B"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_BL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Sprint_BL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_BR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_Sprint_BR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_F": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sprint_F"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_FL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sprint_FL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_FR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Sprint_FR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_L": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 2.384185791015625e-07,
+   "takes": [
+    "UP_Sprint_L"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Sprint_R": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 2.384185791015625e-07,
+   "takes": [
+    "UP_Sprint_R"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_StandToSneak": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 5.960464477539062e-07,
+   "takes": [
+    "UP_StandToSneak"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Turn_L45": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Turn_L45"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Turn_L90": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Turn_L90"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Turn_R45": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Turn_R45"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Turn_R90": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Turn_R90"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_B": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_B"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_BL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_BL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_BR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_BR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_F": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_F"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_FL": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_FL"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_FR": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_FR"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_L": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_L"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  },
+  "UP_Walk_R": {
+   "unit": [
+    1.0
+   ],
+   "limbs": 22,
+   "limb_scale_max_dev": 4.76837158203125e-07,
+   "takes": [
+    "UP_Walk_R"
+   ],
+   "sockets": 0,
+   "leaf_bone_like": [],
+   "roots": [
+    "Armature",
+    "SK_UnnamedPlayer_Body",
+    "SK_UnnamedPlayer_Head"
+   ]
+  }
+ },
+ "gates": {
+  "SK_unit_1": true,
+  "SK_22_limbs": true,
+  "SK_limb_scale_1": true,
+  "SK_no_leaf_bones": true,
+  "SK_armature_null_named_Armature_at_scene_root": true,
+  "anims_armature_at_scene_root": true,
+  "SK_sockets_leaf_children_of_right_bones": true,
+  "anims_unit_1": true,
+  "anims_22_limbs": true,
+  "anims_limb_scale_1": true,
+  "anims_one_take_named_clip": true,
+  "anims_no_sockets_no_leaf": true
+ }
+}

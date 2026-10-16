@@ -1,0 +1,15 @@
+{
+  "index": 1,
+  "end": "2026-10-16T01:47:53.8768571-04:00",
+  "quiet_status": "no quiet window (C:\\dev\\sandbox\\locks\\quiet-window.lock)\r\n",
+  "tag": "matrix",
+  "priority": "BelowNormal",
+  "script": "C:\\dev\\output\\up-pose-clip-investigation-20261016\\scripts\\ue_investigate.py",
+  "exit_code": 1,
+  "start": "2026-10-16T01:46:30.8358624-04:00",
+  "pid": 49844,
+  "script_sha256": "919EC84100731659CAE64EF2204B8C5FAF2DF996EBD1B9A60F7815C54A18822F",
+  "other_editors_before": 0,
+  "log": "C:\\dev\\output\\up-pose-clip-investigation-20261016\\evidence\\ue_1_matrix_20261016_014630.log",
+  "project": "C:\\dev\\sandbox\\up-posefix\\PoseFix.uproject"
+}

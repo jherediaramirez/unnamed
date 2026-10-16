@@ -1,0 +1,174 @@
+{
+ "shots": {
+  "stand_p0_v70": {
+   "nearest_body_cm": 25.27,
+   "fp_mesh_offset_cm": [
+    0.41,
+    20.02
+   ]
+  },
+  "stand_p-45_v70": {
+   "nearest_body_cm": 27.92,
+   "fp_mesh_offset_cm": [
+    0.64,
+    28.89
+   ]
+  },
+  "stand_p-70_v70": {
+   "nearest_body_cm": 29.68,
+   "fp_mesh_offset_cm": [
+    0.77,
+    33.59
+   ]
+  },
+  "stand_p-90_v70": {
+   "nearest_body_cm": 31.22,
+   "fp_mesh_offset_cm": [
+    0.88,
+    37.21
+   ]
+  },
+  "stand_y60_p-60_v70": {
+   "nearest_body_cm": 28.83,
+   "fp_mesh_offset_cm": [
+    10.17,
+    29.88
+   ]
+  },
+  "stand_y-60_p-60_v70": {
+   "nearest_body_cm": 29.08,
+   "fp_mesh_offset_cm": [
+    -8.83,
+    30.62
+   ]
+  },
+  "sneak_p0_v70": {
+   "nearest_body_cm": 25.24,
+   "fp_mesh_offset_cm": [
+    2.83,
+    47.7
+   ]
+  },
+  "sneak_p-60_v70": {
+   "nearest_body_cm": 31.09,
+   "fp_mesh_offset_cm": [
+    2.97,
+    56.03
+   ]
+  },
+  "sneak_p-90_v70": {
+   "nearest_body_cm": 33.84,
+   "fp_mesh_offset_cm": [
+    3.03,
+    59.52
+   ]
+  },
+  "low_p0_v70": {
+   "nearest_body_cm": 16.93,
+   "fp_mesh_offset_cm": [
+    -0.0,
+    4.31
+   ]
+  },
+  "low_p-45_v70": {
+   "nearest_body_cm": 16.93,
+   "fp_mesh_offset_cm": [
+    -0.0,
+    4.31
+   ]
+  },
+  "stand_p-90_v70_NO_OFFSET": {
+   "nearest_body_cm": 22.36,
+   "fp_mesh_offset_cm": [
+    0.0,
+    0.0
+   ]
+  },
+  "stand_p0_v110": {
+   "nearest_body_cm": 25.27,
+   "fp_mesh_offset_cm": [
+    0.41,
+    20.02
+   ]
+  },
+  "stand_p-45_v110": {
+   "nearest_body_cm": 27.92,
+   "fp_mesh_offset_cm": [
+    0.64,
+    28.89
+   ]
+  },
+  "stand_p-70_v110": {
+   "nearest_body_cm": 29.68,
+   "fp_mesh_offset_cm": [
+    0.77,
+    33.59
+   ]
+  },
+  "stand_p-90_v110": {
+   "nearest_body_cm": 31.22,
+   "fp_mesh_offset_cm": [
+    0.88,
+    37.21
+   ]
+  },
+  "stand_y60_p-60_v110": {
+   "nearest_body_cm": 28.83,
+   "fp_mesh_offset_cm": [
+    10.17,
+    29.88
+   ]
+  },
+  "stand_y-60_p-60_v110": {
+   "nearest_body_cm": 29.08,
+   "fp_mesh_offset_cm": [
+    -8.83,
+    30.62
+   ]
+  },
+  "sneak_p0_v110": {
+   "nearest_body_cm": 25.24,
+   "fp_mesh_offset_cm": [
+    2.83,
+    47.7
+   ]
+  },
+  "sneak_p-60_v110": {
+   "nearest_body_cm": 31.09,
+   "fp_mesh_offset_cm": [
+    2.97,
+    56.03
+   ]
+  },
+  "sneak_p-90_v110": {
+   "nearest_body_cm": 33.84,
+   "fp_mesh_offset_cm": [
+    3.03,
+    59.52
+   ]
+  },
+  "low_p0_v110": {
+   "nearest_body_cm": 16.93,
+   "fp_mesh_offset_cm": [
+    -0.0,
+    4.31
+   ]
+  },
+  "low_p-45_v110": {
+   "nearest_body_cm": 16.93,
+   "fp_mesh_offset_cm": [
+    -0.0,
+    4.31
+   ]
+  },
+  "stand_p-90_v110_NO_OFFSET": {
+   "nearest_body_cm": 22.36,
+   "fp_mesh_offset_cm": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "near_clip_cm": 2.0,
+ "fp_offset_rule": "mesh XY offset = camera XY - head_eye socket XY (presentation only, first person only; no vertical offset so feet stay on the floor)"
+}

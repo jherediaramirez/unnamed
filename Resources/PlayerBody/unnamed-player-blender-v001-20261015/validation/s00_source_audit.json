@@ -1,0 +1,2674 @@
+{
+ "file": {
+  "path": "C:\\dev\\output\\unnamed-player-blender-v001-20261015\\source\\minecraft_steve_rigged.glb",
+  "bytes": 661040,
+  "sha256": "88E80A7E1D993092C4143C62EF71505F22B292AECED58A1139368FF3817CA961"
+ },
+ "gltf": {
+  "magic": "glTF",
+  "version": 2,
+  "asset": {
+   "extras": {
+    "author": "Bully Magraptor (https://sketchfab.com/irex6510)",
+    "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+    "source": "https://sketchfab.com/3d-models/minecraft-steve-rigged-fbe1d1fab86d47b09171608103af3b2d",
+    "title": "Minecraft Steve (Rigged)"
+   },
+   "generator": "Sketchfab-16.85.0",
+   "version": "2.0"
+  },
+  "extensionsUsed": [
+   "KHR_texture_transform"
+  ],
+  "scene_extras": [
+   null
+  ],
+  "counts": {
+   "nodes": 41,
+   "meshes": 6,
+   "skins": 1,
+   "animations": 0,
+   "materials": 1,
+   "textures": 1,
+   "images": 1,
+   "samplers": 1,
+   "accessors": 37,
+   "cameras": 0
+  },
+  "skins": [
+   {
+    "name": null,
+    "joints": 24,
+    "skeleton": 5,
+    "joint_names": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ]
+   }
+  ],
+  "meshes": [
+   {
+    "name": "Object_0",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   },
+   {
+    "name": "Object_1",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   },
+   {
+    "name": "Object_2",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   },
+   {
+    "name": "Object_3",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   },
+   {
+    "name": "Object_4",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   },
+   {
+    "name": "Object_5",
+    "primitives": 1,
+    "attributes": [
+     "JOINTS_0",
+     "NORMAL",
+     "POSITION",
+     "TEXCOORD_0",
+     "WEIGHTS_0"
+    ],
+    "material": 0
+   }
+  ],
+  "nodes": [
+   {
+    "i": 0,
+    "name": "Sketchfab_model",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     1
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 1,
+    "name": "root",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     2
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 2,
+    "name": "GLTF_SceneRootNode",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     3
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 3,
+    "name": "bones_29",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     4
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 4,
+    "name": "GLTF_created_0",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     5,
+     7,
+     9,
+     11,
+     13,
+     15,
+     17,
+     6,
+     8,
+     10,
+     12,
+     14,
+     16
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 5,
+    "name": "GLTF_created_0_rootJoint",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     18
+    ],
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 6,
+    "name": "steve_arm_left_23",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 7,
+    "name": "Object_7",
+    "mesh": 0,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 8,
+    "name": "steve_arm_right_24",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 9,
+    "name": "Object_9",
+    "mesh": 1,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 10,
+    "name": "steve_head_25",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 11,
+    "name": "Object_11",
+    "mesh": 2,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 12,
+    "name": "steve_leg_left_26",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 13,
+    "name": "Object_13",
+    "mesh": 3,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 14,
+    "name": "steve_leg_right_27",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 15,
+    "name": "Object_15",
+    "mesh": 4,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 16,
+    "name": "steve_torso_28",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 17,
+    "name": "Object_17",
+    "mesh": 5,
+    "skin": 0,
+    "children": null,
+    "t": null,
+    "r": null,
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 18,
+    "name": "Bone_017_22",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     19,
+     33,
+     37
+    ],
+    "t": [
+     0.0,
+     0.0,
+     -6.260526392274941e-16
+    ],
+    "r": [
+     -0.5,
+     0.5,
+     0.5,
+     0.5
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 19,
+    "name": "Bone_13",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     20
+    ],
+    "t": [
+     -6.260595213701905e-16,
+     1.7263710693723897e-16,
+     0.0
+    ],
+    "r": [
+     0.5,
+     -0.5,
+     -0.5,
+     0.5
+    ],
+    "s": [
+     1.0,
+     0.9999999403953552,
+     1.0
+    ],
+    "extras": null
+   },
+   {
+    "i": 20,
+    "name": "Bone_001_12",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     21,
+     23,
+     28
+    ],
+    "t": [
+     4.462956247985417e-16,
+     1.500000238418579,
+     5.821425782967732e-15
+    ],
+    "r": [
+     9.98354059792301e-19,
+     2.1855692367012125e-08,
+     3.195231946680855e-17,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 21,
+    "name": "Bone_002_1",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     22
+    ],
+    "t": [
+     1.5566374457945506e-17,
+     1.5000004768371582,
+     1.5491422841783578e-14
+    ],
+    "r": [
+     1.2194595202457866e-17,
+     1.7763568394002505e-15,
+     4.160345401515997e-09,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 22,
+    "name": "Bone_002_end_0",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": [
+     1.6641379829707148e-08,
+     2.000000476837158,
+     1.6558361348728567e-09
+    ],
+    "r": [
+     0.0,
+     -2.0258277395503513e-24,
+     0.0,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 23,
+    "name": "Bone_003_6",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     24
+    ],
+    "t": [
+     1.5566374457945506e-17,
+     1.5000004768371582,
+     1.5491422841783578e-14
+    ],
+    "r": [
+     -0.8506508469581604,
+     -1.2475390720467772e-09,
+     -7.062219142817128e-10,
+     0.525731086730957
+    ],
+    "s": [
+     1.0,
+     0.9999999403953552,
+     0.9999998807907104
+    ],
+    "extras": null
+   },
+   {
+    "i": 24,
+    "name": "Bone_004_5",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     25
+    ],
+    "t": [
+     -3.725296515710852e-09,
+     1.1180342435836792,
+     -3.5762786865234375e-07
+    ],
+    "r": [
+     0.2297528237104416,
+     -3.0640092685274567e-09,
+     1.5982330126007582e-08,
+     0.9732490181922913
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 25,
+    "name": "Bone_005_4",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     26
+    ],
+    "t": [
+     1.5002136422026524e-08,
+     0.4999999403953552,
+     -2.3841852225814364e-07
+    ],
+    "r": [
+     -0.7071065902709961,
+     -1.8932742040789208e-09,
+     -1.8894816378178803e-08,
+     0.7071070671081543
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 26,
+    "name": "Bone_006_3",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     27
+    ],
+    "t": [
+     -4.419905152985848e-08,
+     1.2500005960464478,
+     -1.47011178341927e-07
+    ],
+    "r": [
+     -2.3841863594498136e-07,
+     5.960453464126658e-09,
+     -1.7872423541120952e-08,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 27,
+    "name": "Bone_006_end_2",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": [
+     -7.972965221370032e-08,
+     1.2500001192092896,
+     5.827121185575379e-08
+    ],
+    "r": [
+     3.3087224502121107e-23,
+     -9.416482215285002e-16,
+     -3.3040235349372175e-15,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 28,
+    "name": "Bone_010_11",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     29
+    ],
+    "t": [
+     1.5566374457945506e-17,
+     1.5000004768371582,
+     1.5491422841783578e-14
+    ],
+    "r": [
+     0.8506508469581604,
+     -6.764208393406079e-08,
+     -9.94963826883577e-08,
+     0.525731086730957
+    ],
+    "s": [
+     1.0,
+     0.9999999403953552,
+     0.9999998807907104
+    ],
+    "extras": null
+   },
+   {
+    "i": 29,
+    "name": "Bone_011_10",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     30
+    ],
+    "t": [
+     1.1175913527949888e-08,
+     1.1180342435836792,
+     1.49011640360186e-07
+    ],
+    "r": [
+     -0.16245979070663452,
+     0.6881909966468811,
+     -0.16245977580547333,
+     0.6881909370422363
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 30,
+    "name": "Bone_012_9",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     31
+    ],
+    "t": [
+     -2.3841825225190405e-07,
+     0.5000002384185791,
+     -1.4901125666710868e-08
+    ],
+    "r": [
+     0.49999985098838806,
+     -0.5000001192092896,
+     0.5,
+     0.5000001192092896
+    ],
+    "s": [
+     1.0,
+     0.9999999403953552,
+     1.0
+    ],
+    "extras": null
+   },
+   {
+    "i": 31,
+    "name": "Bone_013_8",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     32
+    ],
+    "t": [
+     3.7425380128297547e-07,
+     1.2499996423721313,
+     -6.093796400818974e-08
+    ],
+    "r": [
+     1.907348234908568e-07,
+     -9.324067740124065e-09,
+     -1.632311921184737e-07,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 32,
+    "name": "Bone_013_end_7",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": [
+     3.793830671838805e-08,
+     1.250000238418579,
+     -5.827121185575379e-08
+    ],
+    "r": [
+     3.639438841171027e-15,
+     1.7618154012782623e-15,
+     3.271787578547087e-15,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 33,
+    "name": "Bone_007_17",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     34
+    ],
+    "t": [
+     -6.260595213701905e-16,
+     1.7263710693723897e-16,
+     0.0
+    ],
+    "r": [
+     3.925248086365362e-16,
+     -4.3582087126566016e-16,
+     -0.7071068286895752,
+     0.7071068286895752
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 34,
+    "name": "Bone_008_16",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     35
+    ],
+    "t": [
+     0.0,
+     0.4999998211860657,
+     -4.440892098500626e-16
+    ],
+    "r": [
+     -0.7071067094802856,
+     9.131818501373345e-08,
+     -7.375698629630278e-08,
+     0.7071068286895752
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 35,
+    "name": "Bone_009_15",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     36
+    ],
+    "t": [
+     2.980232594040899e-08,
+     1.5,
+     3.0913355431039236e-08
+    ],
+    "r": [
+     -7.947285496356926e-08,
+     -1.1672577215904312e-07,
+     -3.108085522285364e-08,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 36,
+    "name": "Bone_009_end_14",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": [
+     -5.5989577418813496e-08,
+     1.5,
+     2.4980018054066022e-15
+    ],
+    "r": [
+     7.105427357601002e-15,
+     2.517966371973386e-15,
+     5.329070518200751e-15,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 37,
+    "name": "Bone_014_21",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     38
+    ],
+    "t": [
+     -6.260595213701905e-16,
+     1.7263710693723897e-16,
+     0.0
+    ],
+    "r": [
+     0.5,
+     -0.5,
+     0.5,
+     0.5
+    ],
+    "s": [
+     1.0,
+     0.9999999403953552,
+     1.0
+    ],
+    "extras": null
+   },
+   {
+    "i": 38,
+    "name": "Bone_015_20",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     39
+    ],
+    "t": [
+     -4.440892098500626e-15,
+     0.4999998211860657,
+     7.105427357601002e-15
+    ],
+    "r": [
+     0.49999988079071045,
+     -0.5,
+     0.5,
+     0.5000001192092896
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 39,
+    "name": "Bone_016_19",
+    "mesh": null,
+    "skin": null,
+    "children": [
+     40
+    ],
+    "t": [
+     -1.4901138989387164e-08,
+     1.5000001192092896,
+     -2.3740685861639577e-08
+    ],
+    "r": [
+     9.934109357345733e-08,
+     -1.3261904996397789e-07,
+     -1.7376720506945276e-08,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   },
+   {
+    "i": 40,
+    "name": "Bone_016_end_18",
+    "mesh": null,
+    "skin": null,
+    "children": null,
+    "t": [
+     2.3943069749066126e-11,
+     1.5,
+     0.0
+    ],
+    "r": [
+     4.638081265406614e-24,
+     1.4210856409267898e-14,
+     3.552713678800501e-15,
+     1.0
+    ],
+    "s": null,
+    "extras": null
+   }
+  ],
+  "materials": [
+   {
+    "doubleSided": true,
+    "name": "skin",
+    "pbrMetallicRoughness": {
+     "baseColorTexture": {
+      "extensions": {
+       "KHR_texture_transform": {
+        "offset": [
+         0,
+         -1
+        ]
+       }
+      },
+      "index": 0
+     },
+     "metallicFactor": 0.0,
+     "roughnessFactor": 0.5
+    }
+   }
+  ],
+  "samplers": [
+   {
+    "magFilter": 9729,
+    "minFilter": 9987,
+    "wrapS": 10497,
+    "wrapT": 10497
+   }
+  ],
+  "textures": [
+   {
+    "sampler": 0,
+    "source": 0
+   }
+  ],
+  "images": [
+   {
+    "name": null,
+    "mimeType": "image/jpeg",
+    "bufferView": 6,
+    "bytes": 484578,
+    "sha256": "68104B7C0C75F65937E117EE558FD91A78B3666FD1F665CE31F1026118FEBC2F",
+    "extracted_to": "C:\\dev\\output\\unnamed-player-blender-v001-20261015\\source\\original_skin_texture.jpg",
+    "pixels": [
+     4096,
+     4096
+    ],
+    "sof_marker": "0xc0"
+   }
+  ]
+ },
+ "blender_objects": [
+  {
+   "name": "bones_29",
+   "type": "EMPTY",
+   "parent": "GLTF_SceneRootNode",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    2.81949
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "GLTF_created_0",
+   "type": "ARMATURE",
+   "parent": "bones_29",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "armature": {
+    "bones": [
+     {
+      "name": "GLTF_created_0_rootJoint",
+      "parent": null,
+      "head": [
+       0.0,
+       0.0,
+       2.81949
+      ],
+      "tail": [
+       0.0,
+       0.0,
+       5.63898
+      ],
+      "length_local": 2.81949,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_017_22"
+      ]
+     },
+     {
+      "name": "Bone_017_22",
+      "parent": "GLTF_created_0_rootJoint",
+      "head": [
+       -0.0,
+       -0.0,
+       5.63898
+      ],
+      "tail": [
+       -2.81949,
+       -0.0,
+       5.63898
+      ],
+      "length_local": 2.81949,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_13",
+       "Bone_007_17",
+       "Bone_014_21"
+      ]
+     },
+     {
+      "name": "Bone_13",
+      "parent": "Bone_017_22",
+      "head": [
+       -0.0,
+       -0.0,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.0,
+       7.13898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_001_12"
+      ]
+     },
+     {
+      "name": "Bone_001_12",
+      "parent": "Bone_13",
+      "head": [
+       -0.0,
+       -0.0,
+       7.13898
+      ],
+      "tail": [
+       -0.0,
+       -0.0,
+       8.63898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_002_1",
+       "Bone_003_6",
+       "Bone_010_11"
+      ]
+     },
+     {
+      "name": "Bone_002_1",
+      "parent": "Bone_001_12",
+      "head": [
+       -0.0,
+       -0.0,
+       8.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.0,
+       10.63898
+      ],
+      "length_local": 2.0,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_002_end_0"
+      ]
+     },
+     {
+      "name": "Bone_002_end_0",
+      "parent": "Bone_002_1",
+      "head": [
+       -0.0,
+       -0.0,
+       10.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.0,
+       12.63898
+      ],
+      "length_local": 2.0,
+      "use_deform": true,
+      "use_connect": false,
+      "children": []
+     },
+     {
+      "name": "Bone_003_6",
+      "parent": "Bone_001_12",
+      "head": [
+       -0.0,
+       -0.0,
+       8.63898
+      ],
+      "tail": [
+       -0.0,
+       1.0,
+       8.13898
+      ],
+      "length_local": 1.11803,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_004_5"
+      ]
+     },
+     {
+      "name": "Bone_004_5",
+      "parent": "Bone_003_6",
+      "head": [
+       -0.0,
+       1.0,
+       8.13898
+      ],
+      "tail": [
+       -0.0,
+       1.5,
+       8.13898
+      ],
+      "length_local": 0.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_005_4"
+      ]
+     },
+     {
+      "name": "Bone_005_4",
+      "parent": "Bone_004_5",
+      "head": [
+       -0.0,
+       1.5,
+       8.13898
+      ],
+      "tail": [
+       -0.0,
+       1.5,
+       6.88898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_006_3"
+      ]
+     },
+     {
+      "name": "Bone_006_3",
+      "parent": "Bone_005_4",
+      "head": [
+       -0.0,
+       1.5,
+       6.88898
+      ],
+      "tail": [
+       0.0,
+       1.5,
+       5.63898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_006_end_2"
+      ]
+     },
+     {
+      "name": "Bone_006_end_2",
+      "parent": "Bone_006_3",
+      "head": [
+       -0.0,
+       1.5,
+       5.63898
+      ],
+      "tail": [
+       0.0,
+       1.5,
+       4.38898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": []
+     },
+     {
+      "name": "Bone_010_11",
+      "parent": "Bone_001_12",
+      "head": [
+       -0.0,
+       -0.0,
+       8.63898
+      ],
+      "tail": [
+       -0.0,
+       -1.0,
+       8.13898
+      ],
+      "length_local": 1.11803,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_011_10"
+      ]
+     },
+     {
+      "name": "Bone_011_10",
+      "parent": "Bone_010_11",
+      "head": [
+       -0.0,
+       -1.0,
+       8.13898
+      ],
+      "tail": [
+       -0.0,
+       -1.5,
+       8.13898
+      ],
+      "length_local": 0.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_012_9"
+      ]
+     },
+     {
+      "name": "Bone_012_9",
+      "parent": "Bone_011_10",
+      "head": [
+       -0.0,
+       -1.5,
+       8.13898
+      ],
+      "tail": [
+       -0.0,
+       -1.5,
+       6.88898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_013_8"
+      ]
+     },
+     {
+      "name": "Bone_013_8",
+      "parent": "Bone_012_9",
+      "head": [
+       -0.0,
+       -1.5,
+       6.88898
+      ],
+      "tail": [
+       -0.0,
+       -1.5,
+       5.63898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_013_end_7"
+      ]
+     },
+     {
+      "name": "Bone_013_end_7",
+      "parent": "Bone_013_8",
+      "head": [
+       -0.0,
+       -1.5,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       -1.5,
+       4.38898
+      ],
+      "length_local": 1.25,
+      "use_deform": true,
+      "use_connect": false,
+      "children": []
+     },
+     {
+      "name": "Bone_007_17",
+      "parent": "Bone_017_22",
+      "head": [
+       -0.0,
+       -0.0,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       0.5,
+       5.63898
+      ],
+      "length_local": 0.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_008_16"
+      ]
+     },
+     {
+      "name": "Bone_008_16",
+      "parent": "Bone_007_17",
+      "head": [
+       -0.0,
+       0.5,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       0.5,
+       4.13898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_009_15"
+      ]
+     },
+     {
+      "name": "Bone_009_15",
+      "parent": "Bone_008_16",
+      "head": [
+       -0.0,
+       0.5,
+       4.13898
+      ],
+      "tail": [
+       -0.0,
+       0.5,
+       2.63898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_009_end_14"
+      ]
+     },
+     {
+      "name": "Bone_009_end_14",
+      "parent": "Bone_009_15",
+      "head": [
+       -0.0,
+       0.5,
+       2.63898
+      ],
+      "tail": [
+       -0.0,
+       0.5,
+       1.13898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": []
+     },
+     {
+      "name": "Bone_014_21",
+      "parent": "Bone_017_22",
+      "head": [
+       -0.0,
+       -0.0,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.5,
+       5.63898
+      ],
+      "length_local": 0.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_015_20"
+      ]
+     },
+     {
+      "name": "Bone_015_20",
+      "parent": "Bone_014_21",
+      "head": [
+       -0.0,
+       -0.5,
+       5.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.5,
+       4.13898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_016_19"
+      ]
+     },
+     {
+      "name": "Bone_016_19",
+      "parent": "Bone_015_20",
+      "head": [
+       -0.0,
+       -0.5,
+       4.13898
+      ],
+      "tail": [
+       -0.0,
+       -0.5,
+       2.63898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": [
+       "Bone_016_end_18"
+      ]
+     },
+     {
+      "name": "Bone_016_end_18",
+      "parent": "Bone_016_19",
+      "head": [
+       -0.0,
+       -0.5,
+       2.63898
+      ],
+      "tail": [
+       -0.0,
+       -0.5,
+       1.13898
+      ],
+      "length_local": 1.5,
+      "use_deform": true,
+      "use_connect": false,
+      "children": []
+     }
+    ],
+    "bone_count": 24,
+    "display_type": "OCTAHEDRAL"
+   },
+   "pose_custom_shapes": {
+    "GLTF_created_0_rootJoint": "Icosphere",
+    "Bone_017_22": "Icosphere",
+    "Bone_13": "Icosphere",
+    "Bone_001_12": "Icosphere",
+    "Bone_002_1": "Icosphere",
+    "Bone_002_end_0": "Icosphere",
+    "Bone_003_6": "Icosphere",
+    "Bone_004_5": "Icosphere",
+    "Bone_005_4": "Icosphere",
+    "Bone_006_3": "Icosphere",
+    "Bone_006_end_2": "Icosphere",
+    "Bone_010_11": "Icosphere",
+    "Bone_011_10": "Icosphere",
+    "Bone_012_9": "Icosphere",
+    "Bone_013_8": "Icosphere",
+    "Bone_013_end_7": "Icosphere",
+    "Bone_007_17": "Icosphere",
+    "Bone_008_16": "Icosphere",
+    "Bone_009_15": "Icosphere",
+    "Bone_009_end_14": "Icosphere",
+    "Bone_014_21": "Icosphere",
+    "Bone_015_20": "Icosphere",
+    "Bone_016_19": "Icosphere",
+    "Bone_016_end_18": "Icosphere"
+   }
+  },
+  {
+   "name": "GLTF_SceneRootNode",
+   "type": "EMPTY",
+   "parent": "root",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    0.707107,
+    0.707107,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "Icosphere",
+   "type": "MESH",
+   "parent": null,
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "XYZ",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "glTF_not_exported"
+   ],
+   "mesh": {
+    "verts": 42,
+    "faces": 80,
+    "edges": 120,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [],
+    "vertex_groups": [],
+    "modifiers": [],
+    "shape_keys": [],
+    "weighted_groups": {},
+    "max_influences": 0,
+    "unweighted_verts": 42
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.951058,
+     -1.0,
+     -1.0
+    ],
+    "max": [
+     0.951058,
+     1.0,
+     1.0
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.951058,
+     -1.0,
+     -1.0
+    ],
+    "max": [
+     0.951058,
+     1.0,
+     1.0
+    ]
+   }
+  },
+  {
+   "name": "Object_11",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 486,
+    "faces": 768,
+    "edges": 1248,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_002_1": {
+      "verts": 486,
+      "partial": 0
+     }
+    },
+    "max_influences": 1,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -1.0,
+     -1.000001,
+     5.819492
+    ],
+    "max": [
+     1.000001,
+     1.000001,
+     7.819493
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -1.0,
+     -1.000001,
+     8.638983
+    ],
+    "max": [
+     1.000001,
+     1.000001,
+     10.638984
+    ]
+   }
+  },
+  {
+   "name": "Object_13",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 310,
+    "faces": 448,
+    "edges": 752,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_008_16": {
+      "verts": 185,
+      "partial": 60
+     },
+     "Bone_009_15": {
+      "verts": 185,
+      "partial": 60
+     }
+    },
+    "max_influences": 2,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.5,
+     -1e-06,
+     -0.180509
+    ],
+    "max": [
+     0.5,
+     1.000001,
+     2.819492
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.5,
+     -1e-06,
+     2.638982
+    ],
+    "max": [
+     0.5,
+     1.0,
+     5.638982
+    ]
+   }
+  },
+  {
+   "name": "Object_15",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 310,
+    "faces": 448,
+    "edges": 752,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_015_20": {
+      "verts": 185,
+      "partial": 60
+     },
+     "Bone_016_19": {
+      "verts": 185,
+      "partial": 60
+     }
+    },
+    "max_influences": 2,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.5,
+     -1.000001,
+     -0.180509
+    ],
+    "max": [
+     0.5,
+     0.0,
+     2.819491
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.5,
+     -1.000001,
+     2.638981
+    ],
+    "max": [
+     0.5,
+     0.0,
+     5.638982
+    ]
+   }
+  },
+  {
+   "name": "Object_17",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 454,
+    "faces": 704,
+    "edges": 1152,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_001_12": {
+      "verts": 297,
+      "partial": 140
+     },
+     "Bone_13": {
+      "verts": 297,
+      "partial": 140
+     }
+    },
+    "max_influences": 2,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.5,
+     -1.000001,
+     2.819492
+    ],
+    "max": [
+     0.5,
+     1.000001,
+     5.819492
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.5,
+     -1.000001,
+     5.638982
+    ],
+    "max": [
+     0.5,
+     1.0,
+     8.638983
+    ]
+   }
+  },
+  {
+   "name": "Object_7",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 310,
+    "faces": 448,
+    "edges": 752,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_005_4": {
+      "verts": 205,
+      "partial": 80
+     },
+     "Bone_006_3": {
+      "verts": 185,
+      "partial": 80
+     }
+    },
+    "max_influences": 2,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.5,
+     1.0,
+     2.819491
+    ],
+    "max": [
+     0.5,
+     2.000001,
+     5.81949
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.5,
+     1.0,
+     5.638982
+    ],
+    "max": [
+     0.5,
+     2.000001,
+     8.638983
+    ]
+   }
+  },
+  {
+   "name": "Object_9",
+   "type": "MESH",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ],
+   "mesh": {
+    "verts": 310,
+    "faces": 448,
+    "edges": 752,
+    "uv_layers": [
+     "UVMap"
+    ],
+    "materials": [
+     "skin"
+    ],
+    "vertex_groups": [
+     "GLTF_created_0_rootJoint",
+     "Bone_017_22",
+     "Bone_13",
+     "Bone_001_12",
+     "Bone_002_1",
+     "Bone_002_end_0",
+     "Bone_003_6",
+     "Bone_004_5",
+     "Bone_005_4",
+     "Bone_006_3",
+     "Bone_006_end_2",
+     "Bone_010_11",
+     "Bone_011_10",
+     "Bone_012_9",
+     "Bone_013_8",
+     "Bone_013_end_7",
+     "Bone_007_17",
+     "Bone_008_16",
+     "Bone_009_15",
+     "Bone_009_end_14",
+     "Bone_014_21",
+     "Bone_015_20",
+     "Bone_016_19",
+     "Bone_016_end_18"
+    ],
+    "modifiers": [
+     [
+      "ARMATURE",
+      "GLTF_created_0"
+     ]
+    ],
+    "shape_keys": [],
+    "weighted_groups": {
+     "Bone_012_9": {
+      "verts": 185,
+      "partial": 80
+     },
+     "Bone_013_8": {
+      "verts": 205,
+      "partial": 80
+     }
+    },
+    "max_influences": 2,
+    "unweighted_verts": 0
+   },
+   "evaluated_bounds": {
+    "min": [
+     -0.5,
+     -2.000001,
+     2.819492
+    ],
+    "max": [
+     0.5,
+     -1.0,
+     5.819492
+    ]
+   },
+   "rest_bounds": {
+    "min": [
+     -0.5,
+     -2.000001,
+     5.63898
+    ],
+    "max": [
+     0.5,
+     -0.999999,
+     8.638983
+    ]
+   }
+  },
+  {
+   "name": "root",
+   "type": "EMPTY",
+   "parent": "Sketchfab_model",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "Sketchfab_model",
+   "type": "EMPTY",
+   "parent": null,
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    0.707107,
+    -0.707107,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_arm_left_23",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_arm_right_24",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_head_25",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_leg_left_26",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_leg_right_27",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  },
+  {
+   "name": "steve_torso_28",
+   "type": "EMPTY",
+   "parent": "GLTF_created_0",
+   "parent_type": "OBJECT",
+   "parent_bone": null,
+   "location": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_mode": "QUATERNION",
+   "rotation_quaternion": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hide_render": false,
+   "hide_viewport": false,
+   "custom_props": {},
+   "collections": [
+    "Scene Collection"
+   ]
+  }
+ ],
+ "blender_actions": [],
+ "blender_images": [
+  {
+   "name": "Image_0",
+   "size": [
+    4096,
+    4096
+   ],
+   "packed": true,
+   "colorspace": "sRGB"
+  }
+ ],
+ "blender_materials": [
+  {
+   "name": "skin",
+   "nodes": [
+    {
+     "type": "BSDF_PRINCIPLED"
+    },
+    {
+     "type": "OUTPUT_MATERIAL"
+    },
+    {
+     "type": "TEX_IMAGE",
+     "image": "Image_0",
+     "interpolation": "Linear"
+    },
+    {
+     "type": "MAPPING"
+    },
+    {
+     "type": "UVMAP"
+    }
+   ],
+   "blend_method": "HASHED"
+  }
+ ],
+ "summary": {
+  "skinned_meshes": [
+   "Object_11",
+   "Object_13",
+   "Object_15",
+   "Object_17",
+   "Object_7",
+   "Object_9"
+  ],
+  "non_skinned_mesh_objects": [
+   "Icosphere"
+  ],
+  "empties": [
+   "bones_29",
+   "GLTF_SceneRootNode",
+   "root",
+   "Sketchfab_model",
+   "steve_arm_left_23",
+   "steve_arm_right_24",
+   "steve_head_25",
+   "steve_leg_left_26",
+   "steve_leg_right_27",
+   "steve_torso_28"
+  ],
+  "armatures": [
+   "GLTF_created_0"
+  ],
+  "evaluated_bounds_skinned": {
+   "min": [
+    -1.0,
+    -2.000001,
+    -0.180509
+   ],
+   "max": [
+    1.000001,
+    2.000001,
+    7.819493
+   ],
+   "height": 8.000002,
+   "width_x": 2.000001,
+   "depth_y": 4.000002
+  },
+  "normalize_factor_to_1p8": 0.22499994375001406
+ }
+}

@@ -1,0 +1,960 @@
+{
+ "Idle": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.0,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 2e-05,
+   "max_interior_accel_m_per_frame2": 6e-05,
+   "seam_accel_ratio": 0.32196
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 121
+ },
+ "SneakIdle": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.0,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 2e-05,
+   "max_interior_accel_m_per_frame2": 5e-05,
+   "seam_accel_ratio": 0.49448
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 121
+ },
+ "StandToSneak": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.017,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 17
+ },
+ "SneakToStand": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.012,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 17
+ },
+ "Walk_F": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.078,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.078,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.078,
+  "drift_cm_max_120fps": 0.082,
+  "drift_cm_max_30fps": 0.001,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02227,
+   "max_interior_accel_m_per_frame2": 0.04862,
+   "seam_accel_ratio": 0.45811
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5672,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6476,
+   "a_on": 0.3044,
+   "yaw": 0.0,
+   "backward": false
+  }
+ },
+ "Walk_FR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.071,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.071,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.071,
+  "drift_cm_max_120fps": 0.155,
+  "drift_cm_max_30fps": 0.001,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02051,
+   "max_interior_accel_m_per_frame2": 0.05143,
+   "seam_accel_ratio": 0.3987
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5516,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6608,
+   "a_on": 0.3106,
+   "yaw": -18.0,
+   "backward": false
+  }
+ },
+ "Walk_R": {
+  "drift_cm_60fps": {
+   "l_heel": 0.02,
+   "l_mid": 0.041,
+   "l_ball": 0.001,
+   "l_tip": 0.002,
+   "r_heel": 0.02,
+   "r_mid": 0.041,
+   "r_ball": 0.001,
+   "r_tip": 0.002
+  },
+  "drift_cm_max_60fps": 0.041,
+  "drift_cm_max_120fps": 0.3,
+  "drift_cm_max_30fps": 0.041,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02077,
+   "max_interior_accel_m_per_frame2": 0.06673,
+   "seam_accel_ratio": 0.31126
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5332,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6476,
+   "a_on": 0.3064,
+   "yaw": -12.0,
+   "backward": false
+  }
+ },
+ "Walk_BR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.066,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.066,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.066,
+  "drift_cm_max_120fps": 0.156,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02271,
+   "max_interior_accel_m_per_frame2": 0.04189,
+   "seam_accel_ratio": 0.54214
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5564,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6608,
+   "a_on": 0.3304,
+   "yaw": 8.0,
+   "backward": true
+  }
+ },
+ "Walk_B": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.004,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.004,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.004,
+  "drift_cm_max_120fps": 0.091,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02232,
+   "max_interior_accel_m_per_frame2": 0.05217,
+   "seam_accel_ratio": 0.42776
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5833,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6476,
+   "a_on": 0.3238,
+   "yaw": 0.0,
+   "backward": true
+  }
+ },
+ "Walk_BL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.066,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.066,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.066,
+  "drift_cm_max_120fps": 0.151,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02271,
+   "max_interior_accel_m_per_frame2": 0.03874,
+   "seam_accel_ratio": 0.58624
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5542,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6608,
+   "a_on": 0.3304,
+   "yaw": -8.0,
+   "backward": true
+  }
+ },
+ "Walk_L": {
+  "drift_cm_60fps": {
+   "l_heel": 0.02,
+   "l_mid": 0.041,
+   "l_ball": 0.001,
+   "l_tip": 0.002,
+   "r_heel": 0.02,
+   "r_mid": 0.041,
+   "r_ball": 0.001,
+   "r_tip": 0.002
+  },
+  "drift_cm_max_60fps": 0.041,
+  "drift_cm_max_120fps": 0.29,
+  "drift_cm_max_30fps": 0.041,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02073,
+   "max_interior_accel_m_per_frame2": 0.06285,
+   "seam_accel_ratio": 0.32987
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.532,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6476,
+   "a_on": 0.3064,
+   "yaw": 12.0,
+   "backward": false
+  }
+ },
+ "Walk_FL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.071,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.071,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.071,
+  "drift_cm_max_120fps": 0.15,
+  "drift_cm_max_30fps": 0.001,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02079,
+   "max_interior_accel_m_per_frame2": 0.05026,
+   "seam_accel_ratio": 0.4136
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 37,
+  "diag": {
+   "hip_z": 0.5505,
+   "max_extension": 0.995,
+   "D": 0.25,
+   "stance_len": 0.6608,
+   "a_on": 0.3106,
+   "yaw": 18.0,
+   "backward": false
+  }
+ },
+ "Sprint_F": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.002,
+   "l_ball": 0.002,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.001,
+   "r_ball": 0.002,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.002,
+  "drift_cm_max_120fps": 0.221,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02896,
+   "max_interior_accel_m_per_frame2": 0.05864,
+   "seam_accel_ratio": 0.49391
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5628,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6286,
+   "a_on": 0.2829,
+   "yaw": 0.0,
+   "backward": false
+  }
+ },
+ "Sprint_FR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.001,
+   "l_ball": 0.002,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.001,
+   "r_ball": 0.002,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.002,
+  "drift_cm_max_120fps": 0.282,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02874,
+   "max_interior_accel_m_per_frame2": 0.05878,
+   "seam_accel_ratio": 0.4889
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5503,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6414,
+   "a_on": 0.2886,
+   "yaw": -18.0,
+   "backward": false
+  }
+ },
+ "Sprint_R": {
+  "drift_cm_60fps": {
+   "l_heel": 0.026,
+   "l_mid": 0.026,
+   "l_ball": 0.002,
+   "l_tip": 0.0,
+   "r_heel": 0.026,
+   "r_mid": 0.026,
+   "r_ball": 0.002,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.026,
+  "drift_cm_max_120fps": 0.332,
+  "drift_cm_max_30fps": 0.021,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.0281,
+   "max_interior_accel_m_per_frame2": 0.06692,
+   "seam_accel_ratio": 0.41994
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5392,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6286,
+   "a_on": 0.2887,
+   "yaw": -14.0,
+   "backward": false
+  }
+ },
+ "Sprint_BR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.199,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.03219,
+   "max_interior_accel_m_per_frame2": 0.07399,
+   "seam_accel_ratio": 0.43512
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5374,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6414,
+   "a_on": 0.3464,
+   "yaw": 8.0,
+   "backward": true
+  }
+ },
+ "Sprint_B": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.175,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.03129,
+   "max_interior_accel_m_per_frame2": 0.04999,
+   "seam_accel_ratio": 0.62587
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5713,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6286,
+   "a_on": 0.3394,
+   "yaw": 0.0,
+   "backward": true
+  }
+ },
+ "Sprint_BL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.0,
+   "l_mid": 0.0,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.0,
+   "r_mid": 0.0,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.0,
+  "drift_cm_max_120fps": 0.197,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.03179,
+   "max_interior_accel_m_per_frame2": 0.075,
+   "seam_accel_ratio": 0.42387
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.535,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6414,
+   "a_on": 0.3464,
+   "yaw": -8.0,
+   "backward": true
+  }
+ },
+ "Sprint_L": {
+  "drift_cm_60fps": {
+   "l_heel": 0.026,
+   "l_mid": 0.026,
+   "l_ball": 0.002,
+   "l_tip": 0.0,
+   "r_heel": 0.026,
+   "r_mid": 0.026,
+   "r_ball": 0.002,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.026,
+  "drift_cm_max_120fps": 0.312,
+  "drift_cm_max_30fps": 0.021,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02807,
+   "max_interior_accel_m_per_frame2": 0.063,
+   "seam_accel_ratio": 0.44546
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5381,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6286,
+   "a_on": 0.2887,
+   "yaw": 14.0,
+   "backward": false
+  }
+ },
+ "Sprint_FL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.001,
+   "l_mid": 0.001,
+   "l_ball": 0.002,
+   "l_tip": 0.0,
+   "r_heel": 0.001,
+   "r_mid": 0.001,
+   "r_ball": 0.002,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.002,
+  "drift_cm_max_120fps": 0.282,
+  "drift_cm_max_30fps": 0.0,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.02797,
+   "max_interior_accel_m_per_frame2": 0.05906,
+   "seam_accel_ratio": 0.47353
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 33,
+  "diag": {
+   "hip_z": 0.5493,
+   "max_extension": 0.995,
+   "D": 0.21,
+   "stance_len": 0.6414,
+   "a_on": 0.2886,
+   "yaw": 18.0,
+   "backward": false
+  }
+ },
+ "Sneak_F": {
+  "drift_cm_60fps": {
+   "l_heel": 0.02,
+   "l_mid": 0.046,
+   "l_ball": 0.0,
+   "l_tip": 0.001,
+   "r_heel": 0.02,
+   "r_mid": 0.046,
+   "r_ball": 0.001,
+   "r_tip": 0.001
+  },
+  "drift_cm_max_60fps": 0.046,
+  "drift_cm_max_120fps": 0.064,
+  "drift_cm_max_30fps": 0.047,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.0095,
+   "max_interior_accel_m_per_frame2": 0.0197,
+   "seam_accel_ratio": 0.48227
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.9001,
+   "D": 0.58,
+   "stance_len": 0.6761,
+   "a_on": 0.338,
+   "yaw": 0.0,
+   "backward": false
+  }
+ },
+ "Sneak_FR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.019,
+   "l_mid": 0.044,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.019,
+   "r_mid": 0.044,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.044,
+  "drift_cm_max_120fps": 0.067,
+  "drift_cm_max_30fps": 0.044,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01144,
+   "max_interior_accel_m_per_frame2": 0.02129,
+   "seam_accel_ratio": 0.53746
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.4645,
+   "max_extension": 0.9804,
+   "D": 0.47,
+   "stance_len": 0.7748,
+   "a_on": 0.3874,
+   "yaw": -15.0,
+   "backward": false
+  }
+ },
+ "Sneak_R": {
+  "drift_cm_60fps": {
+   "l_heel": 0.013,
+   "l_mid": 0.056,
+   "l_ball": 0.002,
+   "l_tip": 0.001,
+   "r_heel": 0.013,
+   "r_mid": 0.056,
+   "r_ball": 0.002,
+   "r_tip": 0.001
+  },
+  "drift_cm_max_60fps": 0.056,
+  "drift_cm_max_120fps": 0.067,
+  "drift_cm_max_30fps": 0.058,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01025,
+   "max_interior_accel_m_per_frame2": 0.02304,
+   "seam_accel_ratio": 0.4448
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.9192,
+   "D": 0.58,
+   "stance_len": 0.6761,
+   "a_on": 0.3394,
+   "yaw": -10.0,
+   "backward": false
+  }
+ },
+ "Sneak_BR": {
+  "drift_cm_60fps": {
+   "l_heel": 0.007,
+   "l_mid": 0.068,
+   "l_ball": 0.001,
+   "l_tip": 0.0,
+   "r_heel": 0.007,
+   "r_mid": 0.068,
+   "r_ball": 0.001,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.068,
+  "drift_cm_max_120fps": 0.069,
+  "drift_cm_max_30fps": 0.068,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01121,
+   "max_interior_accel_m_per_frame2": 0.02702,
+   "seam_accel_ratio": 0.4149
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.9753,
+   "D": 0.47,
+   "stance_len": 0.7748,
+   "a_on": 0.4029,
+   "yaw": 6.0,
+   "backward": true
+  }
+ },
+ "Sneak_B": {
+  "drift_cm_60fps": {
+   "l_heel": 0.014,
+   "l_mid": 0.08,
+   "l_ball": 0.001,
+   "l_tip": 0.001,
+   "r_heel": 0.014,
+   "r_mid": 0.08,
+   "r_ball": 0.001,
+   "r_tip": 0.001
+  },
+  "drift_cm_max_60fps": 0.08,
+  "drift_cm_max_120fps": 0.08,
+  "drift_cm_max_30fps": 0.08,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01112,
+   "max_interior_accel_m_per_frame2": 0.01851,
+   "seam_accel_ratio": 0.60075
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.8731,
+   "D": 0.58,
+   "stance_len": 0.6761,
+   "a_on": 0.3516,
+   "yaw": 0.0,
+   "backward": true
+  }
+ },
+ "Sneak_BL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.007,
+   "l_mid": 0.068,
+   "l_ball": 0.001,
+   "l_tip": 0.0,
+   "r_heel": 0.007,
+   "r_mid": 0.068,
+   "r_ball": 0.001,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.068,
+  "drift_cm_max_120fps": 0.069,
+  "drift_cm_max_30fps": 0.068,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01799,
+   "max_interior_accel_m_per_frame2": 0.02821,
+   "seam_accel_ratio": 0.63772
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.9782,
+   "D": 0.47,
+   "stance_len": 0.7748,
+   "a_on": 0.4029,
+   "yaw": -6.0,
+   "backward": true
+  }
+ },
+ "Sneak_L": {
+  "drift_cm_60fps": {
+   "l_heel": 0.013,
+   "l_mid": 0.056,
+   "l_ball": 0.002,
+   "l_tip": 0.001,
+   "r_heel": 0.013,
+   "r_mid": 0.056,
+   "r_ball": 0.002,
+   "r_tip": 0.001
+  },
+  "drift_cm_max_60fps": 0.056,
+  "drift_cm_max_120fps": 0.067,
+  "drift_cm_max_30fps": 0.058,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01023,
+   "max_interior_accel_m_per_frame2": 0.02347,
+   "seam_accel_ratio": 0.43584
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.485,
+   "max_extension": 0.9218,
+   "D": 0.58,
+   "stance_len": 0.6761,
+   "a_on": 0.3394,
+   "yaw": 10.0,
+   "backward": false
+  }
+ },
+ "Sneak_FL": {
+  "drift_cm_60fps": {
+   "l_heel": 0.019,
+   "l_mid": 0.044,
+   "l_ball": 0.0,
+   "l_tip": 0.0,
+   "r_heel": 0.019,
+   "r_mid": 0.044,
+   "r_ball": 0.0,
+   "r_tip": 0.0
+  },
+  "drift_cm_max_60fps": 0.044,
+  "drift_cm_max_120fps": 0.067,
+  "drift_cm_max_30fps": 0.044,
+  "unreachable_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.01144,
+   "max_interior_accel_m_per_frame2": 0.02131,
+   "seam_accel_ratio": 0.53691
+  },
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 55,
+  "diag": {
+   "hip_z": 0.4623,
+   "max_extension": 0.9799,
+   "D": 0.47,
+   "stance_len": 0.7748,
+   "a_on": 0.3874,
+   "yaw": 15.0,
+   "backward": false
+  }
+ }
+}

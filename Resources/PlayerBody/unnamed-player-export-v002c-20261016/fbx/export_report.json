@@ -1,0 +1,42 @@
+{
+ "checks": {
+  "actions": {
+   "count": 66,
+   "names_frames_match_v001_manifest": true
+  },
+  "rest_pose_max_dev_vs_v001_m": 3.5762786865234375e-07,
+  "sockets_vs_v001_cm": "<=0.01",
+  "leftover": {
+   "rig_action": "RIG_UP_Pickaxe_StrikeA",
+   "skeleton_constraints": 22,
+   "frame_current": 3,
+   "cleared": true,
+   "pose_vs_rest_after_clear_m": 0.0
+  },
+  "cm_copy": {
+   "height_BU": 180.0,
+   "soles_BU": 0.0,
+   "skeleton_scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "raw_gates": {
+  "SK_unit_1": true,
+  "SK_22_limbs": true,
+  "SK_limb_scale_1": true,
+  "SK_no_leaf_bones": true,
+  "SK_armature_null_named_Armature_at_scene_root": true,
+  "anims_armature_at_scene_root": true,
+  "SK_sockets_leaf_children_of_right_bones": true,
+  "anims_unit_1": true,
+  "anims_22_limbs": true,
+  "anims_limb_scale_1": true,
+  "anims_one_take_named_clip": true,
+  "anims_no_sockets_no_leaf": true
+ },
+ "source_unchanged": true,
+ "files": 71
+}

@@ -1,0 +1,152 @@
+[
+  {
+    "lift": -6,
+    "wrist": -6,
+    "head_pen_cm": 0.40143118239939213,
+    "frame": 10.25
+  },
+  {
+    "lift": -6,
+    "wrist": -9,
+    "head_pen_cm": 0.31243672128766775,
+    "frame": 8.25
+  },
+  {
+    "lift": -6,
+    "wrist": -3,
+    "head_pen_cm": 0.918277632445097,
+    "frame": 11.0
+  },
+  {
+    "lift": -6,
+    "wrist": -12,
+    "head_pen_cm": 0.31243672128766775,
+    "frame": 8.25
+  },
+  {
+    "lift": -6,
+    "wrist": 0,
+    "head_pen_cm": 1.2959836050868034,
+    "frame": 11.0
+  },
+  {
+    "lift": -9,
+    "wrist": -6,
+    "head_pen_cm": 0.40143118239939213,
+    "frame": 10.25
+  },
+  {
+    "lift": -9,
+    "wrist": -9,
+    "head_pen_cm": 0,
+    "frame": 0
+  },
+  {
+    "lift": -9,
+    "wrist": -3,
+    "head_pen_cm": 0.918277632445097,
+    "frame": 11.0
+  },
+  {
+    "lift": -9,
+    "wrist": -12,
+    "head_pen_cm": 0,
+    "frame": 0
+  },
+  {
+    "lift": -9,
+    "wrist": 0,
+    "head_pen_cm": 1.2959836050868034,
+    "frame": 11.0
+  },
+  {
+    "lift": -3,
+    "wrist": -6,
+    "head_pen_cm": 3.8905367255210876,
+    "frame": 8.0
+  },
+  {
+    "lift": -3,
+    "wrist": -9,
+    "head_pen_cm": 3.8905367255210876,
+    "frame": 8.0
+  },
+  {
+    "lift": -3,
+    "wrist": -3,
+    "head_pen_cm": 3.8905367255210876,
+    "frame": 8.0
+  },
+  {
+    "lift": -3,
+    "wrist": -12,
+    "head_pen_cm": 3.8905367255210876,
+    "frame": 8.0
+  },
+  {
+    "lift": -3,
+    "wrist": 0,
+    "head_pen_cm": 3.8905367255210876,
+    "frame": 8.0
+  },
+  {
+    "lift": -12,
+    "wrist": -6,
+    "head_pen_cm": 0.40143118239939213,
+    "frame": 10.25
+  },
+  {
+    "lift": -12,
+    "wrist": -9,
+    "head_pen_cm": 0,
+    "frame": 0
+  },
+  {
+    "lift": -12,
+    "wrist": -3,
+    "head_pen_cm": 0.918277632445097,
+    "frame": 11.0
+  },
+  {
+    "lift": -12,
+    "wrist": -12,
+    "head_pen_cm": 0,
+    "frame": 0
+  },
+  {
+    "lift": -12,
+    "wrist": 0,
+    "head_pen_cm": 1.2959836050868034,
+    "frame": 11.0
+  },
+  {
+    "lift": 0,
+    "wrist": -6,
+    "head_pen_cm": 3.4289028495550156,
+    "frame": 8.0
+  },
+  {
+    "lift": 0,
+    "wrist": -9,
+    "head_pen_cm": 3.4289028495550156,
+    "frame": 8.0
+  },
+  {
+    "lift": 0,
+    "wrist": -3,
+    "head_pen_cm": 3.4289028495550156,
+    "frame": 8.0
+  },
+  {
+    "lift": 0,
+    "wrist": -12,
+    "head_pen_cm": 3.4289028495550156,
+    "frame": 8.0
+  },
+  {
+    "lift": 0,
+    "wrist": 0,
+    "head_pen_cm": 3.4289028495550156,
+    "frame": 8.0
+  }
+]

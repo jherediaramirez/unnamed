@@ -1,0 +1,804 @@
+{
+ "sole_z": 0.0,
+ "points": {
+  "heel": [
+   0.08500000089406967,
+   0.07999999821186066,
+   0.0
+  ],
+  "mid": [
+   0.08500000089406967,
+   -0.015000000596046448,
+   0.0
+  ],
+  "toe": [
+   0.08500000089406967,
+   -0.1550000011920929,
+   0.0
+  ]
+ },
+ "point_bones": {
+  "heel": "foot",
+  "mid": "foot",
+  "toe": "ball"
+ },
+ "rest_min_z_mm": -0.0,
+ "actions": {
+  "BS_CrouchIdle": {
+   "frames": 60,
+   "loop": true,
+   "family": "Crouch",
+   "min_z_mm": -0.07,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "eye_z": 1.27,
+   "eye_z_range": [
+    1.2637,
+    1.2731
+   ]
+  },
+  "BS_CrouchToStand": {
+   "frames": 8,
+   "loop": false,
+   "family": "Crouch",
+   "min_z_mm": -0.07
+  },
+  "BS_CrouchWalk_B": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.06,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.295154,
+   "cycle": 32,
+   "beta": 0.62,
+   "planted_pairs": 38,
+   "slide_mm": 0.037,
+   "contact_z_mm": 0.061,
+   "ik_miss_mm": 0.069,
+   "travel": [
+    -1.2246468525851679e-16,
+    1.0
+   ]
+  },
+  "BS_CrouchWalk_BL": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.07,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.831625,
+   "cycle": 32,
+   "beta": 0.5374,
+   "planted_pairs": 34,
+   "slide_mm": 0.033,
+   "contact_z_mm": 0.066,
+   "ik_miss_mm": 0.074,
+   "travel": [
+    0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_CrouchWalk_BR": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.07,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.831625,
+   "cycle": 32,
+   "beta": 0.5374,
+   "planted_pairs": 34,
+   "slide_mm": 0.033,
+   "contact_z_mm": 0.066,
+   "ik_miss_mm": 0.073,
+   "travel": [
+    -0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_CrouchWalk_F": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.07,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.295154,
+   "cycle": 32,
+   "beta": 0.62,
+   "planted_pairs": 38,
+   "slide_mm": 0.037,
+   "contact_z_mm": 0.067,
+   "ik_miss_mm": 0.07,
+   "travel": [
+    -0.0,
+    -1.0
+   ]
+  },
+  "BS_CrouchWalk_FL": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.06,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.831625,
+   "cycle": 32,
+   "beta": 0.5374,
+   "planted_pairs": 34,
+   "slide_mm": 0.031,
+   "contact_z_mm": 0.062,
+   "ik_miss_mm": 0.065,
+   "travel": [
+    0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_CrouchWalk_FR": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.06,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.831625,
+   "cycle": 32,
+   "beta": 0.5374,
+   "planted_pairs": 34,
+   "slide_mm": 0.031,
+   "contact_z_mm": 0.062,
+   "ik_miss_mm": 0.065,
+   "travel": [
+    -0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_CrouchWalk_L": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.06,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.295154,
+   "cycle": 32,
+   "beta": 0.62,
+   "planted_pairs": 38,
+   "slide_mm": 0.036,
+   "contact_z_mm": 0.063,
+   "ik_miss_mm": 0.07,
+   "travel": [
+    1.0,
+    -6.123234262925839e-17
+   ]
+  },
+  "BS_CrouchWalk_R": {
+   "frames": 32,
+   "loop": true,
+   "family": "CrouchWalk",
+   "min_z_mm": -0.06,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 1.295154,
+   "cycle": 32,
+   "beta": 0.62,
+   "planted_pairs": 38,
+   "slide_mm": 0.036,
+   "contact_z_mm": 0.063,
+   "ik_miss_mm": 0.07,
+   "travel": [
+    -1.0,
+    -6.123234262925839e-17
+   ]
+  },
+  "BS_Hold_Pickaxe": {
+   "frames": 60,
+   "loop": true,
+   "family": "Action",
+   "min_z_mm": -0.0,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "prop_inside_verts": 0,
+   "prop_depth_mm": 0.0,
+   "prop_worst_frame": null
+  },
+  "BS_Jump_Land": {
+   "frames": 12,
+   "loop": false,
+   "family": "Jump",
+   "min_z_mm": -0.04
+  },
+  "BS_Jump_Loop": {
+   "frames": 24,
+   "loop": true,
+   "family": "Jump",
+   "min_z_mm": 31.45,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0
+  },
+  "BS_Jump_Start": {
+   "frames": 9,
+   "loop": false,
+   "family": "Jump",
+   "min_z_mm": -0.0
+  },
+  "BS_Look_C": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    0.0,
+    0.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 0.0
+  },
+  "BS_Look_D": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    0.0,
+    -90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 4.62
+  },
+  "BS_Look_DL": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    -90.0,
+    -90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 7.37
+  },
+  "BS_Look_DR": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    90.0,
+    -90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 7.37
+  },
+  "BS_Look_L": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    -90.0,
+    0.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 5.77
+  },
+  "BS_Look_R": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    90.0,
+    0.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 5.77
+  },
+  "BS_Look_U": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    0.0,
+    90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 4.62
+  },
+  "BS_Look_UL": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    -90.0,
+    90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 7.37
+  },
+  "BS_Look_UR": {
+   "frames": 1,
+   "loop": false,
+   "family": "Look",
+   "min_z_mm": -0.0,
+   "look": [
+    90.0,
+    90.0
+   ],
+   "head_err_deg": 0.0,
+   "eye_err_deg": 7.37
+  },
+  "BS_Mine_Swing": {
+   "frames": 9,
+   "loop": true,
+   "family": "Action",
+   "min_z_mm": -0.0,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "contact_frame": 4,
+   "tip_contact": [
+    -0.03341,
+    -0.93783,
+    1.54971
+   ],
+   "tip_from_eyes": [
+    0.835,
+    -0.058
+   ],
+   "tip_elev_deg": -4.0,
+   "tip_speed_in": 32.97,
+   "tip_speed_out": 2.57,
+   "peak_frame": {
+    "spine_03": 1,
+    "upperarm_r": 4,
+    "lowerarm_r": 4,
+    "hand_r": 4
+   },
+   "prop_inside_verts": 0,
+   "prop_depth_mm": 0.0,
+   "prop_worst_frame": null
+  },
+  "BS_Mine_Swing_Down": {
+   "frames": 9,
+   "loop": true,
+   "family": "Action",
+   "min_z_mm": -0.0,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "contact_frame": 4,
+   "tip_contact": [
+    -0.03591,
+    -0.63956,
+    0.5816
+   ],
+   "tip_from_eyes": [
+    0.441,
+    -0.995
+   ],
+   "tip_elev_deg": -65.9,
+   "tip_speed_in": 36.69,
+   "tip_speed_out": 2.78,
+   "peak_frame": {
+    "spine_03": 4,
+    "upperarm_r": 4,
+    "lowerarm_r": 4,
+    "hand_r": 1
+   },
+   "prop_inside_verts": 0,
+   "prop_depth_mm": 0.0,
+   "prop_worst_frame": null
+  },
+  "BS_Mine_Swing_Up": {
+   "frames": 9,
+   "loop": true,
+   "family": "Action",
+   "min_z_mm": -0.0,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "contact_frame": 4,
+   "tip_contact": [
+    -0.10442,
+    -0.40163,
+    2.16463
+   ],
+   "tip_from_eyes": [
+    0.332,
+    0.551
+   ],
+   "tip_elev_deg": 57.5,
+   "tip_speed_in": 26.8,
+   "tip_speed_out": 1.59,
+   "peak_frame": {
+    "spine_03": 1,
+    "upperarm_r": 4,
+    "lowerarm_r": 4,
+    "hand_r": 1
+   },
+   "prop_inside_verts": 0,
+   "prop_depth_mm": 0.0,
+   "prop_worst_frame": null
+  },
+  "BS_Place": {
+   "frames": 6,
+   "loop": true,
+   "family": "Action",
+   "min_z_mm": -0.0,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0
+  },
+  "BS_Sprint_B": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.612335,
+   "cycle": 16,
+   "beta": 0.1938,
+   "planted_pairs": 6,
+   "slide_mm": 0.01,
+   "contact_z_mm": 0.03,
+   "ik_miss_mm": 0.033,
+   "travel": [
+    -1.2246468525851679e-16,
+    1.0
+   ]
+  },
+  "BS_Sprint_BL": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.02,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.726872,
+   "cycle": 16,
+   "beta": 0.1899,
+   "planted_pairs": 6,
+   "slide_mm": 0.008,
+   "contact_z_mm": 0.024,
+   "ik_miss_mm": 0.025,
+   "travel": [
+    0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_Sprint_BR": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.02,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.726872,
+   "cycle": 16,
+   "beta": 0.1899,
+   "planted_pairs": 6,
+   "slide_mm": 0.008,
+   "contact_z_mm": 0.024,
+   "ik_miss_mm": 0.025,
+   "travel": [
+    -0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_Sprint_F": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.04,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.612335,
+   "cycle": 16,
+   "beta": 0.2195,
+   "planted_pairs": 6,
+   "slide_mm": 0.045,
+   "contact_z_mm": 0.087,
+   "ik_miss_mm": 0.036,
+   "travel": [
+    -0.0,
+    -1.0
+   ]
+  },
+  "BS_Sprint_FL": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.02,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.726872,
+   "cycle": 16,
+   "beta": 0.2024,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.025,
+   "ik_miss_mm": 0.025,
+   "travel": [
+    0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_Sprint_FR": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.726872,
+   "cycle": 16,
+   "beta": 0.2024,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.025,
+   "ik_miss_mm": 0.025,
+   "travel": [
+    -0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_Sprint_L": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.612335,
+   "cycle": 16,
+   "beta": 0.2004,
+   "planted_pairs": 6,
+   "slide_mm": 0.008,
+   "contact_z_mm": 0.026,
+   "ik_miss_mm": 0.029,
+   "travel": [
+    1.0,
+    -6.123234262925839e-17
+   ]
+  },
+  "BS_Sprint_R": {
+   "frames": 16,
+   "loop": true,
+   "family": "Sprint",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 5.612335,
+   "cycle": 16,
+   "beta": 0.2004,
+   "planted_pairs": 6,
+   "slide_mm": 0.008,
+   "contact_z_mm": 0.026,
+   "ik_miss_mm": 0.029,
+   "travel": [
+    -1.0,
+    -6.123234262925839e-17
+   ]
+  },
+  "BS_StandToCrouch": {
+   "frames": 8,
+   "loop": false,
+   "family": "Crouch",
+   "min_z_mm": -0.07
+  },
+  "BS_Swim_F": {
+   "frames": 30,
+   "loop": true,
+   "family": "Swim",
+   "min_z_mm": 393.9,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "swim_speed": 1.96,
+   "pull_l": {
+    "mean": 2.13,
+    "max": 2.94,
+    "frames": 7
+   },
+   "pull_r": {
+    "mean": 2.13,
+    "max": 2.94,
+    "frames": 7
+   }
+  },
+  "BS_Swim_Sprint": {
+   "frames": 40,
+   "loop": true,
+   "family": "Swim",
+   "min_z_mm": -466.36,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "swim_speed": 3.92,
+   "pull_l": {
+    "mean": 3.68,
+    "max": 4.68,
+    "frames": 14
+   },
+   "pull_r": {
+    "mean": 3.68,
+    "max": 4.68,
+    "frames": 14
+   }
+  },
+  "BS_Swim_Tread": {
+   "frames": 48,
+   "loop": true,
+   "family": "Swim",
+   "min_z_mm": 157.83,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0
+  },
+  "BS_Walk_B": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.317181,
+   "cycle": 18,
+   "beta": 0.2097,
+   "planted_pairs": 6,
+   "slide_mm": 0.004,
+   "contact_z_mm": 0.028,
+   "ik_miss_mm": 0.028,
+   "travel": [
+    -1.2246468525851679e-16,
+    1.0
+   ]
+  },
+  "BS_Walk_BL": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.405286,
+   "cycle": 18,
+   "beta": 0.1993,
+   "planted_pairs": 6,
+   "slide_mm": 0.004,
+   "contact_z_mm": 0.029,
+   "ik_miss_mm": 0.029,
+   "travel": [
+    0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_Walk_BR": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.405286,
+   "cycle": 18,
+   "beta": 0.1993,
+   "planted_pairs": 6,
+   "slide_mm": 0.004,
+   "contact_z_mm": 0.029,
+   "ik_miss_mm": 0.029,
+   "travel": [
+    -0.7071067690849304,
+    0.7071067690849304
+   ]
+  },
+  "BS_Walk_F": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.02,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.317181,
+   "cycle": 18,
+   "beta": 0.2256,
+   "planted_pairs": 8,
+   "slide_mm": 0.004,
+   "contact_z_mm": 0.02,
+   "ik_miss_mm": 0.019,
+   "travel": [
+    -0.0,
+    -1.0
+   ]
+  },
+  "BS_Walk_FL": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.405286,
+   "cycle": 18,
+   "beta": 0.2144,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.025,
+   "ik_miss_mm": 0.027,
+   "travel": [
+    0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_Walk_FR": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.405286,
+   "cycle": 18,
+   "beta": 0.2144,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.025,
+   "ik_miss_mm": 0.027,
+   "travel": [
+    -0.7071067690849304,
+    -0.7071067690849304
+   ]
+  },
+  "BS_Walk_L": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.317181,
+   "cycle": 18,
+   "beta": 0.2122,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.033,
+   "ik_miss_mm": 0.033,
+   "travel": [
+    1.0,
+    -6.123234262925839e-17
+   ]
+  },
+  "BS_Walk_R": {
+   "frames": 18,
+   "loop": true,
+   "family": "Walk",
+   "min_z_mm": -0.03,
+   "seam_mm": 0.0,
+   "seam_deg": 0.0,
+   "speed": 4.317181,
+   "cycle": 18,
+   "beta": 0.2122,
+   "planted_pairs": 6,
+   "slide_mm": 0.006,
+   "contact_z_mm": 0.032,
+   "ik_miss_mm": 0.033,
+   "travel": [
+    -1.0,
+    -6.123234262925839e-17
+   ]
+  }
+ },
+ "pickaxe": {
+  "grip": [
+   -0.23099999129772186,
+   0.0,
+   0.7425000071525574
+  ],
+  "tip": [
+   -0.23099999129772186,
+   -0.48399999737739563,
+   0.6075000166893005
+  ]
+ }
+}

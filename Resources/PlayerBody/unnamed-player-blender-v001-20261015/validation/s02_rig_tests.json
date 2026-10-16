@@ -1,0 +1,402 @@
+{
+ "tests": {
+  "T01_rest": {
+   "edge_min": 1.0,
+   "edge_max": 1.0,
+   "area_min": 1.0,
+   "area_max": 1.0,
+   "worst_parts": [
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ],
+    [
+     "arm_r",
+     1.0,
+     1.0
+    ],
+    [
+     "leg_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T02_bends_90": {
+   "edge_min": 0.25,
+   "edge_max": 2.316,
+   "area_min": 0.004,
+   "area_max": 2.316,
+   "worst_parts": [
+    [
+     "leg_l",
+     0.25,
+     2.316
+    ],
+    [
+     "leg_r",
+     0.25,
+     2.316
+    ],
+    [
+     "arm_l",
+     0.707,
+     1.91
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T03_bends_135": {
+   "edge_min": 0.368,
+   "edge_max": 2.498,
+   "area_min": 0.018,
+   "area_max": 2.498,
+   "worst_parts": [
+    [
+     "leg_l",
+     0.368,
+     2.498
+    ],
+    [
+     "leg_r",
+     0.368,
+     2.498
+    ],
+    [
+     "arm_l",
+     0.383,
+     2.002
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T04_wrists": {
+   "edge_min": 0.243,
+   "edge_max": 3.687,
+   "area_min": 0.189,
+   "area_max": 3.367,
+   "worst_parts": [
+    [
+     "arm_l",
+     0.243,
+     3.675
+    ],
+    [
+     "arm_r",
+     0.268,
+     3.687
+    ],
+    [
+     "leg_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T05_ankles": {
+   "edge_min": 0.205,
+   "edge_max": 2.508,
+   "area_min": 0.013,
+   "area_max": 2.379,
+   "worst_parts": [
+    [
+     "leg_l",
+     0.205,
+     2.508
+    ],
+    [
+     "leg_r",
+     0.217,
+     2.308
+    ],
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T06_hands_relaxed_open_fist": {
+   "edge_min": 0.674,
+   "edge_max": 1.259,
+   "area_min": 0.674,
+   "area_max": 1.259,
+   "worst_parts": [
+    [
+     "arm_l",
+     0.674,
+     1.259
+    ],
+    [
+     "arm_r",
+     0.674,
+     1.259
+    ],
+    [
+     "leg_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {
+    "arm_l>torso": 1.84,
+    "arm_r>torso": 1.84
+   },
+   "detached_cm": {}
+  },
+  "T07_grip_one_hand": {
+   "edge_min": 0.482,
+   "edge_max": 1.439,
+   "area_min": 0.482,
+   "area_max": 1.439,
+   "worst_parts": [
+    [
+     "arm_r",
+     0.482,
+     1.439
+    ],
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ],
+    [
+     "leg_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {
+    "arm_r>torso": 1.42
+   },
+   "detached_cm": {},
+   "grip": {
+    "arm_r": {
+     "handle_in_part_cm": 9.0,
+     "part_in_handle_cm": 0.83,
+     "gap_to_handle_cm": 0.83
+    }
+   }
+  },
+  "T08_grip_two_hands": {
+   "edge_min": 0.45,
+   "edge_max": 4.869,
+   "area_min": 0.054,
+   "area_max": 3.108,
+   "worst_parts": [
+    [
+     "arm_l",
+     0.45,
+     4.825
+    ],
+    [
+     "arm_r",
+     0.611,
+     4.869
+    ],
+    [
+     "torso",
+     0.999,
+     1.081
+    ]
+   ],
+   "penetration_cm": {
+    "arm_l>torso": 8.79,
+    "arm_r>torso": 8.13
+   },
+   "detached_cm": {},
+   "grip": {
+    "arm_r": {
+     "handle_in_part_cm": 3.81,
+     "part_in_handle_cm": 0.0,
+     "gap_to_handle_cm": 0.07
+    },
+    "arm_l": {
+     "handle_in_part_cm": 7.32,
+     "part_in_handle_cm": 0.83,
+     "gap_to_handle_cm": 0.83
+    }
+   }
+  },
+  "T09_toe_off_heel_lift": {
+   "edge_min": 0.241,
+   "edge_max": 1.898,
+   "area_min": 0.033,
+   "area_max": 1.898,
+   "worst_parts": [
+    [
+     "leg_r",
+     0.241,
+     1.821
+    ],
+    [
+     "leg_l",
+     0.347,
+     1.898
+    ],
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  },
+  "T10_torso_twist": {
+   "edge_min": 0.958,
+   "edge_max": 1.815,
+   "area_min": 0.701,
+   "area_max": 1.576,
+   "worst_parts": [
+    [
+     "torso",
+     0.958,
+     1.815
+    ],
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ],
+    [
+     "arm_r",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {
+    "arm_l>torso": 1.91,
+    "arm_r>torso": 1.03,
+    "arm_l>leg_l": 3.36
+   },
+   "detached_cm": {}
+  },
+  "T11_extreme_look": {
+   "edge_min": 0.774,
+   "edge_max": 1.897,
+   "area_min": 0.561,
+   "area_max": 1.723,
+   "worst_parts": [
+    [
+     "torso",
+     0.774,
+     1.897
+    ],
+    [
+     "arm_l",
+     1.0,
+     1.0
+    ],
+    [
+     "arm_r",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {
+    "arm_l>torso": 0.56,
+    "arm_r>torso": 2.3,
+    "arm_r>leg_r": 3.03,
+    "head>torso": 6.36,
+    "torso>head": 9.29
+   },
+   "detached_cm": {}
+  },
+  "T12_crouch": {
+   "edge_min": 0.237,
+   "edge_max": 3.061,
+   "area_min": 0.05,
+   "area_max": 3.034,
+   "worst_parts": [
+    [
+     "leg_l",
+     0.237,
+     2.297
+    ],
+    [
+     "leg_r",
+     0.268,
+     3.061
+    ],
+    [
+     "arm_l",
+     0.536,
+     1.381
+    ]
+   ],
+   "penetration_cm": {
+    "leg_l>leg_r": 0.31,
+    "leg_r>leg_l": 0.57,
+    "head>torso": 2.26,
+    "torso>head": 4.1
+   },
+   "detached_cm": {}
+  },
+  "T13_low_pose": {
+   "edge_min": 0.833,
+   "edge_max": 1.131,
+   "area_min": 0.833,
+   "area_max": 1.131,
+   "worst_parts": [
+    [
+     "arm_l",
+     0.833,
+     1.131
+    ],
+    [
+     "arm_r",
+     0.833,
+     1.131
+    ],
+    [
+     "leg_r",
+     0.909,
+     1.089
+    ]
+   ],
+   "penetration_cm": {
+    "arm_l>torso": 1.63,
+    "arm_r>torso": 1.63,
+    "head>torso": 5.43,
+    "torso>head": 7.64
+   },
+   "detached_cm": {}
+  },
+  "T14_forearm_twist_bad": {
+   "edge_min": 0.427,
+   "edge_max": 4.123,
+   "area_min": 0.084,
+   "area_max": 2.622,
+   "worst_parts": [
+    [
+     "arm_r",
+     0.427,
+     4.123
+    ],
+    [
+     "arm_l",
+     0.707,
+     2.28
+    ],
+    [
+     "leg_l",
+     1.0,
+     1.0
+    ]
+   ],
+   "penetration_cm": {},
+   "detached_cm": {}
+  }
+ },
+ "note": "penetration lists only pairs > 0.3 cm; junction gaps only > 0.2 cm"
+}

@@ -1,0 +1,15 @@
+For planning chat session_01Se4YftFDXKqfe2uM3AkET9
+Status: prepared locally; not sent (Claude Code Remote messaging is unavailable in this Codex session).
+
+The pose investigation is complete in the isolated sandbox. Report:
+C:\dev\output\up-pose-clip-investigation-20261016\REPORT.md
+
+All 20 freshly reproduced v002b/v002c poses match the approved source blend: max 0.00008020 cm / 0.00008687 degrees, measured per bone in component space with normalized shortest-arc rotations. The existing M0 assets were not opened in Unreal or changed.
+
+Interchange's parser accepts one frame at 60 Hz, while its animation factory clamps duration to 1/30 second and demands 3 keys. The count mismatch breaks animation-track processing; static-node fallback explains the apparently correct poses. Look_D baselines have 19 fallback tracks, versus all 22 with the fixes.
+
+Smallest proven M0 change: for pose_clip entries only, set Interchange animation_range=SET_RANGE, frame_import_range=0..2, sample rate=60. Reuse v002c FBXs unchanged, expect 3 imported keys / 2/60 seconds, and keep source timing recorded separately. Alternatively, export the unchanged pose over 0..2 and use Source Timeline. Both passed all 20 source checks, all 18 mesh-space additive checks, and saved-asset reloads. A fresh editor session had zero warnings, errors or ensures and exited 0.
+
+Blender's +/-90-look error is not gimbal lock. Its importer connects head to neck_01 and suppresses the head's animated translation: D (0,2,5) cm, U (0,3.5,-2) cm. Disconnecting only the imported head in memory reduces the maximum round-trip error to 0.00007243 cm. Direct FBX decoding verifies the exported rotations/translations. Use the source as the reference or correct that round-trip check; do not alter authored poses.
+
+Used 2 of 6 editor runs. All 243 protected input hashes unchanged. No game/M0/planning-folder changes, builds, commits or pushes. M0 remains on hold. An unrelated editor started during the final 12 seconds of diagnostic run 1 despite its clear launch check; recorded in the report. The independent clean run started after another clear check.

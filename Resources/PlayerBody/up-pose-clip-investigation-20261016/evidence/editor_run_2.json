@@ -1,0 +1,15 @@
+{
+  "pid": 35580,
+  "tag": "clean",
+  "priority": "BelowNormal",
+  "script": "C:\\dev\\output\\up-pose-clip-investigation-20261016\\scripts\\ue_verify_clean.py",
+  "other_editors_before": 0,
+  "start": "2026-10-16T01:48:40.5213315-04:00",
+  "quiet_status": "no quiet window (C:\\dev\\sandbox\\locks\\quiet-window.lock)\r\n",
+  "script_sha256": "403EB9BF63FA9238D04E91C9EAEB056A1F4E26E237DF43DC38530408E079760E",
+  "log": "C:\\dev\\output\\up-pose-clip-investigation-20261016\\evidence\\ue_2_clean_20261016_014840.log",
+  "project": "C:\\dev\\sandbox\\up-posefix\\PoseFix.uproject",
+  "exit_code": 0,
+  "index": 2,
+  "end": "2026-10-16T01:49:16.2725811-04:00"
+}

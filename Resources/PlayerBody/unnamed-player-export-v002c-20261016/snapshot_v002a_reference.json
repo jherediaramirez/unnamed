@@ -1,0 +1,332 @@
+[
+  {
+    "group": "repo-head",
+    "path": "C:\\dev\\projects\\Unnamed-use",
+    "status": "HEAD",
+    "sha256": "57fd09387009c9d7e42bc39ec6a8054de2a96e38"
+  },
+  {
+    "group": "repo-head",
+    "path": "C:\\dev\\projects\\Unnamed-body",
+    "status": "HEAD",
+    "sha256": "9822d24b8bf61b55a77c8294938674c3bef98afe"
+  },
+  {
+    "group": "dirty",
+    "path": "C:\\dev\\projects\\Unnamed-body\\Config\\DefaultEditor.ini",
+    "status": " M",
+    "sha256": "25920E87560682479062A06AFEF5E0046D23789E72200634D852BECBE1DB407B"
+  },
+  {
+    "group": "dirty",
+    "path": "C:\\dev\\projects\\Unnamed-body\\Art\\Characters\\BetterSteve\\SK_BetterSteve.fbm\\T_BetterSteve.png",
+    "status": "??",
+    "sha256": "A21553EE05E47D4813F06F5F541C75A4026495C90CFC73071399EE0D873D4D61"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchIdle.uasset",
+    "status": "",
+    "sha256": "759F32C5495E710F9B992125A9F97C12286D67AB52BEC8505AA4661C4F9251D3"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchToStand.uasset",
+    "status": "",
+    "sha256": "FFC55C1F3245ED1731EA1511C4360293B0ADC725CFA2EB9439DC7A3D4D1E7E3C"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_B.uasset",
+    "status": "",
+    "sha256": "50D889E23310F76C8CA9AB3EE76606B17393A89CE3123A675FB03843DFDF101A"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_BL.uasset",
+    "status": "",
+    "sha256": "A489E7FC221D250EF9253BFC87D5F7BC67BB18868608C6DCC93D09336F96F116"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_BR.uasset",
+    "status": "",
+    "sha256": "C3AA5E1D39CD9289FB257F7CC73924E1422AF573371D1971EF03A0B909191362"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_F.uasset",
+    "status": "",
+    "sha256": "1EFE7A970D1448529E7937D9157B4334D59F30C20DDAECC1E4658B72CBFE77C4"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_FL.uasset",
+    "status": "",
+    "sha256": "FD8D19604FDD51C589C4A56150AB59EA607610E19E15BE386CDAE4E77CF53DC1"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_FR.uasset",
+    "status": "",
+    "sha256": "95463462FE6F2896F6FF15371BA141AC1013ABFE83AFF566592A29517DDE5E98"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_L.uasset",
+    "status": "",
+    "sha256": "FF86E314B80215D497FFE7DAC22CF73258770C3351972BEB486690AC1B210ED1"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_CrouchWalk_R.uasset",
+    "status": "",
+    "sha256": "3797A9A481F5737A8B2913F6CD1C01C2EA31562012F4A4C0D87ECD177B509C10"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_FaceTest.uasset",
+    "status": "",
+    "sha256": "9538DE0EA64EF54A9A5FD5CA909F12C38219FFC20C081C955AE781B7EDEEB613"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_FlexTest.uasset",
+    "status": "",
+    "sha256": "73F8D3CBC51C86437342441747D5C7BE39580E35F11945D90AA490CCC36A3247"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Idle.uasset",
+    "status": "",
+    "sha256": "066CDDBD7F33C9637E96B46FA9162ED45240BE72014C288319CECB3DA7AD8BD6"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Jump_Land.uasset",
+    "status": "",
+    "sha256": "FC13BC9FE17709D6FF6B0B6DBE820D8B9B9ABE8F884B6E1C017C5D305F32F158"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Jump_Loop.uasset",
+    "status": "",
+    "sha256": "8FCFC2204632A2D194AE1533493CF2ADD2EA6EB1E92678474DB72C7F00C4FFEE"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Jump_Start.uasset",
+    "status": "",
+    "sha256": "ABEE5046A4198660DE05A1DE5D8A64199F5177EA38602897E71B88F7CD83E477"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_C.uasset",
+    "status": "",
+    "sha256": "F6FA0ED039CC58CCF05830F50BE277115C9D6E15AF99D7A047CD81BF4D0197C2"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_D.uasset",
+    "status": "",
+    "sha256": "8D9D6F780189575DA132BB283E723CCBEDA0C50CA504CB004117694DF78EF167"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_DL.uasset",
+    "status": "",
+    "sha256": "BEC2508B410C4D7B843123213ABF42C2159CF86DBC2586B3D7CCF87EEB741098"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_DR.uasset",
+    "status": "",
+    "sha256": "5EDE786AE1589862BA26427420085D37CD9B25E03780AE0B2B4AA1EC1253DEAE"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_L.uasset",
+    "status": "",
+    "sha256": "396150B3E4C43778AC13C42B1F3537201B550B4350296211E14E940EF73DDECE"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_R.uasset",
+    "status": "",
+    "sha256": "D80215347E46425E5D4D69C8AF48D7022070A1093F7322FACE0C9A3A81C495E2"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_U.uasset",
+    "status": "",
+    "sha256": "EC3B2BFF29189D94BB963738D5C84A6C9DE83EDF6FE5DBCE8D5890895924CC34"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_UL.uasset",
+    "status": "",
+    "sha256": "38B3B09025896D25C5DBAB1EA2881B62C432CD43E2B8D30C521F4C7B4BDF6854"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Look_UR.uasset",
+    "status": "",
+    "sha256": "23E49A96EC0E7D7BE6DC09BCCFAE8F5C90638EF8DA977FDBFFC3CCAE147E0028"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_B.uasset",
+    "status": "",
+    "sha256": "C37124D3A091A5443F1AEEFF7507DAE9A684DFA1A876714CC0C1E2210D198DAA"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_BL.uasset",
+    "status": "",
+    "sha256": "FE3BD29E70EC1447A01364F9500F110C60AC2BCBD8E423E6F85B93842C1FFE98"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_BR.uasset",
+    "status": "",
+    "sha256": "990D07723E90849ED0BE780CB2A8989DAC796B6A4EAD8BF5E4D4BA9C6B5F1369"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_F.uasset",
+    "status": "",
+    "sha256": "CFDA67CDABC1B5D459D5F9C51A731F11F7EE666A5ECFC2E3A236245AC06CE634"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_FL.uasset",
+    "status": "",
+    "sha256": "3DF4A05DC92B9355D3BEA5A3B264AD3E1E7B91017FAAADEA50120FA89CC61B88"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_FR.uasset",
+    "status": "",
+    "sha256": "44E7AD34EE23CA2C7C653FA28EADD10BC031BBFC63A196C0B088B676ACC9E037"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_L.uasset",
+    "status": "",
+    "sha256": "C4D046E304064D35C00684FB4B4B5ABB537B2BF6F0DC0BE4E9FA27D2A960119B"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Sprint_R.uasset",
+    "status": "",
+    "sha256": "01446FF6050D4AB75043A9279DC22445C0058BB544655F6AA7535EA3E0000897"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_StandToCrouch.uasset",
+    "status": "",
+    "sha256": "F6F864D990ED78A0D0FB88994B6A5C80A4B10FA2CA36EA203B01E14EC8DC93A8"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_B.uasset",
+    "status": "",
+    "sha256": "E276EEFE5230D93CF5CFEC66F00323F999FA426A61F71FD1F15C475D6D569809"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_BL.uasset",
+    "status": "",
+    "sha256": "43CB2C91EBFC179ECB72334A6E99E9B39790AAF2DFF0813E0AF0E69AA40A259F"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_BR.uasset",
+    "status": "",
+    "sha256": "FEAC005740F8D949DD2FF38F1366A183B5C8CADB6FB58AC4621F3750528CEDB3"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_F.uasset",
+    "status": "",
+    "sha256": "9E4E54B529A6C81A255B9EF1314137D52D7975BEB063053F655D64276962F612"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_FL.uasset",
+    "status": "",
+    "sha256": "F99B8A64871F30D388C7B77EEEAE4B9E34079C8F77382793D676865762CD5FD5"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_FR.uasset",
+    "status": "",
+    "sha256": "2A2232A4766F990B3046D40D12370A01429D1DF4E9EC4B8A72C6A4675FED4B7C"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_L.uasset",
+    "status": "",
+    "sha256": "A3F2373B2345A38D531FE420EE2453A0250F840FF1FBB9456F328B6A523FECDA"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk_R.uasset",
+    "status": "",
+    "sha256": "5250EF1C578497EB12F0393F507602F0D687B6008AE0F3B83C0CE6C22A97CF32"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\BS_Walk.uasset",
+    "status": "",
+    "sha256": "76C152EF1D00382CAE97CED55ACCB556CD39CBBFFBE0A716AF38C28692AA0CEB"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\M_BetterSteve.uasset",
+    "status": "",
+    "sha256": "DE40752147C42BD4F165B12CDEBCA1472A61E4A53D2A2A358538D8F92C894F10"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\SK_BetterSteve_PhysicsAsset.uasset",
+    "status": "",
+    "sha256": "54C0C0EFDDB192144F1D965F55BC142C3FD67A2D41BFB728D8D637A16570D617"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\SK_BetterSteve_Skeleton.uasset",
+    "status": "",
+    "sha256": "DCED1255DA863927CF867E52AB10B856F112A9023148163DCDB6DB5459BADC1D"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\SK_BetterSteve.uasset",
+    "status": "",
+    "sha256": "8B6078F49F6BF76CB98BA2D8A7E7D5EB7652DCB18F0EDFA7B31CC5BF4D250A45"
+  },
+  {
+    "group": "BetterSteve",
+    "path": "C:\\dev\\projects\\Unnamed-survival\\Content\\Characters\\BetterSteve\\T_BetterSteve.uasset",
+    "status": "",
+    "sha256": "768CFF259A1E00B4975C79CE0EF2D80C0F1FBC1DAB90E7F489D6B1ED3BFA1F07"
+  },
+  {
+    "group": "blend",
+    "path": "C:\\dev\\output\\unnamed-player-blender-v001-20261015\\blend\\UP_Player_master_v001.blend",
+    "status": "",
+    "sha256": "56A59E5F04A86C794857A2A4A5C16A6164A3396A448F8F79F43051CAD5DBE2F9"
+  },
+  {
+    "group": "blend",
+    "path": "C:\\dev\\output\\unnamed-player-motion-polish-v002-20261015\\blend\\UP_Player_arm_polish_v002.blend",
+    "status": "",
+    "sha256": "26E585D5676D5A8A18A6E6A2FAE5D682DF3470FA7B83A01972CFAE138D4D22C7"
+  },
+  {
+    "group": "blend",
+    "path": "C:\\dev\\output\\unnamed-player-motion-polish-v002-20261015\\blend\\UP_Player_master_v002.blend",
+    "status": "",
+    "sha256": "F2DBF90386000BEEA958FC8BFD55BEF1978BE98B8CDA642E9845E492E71D0241"
+  }
+]

@@ -1,0 +1,70 @@
+{
+ "log": "C:\\dev\\output\\unnamed-player-export-v002c-20261016\\evidence\\ue_proofC_20261016_011858.log",
+ "files_imported": 26,
+ "files_with_issues": {
+  "SK_UnnamedPlayer.fbx": [
+   "LogInterchangeEngine: Error: [C:/dev/output/unnamed-player-export-v002c-20261016/fbx/SK_UnnamedPlayer.fbx : '', Texture] UInterchangeTextureFactory: Invalid translator couldn't retrieve a payload."
+  ],
+  "A_UP_Look_C.fbx": [
+   "LogOutputDevice: Error: Ensure condition failed: AnimationTransformPayload.Transforms.Num() == BakeKeyCountForAnimationPayload  [File:D:\\build\\++UE5\\Sync\\Engine\\Plugins\\Interchange\\Runtime\\Source\\Import\\Private\\Animation\\Interchan",
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_D.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_DL.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_DR.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_L.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_R.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_U.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_UL.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Look_UR.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Low_Pose.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_Pickaxe_Hold.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_C.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_D.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_DL.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_DR.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_L.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_R.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_U.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_UL.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ],
+  "A_UP_SneakLook_UR.fbx": [
+   "LogInterchangeEngine: Warning: [ : '', AnimSequence] Animation Payload [RootNode.Armature.root_0_SkeletalAnimationPayloadKey] has unexpected number of Baked Transforms."
+  ]
+ }
+}

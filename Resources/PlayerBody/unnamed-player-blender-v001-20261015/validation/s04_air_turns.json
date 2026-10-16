@@ -1,0 +1,118 @@
+{
+ "Jump_Start": {
+  "min_sole_z_cm": -0.0,
+  "planted_drift_cm": null,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "Jump_Rise": {
+  "min_sole_z_cm": 10.75,
+  "planted_drift_cm": null,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "Jump_Fall": {
+  "min_sole_z_cm": 2.5,
+  "planted_drift_cm": null,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 49,
+  "closure": {
+   "pose_pos_m": 0.0,
+   "pose_rot_deg": 0.0,
+   "seam_accel_m_per_frame2": 0.00079,
+   "max_interior_accel_m_per_frame2": 0.0008,
+   "seam_accel_ratio": 0.9809
+  }
+ },
+ "Land_Soft": {
+  "min_sole_z_cm": -0.0,
+  "planted_drift_cm": 0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 13
+ },
+ "Land_Firm": {
+  "min_sole_z_cm": -0.0,
+  "planted_drift_cm": 0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 25
+ },
+ "Turn_L45": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "Turn_L90": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 31
+ },
+ "Turn_R45": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "Turn_R90": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 31
+ },
+ "SneakTurn_L45": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "SneakTurn_L90": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 31
+ },
+ "SneakTurn_R45": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 19
+ },
+ "SneakTurn_R90": {
+  "planted_drift_world_cm": 0.0,
+  "min_sole_z_cm": -0.0,
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 31
+ },
+ "Low_Pose": {
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 1,
+  "placeholder": true
+ },
+ "Flight_Placeholder": {
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 61,
+  "placeholder": true
+ },
+ "Death_Placeholder": {
+  "root_motion_max": 0.0,
+  "scale_dev_max": 0.0,
+  "keys_per_channel": 31,
+  "placeholder": true
+ }
+}

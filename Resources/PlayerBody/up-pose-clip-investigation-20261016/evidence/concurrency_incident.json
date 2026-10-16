@@ -1,0 +1,12 @@
+{
+  "run": 1,
+  "own_pid": 49844,
+  "own_start": "2026-10-16T01:46:30.8358624-04:00",
+  "own_end": "2026-10-16T01:47:53.8768571-04:00",
+  "other_pid": 44256,
+  "other_creation_time": "2026-10-16T01:47:41.463736-04:00",
+  "other_purpose_observed": "Unrelated Unnamed-mobs world-creation runtime test",
+  "other_editors_before_own_launch": 0,
+  "action": "No other process touched; next run deferred until no editor remained",
+  "limitation": "A clear pre-launch check cannot prevent another task from starting an editor afterwards. Approximately 12 seconds of overlap observed."
+}

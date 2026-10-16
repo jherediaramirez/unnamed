@@ -1,0 +1,309 @@
+Unnamed: full-body first-person / third-person animation integration
+Prepared for Jesus Heredia, 2026-10-15
+
+You are the Unreal gameplay engineer and technical animator for my existing game,
+Unnamed. Develop a concrete plan to bring our new Blender player and animation
+library into the game, support a visible full body in first and third person,
+and close the animation gaps exposed by actual gameplay.
+
+Start with a read-only audit and a reviewable implementation plan. You may write
+planning documents and inspection reports to a fresh output folder. Do not yet
+change the game, import/reimport assets, rebuild the Blender library, build or
+package Unreal, commit, or push. After I approve a concrete plan, carry out its
+approved scope without asking again for routine steps. This is an integration
+planning task, not another general animation critique.
+
+MY TARGET
+
+Keep the character's body present in first person: torso, arms, hands, legs and
+feet. The first-person hands must belong to that character and hold its tools.
+Preserve a coherent third-person character. A body visible when looking down is
+not enough: design the posing, camera relationship, tool handling, visibility,
+clipping, shadows, transitions and gameplay timing as a complete system.
+
+Interpret the head requirement as: exclude the head and obstructive headwear
+from the owner's first-person view; retain the head in third-person views,
+other players' views, and the intended world shadows/reflections. State this
+interpretation prominently in the plan so I can correct it before implementation.
+Do not permanently remove the head from the shared asset.
+
+Prefer shared character data and one coherent animation state across views.
+Evaluate whether one rendered body can meet the requirements or whether a
+synchronized owner-view representation is justified. Multiple render components
+are acceptable when justified; an unrelated floating-arms rig replacing the
+visible full body is not the requested outcome.
+
+READ THESE FIRST
+
+1. This prompt's companion, in the same folder:
+   INTEGRATION-CONTEXT-20261015.txt
+   It records the inspected checkout, exact candidate, hashes, existing code
+   paths, acceptance boundaries, and the history relevant to this task.
+
+2. The original complete character package:
+   C:\dev\output\unnamed-player-blender-v001-20261015
+   Read README.md, HANDOFF.md, REVIEW_PROMPT_ANIMATION.md,
+   exports\UP_manifest_v001.json, relevant scripts, validation and previews.
+
+3. The user-accepted arm revision:
+   C:\dev\output\unnamed-player-motion-polish-v002-20261015\blend\UP_Player_arm_polish_v002.blend
+   This contains the original complete library with only the three baked strike
+   actions and their three authoring counterparts replaced. Jesus accepted the
+   revised arm anticipation/approach: "That is much better."
+   Preserve those poses and the A -> B -> A -> C flow as the strike baseline.
+
+4. Current game, initially inspect:
+   C:\dev\projects\Unnamed-survival\Unnamed.uproject
+   Also identify C:\dev\projects\Unnamed and Unnamed-body through git worktree
+   list. Choose the actual integration checkout from current evidence, not its
+   folder name. The snapshot used here is historical as soon as work advances.
+   Read applicable AGENTS.md, CLAUDE.md, Docs\Architecture.md,
+   Docs\NamingConventions.md, Docs\Foundation\Architecture.md, and the relevant
+   Docs\Records handoffs. Inspect live source before trusting older documents.
+
+5. Earlier context, where useful:
+   C:\dev\output\unnamed-player-blender-handoff-20261015\BLENDER-PLAYER-HANDOFF.txt
+   Codex chats "Create Pickaxe Hit Variations" and
+   "Polish Unnamed Player Animation" (IDs in the companion).
+   Recover Claude's decisions from the original asset HANDOFF, CLAUDE.md and the
+   project's handoffs. If a particular conversation is unavailable, say so and
+   use the saved evidence; do not pretend to remember it. Earlier suggestions
+   for fingers, proportions, body offsets or architecture are not all approvals.
+
+SOURCE SELECTION IS PART OF THE WORK
+
+The existing v001 exports contain the older strikes. The polish folder currently
+has no exports directory. Do not import the old FBXs and claim the accepted arm
+revision is in the game.
+
+UP_Player_master_v002.blend is a separate, broader experimental master. Its gait,
+look, air and other edits were not accepted as a complete replacement set.
+Do not export that whole master as the approved version. Use the focused
+UP_Player_arm_polish_v002.blend as the proposed complete source candidate, and
+classify inherited defects separately from accepted arm improvements.
+
+Do not blindly run run_all.ps1 or s07_export.py. The stage scripts resolve their
+source through up_config.MASTER; the polish config points to the experimental
+master. The original export script also clears its destination anims directory.
+Plan explicit source/output arguments, a fresh versioned export destination,
+and source hashes. Reconcile each family's metadata with the selected actions:
+the polish folder's locomotion/look reports may describe the broader experiment,
+not the focused candidate. Approval of the arm motion does not prove readiness
+of every clip, its exports, or its Unreal integration.
+
+REQUIRED INVESTIGATION AND DESIGN
+
+A. Explain the current player system with file/function evidence.
+
+Trace input -> authoritative simulation -> rendered transform -> body-facing
+controller -> animation selection/evaluation -> camera -> held item -> effects.
+Inspect at least FoundationPawn, FoundationBody, FoundationBodyAnimInstance,
+FoundationController, FoundationSimulation/Profile, FoundationInteractionView,
+FoundationBreakEffects, authority/action timing, project settings, importer and
+body probes/tests. Follow their actual dependencies for item use and equipment.
+
+The inspected game uses an APawn with a world-aligned box and a custom 20 Hz
+simulation, not ACharacter/CharacterMovement. It currently loads Better Steve,
+56 bones and BS_* clips, through a native animation proxy rather than an AnimBP.
+First person hides the whole body; held items use a camera-attached HandPivot.
+Verify these facts and identify every assumption the new 22-bone UP_* set breaks.
+
+Describe F5 rear/front views, the optional shoulder-camera preview, body-yaw
+modes, camera collision, close-camera hiding, FOV conversion and action clocks.
+Distinguish a third-person inspection camera from playable third-person aiming.
+Plan crosshair/aim-line parallax and obstruction handling while keeping the
+authoritative eye, reach, collisions and action results authoritative. Any
+gameplay-rule change must be identified separately, not smuggled into rendering.
+
+B. Specify an export/import pipeline that we can execute and verify.
+
+Inventory all 66 clips, reference poses, rig actions, meshes, skeleton, tool,
+sockets and metadata. Produce source -> export -> Unreal asset mappings with
+status, hashes, duration, loop/contact/reference data and replacement policy.
+Retain the three placeholder labels; an imported placeholder is not a completed
+feature. Inspect the baked FK actions, not just the control rig's appearance.
+
+Compare the installed engine's supported FBX/Interchange paths and choose one
+explicit workflow with exact options and version caveats. Start with a fresh
+asset namespace and a new skeleton unless measured compatibility supports a
+different choice. Do not reuse the BetterSteve importer unchanged: it validates
+187.5 cm, 56 bones, old action names and old additive references.
+
+Specify centimetres, axes, facing, floor origin, object and bone scales, bind
+pose, hierarchy, exported objects, baking, frame ranges, sampling, compression,
+mesh sections/components, and socket transforms. Verify the 180 cm character
+and 100 cm reference in Unreal. The old handoff's expected +Y facing and -90
+degree mesh correction are hypotheses to verify once, not transforms to apply
+blindly twice. Prevent an extra armature root, leaf bones, scale-100 bones,
+frame-zero-as-bind-pose errors, and accidental duplicate clips or skeletons.
+
+Decide how separate head geometry survives the importer: two Blender objects
+do not by themselves prove two independently controllable Unreal components.
+Give a supported socket-authoring route for this installed engine and verify
+readback; the earlier Python socket limitation needs checking, not repetition
+as a permanent rule. Preserve sockets, references and user edits on reimport.
+
+Plan a small import proof before the full library: mesh/rest pose, idle,
+Walk_F, Sneak_FR, one look sample and accepted StrikeA. Then batch the rest with
+per-asset verification. Check evaluated poses after Unreal compression as well
+as raw imported tracks. Keep the existing body available for A/B and rollback.
+
+C. Recommend a full-body first-person architecture, with alternatives.
+
+Compare (1) a shared world-space body with separately controlled head geometry,
+and (2) a synchronized local full-body presentation using Unreal's first-person
+rendering facilities plus an appropriate world representation. Include mesh
+sections versus separate components, Leader Pose versus Copy Pose where useful,
+pose cost, view ownership, LOD/bounds, equipment and maintenance. Recommend one
+based on this character and project, not a generic template tutorial.
+
+Provide a visibility table for owner first person, owner rear/front third
+person, shoulder view, remote view, world shadows, reflections and scene captures.
+Include head, headwear, body, both hands, tools and armor. Explain the real
+limitations of each selected visibility mechanism. Hiding a bone, hiding a
+material section and OwnerNoSee are not interchangeable solutions.
+
+Keep the gameplay camera driven by simulation eye height and input; do not
+parent it to the head or make animation compression move the camera. Explain
+standing/crouch/low-pose clearance, looking fully down/up, neck closure,
+shoulder/chest intersection, near plane, wall/tool clipping, FOV/aspect ratios,
+FOV effects and view switching. Do not apply the held-item projection/scale to
+the entire body without proving grounded feet and perspective continuity.
+
+The old Blender handoff proposes large first-person body offsets (roughly
+20-37 cm standing, 48-60 cm crouched). Those are preview experiments, not an
+approved game solution. Compare bounded pose corrections and camera-relative
+upper-body adjustments; explain what they do to foot planting, tool contacts,
+world alignment and shadows. Avoid whole-body pops when entering a strike.
+
+Define one render-time sample shared by body, attachments and camera. Preserve
+the existing advance-clock-before-pose and pawn-before-mesh ordering. Address
+offscreen/hidden pose evaluation, socket refresh and stale poses on view switch.
+Specify remote-state inputs and interpolation where relevant, but do not claim
+network support from a single-player preview or redesign networking here.
+
+D. Design animation composition and gameplay integration.
+
+Compare extending the native proxy with a small AnimBP/hybrid, then recommend
+one. Give a state/layer diagram, exact data inputs, ownership of clocks,
+transition conditions and initial numeric blend/IK limits. Explain base
+locomotion, stance transitions, jump/rise/fall/land, turn-in-place, separate
+standing/crouch look, held poses, strikes/use actions and bounded corrections.
+State the order of aim, action and contact corrections and why it is coherent.
+
+Use actual velocity and resolved stance. Preserve normalized foot phase across
+directions and walk/sprint; explicitly handle the separate crouch phase, stops,
+starts, reversals, blocked movement and rapid stance changes. Root travel and
+jump height remain gameplay-owned. Apply turn metadata yaw once. Do not mask
+an import or phase error by changing movement speed or moving the gameplay box.
+
+Keep strikes spine-and-up over the current lower body. Design A/B/C selection,
+repeat/chaining, enter/exit, interruption, tool switch, target loss, focus loss,
+pause, stance change, jump, death and respawn. Keep the accepted anticipation
+and approach. The 0.15 s contact is an animation event, not permission to delay
+input or award a hit. Reconcile it with existing action clocks and authoritative
+results; notifies may drive cosmetics, never damage/drops/placement/consumption.
+
+Migrate the camera-pivot tool presentation deliberately: real grip attachment,
+no doubled tools or swings, offhand behavior, per-item grip data, equipment and
+bounded support-hand IK. Preserve working eating/use/bow/shield behavior while
+its body animations are incomplete, with a clearly named temporary policy.
+
+Define reachable-contact and distant-target behavior. Block reach is 450 cm,
+well beyond a physical arm/tool. Never stretch an arm to that distance or alter
+authority to match the animation. Give a bounded contact-correction proposal
+for nearby targets and an aimed gesture/effects policy beyond reach. Recheck
+contact over lowered locomotion/crouch pelvis and extreme aim; a perfect idle
+strike does not establish that these combinations work.
+
+E. Produce a prioritized animation coverage matrix.
+
+For every implemented player capability, classify: usable now, needs polish,
+needs adaptation, placeholder, missing, or intentionally deferred. Include all
+locomotion directions and blends; start/stop/pivot/reversal; crouch interruption;
+jump versus edge fall; moving/standing landings; low/crawl/swim/tread water and
+entry/exit; flight; death/respawn; empty hand; tool hold/equip/unequip; mining,
+placing, melee, eating/drinking, bow, shield and offhand/equipment cases present
+in current gameplay. Do not invent a requirement to ship every possible feature
+in the first slice. Separate missing animations from missing runtime wiring.
+
+For each necessary new clip, specify purpose, priority, duration/rate, contact
+or event frame, loop/seam, reference/entry/exit poses, layer/mask, interruption
+rules, camera restrictions and the views that must be reviewed. Prefer reusing
+sound existing work and creating the smallest set that closes visible gaps.
+Old Better Steve action clips may be references, not assumed compatible assets.
+
+F. Give staged work with objective acceptance and rollback.
+
+Recommend a narrow playable slice first: new skeleton/body, idle, walk/crouch,
+first-person look-down and F5 switching, and accepted StrikeA through the real
+hand. Name prerequisites that must be fixed before that slice is meaningful.
+Follow with complete existing-library integration, then missing-action coverage,
+then polish/optimization. For every stage identify files/assets to touch,
+dependencies, risks, evidence, stop conditions and reversible fallback.
+
+Plan tests at 30/60/120 fps and variable frame time. Include direction blends,
+walk/sprint/crouch transitions, edges/steps/slopes, aim extremes, low ceilings,
+wall proximity, close third-person camera, view switches mid-action, equipment,
+pause/focus/respawn and multiple FOV/aspect ratios. State numeric thresholds:
+planted-contact drift < 1 cm; loops retain N/60 seconds; strike contact remains
+frame 9/60; no animation-driven movement/input delay. Define additional visual
+clearance and performance thresholds with rationale and measure before/after.
+
+Require matching first/third-person videos, full-speed A-B-A-C, slow motion,
+contact/phase overlays, shadow/reflection evidence for the active renderer,
+and in-game inspection of the imported/compressed poses. Static checks,
+Blender round trips, native unit tests, editor playback, packaged runtime and
+human comfort acceptance are separate claims. Do not call a stage complete
+because an importer returned success or a screenshot looks plausible.
+
+HARD CONTRACT TO PRESERVE
+
+- 180 cm character, 40 cm head, approved vanilla arm-end hands with wrist bones;
+  no fingers added. 22 deform bones; separate authoring rig. Gameplay box width
+  60 cm; heights standing/crouch/low 180/150/60; eyes 162/127/40 cm.
+- Camera is gameplay-owned. No root translation/rotation in the clips, no jump
+  wind-up input delay. Do not replace the custom simulation or its collision box.
+- Authoring is 60 fps; a loop has identical keys 0 and N, lasts N/60 seconds,
+  and has no duplicate endpoint dwell. Left contact phase 0, right 0.5.
+- Walk 36 f, sprint 32 f, crouch locomotion 54 f, idle 120 f, stance transitions
+  16 f; jump start/rise 18/18 (rise holdable), fall 48 loop, soft/firm land 12/24;
+  45/90 degree turns 18/30; strikes 18 with contact at 9 and shared 0=18 pose.
+- Speeds cardinal/diagonal m/s: walk 4.3172/4.4053, sprint 5.6123/5.7269,
+  crouch 1.2952/1.8316. Short 58 cm hip-to-ankle legs constrain these gaits.
+- Preserve C crouch, Left Shift sprint and saved bindings; preserve all existing
+  gameplay authority, input responsiveness, worlds and unrelated work.
+- Before any later implementation, snapshot affected dirty/staged/untracked
+  work and assets with hashes. No resets, broad staging, overwriting existing
+  evidence/packages, automatic commits or pushes.
+
+RESEARCH STARTING POINTS
+
+Use official documentation and installed UE 5.8.3 headers/APIs. Separate verified
+engine behavior from project-specific recommendations and unresolved trials.
+These official pages were opened when this prompt was prepared; recheck them:
+
+- First-person rendering: https://dev.epicgames.com/documentation/en-us/unreal-engine/first-person-rendering
+  Compare per-vertex influence, world representations and shadow/reflection
+  behavior; do not assume owner-rendered geometry supplies the world shadow.
+- Modular characters: https://dev.epicgames.com/documentation/en-us/unreal-engine/working-with-modular-characters-in-unreal-engine
+- FBX animation: https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-animation-pipeline-in-unreal-engine
+- FBX import options: https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-options-reference-in-unreal-engine
+- Animation sync groups: https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sync-groups-in-unreal-engine
+- Blend nodes: https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-blend-nodes-in-unreal-engine
+
+FIRST DELIVERABLE
+
+Save a durable plan and give me the useful version in chat:
+1. Current state and source-of-truth table, with evidence and stale assumptions.
+2. Recommended architecture, alternatives and explicit head/visibility policy.
+3. Exact export/import and asset migration procedure, including a small proof.
+4. Animation state/layer design and gameplay/action timing contract.
+5. Coverage matrix and prioritized new-animation briefs.
+6. Staged implementation with file/asset map, measurable acceptance and rollback.
+7. The few genuine product choices I need to decide, with your recommendation.
+
+Lead with your recommendation and the first useful milestone. Be numeric where
+evidence supports it; mark proposed tuning as proposed. Do not give me only
+"hide the head", a generic tutorial, an unprioritized checklist or an offer to
+plan later. Finish the concrete plan, then stop before implementation.

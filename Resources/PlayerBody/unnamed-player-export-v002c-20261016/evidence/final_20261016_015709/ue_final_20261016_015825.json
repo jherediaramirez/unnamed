@@ -1,0 +1,3781 @@
+{
+ "started": "2026-10-16 01:58:25",
+ "engine": "5.8.3-58210709+++UE5+Release-5.8",
+ "folder": "/Game/Characters/UnnamedPlayer",
+ "fbx_translator": {
+  "convert_scene": "True",
+  "force_front_x_axis": "False",
+  "convert_scene_unit": "True",
+  "keep_fbx_namespace": "False",
+  "Interchange.FeatureFlags.Import.FBX": true
+ },
+ "pipeline_mesh_effective": {
+  "use_source_name_for_asset": "True",
+  "asset_name": "",
+  "import_offset_translation": "<Struct 'Vector' (0x0000021A136D7380) {x: 0.000000, y: 0.000000, z: 0.000000}>",
+  "import_offset_rotation": "<Struct 'Rotator' (0x0000021A136D7398) {pitch: 0.000000, yaw: 0.000000, roll: 0.000000}>",
+  "import_offset_uniform_scale": "1.0",
+  "import_only_animation_adjusted": "<unreadable: InterchangeGenericAssetsPipeline: Failed to find property 'import_only_animation_adjusted' for attribute 'import_only_animation_adjusted' on 'InterchangeGenericAssetsPipeline'>",
+  "reimport_strategy": "<ReimportStrategyFlags.APPLY_NO_PROPERTIES: 0>",
+  "common_meshes_properties.force_all_mesh_as_type": "<InterchangeForceMeshType.IFMT_NONE: 0>",
+  "common_meshes_properties.import_lods": "True",
+  "common_meshes_properties.bake_meshes": "True",
+  "common_meshes_properties.keep_sections_separate": "False",
+  "common_meshes_properties.import_sockets": "True",
+  "common_meshes_properties.recompute_normals": "True",
+  "common_meshes_properties.recompute_tangents": "True",
+  "common_meshes_properties.vertex_color_import_option": "<InterchangeVertexColorImportOption.IVCIO_REPLACE: 0>",
+  "common_skeletal_meshes_and_animations_properties.import_only_animations": "False",
+  "common_skeletal_meshes_and_animations_properties.skeleton": "None",
+  "common_skeletal_meshes_and_animations_properties.use_t0_as_ref_pose": "False",
+  "common_skeletal_meshes_and_animations_properties.add_curve_metadata_to_skeleton": "True",
+  "mesh_pipeline.import_static_meshes": "False",
+  "mesh_pipeline.import_skeletal_meshes": "True",
+  "mesh_pipeline.combine_skeletal_meshes_behavior": "<InterchangeCombineSkeletalMeshesBehavior.BY_SKELETON: 0>",
+  "mesh_pipeline.import_morph_targets": "False",
+  "mesh_pipeline.create_physics_asset": "False",
+  "mesh_pipeline.update_skeleton_reference_pose": "False",
+  "mesh_pipeline.import_vertex_attributes": "False",
+  "mesh_pipeline.skeletal_mesh_import_content_type": "<InterchangeSkeletalMeshContentType.ALL: 0>",
+  "mesh_pipeline.build_nanite": "True",
+  "animation_pipeline.import_animations": "False",
+  "animation_pipeline.import_bone_tracks": "True",
+  "animation_pipeline.animation_range": "<InterchangeAnimationRange.TIMELINE: 0>",
+  "animation_pipeline.frame_import_range": "<Struct 'Int32Interval' (0x0000021A134DD36C) {min: 0, max: 0}>",
+  "animation_pipeline.use30_hz_to_bake_bone_animation": "False",
+  "animation_pipeline.custom_bone_animation_sample_rate": "60",
+  "animation_pipeline.frame_alignment": "<InterchangeFrameAlignment.NONE: 0>",
+  "animation_pipeline.import_custom_attribute": "True",
+  "material_pipeline.import_materials": "True",
+  "material_pipeline.material_import": "<InterchangeMaterialImportOption.IMPORT_AS_MATERIALS: 0>",
+  "material_pipeline.reuse_existing_materials": "True",
+  "material_pipeline.texture_pipeline.import_textures": "True"
+ },
+ "mesh_import_new_assets": [
+  "/Game/Characters/UnnamedPlayer/M_UP_Body.M_UP_Body",
+  "/Game/Characters/UnnamedPlayer/M_UP_Head.M_UP_Head",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton"
+ ],
+ "after_mesh": {
+  "skeletal_meshes": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer"
+  ],
+  "skeletons": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton"
+  ],
+  "physics": [],
+  "materials": [],
+  "textures": []
+ },
+ "skin": {
+  "file": "C:\\dev\\output\\unnamed-player-export-v002c-20261016\\fbx\\T_UP_Skin_64.png",
+  "sha256": "072116FAF535696DA893EA8E30151C2D6AC1B0CA84E748FF76D6CC0ACA770671",
+  "imported": [
+   "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin"
+  ],
+  "texture": {
+   "path": "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin",
+   "filter": "<TextureFilter.TF_NEAREST: 0>",
+   "mips": "<TextureMipGenSettings.TMGS_NO_MIPMAPS: 13>",
+   "srgb": true,
+   "size": [
+    64,
+    64
+   ]
+  },
+  "materials": {
+   "M_UP_Body": {
+    "class": "MaterialInstanceConstant",
+    "parent": "/InterchangeAssets/Materials/FBXLegacyPhongSurfaceMaterial.FBXLegacyPhongSurfaceMaterial",
+    "texture_params": [
+     "DiffuseColorMap",
+     "AmbientColorMap",
+     "SpecularColorMap",
+     "ShininessMap",
+     "EmissiveColorMap",
+     "NormalMap",
+     "AmbientOcclusionMap",
+     "OpacityMaskMap",
+     "OpacityMap"
+    ],
+    "switch_params": [],
+    "set_ok": false,
+    "param": "DiffuseColorMap",
+    "readback": "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin",
+    "assigned": true
+   },
+   "M_UP_Head": {
+    "class": "MaterialInstanceConstant",
+    "parent": "/InterchangeAssets/Materials/FBXLegacyPhongSurfaceMaterial.FBXLegacyPhongSurfaceMaterial",
+    "texture_params": [
+     "DiffuseColorMap",
+     "AmbientColorMap",
+     "SpecularColorMap",
+     "ShininessMap",
+     "EmissiveColorMap",
+     "NormalMap",
+     "AmbientOcclusionMap",
+     "OpacityMaskMap",
+     "OpacityMap"
+    ],
+    "switch_params": [],
+    "set_ok": false,
+    "param": "DiffuseColorMap",
+    "readback": "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin",
+    "assigned": true
+   }
+  }
+ },
+ "clips": {
+  "UP_Death_Placeholder": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Death_Placeholder.UP_Death_Placeholder"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 30,
+     "num_keys": 31,
+     "num_frames": 30,
+     "play_length_s": 0.5,
+     "expected_s": 0.5,
+     "frame_rate": 59.999997,
+     "seam_cm": 139.25532827882617,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Flight_Placeholder": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Flight_Placeholder.UP_Flight_Placeholder"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 60,
+     "num_keys": 61,
+     "num_frames": 60,
+     "play_length_s": 1.0,
+     "expected_s": 1.0,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Idle": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Idle.UP_Idle"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 120,
+     "num_keys": 121,
+     "num_frames": 120,
+     "play_length_s": 2.0,
+     "expected_s": 2.0,
+     "frame_rate": 59.999997,
+     "seam_cm": 5.551115123125783e-17,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.182619578303746e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Jump_Fall": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Jump_Fall.UP_Jump_Fall"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 48,
+     "num_keys": 49,
+     "num_frames": 48,
+     "play_length_s": 0.800000011920929,
+     "expected_s": 0.8,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Jump_Rise": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Jump_Rise.UP_Jump_Rise"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 4.97749166342107,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Jump_Start": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Jump_Start.UP_Jump_Start"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 20.24846351978078,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Land_Firm": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Land_Firm.UP_Land_Firm"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 24,
+     "num_keys": 25,
+     "num_frames": 24,
+     "play_length_s": 0.4000000059604645,
+     "expected_s": 0.4,
+     "frame_rate": 59.999997,
+     "seam_cm": 26.397523945506293,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Land_Soft": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Land_Soft.UP_Land_Soft"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 12,
+     "num_keys": 13,
+     "num_frames": 12,
+     "play_length_s": 0.20000000298023224,
+     "expected_s": 0.2,
+     "frame_rate": 59.999997,
+     "seam_cm": 21.477184306931917,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_C": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_C.UP_Look_C"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 3.064953649671706e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "head"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_D": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_D.UP_Look_D"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 2.854558380010323e-05,
+      "max_deg": 5.258427578083e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "head"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_DL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_DL.UP_Look_DL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.4654961934508695e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "upperarm_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_DR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_DR.UP_Look_DR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.326966591854886e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "neck_01"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_L": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_L.UP_Look_L"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 7.836861852892456e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "lowerarm_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_R": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_R.UP_Look_R"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.077398007420111e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "upperarm_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_U": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_U.UP_Look_U"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.799849560459349e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "upperarm_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_UL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_UL.UP_Look_UL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 3.945749243950241e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "upperarm_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Look_UR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Look_UR.UP_Look_UR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 2.854558380010323e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Low_Pose": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Low_Pose.UP_Low_Pose"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.6279142373906754e-05,
+      "max_deg": 4.3502744686637006e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "hand_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "neck_01"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Pickaxe_Hold": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Pickaxe_Hold.UP_Pickaxe_Hold"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 2.854558380010323e-05,
+      "max_deg": 4.8177686443603636e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "calf_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Pickaxe_StrikeA": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "tip_f9_raw": {
+      "tip_cm": [
+       -5.00025,
+       79.99986,
+       124.99993
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.00029799657347213027,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "tip_f9_compressed": {
+      "tip_cm": [
+       -5.00025,
+       79.99986,
+       124.99993
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.00029799657347213027,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "pass": true
+    }
+   }
+  },
+  "UP_Pickaxe_StrikeB": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeB.UP_Pickaxe_StrikeB"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "tip_f9_raw": {
+      "tip_cm": [
+       -4.99998,
+       79.99969,
+       124.99985
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.0003492249337233167,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "tip_f9_compressed": {
+      "tip_cm": [
+       -4.99998,
+       79.99969,
+       124.99985
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.0003492249337233167,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "pass": true
+    }
+   }
+  },
+  "UP_Pickaxe_StrikeC": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeC.UP_Pickaxe_StrikeC"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 0.0,
+     "worst": null,
+     "compressed_identical_to_raw": true,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "tip_f9_raw": {
+      "tip_cm": [
+       -5.00184,
+       80.00028,
+       124.99938
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.001958973479994125,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "tip_f9_compressed": {
+      "tip_cm": [
+       -5.00184,
+       80.00028,
+       124.99938
+      ],
+      "target_cm": [
+       -5.0,
+       80.0,
+       125.0
+      ],
+      "err_cm": 0.001958973479994125,
+      "tip_local_in_socket_cm": [
+       -0.00012,
+       -42.74992,
+       26.49987
+      ],
+      "tip_local_len_cm": 50.29710535718081
+     },
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakIdle": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchIdle.UP_CrouchIdle"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 120,
+     "num_keys": 121,
+     "num_frames": 120,
+     "play_length_s": 2.0,
+     "expected_s": 2.0,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_C": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_C.UP_CrouchLook_C"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 5.325145742949453e-05,
+      "max_deg": 6.676745878295932e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "hand_r"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "foot_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_D": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_D.UP_CrouchLook_D"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 5.074401708993164e-05,
+      "max_deg": 8.372284073544675e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "upperarm_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "hand_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_DL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DL.UP_CrouchLook_DL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 6.207761656833028e-05,
+      "max_deg": 8.328385691680201e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "head"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "hand_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 1.7075472925031877e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_DR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DR.UP_CrouchLook_DR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 5.624134243866583e-05,
+      "max_deg": 8.518345425192232e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "hand_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "hand_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_L": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_L.UP_CrouchLook_L"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.502603708300341e-05,
+      "max_deg": 6.676745878295932e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "foot_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_R": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_R.UP_CrouchLook_R"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.502603708300341e-05,
+      "max_deg": 6.676745878295932e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "foot_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 1.7075472925031877e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_U": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_U.UP_CrouchLook_U"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.502603708300341e-05,
+      "max_deg": 6.676745878295932e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "foot_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 1.7075472925031877e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_UL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UL.UP_CrouchLook_UL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.502603708300341e-05,
+      "max_deg": 6.676745878295932e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "foot_l"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakLook_UR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UR.UP_CrouchLook_UR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 2,
+     "num_keys": 3,
+     "num_frames": 2,
+     "play_length_s": 0.03333333507180214,
+     "expected_s": 0.03333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true,
+     "source_timing": {
+      "keys": 2,
+      "seconds": 0.016666666666666666
+     },
+     "imported_timing_expected": {
+      "keys": 3,
+      "seconds": 0.03333333333333333
+     },
+     "bone_tracks": 22,
+     "source_pose": {
+      "max_cm": 4.502603708300341e-05,
+      "max_deg": 7.679049143032984e-05,
+      "worst": {
+       "cm": [
+        "raw",
+        0,
+        "ball_l"
+       ],
+       "deg": [
+        "raw",
+        0,
+        "head"
+       ]
+      },
+      "keys_checked": {
+       "raw": 3,
+       "compressed": 3
+      },
+      "pass": true
+     }
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 1.7075472925031877e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakToStand": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchToStand.UP_CrouchToStand"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 16,
+     "num_keys": 17,
+     "num_frames": 16,
+     "play_length_s": 0.2666666805744171,
+     "expected_s": 0.26666666666666666,
+     "frame_rate": 59.999997,
+     "seam_cm": 33.270445483090406,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.182619578303746e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakTurn_L45": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L45.UP_CrouchTurn_L45"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakTurn_L90": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L90.UP_CrouchTurn_L90"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 30,
+     "num_keys": 31,
+     "num_frames": 30,
+     "play_length_s": 0.5,
+     "expected_s": 0.5,
+     "frame_rate": 59.999997,
+     "seam_cm": 8.422582690707494e-08,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakTurn_R45": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R45.UP_CrouchTurn_R45"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_SneakTurn_R90": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R90.UP_CrouchTurn_R90"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 30,
+     "num_keys": 31,
+     "num_frames": 30,
+     "play_length_s": 0.5,
+     "expected_s": 0.5,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_B": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_B.UP_Crouch_B"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07968217196817726,
+     "planted_drift_compressed_cm": 0.07968217196817726,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_BL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_BL.UP_Crouch_BL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.829673078902933e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.0762972713002503,
+     "planted_drift_compressed_cm": 0.0762972713002503,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_BR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_BR.UP_Crouch_BR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07627838084911523,
+     "planted_drift_compressed_cm": 0.07627838084911523,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_F": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_F.UP_Crouch_F"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.046323481476043406,
+     "planted_drift_compressed_cm": 0.046323481476043406,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_FL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_FL.UP_Crouch_FL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.049090385589609146,
+     "planted_drift_compressed_cm": 0.049090385589609146,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_FR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_FR.UP_Crouch_FR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.04907748977198303,
+     "planted_drift_compressed_cm": 0.04907748977198303,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_L": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_L.UP_Crouch_L"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07087294362879748,
+     "planted_drift_compressed_cm": 0.07087294362879748,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sneak_R": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Crouch_R.UP_Crouch_R"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 54,
+     "num_keys": 55,
+     "num_frames": 54,
+     "play_length_s": 0.8999999761581421,
+     "expected_s": 0.9,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.829673078902933e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.0708705204266633,
+     "planted_drift_compressed_cm": 0.0708705204266633,
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_B": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_B.UP_Sprint_B"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_BL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_BL.UP_Sprint_BL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_BR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_BR.UP_Sprint_BR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_F": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_F.UP_Sprint_F"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_FL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_FL.UP_Sprint_FL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_FR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_FR.UP_Sprint_FR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_L": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_L.UP_Sprint_L"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Sprint_R": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Sprint_R.UP_Sprint_R"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 32,
+     "num_keys": 33,
+     "num_frames": 32,
+     "play_length_s": 0.5333333611488342,
+     "expected_s": 0.5333333333333333,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.517745487845101e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_StandToSneak": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_StandToCrouch.UP_StandToCrouch"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 16,
+     "num_keys": 17,
+     "num_frames": 16,
+     "play_length_s": 0.2666666805744171,
+     "expected_s": 0.26666666666666666,
+     "frame_rate": 59.999997,
+     "seam_cm": 33.270436026361494,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": false
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Turn_L45": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Turn_L45.UP_Turn_L45"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Turn_L90": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Turn_L90.UP_Turn_L90"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 30,
+     "num_keys": 31,
+     "num_frames": 30,
+     "play_length_s": 0.5,
+     "expected_s": 0.5,
+     "frame_rate": 59.999997,
+     "seam_cm": 5.431768215676024e-06,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 4.182619578303746e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Turn_R45": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Turn_R45.UP_Turn_R45"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 18,
+     "num_keys": 19,
+     "num_frames": 18,
+     "play_length_s": 0.30000001192092896,
+     "expected_s": 0.3,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Turn_R90": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Turn_R90.UP_Turn_R90"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 30,
+     "num_keys": 31,
+     "num_frames": 30,
+     "play_length_s": 0.5,
+     "expected_s": 0.5,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_B": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_B.UP_Walk_B"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.004043445164928991,
+     "planted_drift_compressed_cm": 0.004043445164928991,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_BL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_BL.UP_Walk_BL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.9575586669421963e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07377278517694234,
+     "planted_drift_compressed_cm": 0.07377278517694234,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_BR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_BR.UP_Walk_BR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07377733314764637,
+     "planted_drift_compressed_cm": 0.07377733314764637,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_F": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_F.UP_Walk_F"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07824017757875366,
+     "planted_drift_compressed_cm": 0.07824017757875366,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_FL": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_FL.UP_Walk_FL"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.818191820832845e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07108264382579595,
+     "planted_drift_compressed_cm": 0.07108264382579595,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_FR": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_FR.UP_Walk_FR"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.07107386085384645,
+     "planted_drift_compressed_cm": 0.07107386085384645,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_L": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_L.UP_Walk_L"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 3.4150945850063755e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.050006362922736046,
+     "planted_drift_compressed_cm": 0.050006362922736046,
+     "pass": true
+    }
+   }
+  },
+  "UP_Walk_R": {
+   "new_assets": [
+    "/Game/Characters/UnnamedPlayer/UP_Walk_R.UP_Walk_R"
+   ],
+   "unexpected_non_anim": [],
+   "gates": {
+    "6_timing": {
+     "frames": 36,
+     "num_keys": 37,
+     "num_frames": 36,
+     "play_length_s": 0.6000000238418579,
+     "expected_s": 0.6,
+     "frame_rate": 59.999997,
+     "seam_cm": 0.0,
+     "root_static_dev": 0.0,
+     "bone_scale_max_dev": 0.0,
+     "root_motion_enabled": false,
+     "pass": true
+    },
+    "7_compression": {
+     "compressed_pos_max_err_cm": 0.0,
+     "compressed_rot_max_err_deg": 2.4148365394514667e-06,
+     "worst": null,
+     "compressed_identical_to_raw": false,
+     "bone_compression_settings": "/ACLPlugin/ACLAnimBoneCompressionSettings.ACLAnimBoneCompressionSettings",
+     "planted_drift_raw_cm": 0.04998129111044817,
+     "planted_drift_compressed_cm": 0.04998129111044817,
+     "pass": true
+    }
+   }
+  }
+ },
+ "pipeline_clip_effective": {
+  "use_source_name_for_asset": "True",
+  "asset_name": "UP_Death_Placeholder",
+  "import_offset_translation": "<Struct 'Vector' (0x00000219DCBB6D80) {x: 0.000000, y: 0.000000, z: 0.000000}>",
+  "import_offset_rotation": "<Struct 'Rotator' (0x00000219DCBB6D98) {pitch: 0.000000, yaw: 0.000000, roll: 0.000000}>",
+  "import_offset_uniform_scale": "1.0",
+  "import_only_animation_adjusted": "<unreadable: InterchangeGenericAssetsPipeline: Failed to find property 'import_only_animation_adjusted' for attribute 'import_only_animation_adjusted' on 'InterchangeGenericAssetsPipeline'>",
+  "reimport_strategy": "<ReimportStrategyFlags.APPLY_NO_PROPERTIES: 0>",
+  "common_meshes_properties.force_all_mesh_as_type": "<InterchangeForceMeshType.IFMT_NONE: 0>",
+  "common_meshes_properties.import_lods": "True",
+  "common_meshes_properties.bake_meshes": "True",
+  "common_meshes_properties.keep_sections_separate": "False",
+  "common_meshes_properties.import_sockets": "True",
+  "common_meshes_properties.recompute_normals": "True",
+  "common_meshes_properties.recompute_tangents": "True",
+  "common_meshes_properties.vertex_color_import_option": "<InterchangeVertexColorImportOption.IVCIO_REPLACE: 0>",
+  "common_skeletal_meshes_and_animations_properties.import_only_animations": "True",
+  "common_skeletal_meshes_and_animations_properties.skeleton": "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "common_skeletal_meshes_and_animations_properties.use_t0_as_ref_pose": "False",
+  "common_skeletal_meshes_and_animations_properties.add_curve_metadata_to_skeleton": "True",
+  "mesh_pipeline.import_static_meshes": "False",
+  "mesh_pipeline.import_skeletal_meshes": "False",
+  "mesh_pipeline.combine_skeletal_meshes_behavior": "<InterchangeCombineSkeletalMeshesBehavior.BY_SKELETON: 0>",
+  "mesh_pipeline.import_morph_targets": "False",
+  "mesh_pipeline.create_physics_asset": "False",
+  "mesh_pipeline.update_skeleton_reference_pose": "False",
+  "mesh_pipeline.import_vertex_attributes": "False",
+  "mesh_pipeline.skeletal_mesh_import_content_type": "<InterchangeSkeletalMeshContentType.ALL: 0>",
+  "mesh_pipeline.build_nanite": "True",
+  "animation_pipeline.import_animations": "True",
+  "animation_pipeline.import_bone_tracks": "True",
+  "animation_pipeline.animation_range": "<InterchangeAnimationRange.TIMELINE: 0>",
+  "animation_pipeline.frame_import_range": "<Struct 'Int32Interval' (0x00000219E4CE8F6C) {min: 0, max: 0}>",
+  "animation_pipeline.use30_hz_to_bake_bone_animation": "False",
+  "animation_pipeline.custom_bone_animation_sample_rate": "60",
+  "animation_pipeline.frame_alignment": "<InterchangeFrameAlignment.NONE: 0>",
+  "animation_pipeline.import_custom_attribute": "True",
+  "material_pipeline.import_materials": "False",
+  "material_pipeline.material_import": "<InterchangeMaterialImportOption.IMPORT_AS_MATERIALS: 0>",
+  "material_pipeline.reuse_existing_materials": "True",
+  "material_pipeline.texture_pipeline.import_textures": "False"
+ },
+ "pipeline_pose_clip_effective": {
+  "use_source_name_for_asset": "True",
+  "asset_name": "UP_Look_C",
+  "import_offset_translation": "<Struct 'Vector' (0x00000219DB53C780) {x: 0.000000, y: 0.000000, z: 0.000000}>",
+  "import_offset_rotation": "<Struct 'Rotator' (0x00000219DB53C798) {pitch: 0.000000, yaw: 0.000000, roll: 0.000000}>",
+  "import_offset_uniform_scale": "1.0",
+  "import_only_animation_adjusted": "<unreadable: InterchangeGenericAssetsPipeline: Failed to find property 'import_only_animation_adjusted' for attribute 'import_only_animation_adjusted' on 'InterchangeGenericAssetsPipeline'>",
+  "reimport_strategy": "<ReimportStrategyFlags.APPLY_NO_PROPERTIES: 0>",
+  "common_meshes_properties.force_all_mesh_as_type": "<InterchangeForceMeshType.IFMT_NONE: 0>",
+  "common_meshes_properties.import_lods": "True",
+  "common_meshes_properties.bake_meshes": "True",
+  "common_meshes_properties.keep_sections_separate": "False",
+  "common_meshes_properties.import_sockets": "True",
+  "common_meshes_properties.recompute_normals": "True",
+  "common_meshes_properties.recompute_tangents": "True",
+  "common_meshes_properties.vertex_color_import_option": "<InterchangeVertexColorImportOption.IVCIO_REPLACE: 0>",
+  "common_skeletal_meshes_and_animations_properties.import_only_animations": "True",
+  "common_skeletal_meshes_and_animations_properties.skeleton": "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "common_skeletal_meshes_and_animations_properties.use_t0_as_ref_pose": "False",
+  "common_skeletal_meshes_and_animations_properties.add_curve_metadata_to_skeleton": "True",
+  "mesh_pipeline.import_static_meshes": "False",
+  "mesh_pipeline.import_skeletal_meshes": "False",
+  "mesh_pipeline.combine_skeletal_meshes_behavior": "<InterchangeCombineSkeletalMeshesBehavior.BY_SKELETON: 0>",
+  "mesh_pipeline.import_morph_targets": "False",
+  "mesh_pipeline.create_physics_asset": "False",
+  "mesh_pipeline.update_skeleton_reference_pose": "False",
+  "mesh_pipeline.import_vertex_attributes": "False",
+  "mesh_pipeline.skeletal_mesh_import_content_type": "<InterchangeSkeletalMeshContentType.ALL: 0>",
+  "mesh_pipeline.build_nanite": "True",
+  "animation_pipeline.import_animations": "True",
+  "animation_pipeline.import_bone_tracks": "True",
+  "animation_pipeline.animation_range": "<InterchangeAnimationRange.SET_RANGE: 2>",
+  "animation_pipeline.frame_import_range": "<Struct 'Int32Interval' (0x0000021A16B0ED6C) {min: 0, max: 2}>",
+  "animation_pipeline.use30_hz_to_bake_bone_animation": "False",
+  "animation_pipeline.custom_bone_animation_sample_rate": "60",
+  "animation_pipeline.frame_alignment": "<InterchangeFrameAlignment.NONE: 0>",
+  "animation_pipeline.import_custom_attribute": "True",
+  "material_pipeline.import_materials": "False",
+  "material_pipeline.material_import": "<InterchangeMaterialImportOption.IMPORT_AS_MATERIALS: 0>",
+  "material_pipeline.reuse_existing_materials": "True",
+  "material_pipeline.texture_pipeline.import_textures": "False"
+ },
+ "SX": 1,
+ "mesh_gates": {
+  "1_skeleton": {
+   "bones": 22,
+   "root": "root",
+   "names_match": true,
+   "hierarchy_match": true,
+   "extra_root": [],
+   "ref_scale_max_dev": 0.0,
+   "pass": true
+  },
+  "3_ref_pose": {
+   "sx_fit": 1,
+   "joint_pos_max_err_cm": 4.3516400481413116e-05,
+   "other_sx_err_cm": 60.00000038156184,
+   "parent_relative_rot_angle_max_err_deg": 0.0013259493500799024,
+   "root_local": {
+    "t": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "r": "<Struct 'Rotator' (0x0000021A14318A10) {pitch: 0.000000, yaw: -0.000000, roll: -0.000000}>"
+   },
+   "pass": true
+  },
+  "2_bounds": {
+   "height_cm": 180.00000162920685,
+   "soles_cm": -1.6292068494294654e-06,
+   "min": [
+    -40.0,
+    -20.00003,
+    -0.0
+   ],
+   "max": [
+    40.0,
+    19.99998,
+    180.0
+   ],
+   "source": "imported_bounds",
+   "picture": "skipped (optional)",
+   "pass": true
+  },
+  "4_facing_plusY": {
+   "ball_minus_foot_y_cm": {
+    "l": 4.999996566124828,
+    "r": 4.999996427010698
+   },
+   "head_y": -1.332267814838645e-14,
+   "pelvis_y": -1.8528845721187816e-21,
+   "pass": true
+  },
+  "5_sections_sockets": {
+   "sections_lod0": 2,
+   "material_slots": [
+    "M_UP_Body",
+    "M_UP_Head"
+   ],
+   "sockets": {
+    "hand_r_grip": {
+     "bone": "hand_r",
+     "rel_loc": [
+      0.0,
+      -8.00001,
+      0.0
+     ],
+     "rel_rot": "<Struct 'Rotator' (0x0000021A1486EEE0) {pitch: 0.000000, yaw: 179.999991, roll: 90.000009}>",
+     "rel_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "pos_err_cm": 1.4883437517775477e-06,
+     "blender_Y_matches_ue": "-Y",
+     "blender_Y_err_deg": 1.010198601586461e-05,
+     "blender_Z_matches_ue": "+Z",
+     "blender_Z_err_deg": 1.4614250772341616e-05,
+     "pass": true
+    },
+    "hand_l_grip": {
+     "bone": "hand_l",
+     "rel_loc": [
+      0.0,
+      -8.00001,
+      0.0
+     ],
+     "rel_rot": "<Struct 'Rotator' (0x0000021A1486EFA0) {pitch: -0.000000, yaw: -179.999991, roll: 90.000009}>",
+     "rel_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "pos_err_cm": 6.31271291297821e-06,
+     "blender_Y_matches_ue": "-Y",
+     "blender_Y_err_deg": 1.020964787746499e-05,
+     "blender_Z_matches_ue": "+Z",
+     "blender_Z_err_deg": 1.4489019236708837e-05,
+     "pass": true
+    },
+    "head_eye": {
+     "bone": "head",
+     "rel_loc": [
+      0.0,
+      -17.5,
+      20.0
+     ],
+     "rel_rot": "<Struct 'Rotator' (0x0000021A1486F060) {pitch: -0.000000, yaw: 0.000000, roll: -90.000009}>",
+     "rel_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "pos_err_cm": 7.000000067591827e-06,
+     "blender_Y_matches_ue": "-Y",
+     "blender_Y_err_deg": 9.313570918021479e-06,
+     "blender_Z_matches_ue": "+Z",
+     "blender_Z_err_deg": 9.313570918021479e-06,
+     "pass": true
+    }
+   },
+   "num_sockets": 3,
+   "pass": true
+  }
+ },
+ "additive": {
+  "UP_Look_D": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 2.8545583800917638e-05,
+    "max_deg": 5.258427579986111e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_r"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "head"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_DL": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.465496193616167e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "upperarm_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_DR": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.3269665918742134e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "neck_01"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_L": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 7.836861851979141e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "lowerarm_r"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_R": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.07739800917179e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "upperarm_r"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_U": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.7998495619690264e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "upperarm_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_UL": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 3.945749244160286e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "upperarm_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_UR": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 2.8545583800917638e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_r"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_D": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 5.074401707989256e-05,
+    "max_deg": 8.372284072611238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "upperarm_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "hand_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_DL": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 6.207761657270543e-05,
+    "max_deg": 8.328385688859492e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "head"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "hand_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_DR": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 5.624134242821249e-05,
+    "max_deg": 8.51834542336646e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "hand_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "hand_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_L": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.5026037082984496e-05,
+    "max_deg": 6.676745880433158e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "foot_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_R": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.5026037082984496e-05,
+    "max_deg": 6.676745880433158e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "foot_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_U": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.5026037082984496e-05,
+    "max_deg": 6.676745880433158e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "foot_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_UL": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.5026037082984496e-05,
+    "max_deg": 6.676745880433158e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "foot_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_UR": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 4.5026037082984496e-05,
+    "max_deg": 7.679049142253061e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "ball_l"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "head"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_Look_C": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_Look_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 3.064953649023377e-05,
+    "max_deg": 4.817768646320238e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "head"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "calf_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  },
+  "UP_SneakLook_C": {
+   "type": "<AdditiveAnimationType.AAT_ROTATION_OFFSET_MESH_SPACE: 2>",
+   "ref_pose_type": "<AdditiveBasePoseType.ABPT_ANIM_FRAME: 3>",
+   "ref": "UP_CrouchLook_C",
+   "frame": 0,
+   "full_pose_vs_source": {
+    "max_cm": 5.325145744656941e-05,
+    "max_deg": 6.676745880433158e-05,
+    "worst": {
+     "cm": [
+      "raw",
+      0,
+      "hand_r"
+     ],
+     "deg": [
+      "raw",
+      0,
+      "foot_l"
+     ]
+    },
+    "keys_checked": {
+     "raw": 3,
+     "compressed": 3
+    },
+    "pass": true
+   }
+  }
+ },
+ "source_reference_calibration_cm": 1.7609123145487457e-05,
+ "additive_ok": true,
+ "additive_count_looks": 18,
+ "pickaxe": {
+  "new_assets": [
+   "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe"
+  ],
+  "pipeline_effective": {
+   "use_source_name_for_asset": "True",
+   "asset_name": "SM_UP_Pickaxe",
+   "import_offset_translation": "<Struct 'Vector' (0x0000021A19B39D80) {x: 0.000000, y: 0.000000, z: 0.000000}>",
+   "import_offset_rotation": "<Struct 'Rotator' (0x0000021A19B39D98) {pitch: 0.000000, yaw: 0.000000, roll: 0.000000}>",
+   "import_offset_uniform_scale": "1.0",
+   "import_only_animation_adjusted": "<unreadable: InterchangeGenericAssetsPipeline: Failed to find property 'import_only_animation_adjusted' for attribute 'import_only_animation_adjusted' on 'InterchangeGenericAssetsPipeline'>",
+   "reimport_strategy": "<ReimportStrategyFlags.APPLY_NO_PROPERTIES: 0>",
+   "common_meshes_properties.force_all_mesh_as_type": "<InterchangeForceMeshType.IFMT_NONE: 0>",
+   "common_meshes_properties.import_lods": "True",
+   "common_meshes_properties.bake_meshes": "True",
+   "common_meshes_properties.keep_sections_separate": "False",
+   "common_meshes_properties.import_sockets": "True",
+   "common_meshes_properties.recompute_normals": "True",
+   "common_meshes_properties.recompute_tangents": "True",
+   "common_meshes_properties.vertex_color_import_option": "<InterchangeVertexColorImportOption.IVCIO_REPLACE: 0>",
+   "common_skeletal_meshes_and_animations_properties.import_only_animations": "False",
+   "common_skeletal_meshes_and_animations_properties.skeleton": "None",
+   "common_skeletal_meshes_and_animations_properties.use_t0_as_ref_pose": "False",
+   "common_skeletal_meshes_and_animations_properties.add_curve_metadata_to_skeleton": "True",
+   "mesh_pipeline.import_static_meshes": "True",
+   "mesh_pipeline.import_skeletal_meshes": "False",
+   "mesh_pipeline.combine_skeletal_meshes_behavior": "<InterchangeCombineSkeletalMeshesBehavior.BY_SKELETON: 0>",
+   "mesh_pipeline.import_morph_targets": "False",
+   "mesh_pipeline.create_physics_asset": "False",
+   "mesh_pipeline.update_skeleton_reference_pose": "False",
+   "mesh_pipeline.import_vertex_attributes": "False",
+   "mesh_pipeline.skeletal_mesh_import_content_type": "<InterchangeSkeletalMeshContentType.ALL: 0>",
+   "mesh_pipeline.build_nanite": "True",
+   "animation_pipeline.import_animations": "False",
+   "animation_pipeline.import_bone_tracks": "True",
+   "animation_pipeline.animation_range": "<InterchangeAnimationRange.TIMELINE: 0>",
+   "animation_pipeline.frame_import_range": "<Struct 'Int32Interval' (0x0000021A1B1D8D6C) {min: 0, max: 0}>",
+   "animation_pipeline.use30_hz_to_bake_bone_animation": "False",
+   "animation_pipeline.custom_bone_animation_sample_rate": "60",
+   "animation_pipeline.frame_alignment": "<InterchangeFrameAlignment.NONE: 0>",
+   "animation_pipeline.import_custom_attribute": "True",
+   "material_pipeline.import_materials": "False",
+   "material_pipeline.material_import": "<InterchangeMaterialImportOption.IMPORT_AS_MATERIALS: 0>",
+   "material_pipeline.reuse_existing_materials": "True",
+   "material_pipeline.texture_pipeline.import_textures": "False"
+  },
+  "asset": "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe",
+  "verts": 321,
+  "bounds_min": [
+   -2.4,
+   -53.0,
+   -20.50001
+  ],
+  "bounds_max": [
+   2.4,
+   6.5,
+   26.49999
+  ],
+  "origin_inside_bounds": true,
+  "tip_nearest_vertex_cm": {
+   "(0,+42.75,+26.5)": 43.79854434666734,
+   "(0,-42.75,+26.5)": 3.649997907147903
+  },
+  "tip_axis_match": "(0,-42.75,+26.5)",
+  "socket_mapping_note": "socket readback maps Blender tool +Y to UE -Y, so (0,-42.75,26.5) is the consistent tip in UE axes; the Blender-frame tip is (0,42.75,26.5)",
+  "pass": false
+ },
+ "deleted_folders": {},
+ "8_assets": {
+  "scope": "/Game/Characters/UnnamedPlayer",
+  "skeletons": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton"
+  ],
+  "redirectors": [],
+  "skeletal_meshes": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer"
+  ],
+  "static_meshes": [
+   "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe"
+  ],
+  "pass": true
+ },
+ "asset_list": [
+  "/Game/Characters/UnnamedPlayer/M_UP_Body.M_UP_Body",
+  "/Game/Characters/UnnamedPlayer/M_UP_Head.M_UP_Head",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe",
+  "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchIdle.UP_CrouchIdle",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_C.UP_CrouchLook_C",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_D.UP_CrouchLook_D",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DL.UP_CrouchLook_DL",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DR.UP_CrouchLook_DR",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_L.UP_CrouchLook_L",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_R.UP_CrouchLook_R",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_U.UP_CrouchLook_U",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UL.UP_CrouchLook_UL",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UR.UP_CrouchLook_UR",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchToStand.UP_CrouchToStand",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L45.UP_CrouchTurn_L45",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L90.UP_CrouchTurn_L90",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R45.UP_CrouchTurn_R45",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R90.UP_CrouchTurn_R90",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_B.UP_Crouch_B",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_BL.UP_Crouch_BL",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_BR.UP_Crouch_BR",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_F.UP_Crouch_F",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_FL.UP_Crouch_FL",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_FR.UP_Crouch_FR",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_L.UP_Crouch_L",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_R.UP_Crouch_R",
+  "/Game/Characters/UnnamedPlayer/UP_Death_Placeholder.UP_Death_Placeholder",
+  "/Game/Characters/UnnamedPlayer/UP_Flight_Placeholder.UP_Flight_Placeholder",
+  "/Game/Characters/UnnamedPlayer/UP_Idle.UP_Idle",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Fall.UP_Jump_Fall",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Rise.UP_Jump_Rise",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Start.UP_Jump_Start",
+  "/Game/Characters/UnnamedPlayer/UP_Land_Firm.UP_Land_Firm",
+  "/Game/Characters/UnnamedPlayer/UP_Land_Soft.UP_Land_Soft",
+  "/Game/Characters/UnnamedPlayer/UP_Look_C.UP_Look_C",
+  "/Game/Characters/UnnamedPlayer/UP_Look_D.UP_Look_D",
+  "/Game/Characters/UnnamedPlayer/UP_Look_DL.UP_Look_DL",
+  "/Game/Characters/UnnamedPlayer/UP_Look_DR.UP_Look_DR",
+  "/Game/Characters/UnnamedPlayer/UP_Look_L.UP_Look_L",
+  "/Game/Characters/UnnamedPlayer/UP_Look_R.UP_Look_R",
+  "/Game/Characters/UnnamedPlayer/UP_Look_U.UP_Look_U",
+  "/Game/Characters/UnnamedPlayer/UP_Look_UL.UP_Look_UL",
+  "/Game/Characters/UnnamedPlayer/UP_Look_UR.UP_Look_UR",
+  "/Game/Characters/UnnamedPlayer/UP_Low_Pose.UP_Low_Pose",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_Hold.UP_Pickaxe_Hold",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeB.UP_Pickaxe_StrikeB",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeC.UP_Pickaxe_StrikeC",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_B.UP_Sprint_B",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_BL.UP_Sprint_BL",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_BR.UP_Sprint_BR",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_F.UP_Sprint_F",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_FL.UP_Sprint_FL",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_FR.UP_Sprint_FR",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_L.UP_Sprint_L",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_R.UP_Sprint_R",
+  "/Game/Characters/UnnamedPlayer/UP_StandToCrouch.UP_StandToCrouch",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_L45.UP_Turn_L45",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_L90.UP_Turn_L90",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_R45.UP_Turn_R45",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_R90.UP_Turn_R90",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_B.UP_Walk_B",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_BL.UP_Walk_BL",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_BR.UP_Walk_BR",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_F.UP_Walk_F",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_FL.UP_Walk_FL",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_FR.UP_Walk_FR",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_L.UP_Walk_L",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_R.UP_Walk_R",
+  "/Game/Characters/UnnamedPlayer_Proof/M_UP_Body.M_UP_Body",
+  "/Game/Characters/UnnamedPlayer_Proof/M_UP_Head.M_UP_Head",
+  "/Game/Characters/UnnamedPlayer_Proof/SK_UnnamedPlayer.SK_UnnamedPlayer",
+  "/Game/Characters/UnnamedPlayer_Proof/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Crouch_FR.UP_Crouch_FR",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Idle.UP_Idle",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Look_C.UP_Look_C",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Look_D.UP_Look_D",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA",
+  "/Game/Characters/UnnamedPlayer_Proof/UP_Walk_F.UP_Walk_F",
+  "/Game/Characters/UnnamedPlayer_ProofB/M_UP_Body.M_UP_Body",
+  "/Game/Characters/UnnamedPlayer_ProofB/M_UP_Head.M_UP_Head",
+  "/Game/Characters/UnnamedPlayer_ProofB/SK_UnnamedPlayer.SK_UnnamedPlayer",
+  "/Game/Characters/UnnamedPlayer_ProofB/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "/Game/Characters/UnnamedPlayer_ProofB/T_UP_Skin.T_UP_Skin",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Crouch_FR.UP_Crouch_FR",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Idle.UP_Idle",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Look_C.UP_Look_C",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Look_D.UP_Look_D",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA",
+  "/Game/Characters/UnnamedPlayer_ProofB/UP_Walk_F.UP_Walk_F",
+  "/Game/Characters/UnnamedPlayer_ProofC/M_UP_Body.M_UP_Body",
+  "/Game/Characters/UnnamedPlayer_ProofC/M_UP_Head.M_UP_Head",
+  "/Game/Characters/UnnamedPlayer_ProofC/SK_UnnamedPlayer.SK_UnnamedPlayer",
+  "/Game/Characters/UnnamedPlayer_ProofC/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton",
+  "/Game/Characters/UnnamedPlayer_ProofC/T_UP_Skin.T_UP_Skin",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_C.UP_CrouchLook_C",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_D.UP_CrouchLook_D",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_DL.UP_CrouchLook_DL",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_DR.UP_CrouchLook_DR",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_L.UP_CrouchLook_L",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_R.UP_CrouchLook_R",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_U.UP_CrouchLook_U",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_UL.UP_CrouchLook_UL",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_CrouchLook_UR.UP_CrouchLook_UR",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Crouch_FR.UP_Crouch_FR",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Idle.UP_Idle",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_C.UP_Look_C",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_D.UP_Look_D",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_DL.UP_Look_DL",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_DR.UP_Look_DR",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_L.UP_Look_L",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_R.UP_Look_R",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_U.UP_Look_U",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_UL.UP_Look_UL",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Look_UR.UP_Look_UR",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Low_Pose.UP_Low_Pose",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Pickaxe_Hold.UP_Pickaxe_Hold",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA",
+  "/Game/Characters/UnnamedPlayer_ProofC/UP_Walk_F.UP_Walk_F"
+ ],
+ "summary": {
+  "mesh_gates": {
+   "1_skeleton": true,
+   "3_ref_pose": true,
+   "2_bounds": true,
+   "4_facing_plusY": true,
+   "5_sections_sockets": true
+  },
+  "clips_pass": {
+   "UP_Death_Placeholder": false,
+   "UP_Flight_Placeholder": true,
+   "UP_Idle": true,
+   "UP_Jump_Fall": true,
+   "UP_Jump_Rise": false,
+   "UP_Jump_Start": false,
+   "UP_Land_Firm": false,
+   "UP_Land_Soft": false,
+   "UP_Look_C": true,
+   "UP_Look_D": true,
+   "UP_Look_DL": true,
+   "UP_Look_DR": true,
+   "UP_Look_L": true,
+   "UP_Look_R": true,
+   "UP_Look_U": true,
+   "UP_Look_UL": true,
+   "UP_Look_UR": true,
+   "UP_Low_Pose": true,
+   "UP_Pickaxe_Hold": true,
+   "UP_Pickaxe_StrikeA": true,
+   "UP_Pickaxe_StrikeB": true,
+   "UP_Pickaxe_StrikeC": true,
+   "UP_SneakIdle": true,
+   "UP_SneakLook_C": true,
+   "UP_SneakLook_D": true,
+   "UP_SneakLook_DL": true,
+   "UP_SneakLook_DR": true,
+   "UP_SneakLook_L": true,
+   "UP_SneakLook_R": true,
+   "UP_SneakLook_U": true,
+   "UP_SneakLook_UL": true,
+   "UP_SneakLook_UR": true,
+   "UP_SneakToStand": false,
+   "UP_SneakTurn_L45": true,
+   "UP_SneakTurn_L90": true,
+   "UP_SneakTurn_R45": true,
+   "UP_SneakTurn_R90": true,
+   "UP_Sneak_B": true,
+   "UP_Sneak_BL": true,
+   "UP_Sneak_BR": true,
+   "UP_Sneak_F": true,
+   "UP_Sneak_FL": true,
+   "UP_Sneak_FR": true,
+   "UP_Sneak_L": true,
+   "UP_Sneak_R": true,
+   "UP_Sprint_B": true,
+   "UP_Sprint_BL": true,
+   "UP_Sprint_BR": true,
+   "UP_Sprint_F": true,
+   "UP_Sprint_FL": true,
+   "UP_Sprint_FR": true,
+   "UP_Sprint_L": true,
+   "UP_Sprint_R": true,
+   "UP_StandToSneak": false,
+   "UP_Turn_L45": true,
+   "UP_Turn_L90": true,
+   "UP_Turn_R45": true,
+   "UP_Turn_R90": true,
+   "UP_Walk_B": true,
+   "UP_Walk_BL": true,
+   "UP_Walk_BR": true,
+   "UP_Walk_F": true,
+   "UP_Walk_FL": true,
+   "UP_Walk_FR": true,
+   "UP_Walk_L": true,
+   "UP_Walk_R": true
+  },
+  "gate8": true,
+  "skin_assigned": true,
+  "pickaxe": false,
+  "additive_ok": true,
+  "additive_count": 18,
+  "all_pass": false
+ },
+ "finished": "2026-10-16 01:58:44"
+}

@@ -1,0 +1,9 @@
+{
+ "log": "C:\\dev\\output\\unnamed-player-export-v002c-20261016\\evidence\\final_20261016_015709\\ue_final_20261016_015814.log",
+ "files_imported": 69,
+ "files_with_issues": {
+  "SK_UnnamedPlayer.fbx": [
+   "LogInterchangeEngine: Error: [C:/dev/output/unnamed-player-export-v002c-20261016/fbx/SK_UnnamedPlayer.fbx : '', Texture] UInterchangeTextureFactory: Invalid translator couldn't retrieve a payload."
+  ]
+ }
+}

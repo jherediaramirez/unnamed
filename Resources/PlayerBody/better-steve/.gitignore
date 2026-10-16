@@ -1,0 +1,5 @@
+previews/_tiles/
+*.blend1
+*-log.txt
+__pycache__/
+export/*.fbm/

@@ -1,0 +1,128 @@
+{
+ "preset": "C_head36",
+ "proportions": {
+  "head": 0.36,
+  "h": 0.045,
+  "v": 0.06
+ },
+ "height_m": 1.8000001847744045,
+ "soles_z": -2.3245812030836532e-07,
+ "top_z": 1.7999999523162842,
+ "bounds_min": [
+  -0.36000004410743713,
+  -0.18000000715255737,
+  -2.3245812030836532e-07
+ ],
+ "bounds_max": [
+  0.36000004410743713,
+  0.18000000715255737,
+  1.7999999523162842
+ ],
+ "width_x": 0.7200000882148743,
+ "depth_y": 0.36000001430511475,
+ "reference_bounds": {
+  "min": [
+   0.7999998331069946,
+   -0.22500009834766388,
+   -1.1920928955078125e-07
+  ],
+  "max": [
+   1.7000001668930054,
+   0.2250000387430191,
+   1.8000000715255737
+  ],
+  "height": 1.8000001907348633
+ },
+ "painted_eye_row_m": [
+  1.5749999999999997,
+  1.6199999999999999
+ ],
+ "painted_eye_centre_m": 1.5974999999999997,
+ "eye_guide_m": 1.62,
+ "eye_guide_minus_eye_centre_cm": 2.250000000000041,
+ "uniform_0p225_eye_centre_m": 1.546875,
+ "verts": {
+  "body": 1878,
+  "head": 486
+ },
+ "faces": {
+  "body": 1360,
+  "head": 384
+ },
+ "bones": 22,
+ "bone_names": [
+  "root",
+  "pelvis",
+  "spine_01",
+  "spine_02",
+  "neck_01",
+  "head",
+  "clavicle_l",
+  "upperarm_l",
+  "lowerarm_l",
+  "hand_l",
+  "clavicle_r",
+  "upperarm_r",
+  "lowerarm_r",
+  "hand_r",
+  "thigh_l",
+  "calf_l",
+  "foot_l",
+  "ball_l",
+  "thigh_r",
+  "calf_r",
+  "foot_r",
+  "ball_r"
+ ],
+ "rig_bones": 46,
+ "weights_normalised": true,
+ "max_influences": 2,
+ "bad_weights_sample": [],
+ "joints": {
+  "pelvis": [
+   0.0,
+   0.0,
+   0.72
+  ],
+  "thigh_l": [
+   0.09,
+   0.0,
+   0.69
+  ],
+  "calf_l": [
+   0.09,
+   -0.012,
+   0.375
+  ],
+  "foot_l": [
+   0.09,
+   0.0,
+   0.09
+  ],
+  "ball_l": [
+   0.09,
+   -0.045,
+   0.015
+  ],
+  "upperarm_l": [
+   0.252,
+   0.0,
+   1.32
+  ],
+  "lowerarm_l": [
+   0.27,
+   0.012,
+   1.08
+  ],
+  "hand_l": [
+   0.27,
+   0.0,
+   0.87
+  ],
+  "head": [
+   0.0,
+   0.0,
+   1.44
+  ]
+ }
+}

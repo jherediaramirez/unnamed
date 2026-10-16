@@ -1,0 +1,26 @@
+{
+  "clean_three_keys": {
+    "clips": 20,
+    "additive_looks": 18,
+    "keys": 3,
+    "fps": 60,
+    "tracks_per_clip": 22,
+    "max_scale_deviation": 5.960464475318616e-07,
+    "max_source_cm": 7.836861852892456e-05,
+    "max_source_deg": 8.518345425133005e-05
+  },
+  "clean_set_range_0_2": {
+    "clips": 20,
+    "additive_looks": 18,
+    "keys": 3,
+    "fps": 60,
+    "tracks_per_clip": 22,
+    "max_scale_deviation": 5.960464475318616e-07,
+    "max_source_cm": 7.836861852892456e-05,
+    "max_source_deg": 8.518345425133005e-05
+  },
+  "clean_log_warning_error_ensure_lines": 0,
+  "protected_files_unchanged": 243,
+  "local_report_source_links_checked": 8,
+  "editor_runs": 2
+}

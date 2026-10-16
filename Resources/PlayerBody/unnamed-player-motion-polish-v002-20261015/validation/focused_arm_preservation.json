@@ -1,0 +1,10 @@
+{
+  "source": "C:\\dev\\output\\unnamed-player-blender-v001-20261015\\blend\\UP_Player_master_v001.blend",
+  "scope": "Six strike actions only; other actions retained from v001.",
+  "lower_body_max_channel_delta": {
+    "UP_Pickaxe_StrikeA": 0.0,
+    "UP_Pickaxe_StrikeB": 0.0,
+    "UP_Pickaxe_StrikeC": 0.0
+  },
+  "other_actions_unchanged": true
+}

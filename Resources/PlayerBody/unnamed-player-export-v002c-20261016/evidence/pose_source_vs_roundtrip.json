@@ -1,0 +1,82 @@
+{
+ "UP_Look_C": {
+  "source_vs_roundtrip_max_cm": 4e-05,
+  "bone": "upperarm_r"
+ },
+ "UP_Look_D": {
+  "source_vs_roundtrip_max_cm": 5.38517,
+  "bone": "head"
+ },
+ "UP_Look_DL": {
+  "source_vs_roundtrip_max_cm": 5.38517,
+  "bone": "head"
+ },
+ "UP_Look_DR": {
+  "source_vs_roundtrip_max_cm": 5.38514,
+  "bone": "head"
+ },
+ "UP_Look_L": {
+  "source_vs_roundtrip_max_cm": 6e-05,
+  "bone": "upperarm_r"
+ },
+ "UP_Look_R": {
+  "source_vs_roundtrip_max_cm": 4e-05,
+  "bone": "upperarm_r"
+ },
+ "UP_Look_U": {
+  "source_vs_roundtrip_max_cm": 4.03112,
+  "bone": "head"
+ },
+ "UP_Look_UL": {
+  "source_vs_roundtrip_max_cm": 4.03112,
+  "bone": "head"
+ },
+ "UP_Look_UR": {
+  "source_vs_roundtrip_max_cm": 4.03113,
+  "bone": "head"
+ },
+ "UP_Low_Pose": {
+  "source_vs_roundtrip_max_cm": 6e-05,
+  "bone": "lowerarm_l"
+ },
+ "UP_Pickaxe_Hold": {
+  "source_vs_roundtrip_max_cm": 7e-05,
+  "bone": "upperarm_l"
+ },
+ "UP_SneakLook_C": {
+  "source_vs_roundtrip_max_cm": 5e-05,
+  "bone": "upperarm_r"
+ },
+ "UP_SneakLook_D": {
+  "source_vs_roundtrip_max_cm": 5.38519,
+  "bone": "head"
+ },
+ "UP_SneakLook_DL": {
+  "source_vs_roundtrip_max_cm": 5.38518,
+  "bone": "head"
+ },
+ "UP_SneakLook_DR": {
+  "source_vs_roundtrip_max_cm": 5.38519,
+  "bone": "head"
+ },
+ "UP_SneakLook_L": {
+  "source_vs_roundtrip_max_cm": 3e-05,
+  "bone": "lowerarm_r"
+ },
+ "UP_SneakLook_R": {
+  "source_vs_roundtrip_max_cm": 4e-05,
+  "bone": "hand_l"
+ },
+ "UP_SneakLook_U": {
+  "source_vs_roundtrip_max_cm": 4.03112,
+  "bone": "head"
+ },
+ "UP_SneakLook_UL": {
+  "source_vs_roundtrip_max_cm": 4.03111,
+  "bone": "head"
+ },
+ "UP_SneakLook_UR": {
+  "source_vs_roundtrip_max_cm": 4.03111,
+  "bone": "head"
+ }
+}

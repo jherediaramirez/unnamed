@@ -1,0 +1,226 @@
+{
+ "stand": {
+  "DL": {
+   "head_in_torso_cm": 9.36,
+   "torso_in_head_cm": 15.51,
+   "arm_l_in_torso_cm": 1.07,
+   "arm_r_in_torso_cm": 1.07
+  },
+  "D": {
+   "head_in_torso_cm": 2.13,
+   "torso_in_head_cm": 2.73,
+   "arm_l_in_torso_cm": 1.08,
+   "arm_r_in_torso_cm": 1.08
+  },
+  "DR": {
+   "head_in_torso_cm": 9.47,
+   "torso_in_head_cm": 15.7,
+   "arm_l_in_torso_cm": 1.08,
+   "arm_r_in_torso_cm": 1.08
+  },
+  "L": {
+   "head_in_torso_cm": 0.2,
+   "torso_in_head_cm": 0.26,
+   "arm_l_in_torso_cm": 0.96,
+   "arm_r_in_torso_cm": 0.96
+  },
+  "C": {
+   "head_in_torso_cm": 0.28,
+   "torso_in_head_cm": 0.28,
+   "arm_l_in_torso_cm": 0.96,
+   "arm_r_in_torso_cm": 0.96
+  },
+  "R": {
+   "head_in_torso_cm": 0.22,
+   "torso_in_head_cm": 0.25,
+   "arm_l_in_torso_cm": 0.96,
+   "arm_r_in_torso_cm": 0.96
+  },
+  "UL": {
+   "head_in_torso_cm": 9.7,
+   "torso_in_head_cm": 15.34,
+   "arm_l_in_torso_cm": 1.0,
+   "arm_r_in_torso_cm": 1.0
+  },
+  "U": {
+   "head_in_torso_cm": 2.59,
+   "torso_in_head_cm": 3.73,
+   "arm_l_in_torso_cm": 1.0,
+   "arm_r_in_torso_cm": 1.0
+  },
+  "UR": {
+   "head_in_torso_cm": 9.63,
+   "torso_in_head_cm": 16.35,
+   "arm_l_in_torso_cm": 1.0,
+   "arm_r_in_torso_cm": 1.0
+  }
+ },
+ "sneak_grid": {
+  "DL": {
+   "head_in_torso_cm": 8.12,
+   "torso_in_head_cm": 13.18,
+   "arm_l_in_torso_cm": 1.52,
+   "arm_r_in_torso_cm": 1.52
+  },
+  "D": {
+   "head_in_torso_cm": 0.67,
+   "torso_in_head_cm": 2.52,
+   "arm_l_in_torso_cm": 1.52,
+   "arm_r_in_torso_cm": 1.52
+  },
+  "DR": {
+   "head_in_torso_cm": 7.33,
+   "torso_in_head_cm": 12.39,
+   "arm_l_in_torso_cm": 1.52,
+   "arm_r_in_torso_cm": 1.52
+  },
+  "L": {
+   "head_in_torso_cm": 4.96,
+   "torso_in_head_cm": 5.88,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "C": {
+   "head_in_torso_cm": 2.46,
+   "torso_in_head_cm": 4.69,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "R": {
+   "head_in_torso_cm": 4.76,
+   "torso_in_head_cm": 6.01,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "UL": {
+   "head_in_torso_cm": 9.93,
+   "torso_in_head_cm": 15.15,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "U": {
+   "head_in_torso_cm": 3.58,
+   "torso_in_head_cm": 4.23,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "UR": {
+   "head_in_torso_cm": 9.64,
+   "torso_in_head_cm": 16.28,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  }
+ },
+ "stand_grid_on_sneak_additive": {
+  "DL": {
+   "head_in_torso_cm": 9.7,
+   "torso_in_head_cm": 15.11,
+   "arm_l_in_torso_cm": 1.72,
+   "arm_r_in_torso_cm": 1.68
+  },
+  "D": {
+   "head_in_torso_cm": 4.48,
+   "torso_in_head_cm": 6.47,
+   "arm_l_in_torso_cm": 1.72,
+   "arm_r_in_torso_cm": 1.68
+  },
+  "DR": {
+   "head_in_torso_cm": 9.44,
+   "torso_in_head_cm": 14.58,
+   "arm_l_in_torso_cm": 1.72,
+   "arm_r_in_torso_cm": 1.68
+  },
+  "L": {
+   "head_in_torso_cm": 3.22,
+   "torso_in_head_cm": 4.69,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "C": {
+   "head_in_torso_cm": 2.46,
+   "torso_in_head_cm": 4.69,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "R": {
+   "head_in_torso_cm": 3.26,
+   "torso_in_head_cm": 4.45,
+   "arm_l_in_torso_cm": 0.91,
+   "arm_r_in_torso_cm": 0.91
+  },
+  "UL": {
+   "head_in_torso_cm": 9.19,
+   "torso_in_head_cm": 17.56,
+   "arm_l_in_torso_cm": 0.66,
+   "arm_r_in_torso_cm": 0.66
+  },
+  "U": {
+   "head_in_torso_cm": 7.91,
+   "torso_in_head_cm": 7.61,
+   "arm_l_in_torso_cm": 0.66,
+   "arm_r_in_torso_cm": 0.66
+  },
+  "UR": {
+   "head_in_torso_cm": 8.93,
+   "torso_in_head_cm": 18.34,
+   "arm_l_in_torso_cm": 0.66,
+   "arm_r_in_torso_cm": 0.66
+  }
+ },
+ "stand_grid_on_walk_additive": {
+  "DL": {
+   "head_in_torso_cm": 9.55,
+   "torso_in_head_cm": 16.09,
+   "arm_l_in_torso_cm": 1.09,
+   "arm_r_in_torso_cm": 2.0
+  },
+  "D": {
+   "head_in_torso_cm": 5.51,
+   "torso_in_head_cm": 8.6,
+   "arm_l_in_torso_cm": 1.09,
+   "arm_r_in_torso_cm": 2.0
+  },
+  "DR": {
+   "head_in_torso_cm": 9.67,
+   "torso_in_head_cm": 16.65,
+   "arm_l_in_torso_cm": 1.09,
+   "arm_r_in_torso_cm": 2.0
+  },
+  "L": {
+   "head_in_torso_cm": 0.63,
+   "torso_in_head_cm": 0.8,
+   "arm_l_in_torso_cm": 1.26,
+   "arm_r_in_torso_cm": 1.36
+  },
+  "C": {
+   "head_in_torso_cm": 0.83,
+   "torso_in_head_cm": 0.89,
+   "arm_l_in_torso_cm": 1.26,
+   "arm_r_in_torso_cm": 1.36
+  },
+  "R": {
+   "head_in_torso_cm": 1.07,
+   "torso_in_head_cm": 1.14,
+   "arm_l_in_torso_cm": 1.26,
+   "arm_r_in_torso_cm": 1.36
+  },
+  "UL": {
+   "head_in_torso_cm": 9.19,
+   "torso_in_head_cm": 16.37,
+   "arm_l_in_torso_cm": 1.05,
+   "arm_r_in_torso_cm": 0.86
+  },
+  "U": {
+   "head_in_torso_cm": 5.69,
+   "torso_in_head_cm": 8.35,
+   "arm_l_in_torso_cm": 1.05,
+   "arm_r_in_torso_cm": 0.86
+  },
+  "UR": {
+   "head_in_torso_cm": 9.12,
+   "torso_in_head_cm": 17.26,
+   "arm_l_in_torso_cm": 1.08,
+   "arm_r_in_torso_cm": 0.86
+  }
+ }
+}

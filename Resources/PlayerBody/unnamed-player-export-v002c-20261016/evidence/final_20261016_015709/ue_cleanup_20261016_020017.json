@@ -1,0 +1,123 @@
+{
+ "deleted": {
+  "/Game/Characters/UnnamedPlayer_Proof": true,
+  "/Game/Characters/UnnamedPlayer_ProofB": true,
+  "/Game/Characters/UnnamedPlayer_ProofC": true
+ },
+ "pickaxe_tip": {
+  "triangles": 252,
+  "tip_to_surface_cm": {
+   "(0,+42.75,+26.5)": 43.75285689971554,
+   "(0,-42.75,+26.5)": 7.152556381840189e-06
+  },
+  "bounds_min": [
+   -2.4000000953674316,
+   -52.999996185302734,
+   -20.50000762939453
+  ],
+  "bounds_max": [
+   2.4000000953674316,
+   6.500000476837158,
+   26.49999237060547
+  ],
+  "origin_inside_bounds": true,
+  "note": "UE axes: socket readback maps Blender tool +Y to UE -Y, so (0,-42.75,26.5) is the consistent tip",
+  "pass": true
+ },
+ "8_assets_game": {
+  "skeletons": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton"
+  ],
+  "redirectors": [],
+  "skeletal_meshes": [
+   "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer"
+  ],
+  "static_meshes": [
+   "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe"
+  ],
+  "outside_final_folder": [],
+  "pass": true
+ },
+ "assets": {
+  "/Game/Characters/UnnamedPlayer/M_UP_Body.M_UP_Body": "MaterialInstanceConstant",
+  "/Game/Characters/UnnamedPlayer/M_UP_Head.M_UP_Head": "MaterialInstanceConstant",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer.SK_UnnamedPlayer": "SkeletalMesh",
+  "/Game/Characters/UnnamedPlayer/SK_UnnamedPlayer_Skeleton.SK_UnnamedPlayer_Skeleton": "Skeleton",
+  "/Game/Characters/UnnamedPlayer/SM_UP_Pickaxe.SM_UP_Pickaxe": "StaticMesh",
+  "/Game/Characters/UnnamedPlayer/T_UP_Skin.T_UP_Skin": "Texture2D",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchIdle.UP_CrouchIdle": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_C.UP_CrouchLook_C": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_D.UP_CrouchLook_D": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DL.UP_CrouchLook_DL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_DR.UP_CrouchLook_DR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_L.UP_CrouchLook_L": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_R.UP_CrouchLook_R": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_U.UP_CrouchLook_U": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UL.UP_CrouchLook_UL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchLook_UR.UP_CrouchLook_UR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchToStand.UP_CrouchToStand": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L45.UP_CrouchTurn_L45": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_L90.UP_CrouchTurn_L90": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R45.UP_CrouchTurn_R45": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_CrouchTurn_R90.UP_CrouchTurn_R90": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_B.UP_Crouch_B": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_BL.UP_Crouch_BL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_BR.UP_Crouch_BR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_F.UP_Crouch_F": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_FL.UP_Crouch_FL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_FR.UP_Crouch_FR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_L.UP_Crouch_L": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Crouch_R.UP_Crouch_R": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Death_Placeholder.UP_Death_Placeholder": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Flight_Placeholder.UP_Flight_Placeholder": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Idle.UP_Idle": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Fall.UP_Jump_Fall": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Rise.UP_Jump_Rise": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Jump_Start.UP_Jump_Start": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Land_Firm.UP_Land_Firm": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Land_Soft.UP_Land_Soft": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_C.UP_Look_C": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_D.UP_Look_D": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_DL.UP_Look_DL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_DR.UP_Look_DR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_L.UP_Look_L": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_R.UP_Look_R": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_U.UP_Look_U": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_UL.UP_Look_UL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Look_UR.UP_Look_UR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Low_Pose.UP_Low_Pose": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_Hold.UP_Pickaxe_Hold": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeA.UP_Pickaxe_StrikeA": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeB.UP_Pickaxe_StrikeB": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Pickaxe_StrikeC.UP_Pickaxe_StrikeC": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_B.UP_Sprint_B": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_BL.UP_Sprint_BL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_BR.UP_Sprint_BR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_F.UP_Sprint_F": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_FL.UP_Sprint_FL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_FR.UP_Sprint_FR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_L.UP_Sprint_L": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Sprint_R.UP_Sprint_R": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_StandToCrouch.UP_StandToCrouch": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_L45.UP_Turn_L45": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_L90.UP_Turn_L90": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_R45.UP_Turn_R45": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Turn_R90.UP_Turn_R90": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_B.UP_Walk_B": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_BL.UP_Walk_BL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_BR.UP_Walk_BR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_F.UP_Walk_F": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_FL.UP_Walk_FL": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_FR.UP_Walk_FR": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_L.UP_Walk_L": "AnimSequence",
+  "/Game/Characters/UnnamedPlayer/UP_Walk_R.UP_Walk_R": "AnimSequence"
+ },
+ "counts": {
+  "AnimSequence": 66,
+  "MaterialInstanceConstant": 2,
+  "SkeletalMesh": 1,
+  "Skeleton": 1,
+  "StaticMesh": 1,
+  "Texture2D": 1
+ }
+}

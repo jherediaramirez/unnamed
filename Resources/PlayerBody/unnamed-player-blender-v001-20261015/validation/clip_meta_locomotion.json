@@ -1,0 +1,870 @@
+{
+ "Idle": {
+  "frames": 120,
+  "seconds": 2.0,
+  "loop": true,
+  "speed_mps": 0.0,
+  "root_motion": false
+ },
+ "SneakIdle": {
+  "frames": 120,
+  "seconds": 2.0,
+  "loop": true,
+  "speed_mps": 0.0,
+  "root_motion": false
+ },
+ "StandToSneak": {
+  "frames": 16,
+  "seconds": 0.26666666666666666,
+  "loop": false,
+  "speed_mps": 0.0,
+  "root_motion": false
+ },
+ "SneakToStand": {
+  "frames": 16,
+  "seconds": 0.26666666666666666,
+  "loop": false,
+  "speed_mps": 0.0,
+  "root_motion": false
+ },
+ "Walk_F": {
+  "family": "Walk",
+  "direction": "F",
+  "direction_deg": 0.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.3172,
+  "travel_vector_char_space": [
+   -0.0,
+   -4.3172
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": -0.0,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5689
+ },
+ "Walk_FR": {
+  "family": "Walk",
+  "direction": "FR",
+  "direction_deg": 45.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.4053,
+  "travel_vector_char_space": [
+   -3.11502,
+   -3.11502
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": -18.9,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5537
+ },
+ "Walk_R": {
+  "family": "Walk",
+  "direction": "R",
+  "direction_deg": 90.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.3172,
+  "travel_vector_char_space": [
+   -4.3172,
+   -0.0
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": -37.8,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5467
+ },
+ "Walk_BR": {
+  "family": "Walk",
+  "direction": "BR",
+  "direction_deg": 135.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.4053,
+  "travel_vector_char_space": [
+   -3.11502,
+   3.11502
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": 18.9,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5651
+ },
+ "Walk_B": {
+  "family": "Walk",
+  "direction": "B",
+  "direction_deg": 180.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.3172,
+  "travel_vector_char_space": [
+   -0.0,
+   4.3172
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": 0.0,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5849
+ },
+ "Walk_BL": {
+  "family": "Walk",
+  "direction": "BL",
+  "direction_deg": -135.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.4053,
+  "travel_vector_char_space": [
+   3.11502,
+   3.11502
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": -18.9,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5633
+ },
+ "Walk_L": {
+  "family": "Walk",
+  "direction": "L",
+  "direction_deg": -90.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.3172,
+  "travel_vector_char_space": [
+   4.3172,
+   -0.0
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": 37.8,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5456
+ },
+ "Walk_FL": {
+  "family": "Walk",
+  "direction": "FL",
+  "direction_deg": -45.0,
+  "frames": 36,
+  "seconds": 0.6,
+  "loop": true,
+  "speed_mps": 4.4053,
+  "travel_vector_char_space": [
+   3.11502,
+   -3.11502
+  ],
+  "duty_factor": 0.25,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 18.0
+   },
+   "left_toe_off": {
+    "phase": 0.25,
+    "frame": 9.0
+   },
+   "right_toe_off": {
+    "phase": 0.75,
+    "frame": 27.0
+   }
+  },
+  "body_yaw_toward_travel_deg": 18.9,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5525
+ },
+ "Sprint_F": {
+  "family": "Sprint",
+  "direction": "F",
+  "direction_deg": 0.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.6123,
+  "travel_vector_char_space": [
+   -0.0,
+   -5.6123
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": -0.0,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.565
+ },
+ "Sprint_FR": {
+  "family": "Sprint",
+  "direction": "FR",
+  "direction_deg": 45.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.7269,
+  "travel_vector_char_space": [
+   -4.04953,
+   -4.04953
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": -18.9,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5526
+ },
+ "Sprint_R": {
+  "family": "Sprint",
+  "direction": "R",
+  "direction_deg": 90.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.6123,
+  "travel_vector_char_space": [
+   -5.6123,
+   -0.0
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": -37.8,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5504
+ },
+ "Sprint_BR": {
+  "family": "Sprint",
+  "direction": "BR",
+  "direction_deg": 135.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.7269,
+  "travel_vector_char_space": [
+   -4.04953,
+   4.04953
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": 18.9,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5487
+ },
+ "Sprint_B": {
+  "family": "Sprint",
+  "direction": "B",
+  "direction_deg": 180.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.6123,
+  "travel_vector_char_space": [
+   -0.0,
+   5.6123
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": 0.0,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5707
+ },
+ "Sprint_BL": {
+  "family": "Sprint",
+  "direction": "BL",
+  "direction_deg": -135.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.7269,
+  "travel_vector_char_space": [
+   4.04953,
+   4.04953
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": -18.9,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.5466
+ },
+ "Sprint_L": {
+  "family": "Sprint",
+  "direction": "L",
+  "direction_deg": -90.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.6123,
+  "travel_vector_char_space": [
+   5.6123,
+   -0.0
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": 37.8,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5494
+ },
+ "Sprint_FL": {
+  "family": "Sprint",
+  "direction": "FL",
+  "direction_deg": -45.0,
+  "frames": 32,
+  "seconds": 0.5333333333333333,
+  "loop": true,
+  "speed_mps": 5.7269,
+  "travel_vector_char_space": [
+   4.04953,
+   -4.04953
+  ],
+  "duty_factor": 0.21,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 16.0
+   },
+   "left_toe_off": {
+    "phase": 0.21,
+    "frame": 6.72
+   },
+   "right_toe_off": {
+    "phase": 0.71,
+    "frame": 22.72
+   }
+  },
+  "body_yaw_toward_travel_deg": 18.9,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.5517
+ },
+ "Sneak_F": {
+  "family": "Sneak",
+  "direction": "F",
+  "direction_deg": 0.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.2952,
+  "travel_vector_char_space": [
+   -0.0,
+   -1.2952
+  ],
+  "duty_factor": 0.58,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.58,
+    "frame": 31.32
+   },
+   "right_toe_off": {
+    "phase": 1.08,
+    "frame": 58.32
+   }
+  },
+  "body_yaw_toward_travel_deg": -0.0,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_FR": {
+  "family": "Sneak",
+  "direction": "FR",
+  "direction_deg": 45.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.8316,
+  "travel_vector_char_space": [
+   -1.29514,
+   -1.29514
+  ],
+  "duty_factor": 0.47,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.47,
+    "frame": 25.38
+   },
+   "right_toe_off": {
+    "phase": 0.97,
+    "frame": 52.38
+   }
+  },
+  "body_yaw_toward_travel_deg": -17.1,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.4692
+ },
+ "Sneak_R": {
+  "family": "Sneak",
+  "direction": "R",
+  "direction_deg": 90.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.2952,
+  "travel_vector_char_space": [
+   -1.2952,
+   -0.0
+  ],
+  "duty_factor": 0.58,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.58,
+    "frame": 31.32
+   },
+   "right_toe_off": {
+    "phase": 1.08,
+    "frame": 58.32
+   }
+  },
+  "body_yaw_toward_travel_deg": -34.2,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_BR": {
+  "family": "Sneak",
+  "direction": "BR",
+  "direction_deg": 135.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.8316,
+  "travel_vector_char_space": [
+   -1.29514,
+   1.29514
+  ],
+  "duty_factor": 0.47,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.47,
+    "frame": 25.38
+   },
+   "right_toe_off": {
+    "phase": 0.97,
+    "frame": 52.38
+   }
+  },
+  "body_yaw_toward_travel_deg": 17.1,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_B": {
+  "family": "Sneak",
+  "direction": "B",
+  "direction_deg": 180.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.2952,
+  "travel_vector_char_space": [
+   -0.0,
+   1.2952
+  ],
+  "duty_factor": 0.58,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.58,
+    "frame": 31.32
+   },
+   "right_toe_off": {
+    "phase": 1.08,
+    "frame": 58.32
+   }
+  },
+  "body_yaw_toward_travel_deg": 0.0,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_BL": {
+  "family": "Sneak",
+  "direction": "BL",
+  "direction_deg": -135.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.8316,
+  "travel_vector_char_space": [
+   1.29514,
+   1.29514
+  ],
+  "duty_factor": 0.47,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.47,
+    "frame": 25.38
+   },
+   "right_toe_off": {
+    "phase": 0.97,
+    "frame": 52.38
+   }
+  },
+  "body_yaw_toward_travel_deg": -17.1,
+  "backward_style": true,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_L": {
+  "family": "Sneak",
+  "direction": "L",
+  "direction_deg": -90.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.2952,
+  "travel_vector_char_space": [
+   1.2952,
+   -0.0
+  ],
+  "duty_factor": 0.58,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.58,
+    "frame": 31.32
+   },
+   "right_toe_off": {
+    "phase": 1.08,
+    "frame": 58.32
+   }
+  },
+  "body_yaw_toward_travel_deg": 34.2,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.485
+ },
+ "Sneak_FL": {
+  "family": "Sneak",
+  "direction": "FL",
+  "direction_deg": -45.0,
+  "frames": 54,
+  "seconds": 0.9,
+  "loop": true,
+  "speed_mps": 1.8316,
+  "travel_vector_char_space": [
+   1.29514,
+   -1.29514
+  ],
+  "duty_factor": 0.47,
+  "contacts": {
+   "left_contact": {
+    "phase": 0.0,
+    "frame": 0.0
+   },
+   "right_contact": {
+    "phase": 0.5,
+    "frame": 27.0
+   },
+   "left_toe_off": {
+    "phase": 0.47,
+    "frame": 25.38
+   },
+   "right_toe_off": {
+    "phase": 0.97,
+    "frame": 52.38
+   }
+  },
+  "body_yaw_toward_travel_deg": 17.1,
+  "backward_style": false,
+  "pelvis_base_height_m": 0.467
+ }
+}

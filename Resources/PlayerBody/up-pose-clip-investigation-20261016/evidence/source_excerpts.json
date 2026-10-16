@@ -1,0 +1,104 @@
+[
+  {
+    "path": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Engine\\Public\\Animation\\AnimTypes.h",
+    "sha256": "31cce827284996ad249a16c4d99c89e976cc1cda741914e0380e144da9722f80",
+    "excerpts": [
+      {
+        "start": 27,
+        "end": 28,
+        "text": "27: #define DEFAULT_SAMPLERATE\t\t\t30.f\n28: #define MINIMUM_ANIMATION_LENGTH\t(1/DEFAULT_SAMPLERATE)"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Plugins\\Interchange\\Runtime\\Source\\Parsers\\Fbx\\Private\\FbxAnimation.cpp",
+    "sha256": "64dc7deb765faebf2917a56e0f0a7631588426707d4a7bcb0495629cbe176556",
+    "excerpts": [
+      {
+        "start": 1044,
+        "end": 1062,
+        "text": "1044: \t\t}\n1045: \t\tFbxTime StartTime;\n1046: \t\tStartTime.SetSecondDouble(TimeDescription.RangeStartSecond);\n1047: \t\tFbxTime EndTime;\n1048: \t\tEndTime.SetSecondDouble(TimeDescription.RangeStopSecond);\n1049: \t\tif (!ensure(TimeDescription.RangeStopSecond > TimeDescription.RangeStartSecond))\n1050: \t\t{\n1051: \t\t\tOutErrorMessages.Add(LOCTEXT(\"InvalidRange\", \"Cannot fetch FBX animation bake transforms payload because the bake range is invalid.\"));\n1052: \t\t\treturn false;\n1053: \t\t}\n1054: \t\tconst double TimeStepSecond = 1.0 / TimeDescription.BakeFrequency;\n1055: \t\tFbxTime TimeStep = 0;\n1056: \t\tTimeStep.SetSecondDouble(TimeStepSecond);\n1057: \n1058: \t\tconst double SequenceLength = FMath::Max<double>(TimeDescription.RangeStopSecond - TimeDescription.RangeStartSecond, TimeStepSecond);\n1059: \t\tconst int32 NumFrame = FMath::RoundToInt32(SequenceLength * TimeDescription.BakeFrequency);\n1060: \t\tint32 BakeKeyCount = NumFrame + 1;\n1061: \n1062: \t\tensure(NumFrame >= 0);"
+      },
+      {
+        "start": 1114,
+        "end": 1140,
+        "text": "1114: \t\t\t\tPayloadDataHelper.PayloadData.BakeFrequency = PayloadQueryHelper.PayloadQuery->TimeDescription.BakeFrequency;\n1115: \t\t\t\tPayloadDataHelper.PayloadData.RangeStartTime = PayloadQueryHelper.PayloadQuery->TimeDescription.RangeStartSecond;\n1116: \t\t\t\tPayloadDataHelper.PayloadData.RangeEndTime = PayloadQueryHelper.PayloadQuery->TimeDescription.RangeStopSecond;\n1117: \n1118: \t\t\t\tPayloadDataHelper.PayloadData.Transforms.SetNum(BakeKeyCount);\n1119: \n1120: \t\t\t\tPayloadDataHelpersForAnimStack.Add(PayloadDataHelper);\n1121: \t\t\t}\n1122: \n1123: \t\t\t//Acquire Bone Transforms:\n1124: \t\t\t//Time iteration\n1125: \t\t\tFbxTime CurrentTime = StartTime;\n1126: \t\t\tfor (size_t FrameIndex = 0; FrameIndex < BakeKeyCount; FrameIndex++, CurrentTime+=TimeStep)\n1127: \t\t\t{\n1128: \n1129: \t\t\t\t//Bone iteration:\n1130: \t\t\t\tfor (size_t PayloadDataIndex = 0; PayloadDataIndex < PayloadDataHelpersForAnimStack.Num(); PayloadDataIndex++)\n1131: \t\t\t\t{\n1132: \t\t\t\t\tFPayloadQueryHelper& PayloadQueryHelper = PayloadQueryHelpersForAnimStack[PayloadDataIndex];\n1133: \t\t\t\t\tFPayloadDataHelper& PayloadDataHelper = PayloadDataHelpersForAnimStack[PayloadDataIndex];\n1134: \n1135: \t\t\t\t\tFTransform Transform;\n1136: \t\t\t\t\tif (PayloadQueryHelper.PayloadContext->FetchAnimationBakeTransformPayloadForTime(Parser, CurrentTime, Transform))\n1137: \t\t\t\t\t{\n1138: \t\t\t\t\t\tPayloadDataHelper.PayloadData.Transforms[FrameIndex] = Transform;\n1139: \t\t\t\t\t}\n1140: \t\t\t\t\telse"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Plugins\\Interchange\\Runtime\\Source\\Parsers\\Fbx\\Private\\FbxScene.cpp",
+    "sha256": "d9f0db570cb8123e3bcd067186f01e9cdd08ec3e14bbda4294007c1b74ced862",
+    "excerpts": [
+      {
+        "start": 1098,
+        "end": 1116,
+        "text": "1098: \n1099: \t\t\t\t\t\t\t//Calculate AnimationTime:\n1100: \n1101: \t\t\t\t\t\t\t//Node animated time interval (Animated time for all concern bones under the skeletalmesh root bone)\n1102: \t\t\t\t\t\t\tFbxTimeSpan AnimatedInterval(FBXSDK_TIME_INFINITE, FBXSDK_TIME_MINUS_INFINITE);\n1103: \t\t\t\t\t\t\tNode->GetAnimationInterval(AnimatedInterval, CurrentAnimationStack);\n1104: \t\t\t\t\t\t\tSkeletalAnimationTrackNode->SetCustomAnimationStartTime(AnimatedInterval.GetStart().GetSecondDouble());\n1105: \t\t\t\t\t\t\tSkeletalAnimationTrackNode->SetCustomAnimationStopTime(AnimatedInterval.GetStop().GetSecondDouble());\n1106: \n1107: \t\t\t\t\t\t\t//Animation stack time interval (Source timeline interval)\n1108: \t\t\t\t\t\t\t// Note - can be less or more the bones animationlength, it can be configure when exporting by manipulating the timeline in the dcc (Maya have a range cursor on the timeline)\n1109: \t\t\t\t\t\t\tFbxTimeSpan AnimStackInterval(FBXSDK_TIME_INFINITE, FBXSDK_TIME_MINUS_INFINITE);\n1110: \t\t\t\t\t\t\tAnimStackInterval = CurrentAnimationStack->GetLocalTimeSpan();\n1111: \n1112: \t\t\t\t\t\t\t//AnimStackInterval represent the animation time line setup in the DCC\n1113: \t\t\t\t\t\t\tSkeletalAnimationTrackNode->SetCustomSourceTimelineAnimationStartTime(AnimStackInterval.GetStart().GetSecondDouble());\n1114: \t\t\t\t\t\t\tSkeletalAnimationTrackNode->SetCustomSourceTimelineAnimationStopTime(AnimStackInterval.GetStop().GetSecondDouble());\n1115: \t\t\t\t\t\t\treturn true;\n1116: \t\t\t\t\t\t}"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Plugins\\Interchange\\Runtime\\Source\\Import\\Private\\Animation\\InterchangeAnimSequenceFactory.cpp",
+    "sha256": "bda8b9f57d2c429874ffa830dd3908fc2527f9e169cb054a5994a35dac5a165f",
+    "excerpts": [
+      {
+        "start": 531,
+        "end": 537,
+        "text": "531: \t\t\tconst double SequenceLength = FMath::Max<double>(BoneTrackData.MergedRangeEnd - BoneTrackData.MergedRangeStart, MINIMUM_ANIMATION_LENGTH);\n532: \t\t\tint32 FrameCount = FMath::RoundToInt32(SequenceLength * SampleRate);\n533: \t\t\tint32 BakeKeyCount = FrameCount + 1;\n534: \t\t\tconst FFrameRate ResampleFrameRate = UE::Interchange::Animation::ConvertSampleRateToFrameRate(SampleRate);\n535: \t\t\tController.SetFrameRate(ResampleFrameRate, bShouldTransact);\n536: \t\t\tController.SetNumberOfFrames(FrameCount, bShouldTransact);\n537: "
+      },
+      {
+        "start": 553,
+        "end": 590,
+        "text": "553: \t\t\t}\n554: \n555: \t\t\tfor (TTuple< const UInterchangeSceneNode*, UE::Interchange::FAnimationPayloadData>& AnimationPayload : BoneTrackData.PreProcessedAnimationPayloads)\n556: \t\t\t{\n557: \t\t\t\tNonAnimatedSkeletonNodes.Remove(AnimationPayload.Key->GetUniqueID());\n558: \n559: \t\t\t\tconst FName BoneName = FName(*(AnimationPayload.Key->GetDisplayLabel()));\n560: \t\t\t\tUE::Interchange::FAnimationPayloadData& AnimationTransformPayload = AnimationPayload.Value;\n561: \t\t\t\t\n562: \t\t\t\t//If we are getting the root \n563: \t\t\t\tbool bApplyGlobalOffset = AnimationPayload.Key->GetUniqueID().Equals(SkeletonRootUid);\n564: \n565: \t\t\t\tif (AnimationTransformPayload.Transforms.Num() == 0)\n566: \t\t\t\t{\n567: \t\t\t\t\t//We need at least one transform\n568: \t\t\t\t\tAnimationTransformPayload.Transforms.Add(FTransform::Identity);\n569: \t\t\t\t}\n570: \n571: \t\t\t\tconst double SequenceLengthForAnimationPayload = FMath::Max<double>(AnimationTransformPayload.RangeEndTime - AnimationTransformPayload.RangeStartTime, MINIMUM_ANIMATION_LENGTH);\n572: \t\t\t\tint32 BakeKeyCountForAnimationPayload = FMath::RoundToInt32(SequenceLengthForAnimationPayload * AnimationTransformPayload.BakeFrequency) + 1;\n573: \n574: \t\t\t\tFRawAnimSequenceTrack RawTrack;\n575: \t\t\t\tRawTrack.PosKeys.Reserve(BakeKeyCountForAnimationPayload);\n576: \t\t\t\tRawTrack.RotKeys.Reserve(BakeKeyCountForAnimationPayload);\n577: \t\t\t\tRawTrack.ScaleKeys.Reserve(BakeKeyCountForAnimationPayload);\n578: \t\t\t\t\n579: \t\t\t\tif (!ensure(AnimationTransformPayload.Transforms.Num() == BakeKeyCountForAnimationPayload))\n580: \t\t\t\t{\n581: \t\t\t\t\tFString PayloadKey = PayloadKeys[AnimationPayload.Key->GetUniqueID()].UniqueId;\n582: \t\t\t\t\tUInterchangeResultWarning_Generic* Message = Factory->AddMessage<UInterchangeResultWarning_Generic>();\n583: \t\t\t\t\tMessage->DestinationAssetName = AssetName;\n584: \t\t\t\t\tMessage->AssetType = UAnimSequence::StaticClass();\n585: \t\t\t\t\tMessage->Text = FText::Format(NSLOCTEXT(\"UInterchangeAnimSequenceFactory\", \"AnimationPayloadUnexpectedTransformNumber\", \"Animation Payload [{0}] has unexpected number of Baked Transforms.\"), FText::FromString(PayloadKey));\n586: \t\t\t\t\tbreak;\n587: \t\t\t\t}\n588: \n589: \t\t\t\tif (AnimationTransformPayload.PayloadKey.Type == EInterchangeAnimationPayLoadType::BAKED)\n590: \t\t\t\t{"
+      },
+      {
+        "start": 664,
+        "end": 710,
+        "text": "664: \t\t\t// If not, Add one animation track with only one transform key at time 0 with the Local transform.\n665: \t\t\tfor (const FString& NonAnimatedSkeletonNodeUID : NonAnimatedSkeletonNodes)\n666: \t\t\t{\n667: \t\t\t\tif (const UInterchangeSceneNode* SkeletonNode = Cast<UInterchangeSceneNode>(NodeContainer->GetNode(NonAnimatedSkeletonNodeUID)))\n668: \t\t\t\t{\n669: \t\t\t\t\tTOptional<FTransform> ReferenceTransform;\n670: \t\t\t\t\tif (Skeleton)\n671: \t\t\t\t\t{\n672: \t\t\t\t\t\tconst FReferenceSkeleton& RefSkeleton = Skeleton->GetReferenceSkeleton();\n673: \t\t\t\t\t\tint32 BoneIndex = RefSkeleton.FindBoneIndex(*SkeletonNode->GetDisplayLabel());\n674: \t\t\t\t\t\tif (BoneIndex != INDEX_NONE && RefSkeleton.GetRefBonePose().IsValidIndex(BoneIndex))\n675: \t\t\t\t\t\t{\n676: \t\t\t\t\t\t\tReferenceTransform = RefSkeleton.GetRefBonePose()[BoneIndex];\n677: \t\t\t\t\t\t}\n678: \t\t\t\t\t}\n679: \n680: \t\t\t\t\t//check if BindPose exists and if it does, does it equal to LocalTransform/ReferenceTransform\n681: \t\t\t\t\tFTransform LocalBindPoseTransform;\n682: \t\t\t\t\tFTransform LocalTransform;\n683: \n684: \t\t\t\t\tif (const UInterchangeJointNode* JointNode = Cast<UInterchangeJointNode>(SkeletonNode))\n685: \t\t\t\t\t{\n686: \t\t\t\t\t\tif (JointNode->GetBindPoseLocalTransform(LocalBindPoseTransform)\n687: \t\t\t\t\t\t\t&& JointNode->GetCustomLocalTransform(LocalTransform)\n688: \t\t\t\t\t\t\t&& (!LocalBindPoseTransform.Equals(LocalTransform)\n689: \t\t\t\t\t\t\t\t|| (ReferenceTransform.IsSet() && (!ReferenceTransform.GetValue().Equals(LocalBindPoseTransform))))\n690: \t\t\t\t\t\t\t)\n691: \t\t\t\t\t\t{\n692: \t\t\t\t\t\t\t//If we bake the mesh and the current non animated node is the root joint, get the global transform instead of the local\n693: \t\t\t\t\t\t\tif (bBakeMeshes && JointNode->GetUniqueID().Equals(SkeletonRootUid))\n694: \t\t\t\t\t\t\t{\n695: \t\t\t\t\t\t\t\tif (const UInterchangeSceneNode* RootJointNode = Cast<UInterchangeSceneNode>(NodeContainer->GetNode(SkeletonRootUid)))\n696: \t\t\t\t\t\t\t\t{\n697: \t\t\t\t\t\t\t\t\tRootJointNode->GetCustomGlobalTransform(NodeContainer, GlobalOffsetTransform, LocalTransform);\n698: \t\t\t\t\t\t\t\t}\n699: \t\t\t\t\t\t\t}\n700: \n701: \t\t\t\t\t\t\tFTransform3f AnimKeyTransform = static_cast<FTransform3f>(LocalTransform);\n702: \t\t\t\t\t\t\tconst FName BoneName = FName(*(JointNode->GetDisplayLabel()));\n703: \t\t\t\t\t\t\t//Add only one transform key at time 0 since this node is not animated\n704: \t\t\t\t\t\t\tFRawAnimSequenceTrack RawTrack;\n705: \t\t\t\t\t\t\tRawTrack.ScaleKeys.Add(AnimKeyTransform.GetScale3D());\n706: \t\t\t\t\t\t\tRawTrack.PosKeys.Add(AnimKeyTransform.GetLocation());\n707: \t\t\t\t\t\t\tRawTrack.RotKeys.Add(AnimKeyTransform.GetRotation());\n708: \t\t\t\t\t\t\tController.AddBoneCurve(BoneName, bShouldTransact);\n709: \t\t\t\t\t\t\tController.SetBoneTrackKeys(BoneName, RawTrack.PosKeys, RawTrack.RotKeys, RawTrack.ScaleKeys, bShouldTransact);\n710: \t\t\t\t\t\t}"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Plugins\\Interchange\\Runtime\\Source\\Pipelines\\Private\\InterchangeGenericAnimationPipeline.cpp",
+    "sha256": "5be8b337d64bb43fc9e04864c06453766b846d1ebcf2beb1819b550386c83487",
+    "excerpts": [
+      {
+        "start": 725,
+        "end": 772,
+        "text": "725: \n726: \t\t//Get the sample rate from the options and the data\n727: \t\tif (!bUse30HzToBakeBoneAnimation)\n728: \t\t{\n729: \t\t\tif (CustomBoneAnimationSampleRate > 0)\n730: \t\t\t{\n731: \t\t\t\tSampleRate = static_cast<double>(CustomBoneAnimationSampleRate);\n732: \t\t\t}\n733: \t\t\telse if (SourceNode && SourceNode->GetCustomSourceFrameRateNumerator(Numerator) && SourceNode->GetCustomSourceFrameRateDenominator(Denominator) && Denominator > 0 && Numerator > 0)\n734: \t\t\t{\n735: \t\t\t\tSampleRate = static_cast<double>(Numerator) / static_cast<double>(Denominator);\n736: \t\t\t}\n737: \t\t\telse\n738: \t\t\t{\n739: \t\t\t\tTrackNode.GetCustomAnimationSampleRate(SampleRate);\n740: \t\t\t}\n741: \t\t}\n742: \n743: \t\t//Get the animation start and stop time (range) from the options and the data\n744: \t\t//Some format don't fill the animation range data we fall back on the trackNode\n745: \t\tif (AnimationRange == EInterchangeAnimationRange::Timeline)\n746: \t\t{\n747: \t\t\tbTimeRangeIsValid = TrackNode.GetCustomSourceTimelineAnimationStartTime(StartTime) && TrackNode.GetCustomSourceTimelineAnimationStopTime(StopTime);\n748: \t\t}\n749: \t\telse if (AnimationRange == EInterchangeAnimationRange::SetRange)\n750: \t\t{\n751: \t\t\tStartTime = static_cast<double>(FrameImportRange.Min) / SampleRate;\n752: \t\t\tStopTime = static_cast<double>(FrameImportRange.Max) / SampleRate;\n753: \t\t\tbTimeRangeIsValid = true;\n754: \t\t}\n755: \t\t//No custom time specified, use the track default\n756: \t\tif(!bTimeRangeIsValid)\n757: \t\t{\n758: \t\t\tStartTime = 0.;\n759: \t\t\tStopTime = 0.;\n760: \t\t\tbTimeRangeIsValid = TrackNode.GetCustomAnimationStartTime(StartTime);\n761: \t\t\tbTimeRangeIsValid &= TrackNode.GetCustomAnimationStopTime(StopTime);\n762: \t\t}\n763: \n764: \t\tFFrameRate FrameRate = UE::Interchange::Animation::ConvertSampleRateToFrameRate(SampleRate);\n765: \n766: \t\tconst double SequenceLength = FMath::Max<double>(StopTime - StartTime, MINIMUM_ANIMATION_LENGTH);\n767: \n768: \t\tconst float SubFrame = FrameRate.AsFrameTime(SequenceLength).GetSubFrame();\n769: \n770: \t\tif (!FMath::IsNearlyZero(SubFrame, KINDA_SMALL_NUMBER) && !FMath::IsNearlyEqual(SubFrame, 1.0f, KINDA_SMALL_NUMBER))\n771: \t\t{\n772: \t\t\tif (FrameAlignment != EInterchangeFrameAlignment::None)"
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\tools\\blender-5.2.2\\5.2\\scripts\\addons_core\\io_scene_fbx\\import_fbx.py",
+    "sha256": "262127c8e6af3e748d696d81070366f39e449aa73e6bc1d9463092b5cbf86741",
+    "excerpts": [
+      {
+        "start": 2620,
+        "end": 2640,
+        "text": "2620:     def build_skeleton(self, arm, parent_matrix, settings, parent_bone_size=1):\n2621:         def child_connect(par_bone, child_bone, child_head, connect_ctx):\n2622:             # child_bone or child_head may be None.\n2623:             force_connect_children, connected = connect_ctx\n2624:             if child_bone is not None:\n2625:                 child_bone.parent = par_bone\n2626:                 child_head = child_bone.head\n2627: \n2628:             if similar_values_iter(par_bone.tail, child_head):\n2629:                 if child_bone is not None:\n2630:                     child_bone.use_connect = True\n2631:                 # Disallow any force-connection at this level from now on, since that child was 'really'\n2632:                 # connected, we do not want to move current bone's tail anymore!\n2633:                 connected = None\n2634:             elif force_connect_children and connected is not None:\n2635:                 # We only store position where tail of par_bone should be in the end.\n2636:                 # Actual tail moving and force connection of compatible child bones will happen\n2637:                 # once all have been checked.\n2638:                 if connected is ...:\n2639:                     connected = ([child_head.copy(), 1], [child_bone] if child_bone is not None else [])\n2640:                 else:"
+      },
+      {
+        "start": 625,
+        "end": 645,
+        "text": "625:     # Remove that rest pose matrix from current matrix (also in parent space) by computing the inverted local rest\n626:     # matrix of the bone, if relevant.\n627:     combined_pre_matrix = item.get_bind_matrix().inverted_safe() if item.is_bone else Matrix()\n628:     # item.pre_matrix will contain any correction for a parent's correction matrix or the global matrix\n629:     if item.pre_matrix:\n630:         combined_pre_matrix @= item.pre_matrix\n631: \n632:     # Pre-compute combined post-matrix\n633:     # Compensate for changes in the local matrix during processing\n634:     combined_post_matrix = item.anim_compensation_matrix.copy() if item.anim_compensation_matrix else Matrix()\n635:     # item.post_matrix will contain any correction for lights, camera and bone orientation\n636:     if item.post_matrix:\n637:         combined_post_matrix @= item.post_matrix\n638: \n639:     # Create matrices/euler from the initial transformation values of this item.\n640:     # These variables will be updated in-place as we iterate through each frame.\n641:     lcl_translation_mat = Matrix.Translation(transform_data.loc)\n642:     lcl_rotation_eul = Euler(convert_deg_to_rad_iter(transform_data.rot), transform_data.rot_ord)\n643:     lcl_scaling_mat = Matrix()\n644:     lcl_scaling_mat[0][0], lcl_scaling_mat[1][1], lcl_scaling_mat[2][2] = transform_data.sca\n645: "
+      },
+      {
+        "start": 680,
+        "end": 709,
+        "text": "680:                                                    lcl_translation_mat, lcl_rotation_eul, lcl_scaling_mat,\n681:                                                    combined_pre_matrix, combined_post_matrix)\n682: \n683:     # Iterate through the values for each frame.\n684:     for frame_values in frame_values_it:\n685:         # Set each value into its corresponding lcl matrix/euler.\n686:         for lcl_setter, value in zip(lcl_setters, frame_values):\n687:             lcl_setter(value)\n688: \n689:         # Calculate the updated matrix for this frame.\n690:         mat = calc_mat()\n691: \n692:         # Now we have a virtual matrix of transform from AnimCurves, we can yield keyframe values!\n693:         loc, rot, sca = mat_decompose(mat)\n694:         if rot_mode == 'QUATERNION':\n695:             if quat_dot(rot_quat_prev, rot) < 0.0:\n696:                 rot = -rot\n697:             rot_quat_prev = rot\n698:         elif rot_mode == 'AXIS_ANGLE':\n699:             vec, ang = quat_to_axis_angle(rot)\n700:             rot = ang, vec.x, vec.y, vec.z\n701:         else:  # Euler\n702:             rot = quat_to_euler(rot, rot_mode, rot_eul_prev)\n703:             rot_eul_prev = rot\n704: \n705:         # Yield order matches the order that the location/rotation/scale FCurves are created in.\n706:         yield from loc\n707:         yield from rot\n708:         yield from sca\n709: "
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\tools\\blender-5.2.2\\5.2\\scripts\\addons_core\\io_scene_fbx\\fbx_utils.py",
+    "sha256": "66a15d79d5eaf490176b439f22fb01963efcd46e06702eff224a84135e636fb3",
+    "excerpts": [
+      {
+        "start": 1820,
+        "end": 1832,
+        "text": "1820:     def fbx_object_tx(self, scene_data, rest=False, rot_euler_compat=None):\n1821:         \"\"\"\n1822:         Generate object transform data (always in local space when possible).\n1823:         \"\"\"\n1824:         matrix = self.fbx_object_matrix(scene_data, rest=rest)\n1825:         loc, rot, scale = matrix.decompose()\n1826:         matrix_rot = rot.to_matrix()\n1827:         # Quaternion -> euler, we always use 'XYZ' order, use ref rotation if given.\n1828:         if rot_euler_compat is not None:\n1829:             rot = rot.to_euler('XYZ', rot_euler_compat)\n1830:         else:\n1831:             rot = rot.to_euler('XYZ')\n1832:         return loc, rot, scale, matrix, matrix_rot"
+      }
+    ]
+  }
+]

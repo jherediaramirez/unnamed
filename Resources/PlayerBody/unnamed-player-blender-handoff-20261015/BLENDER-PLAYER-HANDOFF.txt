@@ -1,0 +1,307 @@
+You are working on the Blender character and animation foundation for my game, Unnamed. Use the context below to do the work, not merely repeat the plan.
+
+The game is an Unreal Engine 5.8 C++ Minecraft Java 26.3 survival recreation that goes beyond vanilla in presentation. THIS TASK IS BLENDER-FIRST. Build and validate the character and animation library before touching Unreal.
+
+I am Jesus Heredia, a solo developer on Windows 11. Use PowerShell 7; standalone Python goes through uv. Use Blender's embedded Python for bpy work. Give concise progress updates and show visual evidence I can review remotely.
+
+1. SCOPE AND BOUNDARIES
+
+Use the supplied Steve as a reference and starting mesh. You may make modest geometry changes, rebuild or extend its skeleton, add simple hands and feet, adjust proportions, and create animations. Preserve a recognizable blocky Steve silhouette and pixel-art skin. We are not restricted to the original bones.
+
+Work in a new, versioned folder under C:\dev\output, with a new editable .blend master. Preserve the source GLB and existing Blender work unchanged. Keep scripts, textures, previews, and exports together.
+
+Do not change the Unreal repo, import into Unreal, edit C++, change gameplay values, run Unreal builds, install the character into the game, commit, or push. Reading project files for context is allowed. This phase ends with a Blender-validated character, animations, exports, and a handoff for later Unreal integration.
+
+Start with a short plan, then proceed through the stages below. Make reasonable, reversible choices without repeatedly asking permission. Label unfinished work and untested assumptions honestly.
+
+2. SOURCE MODEL AND VERIFIED FINDINGS
+
+Drive source:
+https://drive.google.com/file/d/1VhF4KGyA4OLhptpvxvyE4kVKOksxt64f/view
+
+Already downloaded locally:
+C:\dev\output\unnamed-player-review-20261015\minecraft_steve_rigged.glb
+
+File size: 661040 bytes
+SHA-256: 88E80A7E1D993092C4143C62EF71505F22B292AECED58A1139368FF3817CA961
+
+Available Blender:
+C:\dev\tools\blender-5.2.2\blender.exe
+
+Previous inspection established:
+- Six skinned meshes: head, torso, two arms, and two legs.
+- One 24-joint skin, including helper/end joints.
+- One embedded 4096 x 4096 JPEG skin texture.
+- No animation clips.
+- Elbow, knee, and torso deformation weights exist.
+- No dedicated deforming wrist/hand or articulated foot setup suitable for the proposed actions.
+- Generic bone names such as Bone_002_1; that bone weights the head.
+- Evaluated standing height is approximately 8.000003 metres at the imported unit scale.
+- Evaluated soles are approximately Z = -0.180509 m; top approximately Z = 7.819493 m.
+- Geometric normalization from 8 m to 1.8 m is approximately 0.225. Rebase the whole rig/mesh assembly to the soles as well.
+- The source metadata credits Bully Magraptor and identifies CC-BY-4.0. Preserve the source metadata/attribution and record modifications.
+
+Recheck these facts in the actual file. Count skinned character meshes separately from imported control-display/helper objects. No final deformation, animation, eye alignment, or Unreal compatibility has been approved yet.
+
+3. GAME CONTRACT TO DESIGN AROUND
+
+The inspected checkout is:
+C:\dev\projects\Unnamed-survival
+Repository: github.com/jherediaramirez/unnamed
+Branch: feature/survival
+Reviewed commit: 3e7c5493fcb19bf53de68d622156d2d8dd73ab12
+
+C:\dev\projects\Unnamed is a different checkout/branch. Do not assume it is the survival project.
+
+World and gameplay values:
+- 1 block = 100 cm.
+- Player uses APawn plus a world-aligned collision BOX, not standard CharacterMovement or a capsule.
+- Collision width/depth: 60 x 60 cm.
+- Standing collision height: 180 cm. Standing eyes: 162 cm.
+- Sneak collision height: 150 cm. Sneak eyes: 127 cm.
+- Swimming/low-pose collision height: 60 cm. Eyes: 40 cm.
+- Step height: 60 cm.
+- Simulation tick: 0.05 seconds / 20 Hz; rendered movement is interpolated.
+- Eye-height smoothing moves halfway toward its target per reference tick.
+- Jump starts at 42 cm per reference tick; gravity changes vertical velocity by 8 cm per tick, with vertical drag 0.98. Read the simulation for exact update order if building a faithful jump preview.
+- Block interaction reach: 450 cm.
+- Existing defaults: WASD movement, C sneak, Left Shift sprint, Space jump, F5 perspective. Do not alter bindings.
+
+Current animation sample speeds:
+                     Cardinal       Diagonal
+Walk                 4.3172 m/s     4.4053 m/s
+Sprint               5.6123 m/s     5.7269 m/s
+Sneak                1.2952 m/s     1.8316 m/s
+
+Preserve these distinctions. Do not normalize gameplay speeds for animation convenience. At 4.3172 m/s, the walk gait must look brisk; a relaxed human walk will not match.
+
+Current engine architecture, for future compatibility:
+- FFoundationBodyAnimator selects clips by name and blends direction/speed/stance in C++; there is no AnimBP.
+- The native animation proxy samples UAnimSequence poses, blends them, and applies mesh-space additive look poses.
+- There are already eight walk, eight sprint, eight sneak directions and nine look poses.
+- Moving body yaw currently tends toward travel; that policy can obscure a true side strafe. Future desired presentation is view-facing locomotion with deliberate stationary foot turns.
+- The old body is 187.5 cm tall with 56 bones. Your new model is a DIFFERENT skeleton, not a drop-in replacement.
+- Old importer validation hardcodes that height, bone count, clip names, and texture settings. Do not run it on this model.
+- Existing mesh faces +Y and receives body yaw minus 90 degrees. Document the new export's axis convention and any future offset needed.
+- Locomotion clocks advance BEFORE the pose is built. Preserve that principle in previews and the future handoff.
+- Body/camera transforms must use the same rendered time as animation. Do not evaluate today's body transform with yesterday's pose.
+- Gameplay targets and actions belong to FFoundationAuthority; animation and IK must never determine mining success, damage, drops, placement, consumption, collision, or movement.
+- The recommended later architecture is C++ gameplay plus a thin AnimBP for blending, aim layers, and IK. No Unreal migration is part of this task.
+
+Useful read-only references under the survival checkout:
+Source/Unnamed/Foundation/FoundationProfile.h
+Source/Unnamed/Foundation/FoundationSimulation.h/.cpp
+Source/Unnamed/Foundation/FoundationBody.h/.cpp
+Source/Unnamed/Foundation/FoundationBodyAnimInstance.h/.cpp
+Source/Unnamed/Foundation/FoundationPawn.h/.cpp
+Source/Unnamed/Foundation/FoundationController.h/.cpp
+Source/Unnamed/Foundation/FoundationInteractionView.h/.cpp
+Source/Unnamed/Foundation/FoundationBreakEffects.h
+Source/Unnamed/Foundation/FoundationBodyProbe.cpp
+Source/Unnamed/Foundation/FoundationViewsProbe.cpp
+Scripts/Editor/ImportBetterSteve.py
+Docs/Records/2026-10-13-Player-Body.md
+Docs/Records/2026-10-12-Feel-B.md
+Docs/Records/2026-10-12-Swim-Handoff.md
+Docs/Records/2026-10-15-Feel-Handoff-Step13.md
+CLAUDE.md
+Docs/Architecture.md
+
+Older records can lag code. Gameplay already has a low/swim pose, but the current body animator does not receive the necessary state. Walking camera bob was pending in the reviewed snapshot; avoid designing double bob from camera plus head movement.
+
+4. CHARACTER AND RIG DESIGN
+
+Keep the recognizable head, clothing, colors, chunky limbs, and square silhouette. Improve articulation without turning Steve into a realistic human.
+
+Hands:
+- Add a modest blocky palm with a genuine wrist pivot.
+- Default to a simple opposing thumb and a grouped finger block with enough articulation to curl around a pickaxe handle.
+- One or two thumb/finger segments are sufficient initially. Individual five-finger animation is optional, not a requirement.
+- Test relaxed, open, one-handed grip, and two-handed grip.
+- The tool must not float through the palm or require impossible wrist rotation.
+
+Feet:
+- Add subtle shoe/foot geometry with an ankle and forefoot/toe hinge.
+- Keep the extension modest; avoid oversized cartoon shoes.
+- Support flat planting, heel lift, toe-off, and a stable crouch.
+- Add sole, heel, and forefoot contact guides.
+
+Suggested deformation hierarchy, adapting as needed:
+root at floor
+  pelvis
+    spine_01
+      spine_02/chest
+        neck_01 -> head
+        clavicle_l -> upperarm_l -> lowerarm_l -> hand_l
+        clavicle_r -> upperarm_r -> lowerarm_r -> hand_r
+    thigh_l -> calf_l -> foot_l -> ball_l
+    thigh_r -> calf_r -> foot_r -> ball_r
+
+Parent thumb and grouped-finger chains to each hand. Use consistent _l/_r naming. Ball joints should correspond to actual forefoot pivots. Add twist bones only when deformation tests justify them.
+
+Build a convenient Blender control rig separately from the export/deformation skeleton:
+- Arm and leg IK/FK, elbow/knee poles, foot roll, hand curl, spine/head controls.
+- Grip locators for right and left hands and a pickaxe.
+- Eye-height and contact guides.
+- Reliable baking to the deformation skeleton.
+- No accidental export of control shapes, scene empties, lights, cameras, or duplicate roots.
+
+Retain the head as separable geometry sharing the skeleton. Plan a neck closure for head-hidden first-person views. Keep full-body/head geometry intact for third person. Reuse/remap the skin carefully and texture added surfaces consistently. Preserve the original embedded texture separately.
+
+5. SIZE, UNITS, AND EXPORT DISCIPLINE
+
+Target physical standing height: 1.8 m, soles at floor zero. Check a 1 m cube and standing/sneak/low-pose eye guides.
+
+The 0.225 factor is a geometric normalization ratio, NOT a proposed Unreal import scale. A centimetre authoring scene has different numerical coordinates from a metre scene. Choose one documented convention and verify actual dimensions.
+
+Normalize before authoring the animation library. Apply transforms in a rig-safe way to the complete assembly. Avoid applying arbitrary scale independently to a mesh and its armature.
+
+The known pipeline trap is FBX that looks correct but imports with bone scale 100. Aim for:
+- Clean object transforms and intended unit scale.
+- Root/deformation bone scales of 1, apart from explicitly justified exceptions.
+- One deliberate axis conversion.
+- UE-ready centimetre dimensions with planned import scale 1.
+- Consistent rest pose, hierarchy, names, and orientation across every clip.
+
+Uniform height scaling does not guarantee eye alignment. Check the painted face and eye guide at 162 cm. Adjust proportions modestly where needed. Sneak and low-pose body shapes should plausibly fit their height envelopes without unnatural scaling.
+
+Locomotion and jump clips are IN PLACE. Movement comes from the game's simulation. Use a separate, non-exported travelling preview parent to test world motion.
+
+For turn-in-place, prefer root-neutral poses plus documented body-yaw progress metadata for a future presentation controller. Apply that visual turn once in previews. Do not silently combine root yaw and a second actor/body yaw.
+
+Bake a clean export copy. Export a skeletal FBX and animation FBXs or an explicitly indexed multi-action FBX, plus a manifest. Re-import into a fresh Blender scene to check the round trip. Blender round-trip success is not proof of Unreal import/runtime acceptance; label that distinction.
+
+6. INITIAL ANIMATION LIBRARY
+
+Author at 60 fps. Use these as initial durations, retaining exact seconds in the manifest. Adjust only if contact/style tests justify it, and report the changes.
+
+Clip family                         Count      Duration / frames
+Idle                                1          2.0 s / 120
+Walk F FR R BR B BL L FL             8          0.60 s / 36
+Sprint F FR R BR B BL L FL           8          0.533333 s / 32
+Sneak idle                          1          2.0 s / 120
+Sneak F FR R BR B BL L FL            8          1.066667 s / 64
+Stand-to-sneak / sneak-to-stand      2          0.266667 s / 16
+Jump start                          1          0.30 s / 18
+Rise                                1          0.30 s / 18, holdable
+Fall                                1          0.80 s / 48, looping
+Soft moving landing                 1          0.20 s / 12
+Firm landing                        1          0.40 s / 24
+Standing turns L/R 45 degrees       2          0.30 s / 18
+Standing turns L/R 90 degrees       2          0.50 s / 30
+Sneaking turns L/R 45 degrees       2          0.30 s / 18
+Sneaking turns L/R 90 degrees       2          0.50 s / 30
+Look/aim grid                       9 poses    static samples
+Pickaxe hold                        1 pose     relaxed, usable grip
+Pickaxe strikes A/B/C                3          0.30 s / 18 each
+
+Also create a minimal explicit low-pose/swim-compatible preview pose and a simple flight/death placeholder if needed for coverage. Label placeholders clearly; do not claim a polished swimming/death library.
+
+Use consistent action names and publish a map to the existing BS_* names where applicable. New clips must be distinguishable from old runtime expectations.
+
+Loop rules:
+- Phase 0 = left-foot contact; phase 0.5 = right-foot contact.
+- Share contact phase across all eight directions of a gait.
+- Keep walk/sprint compatible for phase blending.
+- Sneak directions share their own phase.
+- Keys at frame 0 and frame N may match to close a duration of N/60 seconds; do not add an extra endpoint dwell.
+- Preserve contacts when switching direction and gait.
+- During a plant, local foot motion should cancel preview travel at the authored speed.
+- Use weight shifts, arcs, asymmetric detail, and clean silhouettes rather than uniform sine-wave movement alone.
+
+Strafe layout:
+FL   F   FR
+L   idle  R
+BL   B   BR
+
+Author actual sideways/backward steps. Do not rotate a forward walk and call it a strafe. Include diagonal blends and the +/-180-degree backward seam. Eight sprint clips do not imply changing the game's sprint eligibility.
+
+Air preview:
+Ground -> JumpStart -> Rise -> Fall -> Land -> Ground.
+An edge fall skips JumpStart. Use vertical movement to distinguish rise/fall. Landing intensity depends on downward speed; moving landings recover promptly into locomotion. Do not introduce animation-driven input delay. A new jump can interrupt a landing.
+
+Stationary turns:
+Use a preview starting point of approximately 50 degrees view/body separation to trigger a 45/90-degree step, settling within roughly 15 degrees. These are tuning proposals. Test both directions and sneaking, with planted feet and movement interruption.
+
+7. AIM AND TRUE FIRST-PERSON PREVIEWS
+
+Build nine look samples using yaw -90, 0, +90 and pitch -90, 0, +90. Define positive pitch consistently as looking up in the manifest.
+
+All samples use one documented neutral reference pose for future mesh-space additive conversion. Spread the motion through torso, shoulders, neck, and head. Do not twist the neck alone through extreme angles. Validate crouch combinations separately. If another stance-specific grid is needed, explain why.
+
+Make a stable Blender first-person camera at the gameplay eye guide, not parented to animated head motion:
+- Standing 162 cm; sneak 127 cm; low pose 40 cm.
+- Show the body's own arms, torso, and legs when looking down.
+- Hide the head for first-person preview renders only; restore it for full-body renders.
+- Avoid neck holes, camera/shoulder intersections, or fake disconnected floating arms.
+- Inspect at 70 and 110 degrees VERTICAL FOV, labelled correctly.
+- Keep world movement, camera interpolation, and pose sampling at the same timestamp.
+
+The visible head can animate without driving the camera. Design comfortable body motion around the stable view. Body look offsets and weapon grip/target correction are related but distinct systems.
+
+8. PICKAXE VARIATIONS
+
+After the basic rig and locomotion pass, create a simple correctly scaled blocky pickaxe and a stone target for testing.
+
+Build:
+A: diagonal shoulder-led chop with clear weight.
+B: opposite diagonal, using the recovery to unwind into the next stroke.
+C: compact chip with a shorter arc and sharper rebound.
+
+Start with the game's current timing:
+- Cycle: 0.30 seconds = 18 frames at 60 fps.
+- Contact: 0.15 seconds = frame 9.
+- Existing gameplay swing: six 20 Hz steps, contact at step three.
+
+Preserve timing while varying the arc, shoulders, torso, grip and follow-through. Design compatible recovery/start poses so A -> B -> A -> C feels connected. Do not simply randomize the same pose.
+
+Show strikes over idle and moving/sneaking lower-body motion. Plan for an upper-body action layer; legs must remain usable. Include an optional two-handed support grip if it improves the action.
+
+The game allows mining at 4.5 m. Do not stretch the arms to reach that distance. Demonstrate literal contact at a reachable nearby stone, and document a gesture-only solution for distant targets. Later gameplay effects remain at the authoritative target.
+
+Create a side-by-side comparison of A -> A -> A -> A versus A -> B -> A -> C at identical timing and camera settings, in third person and first person. Supply a labelled six-pose strip per strike, including anticipation, approach, contact, rebound, and recovery, plus a short looping video/GIF if available.
+
+9. WORK ORDER AND VALIDATION
+
+Stage 1: Audit source; create an isolated Blender master and reference/scale scene.
+Stage 2: Refine hands/feet and skeleton; fix weights; add controls.
+Stage 3: Validate the rig before producing many clips.
+Stage 4: Author locomotion, sneak, air and turns; test transitions.
+Stage 5: Add aim poses and first-person previews.
+Stage 6: Add pickaxe variations and comparison renders.
+Stage 7: Bake/export, round-trip inspect, and prepare the handoff.
+
+Rig tests must include elbow/knee bends, wrist/ankle rotation, gripping, toe-off, torso twist, extreme look, crouch and low pose. Check joint collapse, candy-wrapper deformation, detached pieces, UV stretching and self-intersections.
+
+Animation validation must include:
+- Repeated loops and closing velocity continuity.
+- All directions at the listed speeds, including diagonal sneak.
+- Preview travel on a floor with a 1 m grid.
+- Measured planted-foot drift, aiming below 1 cm on flat-ground test segments.
+- Inspect exported/baked motion without hidden control constraints masking defects.
+- Gait/direction transitions, quick reversals, stops, turn interruption, jump/land interruption.
+- Fixed 30/60/120 fps sampling and varying frame intervals using one common time source.
+- First-person look-down, aim extremes and pickaxe contact.
+- No unintended locomotion root travel or scale animation.
+- Consistent skeleton and rest pose across exports.
+
+Do not make the clips look correct only by moving the camera or slowing the preview below game speed. If a cadence is unsuitable, improve it and report the new duration.
+
+10. DELIVERABLES AND COMPLETION REPORT
+
+Deliver:
+- Versioned editable .blend master with organized collections and actions.
+- Preserved source GLB and texture/provenance record.
+- Revised textures, if needed, without overwriting originals.
+- Reproducible scripts where practical.
+- Clean export skeleton/mesh and baked animation FBXs.
+- Manifest containing units, axes, dimensions, skeleton hierarchy, bone mappings, clip names, durations, sample speeds, loops, contact markers, additive reference, turn-yaw metadata, grip transforms and known limitations.
+- Rig/animation validation results, with measured values and any failures.
+- Clear front/side/back and deformation renders.
+- First-person previews and the repeated-versus-varied pickaxe comparison.
+- A concise future Unreal integration handoff, with no Unreal changes made.
+
+Report separately what was built, what was visually inspected, what was numerically checked, and what remains for Unreal/runtime or human approval. Keep claims tied to the actual evidence.
+
+Begin with the local GLB and the rig/scale audit. The objective is a character and animation set that we have made into the version we want inside Blender before moving to Unreal.
+

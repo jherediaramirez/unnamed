@@ -1,0 +1,224 @@
+Unnamed player integration: evidence and handoff context
+Inspected 2026-10-15, approximately 19:47 America/New_York.
+This file records a snapshot, not a guarantee that the repositories remain here.
+Only planning files were written for this handoff. No Unreal imports or changes.
+
+1. SAVED WORK AND WHAT IS ACCEPTED
+
+Original complete package:
+C:\dev\output\unnamed-player-blender-v001-20261015
+  README.md, HANDOFF.md, REVIEW_PROMPT_ANIMATION.md
+  blend\UP_Player_master_v001.blend
+  blend\UP_Player_review_v001.blend
+  exports\SK_UnnamedPlayer.fbx
+  exports\anims\A_UP_*.fbx (66 files verified)
+  exports\UP_AllClips.fbx
+  exports\UP_manifest_v001.json (66 entries verified)
+  scripts\s07_export.py, scripts\s08_roundtrip.py
+  scripts\up_config.py and authoring/validation scripts
+  previews\gallery.html, validation\, source\, textures\
+
+Focused accepted arm candidate:
+C:\dev\output\unnamed-player-motion-polish-v002-20261015\blend\UP_Player_arm_polish_v002.blend
+  Full original scene/library, replacing only UP_Pickaxe_StrikeA/B/C and
+  RIG_UP_Pickaxe_StrikeA/B/C. It is the proposed complete integration source;
+  acceptance applies to the revised arm anticipation/approach, not every other
+  inherited motion, first-person comfort, or engine behavior.
+
+  validation\focused_arm_preservation.json confirms zero lower-body channel
+  delta in the three baked strikes and all other actions unchanged from v001.
+  validation\s06_pickaxe.json and arm_polish_240hz.json contain strike evidence.
+  scripts\up_pickaxe.py contains the revised arm keys.
+  scripts\save_arm_candidate.py describes how the focused file was assembled.
+
+  previews\A_anticipation_approach_before_after.png
+  previews\B_anticipation_approach_before_after.png
+  previews\C_anticipation_approach_before_after.png
+  previews\arm_silhouettes_front.png
+  previews\arm_ABAC_before_after_60fps.mp4
+  previews\arm_ABAC_before_after_one_third_speed.mp4
+  previews\arm_ABAC_60fps_single.mp4
+
+  User feedback after these changes: "That is much better."
+  Working agreement: keep this anticipation/approach as the baseline.
+
+Broader experiment, not accepted wholesale:
+C:\dev\output\unnamed-player-motion-polish-v002-20261015\blend\UP_Player_master_v002.blend
+  Contains other gait/look/air/turn experiments as well as final strikes.
+  The polish up_config.MASTER points here. Its general stage scripts and
+  non-strike validation can describe this experimental set, not the focused one.
+  Do not rerun them over the focused candidate or copy all their metadata.
+
+No exports directory exists in the polish folder at inspection time. The v001
+FBXs therefore are not exports of the accepted arm revision. The original
+exporter opens C.MASTER, clears exports\anims, and writes its configured folder.
+Use a new explicit source/destination path in any approved export work.
+
+SHA-256 verified during this handoff:
+  Original UP_Player_master_v001.blend
+  56A59E5F04A86C794857A2A4A5C16A6164A3396A448F8F79F43051CAD5DBE2F9
+  Focused UP_Player_arm_polish_v002.blend
+  26E585D5676D5A8A18A6E6A2FAE5D682DF3470FA7B83A01972CFAE138D4D22C7
+  Experimental UP_Player_master_v002.blend
+  F2DBF90386000BEEA958FC8BFD55BEF1978BE98B8CDA642E9845E492E71D0241
+
+2. EARLIER CONTEXT / READING ORDER
+
+The original asset HANDOFF is the saved Blender build/integration context from
+the previous work with Claude. Read it, but supersede its strike defect report
+with the focused revision. Its first-person offset and integration steps are
+proposals, not proven runtime behavior. The user chose the 40 cm head and
+vanilla box hands after earlier hand alternatives; do not reopen those choices
+because an older prompt mentions fingers.
+
+Original authoring brief:
+C:\dev\output\unnamed-player-blender-handoff-20261015\BLENDER-PLAYER-HANDOFF.txt
+Earlier motion study, historical reference only:
+C:\dev\output\unnamed-pickaxe-study-20261015
+  Uses the older body. Its names/poses are not the current A/B/C contract.
+
+Relevant Codex threads (read, do not message):
+  Create Pickaxe Hit Variations
+  01a140ca-da5a-7cd1-b7d2-f4ab563becf7
+  Contains original player-system audit and authoring brief.
+  Polish Unnamed Player Animation
+  01a141aa-a4f4-7572-83f7-742e7cf761a0
+  Contains the focused arm revision and user acceptance.
+
+Project-owned Claude/current-system context:
+  CLAUDE.md
+  Docs\Architecture.md
+  Docs\NamingConventions.md
+  Docs\Foundation\Architecture.md (player body and third-person views)
+  Docs\Records\2026-10-13-Player-Body.md
+  Docs\Records\README.md and current interaction/use/feel/equipment handoffs.
+No separate private Claude conversation was retrieved for this handoff; rely on
+the saved documents and verify their claims against current source.
+
+3. CURRENT CHECKOUT / ENGINE SNAPSHOT
+
+Read-only inspection target:
+C:\dev\projects\Unnamed-survival
+  Branch feature/survival
+  HEAD db4e78cdfadbe97cd1eb22e87c99ba9e53a43bdd
+  git status --short: clean at inspection.
+
+Other registered worktrees:
+C:\dev\projects\Unnamed
+  Branch feature/voxel-world, HEAD 9822d24b8bf61b55a77c8294938674c3bef98afe
+  Clean at inspection; do not assume it contains the latest survival integration.
+C:\dev\projects\Unnamed-body
+  Branch feature/player-body, same 9822d24b HEAD at inspection.
+  Dirty Config/DefaultEditor.ini and untracked
+  Art/Characters/BetterSteve/SK_BetterSteve.fbm/; preserve them.
+Several other active feature worktrees exist. Recheck git worktree list and
+status before choosing any implementation location; coordinate with live work.
+
+Installed engine verified from Engine\Build\Build.version:
+C:\Program Files\Epic Games\UE_5.8
+  UE 5.8.3, changelist 58210709.
+Blender used for the library:
+C:\dev\tools\blender-5.2.2\blender.exe
+
+4. VERIFIED PLAYER-SYSTEM POINTERS
+
+All paths below are relative to Unnamed-survival. Line numbers are snapshot aids.
+
+Source\Unnamed\Foundation\FoundationPawn.cpp
+  CreateBody, lines 137-170: loads SK_BetterSteve through project settings;
+  one USkeletalMeshComponent; UFoundationBodyAnimInstance; no collision;
+  absolute rendered transforms; pawn tick prerequisite. Missing clips reject
+  the body. Initially hidden and OnlyTickPoseWhenRendered.
+  UpdateBody, 196-228: velocity from simulation displacement; body/view yaw,
+  view pitch, crouch, grounded, flying, jump count. Animator advances, mesh sits
+  at interpolated feet with BodyYaw-90. Shows only when Perspective != 0 and
+  camera is beyond the 40 cm threshold; refreshes bones while shown.
+  Tick, 637-657 and 704-758: 20 Hz simulation; interpolated render eye; F5 rear/
+  front camera offsets +/-400 cm with custom voxel collision; optional shoulder
+  view; gameplay camera is independent of the skeleton. Vertical option FOV is
+  converted to horizontal; the held-item FOV can be separately fixed.
+
+Source\Unnamed\Foundation\FoundationBody.h/.cpp
+  FoundationBodyClip: 40 runtime-required slots, BS_* name mappings.
+  FFoundationBodyTurn: yaw modes View/Vanilla/Travel; default console mode 1.
+  FFoundationBodyAnimator: shared standing phase for walk/sprint, separate
+  crouch phase; transitions and Start/Loop/Land air model; mesh-space look.
+  Current crouch cadence defaults to 32/30 s, while UP crouch is 54/60 s.
+  Frame input has no low/swim pose, action/equipment, or full new-air/turn data.
+  Determine required extensions rather than just renaming loaded clips.
+
+Source\Unnamed\Foundation\FoundationBodyAnimInstance.cpp
+  FFoundationBodyAnimProxy samples/blends Base, then accumulates mesh-space
+  rotation additive Look. This is a native proxy; no existing AnimBP to edit.
+  NativeInitializeAnimation loads the clip names under PlayerBodyRoot.
+  The earlier body handoff documents the one-frame foot-slide fix: advance
+  animation clocks before constructing the pose and evaluate after pawn update.
+
+Source\Unnamed\Foundation\FoundationInteractionView.cpp
+  UpdateHeldItem, approximately 1011-1221: camera-attached HandPivot, owner
+  first-person primitive items, scale treatment, offhand pivot, swing/eat
+  transforms. No body-hand socket ownership for this current presentation.
+  FoundationBreakEffects may provide the six-tick swing clock. Trace current
+  authority/use data before designing strike and equipment layers.
+
+Source\Unnamed\Foundation\FoundationProfile.h
+  20 Hz, width 60 cm, standing/crouch/low heights 180/150/60,
+  eyes 162/127/40; jump 42 cm/tick; block reach 450, entity reach 300 cm.
+Source\Unnamed\UnnamedProjectSettings.h
+  PlayerBodyRoot = /Game/Characters/BetterSteve; project-owned asset path policy.
+Scripts\Editor\ImportBetterSteve.py
+  Old 187.5 cm, 56-bone mesh contract, hash tag, BS_* actions/additive settings.
+  Do not use unchanged for UP.
+
+Art\Characters\BetterSteve and Content\Characters\BetterSteve
+  Existing imported body and old action assets remain available as rollback.
+Source\Unnamed\Tests\FoundationBodyTests.cpp
+Source\Unnamed\Foundation\FoundationBodyProbe.cpp
+Scripts\TestFoundationRuntime.ps1 -Editor -Suite body -FrameRates 60 -FullCostRendering
+  Existing test/probe entry points, not run for this handoff. The old suite's
+  expectation that first person hides the body must be revised intentionally.
+
+5. COVERAGE / KNOWN LIMITS TO CARRY FORWARD
+
+The v001 manifest has 66 clips: idle 2, locomotion 24, stance transitions 2,
+air/land 5, stationary turns 8, stand/crouch look poses 18, pickaxe hold/strikes
+4, placeholders 3. The placeholders are UP_Low_Pose, UP_Flight_Placeholder and
+UP_Death_Placeholder. Swimming strokes and a complete general use/equipment
+library were not authored in UP. Inspect current gameplay for the real gap list.
+
+Focused strike results from saved validation (isolated standing strikes):
+  18 frames, frame 9 contact, shared frame 0=18 link; lower body retained.
+  A/B/C tip speeds into contact about 24.10 / 21.06 / 15.19 m/s.
+  Quarter-frame (240 Hz) samples report no pick/head, pick/arm or pick/torso
+  penetration. Shoulder-joint overlap still reaches about 3.6 cm. These are
+  sampled geometric checks, not proof of continuous or combined-pose clearance.
+
+Unclosed findings from the motion review:
+  - Look-grid corners can put the head roughly 9.5 cm into the shoulders.
+    Hiding the local head does not resolve third-person deformation.
+  - R-to-BR crosses a forward/backward gait-style boundary; inspect direction
+    blends, not only individual planted clips.
+  - World-space strike contact drops when the upper-body pose is placed over
+    a lower locomotion/crouch pelvis. Recorded contact heights for a nominal
+    1.25 m target were about 1.04-1.09 m walk, .98-1.02 sprint, .79-.85 crouch.
+    Reproduce this composition before selecting an aim/contact correction.
+  - Walk is a bent-knee jog at the fixed speed/cadence on these short legs.
+  - Large proposed first-person body offsets are unapproved and can conflict
+    with world foot planting, shadows, view switches and tool contact.
+  - Original air-reel NLA hold/camera framing can obscure actual fall/land
+    behavior; inspect actions directly. Preview defects are not runtime proof.
+  - Use the corrected 60 fps arm MP4 for timing review; earlier comparison GIF
+    timing was not an exact real-time representation.
+
+The Blender round-trip report applies to v001 exports. No UP Unreal import,
+compressed-animation acceptance, gameplay integration, networking or first-
+person comfort acceptance was performed in this animation-polish work. Check
+current engine assets afresh before making a broader claim.
+
+6. EXECUTION BOUNDARY
+
+This handoff is for investigation and a concrete plan first. It does not change
+the approved arms, promote the experimental master, or authorize unrelated
+gameplay refactors. Later implementation should use an explicit approved scope,
+preserve dirty work and old assets, and separate imported/static/test evidence
+from demonstrated runtime and human visual acceptance.

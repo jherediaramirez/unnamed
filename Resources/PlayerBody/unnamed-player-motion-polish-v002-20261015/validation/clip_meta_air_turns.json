@@ -1,0 +1,1067 @@
+{
+ "air": {
+  "jump_ticks_cm": [
+   {
+    "tick": 0,
+    "feet_cm": 0.0,
+    "v_cm_per_tick": 42.0
+   },
+   {
+    "tick": 1,
+    "feet_cm": 42.0,
+    "v_cm_per_tick": 33.32
+   },
+   {
+    "tick": 2,
+    "feet_cm": 75.32,
+    "v_cm_per_tick": 24.814
+   },
+   {
+    "tick": 3,
+    "feet_cm": 100.134,
+    "v_cm_per_tick": 16.477
+   },
+   {
+    "tick": 4,
+    "feet_cm": 116.611,
+    "v_cm_per_tick": 8.308
+   },
+   {
+    "tick": 5,
+    "feet_cm": 124.919,
+    "v_cm_per_tick": 0.302
+   },
+   {
+    "tick": 6,
+    "feet_cm": 125.22,
+    "v_cm_per_tick": -7.544
+   },
+   {
+    "tick": 7,
+    "feet_cm": 117.676,
+    "v_cm_per_tick": -15.234
+   },
+   {
+    "tick": 8,
+    "feet_cm": 102.442,
+    "v_cm_per_tick": -22.769
+   },
+   {
+    "tick": 9,
+    "feet_cm": 79.674,
+    "v_cm_per_tick": -30.153
+   },
+   {
+    "tick": 10,
+    "feet_cm": 49.52,
+    "v_cm_per_tick": -37.39
+   },
+   {
+    "tick": 11,
+    "feet_cm": 12.13,
+    "v_cm_per_tick": -44.483
+   },
+   {
+    "tick": 12,
+    "feet_cm": 0.0,
+    "v_cm_per_tick": -51.433
+   }
+  ],
+  "apex_cm": 125.22,
+  "flat_airtime_ticks": 12,
+  "sequence": "Ground -> Jump_Start (on the jump tick; no anticipation delay) -> Jump_Rise (hold while vz > 0) -> Jump_Fall (loop while vz <= 0) -> Land_Soft / Land_Firm -> Ground. Edge falls skip Jump_Start.",
+  "landing_proposal": {
+   "soft_if_impact_m_s_below": 10.0,
+   "firm_weight": "clamp((v_impact - 8) / 4, 0, 1)",
+   "flat_jump_impact_m_s": 8.9,
+   "note": "a jump on flat ground lands at ~8.9 m/s (game gravity 32 m/s^2), so soft is the everyday landing; a 2-block drop lands at ~11 m/s -> firm. Tuning proposal only."
+  },
+  "rise_hold": "Jump_Rise frames 12..18 are static: hold the last frame while still rising (jump boost, ledges).",
+  "interrupt": "a new jump may start from any landing frame; landings never delay input (game-owned)."
+ },
+ "turns": {
+  "Turn_L45": {
+   "stance": "Stand",
+   "direction": "L",
+   "degrees": 45,
+   "frames": 18,
+   "seconds": 0.3,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": 45,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00158
+    },
+    {
+     "frame": 2,
+     "progress": 0.01153
+    },
+    {
+     "frame": 3,
+     "progress": 0.03549
+    },
+    {
+     "frame": 4,
+     "progress": 0.07641
+    },
+    {
+     "frame": 5,
+     "progress": 0.13495
+    },
+    {
+     "frame": 6,
+     "progress": 0.20988
+    },
+    {
+     "frame": 7,
+     "progress": 0.29842
+    },
+    {
+     "frame": 8,
+     "progress": 0.39669
+    },
+    {
+     "frame": 9,
+     "progress": 0.5
+    },
+    {
+     "frame": 10,
+     "progress": 0.60331
+    },
+    {
+     "frame": 11,
+     "progress": 0.70158
+    },
+    {
+     "frame": 12,
+     "progress": 0.79012
+    },
+    {
+     "frame": 13,
+     "progress": 0.86505
+    },
+    {
+     "frame": 14,
+     "progress": 0.92359
+    },
+    {
+     "frame": 15,
+     "progress": 0.96451
+    },
+    {
+     "frame": 16,
+     "progress": 0.98847
+    },
+    {
+     "frame": 17,
+     "progress": 0.99842
+    },
+    {
+     "frame": 18,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 2.16,
+     "plant_frame": 8.64
+    },
+    "r": {
+     "lift_frame": 9.36,
+     "plant_frame": 16.56
+    }
+   },
+   "lead_foot": "l"
+  },
+  "Turn_L90": {
+   "stance": "Stand",
+   "direction": "L",
+   "degrees": 90,
+   "frames": 30,
+   "seconds": 0.5,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": 90,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00035
+    },
+    {
+     "frame": 2,
+     "progress": 0.00267
+    },
+    {
+     "frame": 3,
+     "progress": 0.00856
+    },
+    {
+     "frame": 4,
+     "progress": 0.01922
+    },
+    {
+     "frame": 5,
+     "progress": 0.03549
+    },
+    {
+     "frame": 6,
+     "progress": 0.05792
+    },
+    {
+     "frame": 7,
+     "progress": 0.08672
+    },
+    {
+     "frame": 8,
+     "progress": 0.12187
+    },
+    {
+     "frame": 9,
+     "progress": 0.16308
+    },
+    {
+     "frame": 10,
+     "progress": 0.20988
+    },
+    {
+     "frame": 11,
+     "progress": 0.2616
+    },
+    {
+     "frame": 12,
+     "progress": 0.31744
+    },
+    {
+     "frame": 13,
+     "progress": 0.37647
+    },
+    {
+     "frame": 14,
+     "progress": 0.43768
+    },
+    {
+     "frame": 15,
+     "progress": 0.5
+    },
+    {
+     "frame": 16,
+     "progress": 0.56232
+    },
+    {
+     "frame": 17,
+     "progress": 0.62353
+    },
+    {
+     "frame": 18,
+     "progress": 0.68256
+    },
+    {
+     "frame": 19,
+     "progress": 0.7384
+    },
+    {
+     "frame": 20,
+     "progress": 0.79012
+    },
+    {
+     "frame": 21,
+     "progress": 0.83692
+    },
+    {
+     "frame": 22,
+     "progress": 0.87813
+    },
+    {
+     "frame": 23,
+     "progress": 0.91328
+    },
+    {
+     "frame": 24,
+     "progress": 0.94208
+    },
+    {
+     "frame": 25,
+     "progress": 0.96451
+    },
+    {
+     "frame": 26,
+     "progress": 0.98078
+    },
+    {
+     "frame": 27,
+     "progress": 0.99144
+    },
+    {
+     "frame": 28,
+     "progress": 0.99733
+    },
+    {
+     "frame": 29,
+     "progress": 0.99965
+    },
+    {
+     "frame": 30,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 2.4,
+     "plant_frame": 13.8
+    },
+    "r": {
+     "lift_frame": 15.0,
+     "plant_frame": 27.9
+    }
+   },
+   "lead_foot": "l"
+  },
+  "Turn_R45": {
+   "stance": "Stand",
+   "direction": "R",
+   "degrees": 45,
+   "frames": 18,
+   "seconds": 0.3,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": -45,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00158
+    },
+    {
+     "frame": 2,
+     "progress": 0.01153
+    },
+    {
+     "frame": 3,
+     "progress": 0.03549
+    },
+    {
+     "frame": 4,
+     "progress": 0.07641
+    },
+    {
+     "frame": 5,
+     "progress": 0.13495
+    },
+    {
+     "frame": 6,
+     "progress": 0.20988
+    },
+    {
+     "frame": 7,
+     "progress": 0.29842
+    },
+    {
+     "frame": 8,
+     "progress": 0.39669
+    },
+    {
+     "frame": 9,
+     "progress": 0.5
+    },
+    {
+     "frame": 10,
+     "progress": 0.60331
+    },
+    {
+     "frame": 11,
+     "progress": 0.70158
+    },
+    {
+     "frame": 12,
+     "progress": 0.79012
+    },
+    {
+     "frame": 13,
+     "progress": 0.86505
+    },
+    {
+     "frame": 14,
+     "progress": 0.92359
+    },
+    {
+     "frame": 15,
+     "progress": 0.96451
+    },
+    {
+     "frame": 16,
+     "progress": 0.98847
+    },
+    {
+     "frame": 17,
+     "progress": 0.99842
+    },
+    {
+     "frame": 18,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 9.36,
+     "plant_frame": 16.56
+    },
+    "r": {
+     "lift_frame": 2.16,
+     "plant_frame": 8.64
+    }
+   },
+   "lead_foot": "r"
+  },
+  "Turn_R90": {
+   "stance": "Stand",
+   "direction": "R",
+   "degrees": 90,
+   "frames": 30,
+   "seconds": 0.5,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": -90,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00035
+    },
+    {
+     "frame": 2,
+     "progress": 0.00267
+    },
+    {
+     "frame": 3,
+     "progress": 0.00856
+    },
+    {
+     "frame": 4,
+     "progress": 0.01922
+    },
+    {
+     "frame": 5,
+     "progress": 0.03549
+    },
+    {
+     "frame": 6,
+     "progress": 0.05792
+    },
+    {
+     "frame": 7,
+     "progress": 0.08672
+    },
+    {
+     "frame": 8,
+     "progress": 0.12187
+    },
+    {
+     "frame": 9,
+     "progress": 0.16308
+    },
+    {
+     "frame": 10,
+     "progress": 0.20988
+    },
+    {
+     "frame": 11,
+     "progress": 0.2616
+    },
+    {
+     "frame": 12,
+     "progress": 0.31744
+    },
+    {
+     "frame": 13,
+     "progress": 0.37647
+    },
+    {
+     "frame": 14,
+     "progress": 0.43768
+    },
+    {
+     "frame": 15,
+     "progress": 0.5
+    },
+    {
+     "frame": 16,
+     "progress": 0.56232
+    },
+    {
+     "frame": 17,
+     "progress": 0.62353
+    },
+    {
+     "frame": 18,
+     "progress": 0.68256
+    },
+    {
+     "frame": 19,
+     "progress": 0.7384
+    },
+    {
+     "frame": 20,
+     "progress": 0.79012
+    },
+    {
+     "frame": 21,
+     "progress": 0.83692
+    },
+    {
+     "frame": 22,
+     "progress": 0.87813
+    },
+    {
+     "frame": 23,
+     "progress": 0.91328
+    },
+    {
+     "frame": 24,
+     "progress": 0.94208
+    },
+    {
+     "frame": 25,
+     "progress": 0.96451
+    },
+    {
+     "frame": 26,
+     "progress": 0.98078
+    },
+    {
+     "frame": 27,
+     "progress": 0.99144
+    },
+    {
+     "frame": 28,
+     "progress": 0.99733
+    },
+    {
+     "frame": 29,
+     "progress": 0.99965
+    },
+    {
+     "frame": 30,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 15.0,
+     "plant_frame": 27.9
+    },
+    "r": {
+     "lift_frame": 2.4,
+     "plant_frame": 13.8
+    }
+   },
+   "lead_foot": "r"
+  },
+  "SneakTurn_L45": {
+   "stance": "Sneak",
+   "direction": "L",
+   "degrees": 45,
+   "frames": 18,
+   "seconds": 0.3,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": 45,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00158
+    },
+    {
+     "frame": 2,
+     "progress": 0.01153
+    },
+    {
+     "frame": 3,
+     "progress": 0.03549
+    },
+    {
+     "frame": 4,
+     "progress": 0.07641
+    },
+    {
+     "frame": 5,
+     "progress": 0.13495
+    },
+    {
+     "frame": 6,
+     "progress": 0.20988
+    },
+    {
+     "frame": 7,
+     "progress": 0.29842
+    },
+    {
+     "frame": 8,
+     "progress": 0.39669
+    },
+    {
+     "frame": 9,
+     "progress": 0.5
+    },
+    {
+     "frame": 10,
+     "progress": 0.60331
+    },
+    {
+     "frame": 11,
+     "progress": 0.70158
+    },
+    {
+     "frame": 12,
+     "progress": 0.79012
+    },
+    {
+     "frame": 13,
+     "progress": 0.86505
+    },
+    {
+     "frame": 14,
+     "progress": 0.92359
+    },
+    {
+     "frame": 15,
+     "progress": 0.96451
+    },
+    {
+     "frame": 16,
+     "progress": 0.98847
+    },
+    {
+     "frame": 17,
+     "progress": 0.99842
+    },
+    {
+     "frame": 18,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 2.16,
+     "plant_frame": 8.64
+    },
+    "r": {
+     "lift_frame": 9.36,
+     "plant_frame": 16.56
+    }
+   },
+   "lead_foot": "l"
+  },
+  "SneakTurn_L90": {
+   "stance": "Sneak",
+   "direction": "L",
+   "degrees": 90,
+   "frames": 30,
+   "seconds": 0.5,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": 90,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00035
+    },
+    {
+     "frame": 2,
+     "progress": 0.00267
+    },
+    {
+     "frame": 3,
+     "progress": 0.00856
+    },
+    {
+     "frame": 4,
+     "progress": 0.01922
+    },
+    {
+     "frame": 5,
+     "progress": 0.03549
+    },
+    {
+     "frame": 6,
+     "progress": 0.05792
+    },
+    {
+     "frame": 7,
+     "progress": 0.08672
+    },
+    {
+     "frame": 8,
+     "progress": 0.12187
+    },
+    {
+     "frame": 9,
+     "progress": 0.16308
+    },
+    {
+     "frame": 10,
+     "progress": 0.20988
+    },
+    {
+     "frame": 11,
+     "progress": 0.2616
+    },
+    {
+     "frame": 12,
+     "progress": 0.31744
+    },
+    {
+     "frame": 13,
+     "progress": 0.37647
+    },
+    {
+     "frame": 14,
+     "progress": 0.43768
+    },
+    {
+     "frame": 15,
+     "progress": 0.5
+    },
+    {
+     "frame": 16,
+     "progress": 0.56232
+    },
+    {
+     "frame": 17,
+     "progress": 0.62353
+    },
+    {
+     "frame": 18,
+     "progress": 0.68256
+    },
+    {
+     "frame": 19,
+     "progress": 0.7384
+    },
+    {
+     "frame": 20,
+     "progress": 0.79012
+    },
+    {
+     "frame": 21,
+     "progress": 0.83692
+    },
+    {
+     "frame": 22,
+     "progress": 0.87813
+    },
+    {
+     "frame": 23,
+     "progress": 0.91328
+    },
+    {
+     "frame": 24,
+     "progress": 0.94208
+    },
+    {
+     "frame": 25,
+     "progress": 0.96451
+    },
+    {
+     "frame": 26,
+     "progress": 0.98078
+    },
+    {
+     "frame": 27,
+     "progress": 0.99144
+    },
+    {
+     "frame": 28,
+     "progress": 0.99733
+    },
+    {
+     "frame": 29,
+     "progress": 0.99965
+    },
+    {
+     "frame": 30,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 2.4,
+     "plant_frame": 13.8
+    },
+    "r": {
+     "lift_frame": 15.0,
+     "plant_frame": 27.9
+    }
+   },
+   "lead_foot": "l"
+  },
+  "SneakTurn_R45": {
+   "stance": "Sneak",
+   "direction": "R",
+   "degrees": 45,
+   "frames": 18,
+   "seconds": 0.3,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": -45,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00158
+    },
+    {
+     "frame": 2,
+     "progress": 0.01153
+    },
+    {
+     "frame": 3,
+     "progress": 0.03549
+    },
+    {
+     "frame": 4,
+     "progress": 0.07641
+    },
+    {
+     "frame": 5,
+     "progress": 0.13495
+    },
+    {
+     "frame": 6,
+     "progress": 0.20988
+    },
+    {
+     "frame": 7,
+     "progress": 0.29842
+    },
+    {
+     "frame": 8,
+     "progress": 0.39669
+    },
+    {
+     "frame": 9,
+     "progress": 0.5
+    },
+    {
+     "frame": 10,
+     "progress": 0.60331
+    },
+    {
+     "frame": 11,
+     "progress": 0.70158
+    },
+    {
+     "frame": 12,
+     "progress": 0.79012
+    },
+    {
+     "frame": 13,
+     "progress": 0.86505
+    },
+    {
+     "frame": 14,
+     "progress": 0.92359
+    },
+    {
+     "frame": 15,
+     "progress": 0.96451
+    },
+    {
+     "frame": 16,
+     "progress": 0.98847
+    },
+    {
+     "frame": 17,
+     "progress": 0.99842
+    },
+    {
+     "frame": 18,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 9.36,
+     "plant_frame": 16.56
+    },
+    "r": {
+     "lift_frame": 2.16,
+     "plant_frame": 8.64
+    }
+   },
+   "lead_foot": "r"
+  },
+  "SneakTurn_R90": {
+   "stance": "Sneak",
+   "direction": "R",
+   "degrees": 90,
+   "frames": 30,
+   "seconds": 0.5,
+   "sign_convention": "+ = turn left (counter-clockwise from above); root stays at 0 deg",
+   "body_yaw_total_deg": -90,
+   "body_yaw_progress": [
+    {
+     "frame": 0,
+     "progress": 0.0
+    },
+    {
+     "frame": 1,
+     "progress": 0.00035
+    },
+    {
+     "frame": 2,
+     "progress": 0.00267
+    },
+    {
+     "frame": 3,
+     "progress": 0.00856
+    },
+    {
+     "frame": 4,
+     "progress": 0.01922
+    },
+    {
+     "frame": 5,
+     "progress": 0.03549
+    },
+    {
+     "frame": 6,
+     "progress": 0.05792
+    },
+    {
+     "frame": 7,
+     "progress": 0.08672
+    },
+    {
+     "frame": 8,
+     "progress": 0.12187
+    },
+    {
+     "frame": 9,
+     "progress": 0.16308
+    },
+    {
+     "frame": 10,
+     "progress": 0.20988
+    },
+    {
+     "frame": 11,
+     "progress": 0.2616
+    },
+    {
+     "frame": 12,
+     "progress": 0.31744
+    },
+    {
+     "frame": 13,
+     "progress": 0.37647
+    },
+    {
+     "frame": 14,
+     "progress": 0.43768
+    },
+    {
+     "frame": 15,
+     "progress": 0.5
+    },
+    {
+     "frame": 16,
+     "progress": 0.56232
+    },
+    {
+     "frame": 17,
+     "progress": 0.62353
+    },
+    {
+     "frame": 18,
+     "progress": 0.68256
+    },
+    {
+     "frame": 19,
+     "progress": 0.7384
+    },
+    {
+     "frame": 20,
+     "progress": 0.79012
+    },
+    {
+     "frame": 21,
+     "progress": 0.83692
+    },
+    {
+     "frame": 22,
+     "progress": 0.87813
+    },
+    {
+     "frame": 23,
+     "progress": 0.91328
+    },
+    {
+     "frame": 24,
+     "progress": 0.94208
+    },
+    {
+     "frame": 25,
+     "progress": 0.96451
+    },
+    {
+     "frame": 26,
+     "progress": 0.98078
+    },
+    {
+     "frame": 27,
+     "progress": 0.99144
+    },
+    {
+     "frame": 28,
+     "progress": 0.99733
+    },
+    {
+     "frame": 29,
+     "progress": 0.99965
+    },
+    {
+     "frame": 30,
+     "progress": 1.0
+    }
+   ],
+   "steps": {
+    "l": {
+     "lift_frame": 15.0,
+     "plant_frame": 27.9
+    },
+    "r": {
+     "lift_frame": 2.4,
+     "plant_frame": 13.8
+    }
+   },
+   "lead_foot": "r"
+  }
+ },
+ "turn_controller_proposal": {
+  "trigger_separation_deg": 50,
+  "step_45_if_separation_below_deg": 95,
+  "settle_within_deg": 15,
+  "apply": "presentation yaw = start_yaw + body_yaw_total * progress(t) on the SAME clock as the pose; root-neutral clips never rotate the root, so apply the yaw exactly once (mesh/body yaw only)",
+  "interrupt": "movement input cross-fades into locomotion over 0.1-0.15 s; keep the yaw reached so far"
+ }
+}

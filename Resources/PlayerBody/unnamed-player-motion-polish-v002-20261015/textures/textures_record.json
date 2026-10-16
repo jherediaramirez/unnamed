@@ -1,0 +1,11 @@
+{
+ "source": "C:\\dev\\output\\unnamed-player-blender-v001-20261015\\source\\original_skin_texture.jpg",
+ "texel": 64,
+ "max_deviation_at_block_corners": 2,
+ "outputs": [
+  "T_UP_Skin_64.png",
+  "T_UP_Skin_1024.png",
+  "T_Preview_Grid_1m.png",
+  "T_Preview_Stone.png"
+ ]
+}
