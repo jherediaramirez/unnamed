@@ -346,7 +346,8 @@ bool FFoundationCommandsKillTest::RunTest(const FString& Parameters)
     Entities.A.SpawnItem(Stone, 1, FVector(50, 50, 300), FVector::ZeroVector, 10);
     Entities.A.SpawnItem(Stone, 2, FVector(250, 50, 300), FVector::ZeroVector, 10);
     TestEqual(TEXT("two item entities"), Entities.A.GetItemEntities().Num(), 2);
-    TestEqual(TEXT("kill @e"), Entities.Run(TEXT("/kill @e")), FString(TEXT("Killed 3 entities")));
+    TestEqual(TEXT("one orb"), Entities.A.SpawnExperience(FVector(150, 150, 300), 1, 10), 1);
+    TestEqual(TEXT("kill @e"), Entities.Run(TEXT("/kill @e")), FString(TEXT("Killed 4 entities")));
     TestTrue(TEXT("@e: the player is dead"), Entities.Vitals.IsDead());
     TestEqual(TEXT("@e: no item entities left"), Entities.A.GetItemEntities().Num(), 0);
     TestEqual(TEXT("@e: no orbs left"), Entities.A.GetExperienceOrbs().Num(), 0);
