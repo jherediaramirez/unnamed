@@ -3646,8 +3646,8 @@ void FFoundationAuthority::UseItemContinue(
     }
     Result.UseDuration = Use.Duration;
     Result.UseTicks = Use.Ticks;
-    // foundation.Items.Use turned 0 mid-use: the use ends, nothing eaten (Codex review 1, finding 1).
-    if (!Options.bItemUse)
+    // Disabling item use or an active bow ends the use without eating or firing (R40-4).
+    if (!Options.bItemUse || (Use.bDraws && !FoundationBow::IsOn()))
     {
         CancelUse(Player);
         Result.Outcome = EFoundationOutcome::Canceled;

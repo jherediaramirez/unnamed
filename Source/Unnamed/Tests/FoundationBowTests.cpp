@@ -9,6 +9,7 @@
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationMobAssets.h"
 #include "GameFramework/Actor.h"
+#include "HAL/IConsoleManager.h"
 #include "UnnamedProjectSettings.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -19,6 +20,16 @@ namespace
 {
     constexpr EAutomationTestFlags BowTestFlags =
         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+
+    struct FBowTestSwitchScope
+    {
+        IConsoleVariable& Variable;
+        int32 Saved;
+
+        explicit FBowTestSwitchScope(IConsoleVariable& InVariable) : Variable(InVariable), Saved(Variable.GetInt()) {}
+        ~FBowTestSwitchScope() { Set(Saved); }
+        void Set(int32 Value) const { Variable.Set(Value, ECVF_SetByCode); }
+    };
 
     // The project's rules, lab tool wear and item use on, finite supply, a floor, a bow in hotbar slot 1 (selected),
     // the player at the origin looking along +X. World origin is zero, so world cm equal local cm.
@@ -310,6 +321,75 @@ bool FFoundationBowReleaseTest::RunTest(const FString&)
     Order.Exec(EFoundationCommandType::UseItemRelease);
     TestEqual(TEXT("the offhand's arrow is spent first"), Order.P().Inventory.GetHand(EFoundationHand::Off).Count, 2);
     TestEqual(TEXT("slot 1 untouched"), Order.P().Inventory.GetSlot(1)->Count, 5);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBowSwitchMidDrawTest, "Unnamed.Foundation.Bow.SwitchMidDraw", BowTestFlags)
+
+bool FFoundationBowSwitchMidDrawTest::RunTest(const FString&)
+{
+    // R40-4: the public foundation.Items.Bow contract disables drawing and shooting. A held use must stop drawing
+    // on its next command when the switch goes off, without spending ammunition or durability.
+    IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(TEXT("foundation.Items.Bow"));
+    if (!TestNotNull(TEXT("the bow switch exists"), Variable)) return false;
+    FBowTestSwitchScope BowSwitch(*Variable);
+    BowSwitch.Set(1);
+    if (!TestTrue(TEXT("the bow switch was enabled"), FoundationBow::IsOn())) return false;
+    FBowLab Disabled;
+    if (!TestTrue(
+            TEXT("bow and arrow items exist"), Disabled.BowItem != INDEX_NONE && Disabled.ArrowItem != INDEX_NONE))
+        return false;
+    Disabled.GiveArrows(2);
+    const FFoundationResult Started = Disabled.Draw(10);
+    if (!TestTrue(TEXT("the bow is actively drawn before disabling it"),
+            Started.IsCommitted() && Disabled.P().Use.bActive && Disabled.P().Use.bDraws &&
+                Disabled.P().Use.Ticks == 10))
+        return false;
+    BowSwitch.Set(0);
+    if (!TestFalse(TEXT("the bow switch was disabled during the draw"), FoundationBow::IsOn())) return false;
+    Disabled.NextStep();
+    const FFoundationResult Continued = Disabled.Exec(EFoundationCommandType::UseItemContinue);
+    TestTrue(TEXT("Bow 0 cancels the held draw"), Continued.Outcome == EFoundationOutcome::Canceled);
+    TestFalse(TEXT("Bow 0 clears active use"), Disabled.P().Use.bActive);
+    TestFalse(TEXT("Bow 0 clears the drawing flag"), Disabled.P().Use.bDraws);
+    TestEqual(TEXT("canceling spends no arrows"), Disabled.CountArrows(), 2);
+    TestEqual(TEXT("canceling does not wear the bow"), Disabled.P().Inventory.Hotbar[0].Damage, 0);
+    Disabled.Exec(EFoundationCommandType::UseItemRelease);
+    TestEqual(TEXT("releasing the canceled draw spawns no arrow"), Disabled.A.GetArrows().Num(), 0);
+    TestEqual(TEXT("releasing the canceled draw spends no arrows"), Disabled.CountArrows(), 2);
+    TestEqual(TEXT("releasing the canceled draw does not wear the bow"), Disabled.P().Inventory.Hotbar[0].Damage, 0);
+
+    // Leaving the bow enabled preserves the held draw and its normal release.
+    BowSwitch.Set(1);
+    if (!TestTrue(TEXT("the bow switch was enabled for the control"), FoundationBow::IsOn())) return false;
+    FBowLab Enabled;
+    Enabled.GiveArrows(2);
+    Enabled.Draw(10);
+    Enabled.NextStep();
+    const FFoundationResult Kept = Enabled.Exec(EFoundationCommandType::UseItemContinue);
+    TestTrue(TEXT("Bow 1 keeps drawing on the next command"),
+        Kept.IsCommitted() && Enabled.P().Use.bActive && Enabled.P().Use.bDraws && Enabled.P().Use.Ticks == 11);
+    Enabled.Exec(EFoundationCommandType::UseItemRelease);
+    TestEqual(TEXT("Bow 1 release spawns one arrow"), Enabled.A.GetArrows().Num(), 1);
+    TestEqual(TEXT("Bow 1 release spends one arrow"), Enabled.CountArrows(), 1);
+    TestEqual(TEXT("Bow 1 release wears the bow once"), Enabled.P().Inventory.Hotbar[0].Damage, 1);
+
+    // The bow switch must not cancel another held item use: the existing fixture also supports a raised shield.
+    FBowLab Shield;
+    if (!TestTrue(TEXT("the shield item exists"), Shield.ShieldItem != INDEX_NONE)) return false;
+    Shield.Hold(Shield.ShieldItem);
+    if (!TestTrue(TEXT("the shield is raised before disabling bows"),
+            Shield.Draw(6).IsCommitted() && Shield.A.IsBlocking(Shield.Player)))
+        return false;
+    BowSwitch.Set(0);
+    if (!TestFalse(TEXT("the bow switch was disabled during shield use"), FoundationBow::IsOn())) return false;
+    Shield.NextStep();
+    const FFoundationResult Blocking = Shield.Exec(EFoundationCommandType::UseItemContinue);
+    TestTrue(TEXT("Bow 0 preserves a held shield"),
+        Blocking.IsCommitted() && Shield.P().Use.bActive && Shield.P().Use.bBlocks && !Shield.P().Use.bDraws &&
+            Shield.A.IsBlocking(Shield.Player));
+    TestEqual(TEXT("the shield's use keeps counting"), Shield.P().Use.Ticks, 7);
+    TestEqual(TEXT("the shield remains unworn"), Shield.P().Inventory.Hotbar[0].Damage, 0);
     return true;
 }
 
