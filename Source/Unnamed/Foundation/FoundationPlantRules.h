@@ -37,8 +37,8 @@ namespace FoundationPlantRules
 
     // The stack a block belongs to, named by its first block (Jesus's answer to scout H's Q1, the chains of the prep's
     // section 4.2): sugar cane, cactus with its flower, bamboo, kelp, cave vines, pointed dripstone, sulfur spike, pale
-    // hanging moss, vine, and big dripleaf with its stem. A stack settles to its end after an edit
-    // (FFoundationAuthority::SettlePlants). None for every other block.
+    // hanging moss, vine, big dripleaf with its stem, and twisting and weeping vines (B4b). A stack settles to its end
+    // after an edit (FFoundationAuthority::SettlePlants). None for every other block.
     UNNAMED_API FName GetStack(FName Block);
     // The wall block a plant's item places against a side, by look as the torch's item does: the coral fans' wall fans
     // (the reference's standing-and-wall items, facts/block_support.json; Jesus's answer to Q7). None for every other

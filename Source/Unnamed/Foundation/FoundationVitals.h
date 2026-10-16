@@ -49,6 +49,8 @@ struct FFoundationVitalsStep
     bool bGrounded = false, bSprinting = false;
     bool bJumped = false, bSprintJumped = false;
     bool bBodyInWater = false, bEyesInWater = false;
+    // The step climbed (FFoundationSimulation::bClimbing): no fall builds, as in water.
+    bool bClimbing = false;
     // The body touches lava (the pawn passes it only with foundation.Fire 1).
     bool bBodyInLava = false;
 };

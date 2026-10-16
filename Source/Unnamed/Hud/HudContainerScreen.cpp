@@ -242,7 +242,7 @@ const TCHAR* SHudContainerScreen::GetBackground() const
 {
     return Model.Kind == EFoundationMenuKind::Crafting ? CraftingBackground
         : IsFurnaceMenu(Model.Kind)                    ? GetFurnaceArt(Model.Kind).Background
-        : Model.Kind == EFoundationMenuKind::Barrel    ? BarrelBackground
+        : HasViewers(Model.Kind)                       ? BarrelBackground
                                                        : ContainerBackground;
 }
 
@@ -263,14 +263,18 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
     const FVector2f Pixels = FVector2f(Geometry.GetLocalSize()) / Frame.Units;
     Paint.Box(&Art.Solid, {0, 0}, FIntPoint(int32(Pixels.X) + 1, int32(Pixels.Y) + 1), Whole,
         FLinearColor(.0627f, .0627f, .0627f, .784f));
-    const bool bBarrel = Model.Kind == EFoundationMenuKind::Barrel;
+    // The barrel, the chest and the double chest (ContainerScreen over generic_54).
+    const bool bBarrel = HasViewers(Model.Kind);
+    const bool bLarge = Model.Kind == EFoundationMenuKind::LargeChest;
     if (bBarrel)
     {
-        // ContainerScreen.renderBg: the title and the 3 rows (71 high), then the player part from y 126 (96 high).
+        // ContainerScreen.renderBg: the title and the rows (71 high for 3, 125 for 6), then the player part from y 126
+        // (96 high).
         using M = FHudContainerModel;
-        Paint.Box(Art.Find(GetBackground()), O, {M::Width, M::BarrelTopHeight},
-            FBox2f(FVector2f(0), FVector2f(M::Width / 256.f, M::BarrelTopHeight / 256.f)));
-        Paint.Box(Art.Find(GetBackground()), O + FIntPoint(0, M::BarrelTopHeight), {M::Width, M::BarrelPlayerHeight},
+        const int32 Top = bLarge ? M::LargeChestTopHeight : M::BarrelTopHeight;
+        Paint.Box(Art.Find(GetBackground()), O, {M::Width, Top},
+            FBox2f(FVector2f(0), FVector2f(M::Width / 256.f, Top / 256.f)));
+        Paint.Box(Art.Find(GetBackground()), O + FIntPoint(0, Top), {M::Width, M::BarrelPlayerHeight},
             FBox2f(FVector2f(0, M::BarrelPlayerTextureY / 256.f),
                 FVector2f(M::Width / 256.f, (M::BarrelPlayerTextureY + M::BarrelPlayerHeight) / 256.f)));
     }
@@ -289,11 +293,16 @@ int32 SHudContainerScreen::OnPaint(const FPaintArgs& Args, const FGeometry& Geom
             {FHudContainerModel::RecipeButtonWidth, FHudContainerModel::RecipeButtonHeight});
     if (bBarrel)
     {
-        Paint.Text(TEXT("Barrel"),
+        // container.barrel, container.chest, container.chestDouble.
+        Paint.Text(bLarge                                  ? TEXT("Large Chest")
+                : Model.Kind == EFoundationMenuKind::Chest ? TEXT("Chest")
+                                                           : TEXT("Barrel"),
             O + FIntPoint(FHudContainerModel::InventoryLabelX, FHudContainerModel::FurnaceTitleY), ContainerTitleColor,
             false);
         Paint.Text(TEXT("Inventory"),
-            O + FIntPoint(FHudContainerModel::InventoryLabelX, FHudContainerModel::BarrelInventoryLabelY),
+            O +
+                FIntPoint(FHudContainerModel::InventoryLabelX,
+                    bLarge ? FHudContainerModel::LargeChestInventoryLabelY : FHudContainerModel::BarrelInventoryLabelY),
             ContainerTitleColor, false);
     }
     else if (bCrafting)

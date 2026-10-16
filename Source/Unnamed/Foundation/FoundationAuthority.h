@@ -197,7 +197,7 @@ struct FFoundationPlayerFacts
     // Horizontal distance moved over the last reference step (the sweep's movement rule).
     double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
-    // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
+    // Climbing since B4b; no mounts or effects yet, kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
@@ -271,6 +271,10 @@ struct FFoundationLabOptions
     // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
     // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
     bool bBarrel = false;
+    // Chests and trapped chests (T1 step 18-chest): a right-click opens the 27-slot menu (54 over a double chest) and
+    // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
+    // foundation.Chest in before each step.
+    bool bChest = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -488,6 +492,8 @@ struct FFoundationOpenMenu
     FIntVector Cell = FIntVector::ZeroValue;
     FName Block;
     TArray<FFoundationItemInstance> Grid;
+    // A double chest's other half when it opened (T1 step 18-chest), so its viewers update when it no longer pairs.
+    TOptional<FIntVector> Partner;
 
     bool IsOpen() const { return ContainerId != 0; }
 };
@@ -762,6 +768,9 @@ private:
     const FBlockUseEntry* FindBlockUse(FName BlockId) const;
     // The open menu's container slots: the crafting table's grid, or its block entity's (a copy).
     TArray<FFoundationItemInstance> GetMenuGrid(const FFoundationPlayer& Player) const;
+    // The cells whose block entities hold an open menu's container slots, in menu order: its own cell, or a double
+    // chest's type=right then type=left half. False when a double chest's halves are no longer paired.
+    bool GetMenuCells(const FFoundationOpenMenu& Open, TArray<FIntVector, TInlineAllocator<2>>& OutCells) const;
     // Whether the player's open menu still has its block (and its block entity) at its cell, within reach.
     bool IsMenuValid(const FFoundationPlayer& Player) const;
     // Closes the open menu (ContainerClose): the cursor, the crafting grid, then the 2x2 back into the inventory, the
@@ -785,8 +794,14 @@ private:
     // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
     // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
     // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
-    // (broken while viewed: vanilla's removed block entity plays nothing).
-    void UpdateBarrelOpen(const FIntVector& Cell);
+    // (broken while viewed: vanilla's removed block entity plays nothing). A chest's goes to UpdateChestOpen.
+    void UpdateContainerOpen(const FIntVector& Cell);
+    // After a barrel or chest menu went away (closed, replaced, its player removed): its block's viewers, and a double
+    // chest's other half's.
+    void UpdateViewers(const FFoundationOpenMenu& Left);
+    // A chest's viewers (T1 step 18-chest; it has no open state): the count of the pair, kept on its halves' entities;
+    // the first viewer plays block.chest.open and the last one leaving block.chest.close, once per double chest.
+    void UpdateChestOpen(const FIntVector& Cell);
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);

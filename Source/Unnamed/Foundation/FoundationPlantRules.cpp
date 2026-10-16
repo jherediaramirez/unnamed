@@ -99,7 +99,9 @@ FName FoundationPlantRules::GetStack(FName Block)
         {TEXT("cave_vines_plant"), TEXT("cave_vines")}, {TEXT("pointed_dripstone"), TEXT("pointed_dripstone")},
         {TEXT("sulfur_spike"), TEXT("sulfur_spike")}, {TEXT("pale_hanging_moss"), TEXT("pale_hanging_moss")},
         {TEXT("vine"), TEXT("vine")}, {TEXT("big_dripleaf"), TEXT("big_dripleaf")},
-        {TEXT("big_dripleaf_stem"), TEXT("big_dripleaf")}};
+        {TEXT("big_dripleaf_stem"), TEXT("big_dripleaf")}, {TEXT("twisting_vines"), TEXT("twisting_vines")},
+        {TEXT("twisting_vines_plant"), TEXT("twisting_vines")}, {TEXT("weeping_vines"), TEXT("weeping_vines")},
+        {TEXT("weeping_vines_plant"), TEXT("weeping_vines")}};
     const FName* Stack = Stacks.Find(Block);
     return Stack ? *Stack : NAME_None;
 }
