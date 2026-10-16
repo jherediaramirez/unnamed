@@ -395,6 +395,8 @@ bool FVoxelOreLookMergeTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// The texture's source data is editor-only: game targets (packages) build without this test.
+#if WITH_EDITORONLY_DATA
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FVoxelOreLookTextureTest, "Unnamed.Voxel.OreLooks.Texture", OreLookTestFlags)
 
 bool FVoxelOreLookTextureTest::RunTest(const FString& Parameters)
@@ -447,5 +449,6 @@ bool FVoxelOreLookTextureTest::RunTest(const FString& Parameters)
             Looks == Array);
     return true;
 }
+#endif
 
 #endif
