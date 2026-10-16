@@ -41,6 +41,13 @@ The old program folder `C:\dev\tools\shift-managers\survival\` is frozen history
 | R17-1: turning fire off didn't put out a player already burning | `e8275a71` | Touch fire/lava, F12 → `foundation.Fire 0` |
 | R47-4: turning farm extras off left cold/warm animals in their variant skins | `1215000b` | Near warm/cold cows/pigs/chickens, F12 → `foundation.Mobs.Farm 0`, then `1` |
 
+## In progress: the full-body player, M1 (since 2026-10-16)
+
+Jesus decided on 2026-10-16 to start M1 of the first/third-person body now. For this work it answers rule 2 below
+("no new features until the open bugs are decided"). Brief: `Resources\PlayerBody\FP-BODY-M1-BRIEF.md`. It runs on
+short-lived branches (`feature/fp-body-m1a`, then `-m1b`), each merged into `main` only after the build, the native
+suite and `-Suite body` pass, then deleted. Better Steve stays as `foundation.Body.Set 0`.
+
 ## Not in the build (on purpose)
 
 | Patch | What | Why |
