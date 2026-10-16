@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Foundation/FoundationActions.h"
 #include "Foundation/FoundationBody.h"
+#include "Foundation/FoundationBodyPose.h"
 #include "Foundation/FoundationDeath.h"
 #include "Foundation/FoundationExperienceOrbs.h"
 #include "Foundation/FoundationFootsteps.h"
@@ -15,6 +16,7 @@
 class AFoundationLab;
 class UBoxComponent;
 class UCameraComponent;
+class USkeletalMesh;
 class USkeletalMeshComponent;
 
 UCLASS()
@@ -78,11 +80,27 @@ public:
 
     UCameraComponent* GetCamera() const { return Camera; }
 
-    // The player body (Better Steve), drawn in the third-person views; null when its assets are missing.
+    // The player body (FoundationPawnBody.cpp): the world body every view sees (null when its assets are missing) ...
     USkeletalMeshComponent* GetBodyMesh() const { return BodyMesh; }
+    // ... and, for the Unnamed Player, the owner's first-person copy (null otherwise).
+    USkeletalMeshComponent* GetFirstPersonBodyMesh() const { return FirstPersonBodyMesh; }
+    EFoundationBodySet GetBodySet() const { return BodySet; }
+    // The world body is drawn for the owner (in a third-person view); in first person it may still cast the owner's
+    // shadow (IsBodyShadowOnly).
     bool IsBodyShown() const;
+    bool IsBodyShadowOnly() const;
+    bool IsFirstPersonBodyShown() const;
     // foundation.Body.Yaw.
     static EFoundationBodyYaw GetBodyYawMode();
+    // foundation.Body.Set and foundation.Body.FirstPerson.
+    static EFoundationBodySet GetRequestedBodySet();
+    static bool IsFirstPersonBodyOn();
+    // The first-person corrections' tuning (foundation.Body.FP.*).
+    static FFoundationFirstPersonTuning GetFirstPersonTuning();
+    // The probe's scripted path: when set, called before each reference step with the steps run so far; it may replace
+    // the step's intent and view yaw (the frame's input and look are then not used), so a path replays bit for bit at
+    // any frame rate.
+    TFunction<void(int64 Step, FFoundationIntent& Intent, double& ViewYaw)> ScriptedStep;
     // foundation.View.SpringArm: the back view is the over-the-shoulder spring arm (a third-person preview).
     bool IsSpringArmView() const;
     // Where the body faces (stepped with the simulation) and which clips it plays (advanced per frame).
@@ -145,9 +163,13 @@ private:
     void StepInteraction(FFoundationAuthority& Authority, bool bLatestStep, double NowSeconds);
     // Registers with the lab's authority, adopts its preset and returns to spawn after a lab reset.
     void SyncInteraction(FFoundationAuthority& Authority);
-    // Adds the body when its mesh and clips exist (UUnnamedProjectSettings::PlayerBodyRoot).
+    // Adds the body of foundation.Body.Set when its mesh and clips exist (Better Steve when the Unnamed Player's are
+    // missing), with the first-person copy for the Unnamed Player.
     void CreateBody();
-    // Places, poses and shows or hides the body for this frame (Eye: the rendered eyes; CameraLocation: the camera).
+    void DestroyBody();
+    // A body mesh component with the body's anim instance, placed by UpdateBody; null without its clips.
+    USkeletalMeshComponent* MakeBodyComponent(USkeletalMesh* Mesh, FName Name);
+    // Places, poses and shows or hides the bodies for this frame (Eye: the rendered eyes; CameraLocation: the camera).
     void UpdateBody(
         double Alpha, double Seconds, const FRotator& Control, const FVector& Eye, const FVector& CameraLocation);
     // The spring arm's camera location for this frame; View becomes its (lagged) rotation.
@@ -159,6 +181,12 @@ private:
     TObjectPtr<UCameraComponent> Camera;
     UPROPERTY()
     TObjectPtr<USkeletalMeshComponent> BodyMesh;
+    UPROPERTY()
+    TObjectPtr<USkeletalMeshComponent> FirstPersonBodyMesh;
+    // The set the bodies were made for (foundation.Body.Set as last read: a change remakes them) and the one they are.
+    EFoundationBodySet RequestedBodySet = EFoundationBodySet::BetterSteve, BodySet = EFoundationBodySet::BetterSteve;
+    // The world body is the owner's world-space representation (shadow only for the owner).
+    bool bBodyOwnerHidden = false;
     // Jumps the simulation started since the body's last frame.
     int32 BodyJumps = 0;
     bool bBodyTurnStarted = false;

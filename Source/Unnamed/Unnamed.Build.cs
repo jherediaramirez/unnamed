@@ -16,6 +16,8 @@ public class Unnamed : ModuleRules
         PrivateDependencyModuleNames.AddRange(new[] { "MeshDescription", "StaticMeshDescription", "ImageWrapper", "AssetRegistry" });
         // The voxel world: its plain C++ core (Source/UnnamedVoxel) and the vendored chunk mesh component.
         PrivateDependencyModuleNames.AddRange(new[] { "UnnamedVoxel", "RealtimeMeshComponent" });
+        // The first-person body re-solves its legs with the engine's two-bone IK (Foundation/FoundationBodyPose).
+        PrivateDependencyModuleNames.Add("AnimationCore");
         string WebRoot = Path.Combine(ModuleDirectory, "../../Content/Menu/Web");
         // Regenerate build/staging metadata when the native preference contract changes.
         ExternalDependencies.Add(Path.Combine(WebRoot, "preferences-schema.menuprefs"));
@@ -48,5 +50,7 @@ public class Unnamed : ModuleRules
         // VoxelWorld): without them a package's monsters never burn and its night sky light stays 15 (QC R35-3).
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/data/...", StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/attributes.json", StagedFileType.NonUFS);
+        // Third-party credits (CC BY 4.0 attribution) ship beside the game until it has a credits screen of its own.
+        RuntimeDependencies.Add("$(ProjectDir)/CREDITS.md", StagedFileType.NonUFS);
     }
 }

@@ -134,6 +134,15 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Player Body")
     FString PlayerBodyRoot = TEXT("/Game/Characters/BetterSteve");
 
+    // Package of an Unnamed Player asset under UnnamedPlayerRoot, e.g. "SK_UnnamedPlayer" or "UP_Walk_F". Written by
+    // Scripts/Editor/ImportUnnamedPlayer.py from Art/Characters/UnnamedPlayer (Docs/Foundation/Architecture.md).
+    UFUNCTION(BlueprintPure, Category = "Unnamed|Paths")
+    static FString GetUnnamedPlayerAssetPackage(const FString& AssetName);
+    static FSoftObjectPath GetUnnamedPlayerAssetPath(const FString& AssetName);
+
+    UPROPERTY(Config, EditAnywhere, Category = "Player Body")
+    FString UnnamedPlayerRoot = TEXT("/Game/Characters/UnnamedPlayer");
+
     UPROPERTY(Config, EditAnywhere, Category = "Maps", meta = (AllowedClasses = "/Script/Engine.World"))
     FSoftObjectPath MenuMap;
 

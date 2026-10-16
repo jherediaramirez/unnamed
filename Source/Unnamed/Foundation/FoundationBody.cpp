@@ -1,4 +1,5 @@
 #include "Foundation/FoundationBody.h"
+#include "UnnamedProjectSettings.h"
 
 namespace
 {
@@ -15,8 +16,29 @@ namespace
     }
 }
 
-FString FoundationBodyClip::GetName(int32 Clip)
+FString FoundationBodyClip::GetName(int32 Clip, EFoundationBodySet Set)
 {
+    if (Set == EFoundationBodySet::UnnamedPlayer)
+    {
+        // The export manifest's unreal_name ("Sneak" is "Crouch"); the air is Start, then the Fall loop, then Land
+        // Soft (Rise and Firm come with the M2 air model).
+        if (Clip == Idle) return TEXT("UP_Idle");
+        if (Clip >= Walk && Clip < Walk + 8) return FString(TEXT("UP_Walk_")) + BodyDirectionNames[Clip - Walk];
+        if (Clip >= Sprint && Clip < Sprint + 8) return FString(TEXT("UP_Sprint_")) + BodyDirectionNames[Clip - Sprint];
+        if (Clip == CrouchIdle) return TEXT("UP_CrouchIdle");
+        if (Clip >= CrouchWalk && Clip < CrouchWalk + 8)
+            return FString(TEXT("UP_Crouch_")) + BodyDirectionNames[Clip - CrouchWalk];
+        if (Clip == StandToCrouch) return TEXT("UP_StandToCrouch");
+        if (Clip == CrouchToStand) return TEXT("UP_CrouchToStand");
+        if (Clip == JumpStart) return TEXT("UP_Jump_Start");
+        if (Clip == JumpLoop) return TEXT("UP_Jump_Fall");
+        if (Clip == JumpLand) return TEXT("UP_Land_Soft");
+        if (Clip >= Look && Clip < CrouchLook) return FString(TEXT("UP_Look_")) + BodyLookNames[Clip - Look];
+        if (Clip >= CrouchLook && Clip < Low) return FString(TEXT("UP_CrouchLook_")) + BodyLookNames[Clip - CrouchLook];
+        if (Clip == Low) return TEXT("UP_Low_Pose");
+        return FString();
+    }
+    if (Clip >= CrouchLook && Clip < Low) return GetName(Look + Clip - CrouchLook, Set);
     if (Clip == Idle) return TEXT("BS_Idle");
     if (Clip >= Walk && Clip < Walk + 8) return FString(TEXT("BS_Walk_")) + BodyDirectionNames[Clip - Walk];
     if (Clip >= Sprint && Clip < Sprint + 8) return FString(TEXT("BS_Sprint_")) + BodyDirectionNames[Clip - Sprint];
@@ -28,12 +50,27 @@ FString FoundationBodyClip::GetName(int32 Clip)
     if (Clip == JumpStart) return TEXT("BS_Jump_Start");
     if (Clip == JumpLoop) return TEXT("BS_Jump_Loop");
     if (Clip == JumpLand) return TEXT("BS_Jump_Land");
-    if (Clip >= Look && Clip < Count) return FString(TEXT("BS_Look_")) + BodyLookNames[Clip - Look];
+    if (Clip >= Look && Clip < CrouchLook) return FString(TEXT("BS_Look_")) + BodyLookNames[Clip - Look];
     return FString();
 }
 
-double FoundationBodyClip::GetDefaultLength(int32 Clip)
+double FoundationBodyClip::GetDefaultLength(int32 Clip, EFoundationBodySet Set)
 {
+    if (Set == EFoundationBodySet::UnnamedPlayer)
+    {
+        // The export manifest's frames at 60 fps; the pose clips import over frames 0..2.
+        if (Clip >= Walk && Clip < Walk + 8) return 36 / 60.;
+        if (Clip >= Sprint && Clip < Sprint + 8) return 32 / 60.;
+        if (Clip >= CrouchWalk && Clip < CrouchWalk + 8) return 54 / 60.;
+        if (Clip == CrouchIdle || Clip == Idle) return 120 / 60.;
+        if (Clip == StandToCrouch || Clip == CrouchToStand) return 16 / 60.;
+        if (Clip == JumpStart) return 18 / 60.;
+        if (Clip == JumpLoop) return 48 / 60.;
+        if (Clip == JumpLand) return 12 / 60.;
+        if (Clip >= Look && Clip <= Low) return 2 / 60.;
+        return 0;
+    }
+    if (Clip == Low) return 0;
     if (Clip >= Walk && Clip < Walk + 8) return 18 / 30.;
     if (Clip >= Sprint && Clip < Sprint + 8) return 16 / 30.;
     if (Clip >= CrouchWalk && Clip < CrouchWalk + 8) return 32 / 30.;
@@ -43,6 +80,17 @@ double FoundationBodyClip::GetDefaultLength(int32 Clip)
     if (Clip == JumpLoop) return 24 / 30.;
     if (Clip == JumpLand) return 12 / 30.;
     return 0;
+}
+
+FString FoundationBodyClip::GetMeshName(EFoundationBodySet Set)
+{
+    return Set == EFoundationBodySet::UnnamedPlayer ? TEXT("SK_UnnamedPlayer") : TEXT("SK_BetterSteve");
+}
+
+FSoftObjectPath FoundationBodyClip::GetAssetPath(EFoundationBodySet Set, const FString& AssetName)
+{
+    return Set == EFoundationBodySet::UnnamedPlayer ? UUnnamedProjectSettings::GetUnnamedPlayerAssetPath(AssetName)
+                                                    : UUnnamedProjectSettings::GetPlayerBodyAssetPath(AssetName);
 }
 
 double FoundationBodyClip::GetSampleSpeed(int32 Gait, int32 Direction)
@@ -101,10 +149,10 @@ double FFoundationBodyTurn::GetYaw(double Alpha, double ViewYaw, EFoundationBody
     return FMath::UnwindDegrees(PreviousYaw + FMath::FindDeltaAngleDegrees(PreviousYaw, Yaw) * Alpha);
 }
 
-FFoundationBodyAnimator::FFoundationBodyAnimator()
+FFoundationBodyAnimator::FFoundationBodyAnimator(EFoundationBodySet Set)
 {
     for (int32 Clip = 0; Clip < FoundationBodyClip::Count; ++Clip)
-        Lengths[Clip] = FoundationBodyClip::GetDefaultLength(Clip);
+        Lengths[Clip] = FoundationBodyClip::GetDefaultLength(Clip, Set);
 }
 
 void FFoundationBodyAnimator::SetLengths(const TArray<double>& InLengths)
@@ -262,9 +310,21 @@ void FFoundationBodyAnimator::Advance(double Seconds, const FFoundationBodyFrame
     else
         for (FFoundationBodyLayer& Layer : Pose.Base)
             Layer.Weight = float(Layer.Weight / Total);
+    // The low box (swimming): its pose fades in over everything else, where the set has one (Lengths[Low] > 0).
+    const double LowTarget = Frame.bLowPose && Lengths[Low] > 0 ? 1 : 0;
+    LowWeight = bStarted ? MoveBodyWeight(LowWeight, LowTarget, Dt) : LowTarget;
+    if (LowWeight > 1e-4)
+    {
+        for (FFoundationBodyLayer& Layer : Pose.Base)
+            Layer.Weight *= float(1 - LowWeight);
+        Pose.Base.RemoveAll([](const FFoundationBodyLayer& Layer) { return Layer.Weight <= 1e-4f; });
+        Pose.Base.Add({Low, 0.f, float(LowWeight)});
+    }
+    Pose.LowWeight = float(LowWeight);
 
-    // The head: the look poses on a 3 x 3 grid (yaw and pitch -90, 0, 90), bilinear. A view behind the body (travel
-    // facing) turns the head back toward the front rather than holding it 90 degrees sideways.
+    // The head: the look poses on a 3 x 3 grid (yaw and pitch -90, 0, 90), bilinear, from the standing and crouching
+    // grids by the eyes' crouch. A view behind the body (travel facing) turns the head back toward the front rather
+    // than holding it 90 degrees sideways.
     double LookYaw = FMath::FindDeltaAngleDegrees(Frame.BodyYaw, Frame.ViewYaw);
     if (FMath::Abs(LookYaw) > 90) LookYaw = FMath::Sign(LookYaw) * (180 - FMath::Abs(LookYaw));
     const double LookPitch = FMath::Clamp(FMath::UnwindDegrees(Frame.ViewPitch), -90., 90.);
@@ -273,8 +333,12 @@ void FFoundationBodyAnimator::Advance(double Seconds, const FFoundationBodyFrame
     const double FX = GridX - X0, FY = GridY - Y0;
     const double Corners[4] = {(1 - FX) * (1 - FY), FX * (1 - FY), (1 - FX) * FY, FX * FY};
     for (int32 Corner = 0; Corner < 4; ++Corner)
-        if (Corners[Corner] > 1e-4)
-            Pose.Look.Add({Look + (Y0 + Corner / 2) * 3 + X0 + Corner % 2, 0.f, float(Corners[Corner])});
+    {
+        const int32 Cell = (Y0 + Corner / 2) * 3 + X0 + Corner % 2;
+        if (Corners[Corner] * (1 - Crouch) > 1e-4)
+            Pose.Look.Add({Look + Cell, 0.f, float(Corners[Corner] * (1 - Crouch))});
+        if (Corners[Corner] * Crouch > 1e-4) Pose.Look.Add({CrouchLook + Cell, 0.f, float(Corners[Corner] * Crouch)});
+    }
 
     // The event clocks start at 0 on their event's frame.
     CrouchTransitionTime += Dt;

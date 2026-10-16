@@ -4,6 +4,10 @@
 #include "Engine/SkeletalMesh.h"
 #include "Foundation/FoundationBody.h"
 #include "UnnamedProjectSettings.h"
+#if WITH_EDITORONLY_DATA
+#include "Rendering/SkeletalMeshLODModel.h"
+#include "Rendering/SkeletalMeshModel.h"
+#endif
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -273,19 +277,134 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodyAssetsTest, "Unnamed.Foundation.
 bool FFoundationBodyAssetsTest::RunTest(const FString& Parameters)
 {
     using namespace FoundationBodyClip;
-    auto* Mesh = Cast<USkeletalMesh>(UUnnamedProjectSettings::GetPlayerBodyAssetPath(TEXT("SK_BetterSteve")).TryLoad());
-    if (!TestNotNull(TEXT("SK_BetterSteve (Scripts/Editor/ImportBetterSteve.py)"), Mesh)) return false;
-    TestEqual(TEXT("1.875 blocks tall"), Mesh->GetBounds().BoxExtent.Z * 2, 187.5, .5);
-    for (int32 Clip = 0; Clip < Count; ++Clip)
+    const struct
     {
-        const FString Name = GetName(Clip);
-        auto* Sequence = Cast<UAnimSequence>(UUnnamedProjectSettings::GetPlayerBodyAssetPath(Name).TryLoad());
-        if (!TestNotNull(Name, Sequence)) continue;
-        TestTrue(Name + TEXT(" uses the body's skeleton"), Sequence->GetSkeleton() == Mesh->GetSkeleton());
-        TestEqual(Name + TEXT(" length"), double(Sequence->GetPlayLength()),
-            Clip >= Look || Clip == Idle ? double(Sequence->GetPlayLength()) : GetDefaultLength(Clip), .02);
-        TestEqual(Name + TEXT(" additive"), int32(Sequence->AdditiveAnimType),
-            int32(Clip >= Look ? AAT_RotationOffsetMeshSpace : AAT_None));
+        EFoundationBodySet Set;
+        const TCHAR* Script;
+        double HeightCm;
+    } Sets[] = {{EFoundationBodySet::BetterSteve, TEXT("ImportBetterSteve.py"), 187.5},
+        {EFoundationBodySet::UnnamedPlayer, TEXT("ImportUnnamedPlayer.py"), 180}};
+    for (const auto& Body : Sets)
+    {
+        const FString MeshName = GetMeshName(Body.Set);
+        auto* Mesh = Cast<USkeletalMesh>(GetAssetPath(Body.Set, MeshName).TryLoad());
+        if (!TestNotNull(MeshName + TEXT(" (Scripts/Editor/") + Body.Script + TEXT(")"), Mesh)) continue;
+        TestEqual(MeshName + TEXT(" height"), Mesh->GetBounds().BoxExtent.Z * 2, Body.HeightCm, .5);
+        for (int32 Clip = 0; Clip < Count; ++Clip)
+        {
+            const FString Name = GetName(Clip, Body.Set);
+            if (Name.IsEmpty()) continue;
+            auto* Sequence = Cast<UAnimSequence>(GetAssetPath(Body.Set, Name).TryLoad());
+            if (!TestNotNull(Name, Sequence)) continue;
+            TestTrue(Name + TEXT(" uses the body's skeleton"), Sequence->GetSkeleton() == Mesh->GetSkeleton());
+            // Better Steve's look poses and idle have their own lengths; every Unnamed Player clip has the manifest's.
+            const bool bOwnLength = Body.Set == EFoundationBodySet::BetterSteve && (Clip >= Look || Clip == Idle);
+            TestEqual(Name + TEXT(" length"), double(Sequence->GetPlayLength()),
+                bOwnLength ? double(Sequence->GetPlayLength()) : GetDefaultLength(Clip, Body.Set), .02);
+            TestEqual(Name + TEXT(" additive"), int32(Sequence->AdditiveAnimType),
+                int32(Clip >= Look && Clip < Low ? AAT_RotationOffsetMeshSpace : AAT_None));
+        }
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodyHeadSectionTest, "Unnamed.Foundation.Body.HeadSection", BodyTestFlags)
+
+bool FFoundationBodyHeadSectionTest::RunTest(const FString& Parameters)
+{
+    // The first-person copy hides the head by its material's section (M_UP_Head): that section must be the head cube
+    // (140-180 cm in the reference pose) and nothing else, and no other section may reach into it.
+#if WITH_EDITORONLY_DATA
+    auto* Mesh = Cast<USkeletalMesh>(FoundationBodyClip::GetAssetPath(
+        EFoundationBodySet::UnnamedPlayer, FoundationBodyClip::GetMeshName(EFoundationBodySet::UnnamedPlayer))
+            .TryLoad());
+    if (!TestNotNull(TEXT("SK_UnnamedPlayer"), Mesh)) return false;
+    const int32 Head = Mesh->GetMaterials().IndexOfByPredicate(
+        [](const FSkeletalMaterial& Material) { return Material.MaterialSlotName == FName(TEXT("M_UP_Head")); });
+    TestTrue(TEXT("an M_UP_Head slot"), Head != INDEX_NONE);
+    const FSkeletalMeshLODModel& Lod = Mesh->GetImportedModel()->LODModels[0];
+    for (int32 Index = 0; Index < Lod.Sections.Num(); ++Index)
+    {
+        const FSkelMeshSection& Section = Lod.Sections[Index];
+        double Low = TNumericLimits<double>::Max(), High = TNumericLimits<double>::Lowest();
+        for (const FSoftSkinVertex& Vertex : Section.SoftVertices)
+        {
+            Low = FMath::Min(Low, double(Vertex.Position.Z));
+            High = FMath::Max(High, double(Vertex.Position.Z));
+        }
+        const FString Name = FString::Printf(TEXT("section %d (material %d, %d vertices, z %.1f..%.1f cm)"), Index,
+            Section.MaterialIndex, Section.SoftVertices.Num(), Low, High);
+        AddInfo(Name);
+        if (Section.MaterialIndex == Head)
+            TestTrue(Name + TEXT(" is the head cube"), Low >= 139.5 && High <= 180.5);
+        else
+            TestTrue(Name + TEXT(" stays below the head"), High <= 140.5);
+    }
+#endif
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodySetsTest, "Unnamed.Foundation.Body.Sets", BodyTestFlags)
+
+bool FFoundationBodySetsTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationBodyClip;
+    const EFoundationBodySet BS = EFoundationBodySet::BetterSteve, UP = EFoundationBodySet::UnnamedPlayer;
+    TestEqual(TEXT("UP crouch walk"), GetName(CrouchWalk + 1, UP), FString(TEXT("UP_Crouch_FR")));
+    TestEqual(TEXT("UP air loop: the fall"), GetName(JumpLoop, UP), FString(TEXT("UP_Jump_Fall")));
+    TestEqual(TEXT("UP land: soft"), GetName(JumpLand, UP), FString(TEXT("UP_Land_Soft")));
+    TestEqual(TEXT("UP crouch look"), GetName(CrouchLook + 7, UP), FString(TEXT("UP_CrouchLook_U")));
+    TestEqual(TEXT("UP low pose"), GetName(Low, UP), FString(TEXT("UP_Low_Pose")));
+    TestEqual(TEXT("BS crouch look: its one grid"), GetName(CrouchLook + 7, BS), FString(TEXT("BS_Look_U")));
+    TestTrue(TEXT("BS has no low pose"), GetName(Low, BS).IsEmpty() && GetDefaultLength(Low, BS) == 0);
+    TestEqual(TEXT("UP walk: 36 frames at 60"), GetDefaultLength(Walk, UP), .6, 1e-9);
+    TestEqual(TEXT("UP crouch walk: 54 frames at 60"), GetDefaultLength(CrouchWalk, UP), .9, 1e-9);
+    for (int32 Clip = 0; Clip < Count; ++Clip)
+        TestFalse(FString::Printf(TEXT("UP clip %d has a name"), Clip), GetName(Clip, UP).IsEmpty());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodyLowTest, "Unnamed.Foundation.Body.Low", BodyTestFlags)
+
+bool FFoundationBodyLowTest::RunTest(const FString& Parameters)
+{
+    using namespace FoundationBodyClip;
+    {
+        FFoundationBodyAnimator Animator(EFoundationBodySet::UnnamedPlayer);
+        FFoundationBodyFrame Frame = MakeBodyFrame(FVector2D::ZeroVector);
+        HoldBodyFrame(Animator, Frame, .5);
+        Frame.bLowPose = true;
+        Frame.bGrounded = false;
+        Animator.Advance(1 / 60., Frame);
+        TestTrue(TEXT("the low pose fades in"), Animator.Pose.GetWeight(Low) > 0 && Animator.Pose.GetWeight(Low) < 1);
+        HoldBodyFrame(Animator, Frame, .2);
+        TestEqual(TEXT("then the low pose alone"), Animator.Pose.GetWeight(Low), 1.f, 1e-5f);
+        TestEqual(TEXT("its weight for the corrections"), Animator.Pose.LowWeight, 1.f, 1e-5f);
+        TestEqual(TEXT("base weights sum to 1"), SumBodyWeights(Animator.Pose, false), 1., 1e-5);
+        Frame.bLowPose = false;
+        Frame.bGrounded = true;
+        HoldBodyFrame(Animator, Frame, .5);
+        TestEqual(TEXT("standing again: no low pose"), Animator.Pose.GetWeight(Low), 0.f);
+    }
+    {
+        FFoundationBodyAnimator Animator(EFoundationBodySet::BetterSteve);
+        FFoundationBodyFrame Frame = MakeBodyFrame(FVector2D::ZeroVector);
+        Frame.bLowPose = true;
+        Frame.bGrounded = false;
+        HoldBodyFrame(Animator, Frame, .5);
+        TestEqual(TEXT("Better Steve keeps its air loop"), Animator.Pose.GetWeight(JumpLoop), 1.f, 1e-5f);
+        TestEqual(TEXT("Better Steve: no low pose"), Animator.Pose.GetWeight(Low), 0.f);
+    }
+    {
+        // The look splits between the standing and crouching grids by the eyes' crouch.
+        FFoundationBodyAnimator Animator(EFoundationBodySet::UnnamedPlayer);
+        FFoundationBodyFrame Frame = MakeBodyFrame(FVector2D::ZeroVector);
+        Frame.bCrouched = true;
+        Frame.CrouchAmount = .25;
+        Animator.Advance(1 / 60., Frame);
+        TestEqual(TEXT("quarter crouched: standing look"), Animator.Pose.GetWeight(Look + 4), .75f, 1e-5f);
+        TestEqual(TEXT("quarter crouched: crouching look"), Animator.Pose.GetWeight(CrouchLook + 4), .25f, 1e-5f);
+        TestEqual(TEXT("look weights sum to 1"), SumBodyWeights(Animator.Pose, true), 1., 1e-5);
     }
     return true;
 }

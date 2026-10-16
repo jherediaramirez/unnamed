@@ -2,6 +2,10 @@
 
 Short dated records of completed work, problems, fixes, and remaining gaps.
 
+## October 16, 2026
+
+- [The full-body player, M1a: the Unnamed Player in both views](2026-10-16-Player-Body-M1.md): record and handoff, branch `feature/fp-body-m1a` (merged). `foundation.Body.Set 1`: the Unnamed Player in every view with a headless first-person copy (legs and feet looking down, the shadow keeps the head); M1a's acceptance table measured at 30/60/120 fps; the crouch stop condition and Jesus's setting B. Next: M1b, the pickaxe strike through the real hand.
+
 ## October 15, 2026
 
 - [Survival 20e1: sheep colours and dyeing, shearing, milking, cold and warm variants](2026-10-15-Mobs-20e1.md): record, lane `feature/survival-mobs`. `foundation.Mobs.Farm 1`: sheep spawn in the 16 colours (tinted wool and undercoat), shears and dyes work on them, an empty bucket milks a cow, and cows, pigs and chickens take their biome's cold or warm variant (entities reference: the shearing tables and variant layers appended). Shears and 14 dyes are not items yet (20e2).

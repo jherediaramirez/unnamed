@@ -164,3 +164,14 @@ FSoftObjectPath UUnnamedProjectSettings::GetPlayerBodyAssetPath(const FString& A
     const FString Package = GetPlayerBodyAssetPackage(AssetName);
     return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
 }
+
+FString UUnnamedProjectSettings::GetUnnamedPlayerAssetPackage(const FString& AssetName)
+{
+    return Get().UnnamedPlayerRoot / AssetName;
+}
+
+FSoftObjectPath UUnnamedProjectSettings::GetUnnamedPlayerAssetPath(const FString& AssetName)
+{
+    const FString Package = GetUnnamedPlayerAssetPackage(AssetName);
+    return FSoftObjectPath(Package + TEXT(".") + FPackageName::GetShortName(Package));
+}

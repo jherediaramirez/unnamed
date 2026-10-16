@@ -6,6 +6,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UnrealClient.h"
@@ -13,9 +15,10 @@
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
 {
-    // An open stretch of the Playground's dev grid, 30 m west and 30 m south of spawn: clear of the stations, the
-    // galleries and the course. The player faces and walks east (+X).
-    const FVector BodyProbeSpot(-3000, 3000, 0);
+    // An open stretch of the Playground's dev grid, 200 m east and 200 m south of spawn: clear of the stations, the
+    // galleries (the registry gallery grew over the old spot at (-30, 30) m) and the course. The player faces and
+    // walks east (+X).
+    const FVector BodyProbeSpot(20000, 20000, 0);
 
     // Sets an integer console variable; returns its previous value (0 when it does not exist).
     int32 SetBodyProbeCVar(const TCHAR* Name, int32 Value)
@@ -83,10 +86,24 @@ void UFoundationRuntimeProbe::AddBodyCases()
             [this]
             {
                 Record(TEXT("body present"), false,
-                    TEXT("no player body: run Scripts/Editor/ImportBetterSteve.py (see the log's Player body line)"));
+                    TEXT("no player body: run Scripts/Editor/ImportUnnamedPlayer.py and ImportBetterSteve.py (see the "
+                         "log's Player body line)"));
             });
         return;
     }
+    if (FParse::Param(FCommandLine::Get(), TEXT("FoundationBodySweep")))
+    {
+        AddFirstPersonBodySweep();
+        return;
+    }
+    AddCase(
+        TEXT("body set"), .1, [] {},
+        [this]
+        {
+            Record(TEXT("body is the Unnamed Player (foundation.Body.Set 1)"),
+                Pawn->GetBodySet() == EFoundationBodySet::UnnamedPlayer,
+                FoundationBodyClip::GetMeshName(Pawn->GetBodySet()));
+        });
     using namespace FoundationBodyClip;
     auto Key = [this](const TCHAR* Id) { return Controller->GetInputSubsystem()->GetCurrentKey(Id); };
     auto Shot = [this](const FString& Name)
@@ -107,11 +124,12 @@ void UFoundationRuntimeProbe::AddBodyCases()
     auto Describe = [this]
     {
         FString Text;
+        const EFoundationBodySet Set = Pawn->GetBodySet();
         for (const FFoundationBodyLayer& Layer : Pawn->BodyAnimator.Pose.Base)
             Text += FString::Printf(
-                TEXT("%s %.2f @%.2f; "), *FoundationBodyClip::GetName(Layer.Clip), Layer.Weight, Layer.Time);
+                TEXT("%s %.2f @%.2f; "), *FoundationBodyClip::GetName(Layer.Clip, Set), Layer.Weight, Layer.Time);
         for (const FFoundationBodyLayer& Layer : Pawn->BodyAnimator.Pose.Look)
-            Text += FString::Printf(TEXT("%s %.2f; "), *FoundationBodyClip::GetName(Layer.Clip), Layer.Weight);
+            Text += FString::Printf(TEXT("%s %.2f; "), *FoundationBodyClip::GetName(Layer.Clip, Set), Layer.Weight);
         return Text;
     };
     auto ReleaseAll = [this]
@@ -123,7 +141,11 @@ void UFoundationRuntimeProbe::AddBodyCases()
 
     AddCase(
         TEXT("body first person"), .5, [Stand] { Stand(0, 1, FRotator(-10, 0, 0)); },
-        [this] { Record(TEXT("body hidden in first person"), !Pawn->IsBodyShown(), TEXT("perspective 0")); });
+        [this]
+        {
+            Record(TEXT("body: the world body is not drawn for the owner in first person"), !Pawn->IsBodyShown(),
+                TEXT("perspective 0"));
+        });
 
     // Each view, each pose: a shot and the clip the animator picked.
     struct FBodyPose
@@ -293,6 +315,7 @@ void UFoundationRuntimeProbe::AddBodyCases()
             Record(TEXT("body spring arm pulled in by the ground"), Camera.Z >= 4.9 && Distance < 250,
                 FString::Printf(TEXT("camera z %.1f cm, %.1f cm from the eyes"), Camera.Z, Distance));
         });
+    if (Pawn->GetBodySet() == EFoundationBodySet::UnnamedPlayer) AddFirstPersonBodyCases();
     AddCase(
         TEXT("body restore"), .3,
         [this]

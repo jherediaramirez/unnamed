@@ -10,7 +10,22 @@ Status words: **BUILT** = in and meant to work (bugs go to QC-KNOWN-BUGS.md). **
 
 - **World saving:** only world settings (world.json) save. Block edits, inventory, player position/vitals and mobs are lost on quit. First after QC (Jesus).
 - **Day/night look:** the world clock runs, but the sky stays daytime unless `voxel.Atmosphere.Cycle 1` (console, F12 in the play copy). Twilight, square sun/moon and dusk water are parked (T7).
-- **Deferred by Jesus:** Adventure mode, survival pick-block, view bobbing (13b), second sound batch, item extras (P5), beyond-vanilla mob AI, the new Steve character / full body, per-part hitboxes (idea only).
+- **Deferred by Jesus:** Adventure mode, survival pick-block, view bobbing (13b), second sound batch, item extras (P5), beyond-vanilla mob AI, per-part hitboxes (idea only).
+
+## The full-body player (M1a, 2026-10-16, after QC by Jesus's decision)
+
+- **BUILT:** the Unnamed Player (a real Steve) in every view (`foundation.Body.Set 1`, default; 0 = Better Steve as before): idle, walk, sprint, crouch, crouch-walk, jump/fall/land (Soft), the head look on standing and crouching grids, a swim pose. In first person you see your own body with no head, legs and feet looking down, and your shadow keeps the head (`foundation.Body.FirstPerson`). Record: `Docs/Records/2026-10-16-Player-Body-M1.md`.
+- **PARTIAL:**
+  - The first-person corrections' standing values are PLAN's proposal, not yet tuned by Jesus. Crouch uses his setting B.
+  - Held items still draw at the camera, not in the body's hand (LEGACY-HAND).
+  - Swimming and flying use placeholders.
+  - The dead player's world body stands.
+- **NOT BUILT:**
+  - The pickaxe strike through the real hand (M1b, next).
+  - Rise/Firm landings, turn-in-place clips, the strike chain, other tools (M2).
+  - New clips such as swim strokes, eat, use and death (M3; the swim clips are being authored).
+  - Armor on the body.
+  - Packaged builds are unchecked: the body folders may not be cooked.
 
 ## Line 1: containers (T1) — LINE DONE 27d0dfa3
 
