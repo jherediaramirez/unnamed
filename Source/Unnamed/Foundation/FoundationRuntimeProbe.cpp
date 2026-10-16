@@ -211,7 +211,9 @@ void UFoundationRuntimeProbe::BeginPlay()
     const bool bBody = Suite == TEXT("body");
     // And the mobs' captures (survival T6 20a, FoundationMobsProbe.cpp).
     const bool bMobs = Suite == TEXT("mobs");
-    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody && !bMobs)
+    // And the smear fix's moving subjects (K-PLAYER-7, FoundationSmearProbe.cpp).
+    const bool bSmear = Suite == TEXT("smear");
+    if (!bMovement && !bInteraction && !bTour && !bViews && !bPause && !bSwim && !bBody && !bMobs && !bSmear)
     {
         // A case, so the probe still finishes and reports the failure.
         AddCase(
@@ -220,7 +222,7 @@ void UFoundationRuntimeProbe::BeginPlay()
             {
                 Record(TEXT("known -FoundationSuite"), false,
                     FString::Printf(
-                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body, mobs or all"),
+                        TEXT("'%s' is not movement, interaction, tour, views, pause, swim, body, mobs, smear or all"),
                         *Suite));
             });
     }
@@ -256,8 +258,10 @@ void UFoundationRuntimeProbe::BeginPlay()
     if (bSwim) AddSwimCases();
     if (bBody) AddBodyCases();
     if (bMobs) AddMobCases();
+    if (bSmear) AddSmearCases();
     if (bInteraction || bViews) AddCommandsCases();
     if (bInteraction) AddDeathCases();
+    if (bInteraction) AddFootstepCases();
     if (Suite == TEXT("all") || bPause) AddPauseMenuCases();
     if (FParse::Param(FCommandLine::Get(), TEXT("HudCaptures"))) AddHudCases();
     TotalStarted = Started = FPlatformTime::Seconds();

@@ -59,7 +59,9 @@ enum class EFoundationBlockEntityKind : uint8
 {
     Furnace,
     // A barrel (T1 step 9): 27 slots, no ticks.
-    Barrel
+    Barrel,
+    // A chest or trapped chest half (T1 step 18-chest): 27 slots, no ticks; a double chest is two.
+    Chest
 };
 
 // One block's entity: its kind, the block id it belongs to, its slots and (a furnace) its timers.
@@ -71,7 +73,8 @@ struct FFoundationBlockEntity
     static constexpr int32 BarrelSlots = 27;
     static int32 GetSlots(EFoundationBlockEntityKind Kind)
     {
-        return Kind == EFoundationBlockEntityKind::Barrel ? BarrelSlots : FurnaceSlots;
+        return Kind == EFoundationBlockEntityKind::Barrel || Kind == EFoundationBlockEntityKind::Chest ? BarrelSlots
+                                                                                                       : FurnaceSlots;
     }
 
     EFoundationBlockEntityKind Kind = EFoundationBlockEntityKind::Furnace;
@@ -83,6 +86,9 @@ struct FFoundationBlockEntity
     // Recipe index (FFoundationCooking, stable while the rules' items are) -> items cooked since the output was last
     // taken; their XP is paid then (or on a break).
     TMap<int32, int32> RecipesUsed;
+    // A chest half's viewers when last counted (FFoundationAuthority::UpdateContainerOpen): a double chest's count is
+    // both halves' and kept on each.
+    int32 Viewers = 0;
 
     bool IsLit() const { return LitTime > 0; }
 };

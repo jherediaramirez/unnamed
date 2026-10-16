@@ -6,6 +6,11 @@ namespace
     constexpr double SimulationEpsilon = 1e-6;
     // The input scale while an item is in use (step 10, eating): about 20% (facts.md section 5, unverified).
     constexpr double ItemUseInputMultiplier = .2;
+    // Climbing (VALUES "Ladder speed", movement.ladder_clamp): each horizontal axis and the descent clamp to 0.15
+    // blocks a tick; pushing into a wall or jumping sets 0.2 blocks a tick up before gravity and drag (movement.ladder,
+    // source-inspected: provisional, provisional-values.md).
+    constexpr double ClimbClampCmPerTick = .15 * UFoundationProfile::BlockCm;
+    constexpr double ClimbUpCmPerTick = .2 * UFoundationProfile::BlockCm;
 
     bool Overlap(double A0, double A1, double B0, double B1)
     {
@@ -169,7 +174,8 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         : bCrouched                  ? TEXT("sprint start blocked: crouch")
         : !Forward                   ? TEXT("sprint needs forward")
                                      : TEXT("eligible: unhindered fixture");
-    const double FovTarget = (bFlying ? P.FlyingFovMultiplier : 1.) * (bSprinting ? P.SprintFovMultiplier : 1.);
+    const double FovTarget =
+        (bFlying ? P.FlyingFovMultiplier : 1.) * (bSprinting ? P.SprintFovMultiplier : 1.) * Intent.ItemFovMultiplier;
     FovMultiplier += (FovTarget - FovMultiplier) * P.FovSmoothingPerTick;
     if (VelocityPerTick.SizeSquared2D() < FMath::Square(P.StopCutoffCmPerTick))
         VelocityPerTick.X = VelocityPerTick.Y = 0;
@@ -205,6 +211,14 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         VelocityPerTick.Z += (int32(Intent.bJump) - int32(Intent.bCrouch)) * P.FlyVerticalCmPerTick;
     if (InFluid && Eligibility.bMobile)
         VelocityPerTick.Z += (int32(Intent.bJump) - int32(Intent.bCrouch)) * P.SwimVerticalCmPerTick;
+    // Climbing clamps the speed; sneaking holds the height.
+    bClimbing = Eligibility.bOnClimbable && !InFluid && !bFlying;
+    if (bClimbing)
+    {
+        VelocityPerTick.X = FMath::Clamp(VelocityPerTick.X, -ClimbClampCmPerTick, ClimbClampCmPerTick);
+        VelocityPerTick.Y = FMath::Clamp(VelocityPerTick.Y, -ClimbClampCmPerTick, ClimbClampCmPerTick);
+        VelocityPerTick.Z = FMath::Max(VelocityPerTick.Z, Intent.bCrouch ? 0. : -ClimbClampCmPerTick);
+    }
     FBox Box = Bounds(Feet, HeightCm, P.WidthCm);
     FVector Wanted = VelocityPerTick;
     if (!bFlying && Intent.bCrouch && Wanted.Z <= 0 &&
@@ -250,6 +264,7 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
     }
     bHorizontalCollision =
         FMath::Abs(Wanted.X - Moved.X) > SimulationEpsilon || FMath::Abs(Wanted.Y - Moved.Y) > SimulationEpsilon;
+    const bool bClimbUp = bClimbing && (bHorizontalCollision || Jump);
     // Vanilla ignores sufficiently shallow glancing collisions for stopping sprint.
     if (bHorizontalCollision && Wanted.SizeSquared2D() > SimulationEpsilon && Moved.SizeSquared2D() > SimulationEpsilon)
     {
@@ -264,7 +279,8 @@ void FFoundationSimulation::Step(const FFoundationIntent& Intent, double YawDegr
         if (FMath::Abs(Wanted[Axis] - Moved[Axis]) > SimulationEpsilon) VelocityPerTick[Axis] = 0;
     Feet += Moved;
     LastDisplacement = Moved;
-    FallDistanceCm = bGrounded || bFlying ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);
+    FallDistanceCm = bGrounded || bFlying || bClimbing ? 0 : FallDistanceCm + FMath::Max(0., -Moved.Z);
+    if (bClimbUp) VelocityPerTick.Z = ClimbUpCmPerTick;
     if (InFluid)
     {
         // Fluid drag on every axis, then the fluid's gravity (the probe's order). Sprinting with the eyes under keeps

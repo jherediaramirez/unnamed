@@ -58,6 +58,11 @@ struct FVoxelDecorationOptions
     // nothing, and a tree decorator not built yet is left out, all counted by Describe. Off: trees are skipped as
     // before S9a, so S8's goldens and hashes reproduce. Needs bPlants.
     bool bTrees = true;
+    // voxel.Decoration.FireflyBushAsGrass 1 (the runtime's default) sets this: firefly_bush's three patches
+    // (patch_firefly_bush_near_water, _near_water_swamp, _swamp) place short_grass instead, with the same tries,
+    // offsets and predicates, would_survive tested against short_grass (beyond vanilla, Jesus via PM 4, survival B4a).
+    // Off here, so tests that build their own options keep 26.3's decoration.
+    bool bFireflyBushAsShortGrass = false;
     // When set, only the placed features it accepts (by full id) run.
     TFunction<bool(FStringView)> Filter;
     EVoxelDecorationMutation Mutation = EVoxelDecorationMutation::None;
@@ -145,6 +150,7 @@ public:
     const FVoxelStateProviders& GetProviders() const { return Providers; }
     // The skipped placed features' reasons with their counts.
     const TMap<FString, int32>& GetSkipped() const { return Skipped; }
+    int32 GetFireflyBushSwaps() const { return FireflyBushSwaps; }
     // Trees (S9a): the configurations compiled (the fallen trees' and huge mushrooms' since S9d part 2), the selector
     // entries placing nothing (trees whose placer is not built), and the tree decorators not built yet (left out), by
     // type.
@@ -252,6 +258,8 @@ private:
     const FVoxelBlockTable* Table = nullptr;
     uint64 WorldSeed = 0;
     FVoxelDecorationOptions Options;
+    // The provider states and would_survive tests bFireflyBushAsShortGrass swapped.
+    int32 FireflyBushSwaps = 0;
     // In run order: by step, then index in the step.
     TArray<FFeature> Features;
     TArray<FOre> Ores;

@@ -446,6 +446,7 @@ namespace
         Options.bFreezeLast = VoxelConsole::CVarDecorationFreezeLast.GetValueOnGameThread();
         Options.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
         Options.bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
+        Options.bFireflyBushAsShortGrass = VoxelConsole::CVarDecorationFireflyBushAsGrass.GetValueOnGameThread();
         FVoxelDecorator Decorator;
         if (!Decorator.Initialize(
                 Graph, *Blocks, Terrain.GetBiomeSource()->GetTable(), Terrain.GetSeed(), Options, &Error))

@@ -315,6 +315,10 @@ bool FFoundationMobView::Prepare(EFoundationMobType Type)
             Component->SetStaticMesh(Mesh);
             Component->SetMaterial(0, Skin);
             Component->SetNumCustomDataFloats(1);
+            // K-PLAYER-7: the instances move, not the component, so each keeps its previous transform: the engine then
+            // writes the part's motion vectors (without them the anti-aliasing took a moving mob for still scenery and
+            // smeared its texture).
+            Component->SetHasPerInstancePrevTransforms(true);
             Component->SetMobility(EComponentMobility::Movable);
             Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
             Component->SetCanEverAffectNavigation(false);
@@ -368,6 +372,9 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
         for (const TPair<double, int32>& Entry : Order)
         {
             const FFoundationMob& Mob = Mobs[Entry.Value];
+            // A mob new to its slot starts still; one drawn there last frame moves from where it was. (A mob before it
+            // going moves the later ones down a slot: they draw one frame without motion.)
+            const bool bSameMob = Draw.SlotMobs.IsValidIndex(Slot) && Draw.SlotMobs[Slot] == Mob.Id;
             const FTransform Root = MakeRootTransform(Mob, Origin, Alpha);
             // [hurt.overlay, mobs.hurt_overlay] red while hurt or dying.
             const float Overlay = Mob.HurtTime > 0 || Mob.DeathTime > 0 ? 1.f : 0.f;
@@ -386,12 +393,23 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
                     FPartDraw& PartDraw = Layer.Parts[PartIndex];
                     if (!PartDraw.Component) continue;
                     PartDraw.Component->SetCustomDataValueById(PartDraw.Ids[Slot], 0, Overlay);
+                    FTransform Previous = World;
+                    if (bSameMob)
+                        PartDraw.Component->GetInstanceTransform(
+                            PartDraw.Component->GetInstanceIndexForId(PartDraw.Ids[Slot]), Previous, true);
+                    PartDraw.Component->SetPreviousTransformById(PartDraw.Ids[Slot], Previous, true);
                     PartDraw.Component->UpdateInstanceTransformById(PartDraw.Ids[Slot], World, true);
                 }
             }
+            if (Draw.SlotMobs.IsValidIndex(Slot))
+                Draw.SlotMobs[Slot] = Mob.Id;
+            else
+                Draw.SlotMobs.Add(Mob.Id);
             ++Slot;
             ++Drawn;
         }
+        // The slots past the last drawn are hidden: a mob drawn there later is new to its slot.
+        Draw.SlotMobs.SetNum(Slot);
         for (FLayerDraw& Layer : Draw.Layers)
             for (FPartDraw& PartDraw : Layer.Parts)
             {

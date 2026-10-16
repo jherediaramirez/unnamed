@@ -479,9 +479,8 @@ void AFoundationController::NoteInteraction(const AFoundationPawn& FoundationPaw
         TEXT("interacted"), TEXT("tool broke"), TEXT("target down"), TEXT("lab reset"), TEXT("popped"),
         TEXT("picked up"), TEXT("eating"), TEXT("ate"), TEXT("stripped"), TEXT("took xp"), TEXT("filled"),
         TEXT("emptied"), TEXT("extinguished"), TEXT("opened"), TEXT("mob sound"), TEXT("equipped"), TEXT("used"),
-        TEXT("blocked"), TEXT("shield disabled")};
-    static_assert(
-        UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::BlockingDisabled) + 1, "one name per event kind");
+        TEXT("blocked"), TEXT("shield disabled"), TEXT("arrow sound")};
+    static_assert(UE_ARRAY_COUNT(Kinds) == int32(EFoundationEventKind::ArrowSound) + 1, "one name per event kind");
     for (const FFoundationEvent& Event : Authority->GetEvents())
     {
         if (Event.Serial <= LastInteractionEvent) continue;

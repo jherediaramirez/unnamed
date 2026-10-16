@@ -52,7 +52,7 @@ Targeting, mining, placing, the HUD and the creative inventory stay the Foundati
 |---|---|---|---|
 | `MenuVideo` | `menuvideo` | `UMenuVideoSettings` | Fullscreen, frame limit, VSync, GUI scale, menu blur; saved to `Saved/Config/MenuVideoSettings.ini`. |
 | `MenuInput` | `menuinput` | `UMenuInputBridge` -> `UUnnamedInputSubsystem` | Player-mappable bindings and Hold/Toggle sprint/crouch; saved in the Enhanced Input SaveGame slot. |
-| `MenuPreferences` | `menupreferences` | `UMenuPreferences` (GameInstance subsystem) | 101 further options, language, pack order, two flags; saved to `Saved/Config/MenuPreferences.json`. |
+| `MenuPreferences` | `menupreferences` | `UMenuPreferences` (GameInstance subsystem) | 102 further options (Master Volume and Bass applied by UMenuAudioSettings), language, pack order, two flags; saved to `Saved/Config/MenuPreferences.json`. |
 | `MenuApplication` | `menuapplication` | `UMenuApplication` | Quit Game, world travel and saved worlds (create, list, rename, delete); worlds are saved to `Saved/Worlds/<id>/world.json`. |
 | `FoundationMenu` | `foundationmenu` | `UFoundationMenuBridge` | Foundation pause menu and binding-capture handoff (Foundation map only). |
 

@@ -1,5 +1,5 @@
 const preferenceSettings = new Set(Object.keys(PREFERENCE_SCHEMA.settings));
-// The 101 saved menu preferences, language, pack order and two flags through the
+// The 102 saved menu preferences, language, pack order and two flags through the
 // menupreferences service. Edits queue in order; Done-style commits are transactions.
 const MenuPreferences = (() => {
   const client = MenuBridge.client('menupreferences', {service: 'preferences',

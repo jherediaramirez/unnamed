@@ -92,6 +92,8 @@ namespace
         FVoxelDecorationOptions DecorationOptions;
         DecorationOptions.bPlants = VoxelConsole::CVarDecorationPlants.GetValueOnGameThread();
         DecorationOptions.bTrees = VoxelConsole::CVarDecorationTrees.GetValueOnGameThread();
+        DecorationOptions.bFireflyBushAsShortGrass =
+            VoxelConsole::CVarDecorationFireflyBushAsGrass.GetValueOnGameThread();
         if (!Terrain->IsValid() ||
             !Decorator.Initialize(
                 Graph, *Table, Terrain->GetBiomeSource()->GetTable(), Terrain->GetSeed(), DecorationOptions, &Error))

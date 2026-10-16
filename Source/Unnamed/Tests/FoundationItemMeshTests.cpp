@@ -288,9 +288,10 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
         Good += bGood;
         Shared += Corners;
     }
-    // 154 since T2 19a2 appended the armor pieces' sprites (121 before; textures.json holds 154).
-    TestEqual(TEXT("154 sprites extrude to closed meshes"), Good, 154);
-    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 154 sprites: %d"), Shared));
+    // 159 since T2 19c appended the bow's four sprites and the arrow's (154 since T2 19a2's armor pieces, 121 before;
+    // textures.json holds 159).
+    TestEqual(TEXT("159 sprites extrude to closed meshes"), Good, 159);
+    AddInfo(FString::Printf(TEXT("depth edges shared at diagonal corners across the 159 sprites: %d"), Shared));
 
     int32 Resolved = 0;
     for (const FFoundationItemAsset& Item : Assets->Items)
@@ -302,9 +303,9 @@ bool FFoundationItemsMeshTest::RunTest(const FString&)
         if (!bResolved) AddError(TEXT("no first-person model for ") + Item.Id.ToString());
         Resolved += bResolved;
     }
-    // 143 since T2 19a2 appended the 29 armor pieces (114 before); items.json holds 144: the shield (T2 19b) draws its
-    // special model (FindSpecialView), not a layered one.
-    TestEqual(TEXT("143 items have a first-person model and transform"), Resolved, 143);
+    // 145 since T2 19c appended the bow and the arrow (143 since T2 19a2's 29 armor pieces, 114 before); items.json
+    // holds 146: the shield (T2 19b) draws its special model (FindSpecialView), not a layered one.
+    TestEqual(TEXT("145 items have a first-person model and transform"), Resolved, 145);
     FFoundationItemModelView Pickaxe, Spear, SpearGui;
     TestTrue(TEXT("iron pickaxe: its own model and sprite, item/generated's first person (handheld inherits it)"),
         Assets->FindModelView(TEXT("iron_pickaxe"), TEXT("firstperson_righthand"), Pickaxe) &&
@@ -415,6 +416,46 @@ bool FFoundationItemsShieldMeshTest::RunTest(const FString& Parameters)
             Raised.Display->Translation.Equals(FVector(-15, 3.25, -11)) && Raised.Display->Scale.Equals(FVector(1.25)));
     TestFalse(TEXT("an iron pickaxe is no special model"),
         Assets->FindSpecialView(TEXT("iron_pickaxe"), TEXT("firstperson_righthand"), Pickaxe, false));
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationItemsBowModelsTest, "Unnamed.Foundation.Items.BowModels", ItemMeshTestFlags)
+
+// The bow's definition (step 19c): a using_item condition over a use_duration range_dispatch (scale 0.05; 0.65
+// pulling_1, 0.9 pulling_2, fallback pulling_0; the jar's items/bow.json). Mutations: thresholds swapped (13 ticks
+// draws pulling_2); the first range case taken as a plain one (every use draws pulling_1).
+bool FFoundationItemsBowModelsTest::RunTest(const FString& Parameters)
+{
+    const UFoundationItemAssets* Assets = UFoundationItemAssets::LoadDefault();
+    if (!TestNotNull(TEXT("DA_Items"), Assets)) return false;
+    auto Model = [Assets](bool bUsing, int32 Ticks)
+    {
+        FFoundationItemModelView View;
+        const bool bFound = Assets->FindModelView(TEXT("bow"), TEXT("firstperson_righthand"), View, bUsing, Ticks);
+        return bFound && View.Model && View.Display ? View.Model->Name : FName();
+    };
+    TestEqual(TEXT("not drawing: item/bow"), Model(false, 0), FName(TEXT("item/bow")));
+    TestEqual(TEXT("not drawing at 30 ticks: item/bow"), Model(false, 30), FName(TEXT("item/bow")));
+    const int32 Ticks[] = {0, 12, 13, 17, 18, 40};
+    const TCHAR* Want[] = {TEXT("item/bow_pulling_0"), TEXT("item/bow_pulling_0"), TEXT("item/bow_pulling_1"),
+        TEXT("item/bow_pulling_1"), TEXT("item/bow_pulling_2"), TEXT("item/bow_pulling_2")};
+    for (int32 Index = 0; Index < 6; ++Index)
+        TestEqual(FString::Printf(TEXT("drawing %d ticks"), Ticks[Index]), Model(true, Ticks[Index]), FName(Want[Index]));
+    // The data: scale 0.05, thresholds 0.65 and 0.9, the fallback's -1 (below any use: a 0 would tie a 0 threshold).
+    const FFoundationItemAsset* Bow = Assets->FindItem(TEXT("bow"));
+    TestTrue(TEXT("bow cases: item/bow plain, then 0.65, 0.9 and the fallback -1 at scale 0.05"),
+        Bow && Bow->Models.Num() == 4 && Bow->Models[0].RangeScale == 0 && Bow->Models[1].RangeScale == .05f &&
+            Bow->Models[1].RangeThreshold == .65f && Bow->Models[2].RangeThreshold == .9f &&
+            Bow->Models[3].RangeThreshold == -1.f && Bow->Models[3].RangeScale == .05f);
+    // Other items ignore the use ticks: a raised shield stays item/shield_blocking.
+    FFoundationItemModelView Shield;
+    Assets->FindModelView(TEXT("shield"), TEXT("firstperson_righthand"), Shield, true, 100);
+    TestTrue(TEXT("a raised shield at 100 use ticks: item/shield_blocking (its special case's base model)"),
+        Shield.Model && Shield.Model->Name == TEXT("item/shield_blocking") && Shield.Special == TEXT("shield"));
+    FFoundationItemModelView Arrow;
+    TestTrue(TEXT("the arrow: item/arrow, one layer"),
+        Assets->FindModelView(TEXT("arrow"), TEXT("firstperson_righthand"), Arrow) && Arrow.Model &&
+            Arrow.Model->Name == TEXT("item/arrow") && Arrow.Texture);
     return true;
 }
 #endif

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Foundation/FoundationArrows.h"
 #include "Foundation/FoundationBlockPlacement.h"
 #include "Foundation/FoundationBlocks.h"
 #include "Foundation/FoundationContainer.h"
@@ -196,7 +197,7 @@ struct FFoundationPlayerFacts
     // Horizontal distance moved over the last reference step (the sweep's movement rule).
     double StepMovedCm = 0;
     bool bGrounded = true, bSprinting = false, bBodyInWater = false, bEyesInWater = false;
-    // No ladders, mounts or effects yet; kept so the critical rule reads like the reference.
+    // Climbing since B4b; no mounts or effects yet, kept so the critical rule reads like the reference.
     bool bClimbing = false, bPassenger = false, bMobilityRestricted = false;
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
@@ -272,6 +273,10 @@ struct FFoundationLabOptions
     // Barrels (T1 step 9): a right-click opens the block's 27-slot menu and the block is open while viewed. Off, as
     // before: no menu (the click passes on and places). The pawn copies foundation.Barrel in before each step.
     bool bBarrel = false;
+    // Chests and trapped chests (T1 step 18-chest): a right-click opens the 27-slot menu (54 over a double chest) and
+    // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
+    // foundation.Chest in before each step.
+    bool bChest = false;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -390,7 +395,10 @@ enum class EFoundationEventKind : uint8
     Blocked,
     // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
     // sound, Amount the cooldown in ticks.
-    BlockingDisabled
+    BlockingDisabled,
+    // An arrow's sound (step 19c): Interaction entity.arrow.shoot, .hit or .hit_player, LocationCm where (world cm),
+    // Amount the volume, Pitch the pitch, EntityId the arrow.
+    ArrowSound
 };
 
 // What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
@@ -436,6 +444,8 @@ struct FFoundationItemUse
     int64 LastStep = -1;
     // A blocks_attacks use (the shield, step 19b): raised, not eaten; no effects and no finish.
     bool bBlocks = false;
+    // A bow's draw (step 19c): no effects and no finish; the release shoots (ReleaseBow).
+    bool bDraws = false;
 };
 
 // A hit with a source on a player (survival step 19b): where it came from (world cm, the block world's frame) and the
@@ -446,6 +456,8 @@ struct FFoundationAttack
     float Amount = 0;
     FVector SourceCm = FVector::ZeroVector;
     float DisableBlockingSeconds = 0;
+    // The attacker's name in the death message (an arrow's shooter, step 19c); empty for none.
+    FString Attacker;
 };
 
 namespace FoundationBucket
@@ -482,6 +494,8 @@ struct FFoundationOpenMenu
     FIntVector Cell = FIntVector::ZeroValue;
     FName Block;
     TArray<FFoundationItemInstance> Grid;
+    // A double chest's other half when it opened (T1 step 18-chest), so its viewers update when it no longer pairs.
+    TOptional<FIntVector> Partner;
 
     bool IsOpen() const { return ContainerId != 0; }
 };
@@ -520,6 +534,8 @@ struct FFoundationPlayer
     int32 ExperienceDelay = 0, PendingExperience = 0;
     // Mob hits since its owner last took them (TakeMobHits).
     TArray<FFoundationMobHit> MobHits;
+    // Arrow hits since its owner last took them (TakeArrowHits; step 19c): each goes through HurtPlayer.
+    TArray<FFoundationAttack> ArrowHits;
     // The container open besides the inventory (survival step 7); its last id (vanilla counts 1-100, then wraps).
     FFoundationOpenMenu OpenMenu;
     int32 LastContainerId = 0;
@@ -672,6 +688,13 @@ public:
     int32 TakeExperience(int32 Player);
     // The mob hits on a player since the last call (survival T6 20c; its owner hurts its vitals with each).
     TArray<FFoundationMobHit> TakeMobHits(int32 Player);
+    // Arrows (survival step 19c), oldest first; Reset clears them. ShootArrow launches one (the bow's release; T6 20d's
+    // skeleton): its id, with an entity.arrow.shoot ArrowSound only from a player; 0 with foundation.Items.Bow 0.
+    const TArray<FFoundationArrow>& GetArrows() const { return Arrows; }
+    int32 ShootArrow(const FFoundationArrowShot& Shot);
+    // The arrow hits on a player since the last call: its owner applies each through HurtPlayer.
+    TArray<FFoundationAttack> TakeArrowHits(int32 Player);
+    int32 RemoveArrows();
     // Armor (survival step 19a): the worn pieces' armor and toughness (each piece counts only in its own slot; none
     // with foundation.Inventory.Full 0, which has no armor slots). Its owner sets them on its vitals every step.
     void GetWornArmor(int32 Player, int32& OutArmor, float& OutToughness) const;
@@ -739,6 +762,8 @@ public:
     int32 MobCycles = 0, MobsCycleSpawned = 0;
     // Survival T6 20c: melee hits monsters landed on players; sun ignitions.
     int32 MobMeleeHits = 0, MobSunBurns = 0;
+    // Survival step 19c: arrows shot, arrows that hit an entity, arrows picked up.
+    int32 ArrowsShot = 0, ArrowHits = 0, ArrowsPickedUp = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
     // Survival T6 20c2: the monster cycle's runs (under the cap) and spawns, its last census and cap; monsters
@@ -760,6 +785,9 @@ private:
     const FBlockUseEntry* FindBlockUse(FName BlockId) const;
     // The open menu's container slots: the crafting table's grid, or its block entity's (a copy).
     TArray<FFoundationItemInstance> GetMenuGrid(const FFoundationPlayer& Player) const;
+    // The cells whose block entities hold an open menu's container slots, in menu order: its own cell, or a double
+    // chest's type=right then type=left half. False when a double chest's halves are no longer paired.
+    bool GetMenuCells(const FFoundationOpenMenu& Open, TArray<FIntVector, TInlineAllocator<2>>& OutCells) const;
     // Whether the player's open menu still has its block (and its block entity) at its cell, within reach.
     bool IsMenuValid(const FFoundationPlayer& Player) const;
     // Closes the open menu (ContainerClose): the cursor, the crafting grid, then the 2x2 back into the inventory, the
@@ -783,8 +811,14 @@ private:
     // A barrel's open state follows its viewers (T1 step 9; SURVIVAL-RUN2-FINDINGS R16,
     // survival2.r16.animation_and_viewers): the first opens it and plays block.barrel.open, the last one leaving closes
     // it and plays block.barrel.close, as a plain state change (no place event). Nothing for a cell that is no barrel
-    // (broken while viewed: vanilla's removed block entity plays nothing).
-    void UpdateBarrelOpen(const FIntVector& Cell);
+    // (broken while viewed: vanilla's removed block entity plays nothing). A chest's goes to UpdateChestOpen.
+    void UpdateContainerOpen(const FIntVector& Cell);
+    // After a barrel or chest menu went away (closed, replaced, its player removed): its block's viewers, and a double
+    // chest's other half's.
+    void UpdateViewers(const FFoundationOpenMenu& Left);
+    // A chest's viewers (T1 step 18-chest; it has no open state): the count of the pair, kept on its halves' entities;
+    // the first viewer plays block.chest.open and the last one leaving block.chest.close, once per double chest.
+    void UpdateChestOpen(const FIntVector& Cell);
     FFoundationFurnaceRules MakeFurnaceRules() const;
     // Pays a furnace's stored XP as orbs at LocalCm (its output taken, or the furnace broken) and clears it.
     void PayFurnaceExperience(FFoundationBlockEntity& Furnace, const FVector& LocalCm, int32 RandomSeed);
@@ -921,6 +955,13 @@ private:
     TMap<FIntPoint, FMobColumnTops> MobColumnTops;
     TMap<FIntVector, FMobEmitters> MobEmitters;
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
+    // Survival step 19c: the bow's release (power from the draw; an arrow, a durability, the shoot sound), the
+    // inventory slot an arrow is taken from (vanilla's order: the offhand, the main hand, then slots 0-35; INDEX_NONE
+    // for none), the arrows' flight, hits, sticking, pickup and despawn, and their sounds.
+    void ReleaseBow(FFoundationPlayer& Player, int32 UseTicks, const FFoundationVitals& Vitals);
+    int32 FindArrowSlot(const FFoundationPlayer& Player) const;
+    void StepArrows();
+    void AddArrowSound(const FFoundationArrow& Arrow, const TCHAR* Sound, float Volume, float Pitch);
     // Survival T6 20b: a sheep standing in a plant it eats (IsSheepFood) or on a grass block; eating it (the plant
     // goes, or the block turns to dirt).
     bool CanGraze(const FFoundationMob& Mob) const;
@@ -940,7 +981,10 @@ private:
     TArray<FFoundationItemEntity> ItemEntities;
     TArray<FFoundationExperienceOrb> ExperienceOrbs;
     TArray<FFoundationMob> Mobs;
-    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId;
+    TArray<FFoundationArrow> Arrows;
+    int32 NextItemEntityId = 1, NextOrbId = 1, NextMobId = FoundationMobs::FirstId, NextArrowId = 1;
+    // The arrows' spread, crits and sound pitches (deterministic per session).
+    FRandomStream ArrowRandom = FRandomStream(19);
     int64 EventSerial = 0;
     int32 SessionId = 1;
     int32 NextPlayerId = 1;

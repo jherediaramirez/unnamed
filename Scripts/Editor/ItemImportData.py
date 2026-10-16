@@ -171,8 +171,14 @@ def build(root):
             using = when is not None and when["property"] == "using_item"
             contexts = [] if when is None or using or when["is"] == "fallback" else \
                 ([when["is"]] if isinstance(when["is"], str) else list(when["is"]))
+            # A use_duration range_dispatch case (the bow's pulling models, 19c): its scale and threshold, -1 for the
+            # fallback; 0 and 0 for every other case.
+            rng = case.get("range")
             cases.append({"model": case["model"], "contexts": contexts,
-                          "using_item": (1 if when["is"] == [True] else 0) if using else -1})
+                          "using_item": (1 if when["is"] == [True] else 0) if using else -1,
+                          "range_scale": float(rng["scale"]) if rng else 0.0,
+                          "range_threshold": (-1.0 if rng["threshold"] is None else float(rng["threshold"]))
+                          if rng else 0.0})
         out_items.append({
             "id": item["id"], "display_name": item["name"], "protocol_id": item["protocol_id"],
             "group": item["group"] or "", "material": item["material"] or "", "kind": item["kind"] or "",

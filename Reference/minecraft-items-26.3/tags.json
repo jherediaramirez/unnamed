@@ -8,6 +8,18 @@
     "spider_eye"
    ]
   },
+  "arrows": {
+   "values": [
+    "minecraft:arrow",
+    "minecraft:tipped_arrow",
+    "minecraft:spectral_arrow"
+   ],
+   "resolved": [
+    "arrow",
+    "spectral_arrow",
+    "tipped_arrow"
+   ]
+  },
   "axes": {
    "values": [
     "minecraft:diamond_axe",
@@ -376,6 +388,14 @@
     "netherite_helmet",
     "netherite_leggings",
     "turtle_helmet"
+   ]
+  },
+  "enchantable/bow": {
+   "values": [
+    "minecraft:bow"
+   ],
+   "resolved": [
+    "bow"
    ]
   },
   "enchantable/chest_armor": {
@@ -1457,6 +1477,14 @@
     "wooden_shovel"
    ]
   },
+  "skeleton_preferred_weapons": {
+   "values": [
+    "minecraft:bow"
+   ],
+   "resolved": [
+    "bow"
+   ]
+  },
   "spears": {
    "values": [
     "minecraft:diamond_spear",
@@ -1611,6 +1639,16 @@
     "potato",
     "torchflower_seeds",
     "wheat_seeds"
+   ]
+  },
+  "wither_skeleton_disliked_weapons": {
+   "values": [
+    "minecraft:bow",
+    "minecraft:crossbow"
+   ],
+   "resolved": [
+    "bow",
+    "crossbow"
    ]
   },
   "wolf_collar_dyes": {
