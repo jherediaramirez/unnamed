@@ -40,23 +40,52 @@ if(!guards)throw Error('No missing-asset guards found in Source/Unnamed/Tests');
 const buildCs=fs.readFileSync(path.join(root,'Source/Unnamed/Unnamed.Build.cs'),'utf8');
 const staged=[...buildCs.matchAll(/RuntimeDependencies\.Add\(\s*"\$\(ProjectDir\)\/(Reference\/[^"]+)"/g)].map(m=>m[1]);
 const covers=file=>staged.some(s=>s.endsWith('/...')?file.startsWith(s.slice(0,-3)):file===s);
+// A root is one TEXT("Reference/<root>...") literal or split pieces: TEXT("Reference"), TEXT("<root>") (QC RQ02-1).
+const referenceRoots=text=>[...text.matchAll(/TEXT\("(Reference\/[^/"]+)/g)].map(m=>m[1]).concat(
+  [...text.matchAll(/TEXT\("Reference\/?"\)\s*(?:,|\/)\s*TEXT\("\/?([^/"]+)/g)].map(m=>'Reference/'+m[1]));
+for(const [sample,want] of [['FPaths::Combine(FPaths::ProjectDir(), TEXT("Reference"), TEXT("minecraft-x-26.3"))','Reference/minecraft-x-26.3'],
+  ['FPaths::ProjectDir() / TEXT("Reference") / TEXT("minecraft-y-26.3/data")','Reference/minecraft-y-26.3'],
+  ['TEXT("Reference/minecraft-z-26.3/attributes.json")','Reference/minecraft-z-26.3']])
+  if(!referenceRoots(sample).includes(want))throw Error(`The runtime reference scan misses ${want} in: ${sample}`);
 const readRoots=new Map();
 const walk=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
   const p=path.join(dir,e.name);
   if(e.isDirectory()){if(p!==testsDir)walk(p);continue;}
   if(!/\.(cpp|h)$/.test(e.name))continue;
-  for(const m of fs.readFileSync(p,'utf8').matchAll(/TEXT\("(Reference\/[^/"]+)/g))readRoots.set(m[1],path.relative(root,p));
+  for(const r of referenceRoots(fs.readFileSync(p,'utf8')))readRoots.set(r,path.relative(root,p));
 }};
 walk(path.join(root,'Source/Unnamed'));
 if(!readRoots.size)throw Error('No runtime Reference/ reads found in Source/Unnamed');
 for(const [refRoot,file] of readRoots)if(!staged.some(s=>s.startsWith(refRoot+'/')))throw Error(`${file} reads ${refRoot} at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
-// The files those roots' readers open (VoxelWorldgen, VoxelTerrainFactory::ReadInputs, VoxelSkyReference).
+// The files those roots' readers open (VoxelWorldgen, VoxelTerrainFactory::ReadInputs, VoxelSkyReference, and the
+// voxel.BiomeMap console command's jar shares, QC RQ02-2).
 const runtimeReads=['Reference/minecraft-worldgen-26.3/data/minecraft/worldgen/noise_settings/overworld.json',
-  'Reference/minecraft-worldgen-26.3/facts/biome_parameters.json',
+  'Reference/minecraft-worldgen-26.3/facts/biome_parameters.json','Reference/minecraft-worldgen-26.3/facts/biome_lookup_samples.json',
   ...['grass','foliage','dry_foliage'].map(n=>`Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/${n}.png`),
   'Reference/minecraft-sky-26.3/data/minecraft/timeline/day.json','Reference/minecraft-sky-26.3/attributes.json'];
 for(const f of runtimeReads){
   if(!fs.existsSync(path.join(root,f)))throw Error(`${f} is missing`);
   if(!covers(f))throw Error(`${f} is read at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
 }
-console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test, ${readRoots.size} runtime reference roots and ${runtimeReads.length} runtime reference files staged.`);
+// A packaged game is monolithic: its globals are constructed before main, when there is no command line, GLog, config or
+// engine yet. A global object whose constructor reads one is a fatal error at static init (QC K-BUILD-4: the transition
+// probe read FCommandLine::Get, and the package exited with 777006 before writing a log). Defer such work to a delegate.
+const staticInitReads=/\b(FCommandLine::|FParse::|GLog\b|GConfig\b|GEngine\b|GIsEditor\b)/;
+const blockAt=(text,open)=>{let depth=0;for(let i=open;i<text.length;i++){if(text[i]==='{')depth++;else if(text[i]==='}'&&!--depth)return text.slice(open,i+1);}return text.slice(open);};
+const staticInitCtors=text=>{const bad=[];
+  for(const g of text.matchAll(/^ {0,4}(F\w+)\s+(G\w+)\s*;/gm)){
+    const ctor=new RegExp(`\\b${g[1]}\\(\\)\\s*(?::[^{]*)?\\{`).exec(text);
+    if(ctor&&staticInitReads.test(blockAt(text,ctor.index+ctor[0].length-1)))bad.push(`${g[2]} (${g[1]})`);
+  }return bad;};
+if(!staticInitCtors('class FProbe{FProbe(){FParse::Value(FCommandLine::Get(),TEXT("X="),V);}};\n    FProbe GProbe;\n').length)
+  throw Error('The static init scan misses a global whose constructor reads the command line');
+let globalsChecked=0;
+const walkGlobals=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+  const p=path.join(dir,e.name);
+  if(e.isDirectory()){walkGlobals(p);continue;}
+  if(!/\.cpp$/.test(e.name))continue;
+  globalsChecked++;
+  for(const g of staticInitCtors(fs.readFileSync(p,'utf8')))throw Error(`${path.relative(root,p)}: the global ${g} reads the command line, GLog, config or the engine in its constructor, before main in a package`);
+}};
+for(const d of ['Source/Unnamed','Source/UnnamedVoxel'])walkGlobals(path.join(root,d));
+console.log(`PASS: ${checked} original assets and working copies, unchanged reference hash, adapted JavaScript syntax, ray tracing residency off, ${guards} missing-asset guards fail their test, ${readRoots.size} runtime reference roots and ${runtimeReads.length} runtime reference files staged, no static-init reads in ${globalsChecked} source files.`);

@@ -26,10 +26,13 @@ public class Unnamed : ModuleRules
         }
         // The terrain reads the 26.3 worldgen data at runtime (VoxelWorldgen::GetReferenceRoot), so packages stage it at
         // the same place under the project folder: data/, and the biome parameter list the jar builds in code
-        // (VoxelWorldgen::ReadBiomeParameters). The other facts and the tools are for tests and rebuilding.
+        // (VoxelWorldgen::ReadBiomeParameters), plus the jar's lookup samples for the voxel.BiomeMap console command's
+        // jar shares (VoxelBiomeDebug, QC RQ02-2). The other facts and the tools are for tests and rebuilding.
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-worldgen-26.3/data/...", StagedFileType.NonUFS);
         RuntimeDependencies.Add(
             "$(ProjectDir)/Reference/minecraft-worldgen-26.3/facts/biome_parameters.json", StagedFileType.NonUFS);
+        RuntimeDependencies.Add(
+            "$(ProjectDir)/Reference/minecraft-worldgen-26.3/facts/biome_lookup_samples.json", StagedFileType.NonUFS);
         // The biome tints read the block reference's grass, foliage and dry foliage colormaps
         // (VoxelTerrainFactory::ReadInputs).
         RuntimeDependencies.Add(

@@ -5,6 +5,7 @@
 #include "Foundation/FoundationGrid.h"
 #include "Foundation/FoundationHud.h"
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationMobs.h"
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationVitals.h"
@@ -1380,6 +1381,54 @@ void UFoundationRuntimeProbe::AddViewsCases()
             if (bHeldLight) HeldLightShots(TEXT("torch"));
         }
     }
+    // The monsters' day (QC R35-3, in a package too: the sky reference is read from the staged Reference/): the night
+    // sky light is below 15 [survival.r10.idle_and_sun S 5457], and a zombie summoned on the open column above the
+    // player at noon catches fire. The zombie stays, as the placed blocks do.
+    auto Zombie = MakeShared<int32>(0);
+    auto Burns = MakeShared<int32>(0);
+    AddCase(
+        TEXT("views monsters at night"), .3, [SetTime] { SetTime(TEXT("midnight")); },
+        [this, Voxel, Authority]
+        {
+            float Level = -1;
+            bool bBurn = true;
+            const bool bFacts = bool(Authority().GetSkyFacts);
+            if (bFacts) Authority().GetSkyFacts(Level, bBurn);
+            Record(TEXT("views night sky light below 15"), bFacts && Level < 15 && !bBurn,
+                FString::Printf(TEXT("time of day %d; sky facts %s; sky light %.2f, monsters burn %s"),
+                    Voxel->GetClock().GetTimeOfDay(), bFacts ? TEXT("read") : TEXT("missing"), Level,
+                    bBurn ? TEXT("yes") : TEXT("no")));
+        });
+    AddCase(
+        TEXT("views zombie at noon"), 5,
+        [this, Authority, SetTime, Zombie, Burns]
+        {
+            SetTime(TEXT("noon"));
+            FFoundationAuthority& A = Authority();
+            const FVector Local = Pawn->GetActorLocation() - A.World.OriginCm;
+            const int32 X = FoundationGrid::FloorToCell(Local.X), Y = FoundationGrid::FloorToCell(Local.Y);
+            const int32 Top = A.World.GetStorage().GetTopZ(X, Y, true);
+            *Burns = A.MobSunBurns;
+            *Zombie = Top == MIN_int32
+                ? 0
+                : A.SpawnMob(EFoundationMobType::Zombie, FVector(X * 100 + 50, Y * 100 + 50, (Top + 1) * 100), 180);
+        },
+        [this, Voxel, Authority, Zombie, Burns]
+        {
+            FFoundationAuthority& A = Authority();
+            float Level = -1;
+            bool bBurn = false;
+            if (A.GetSkyFacts) A.GetSkyFacts(Level, bBurn);
+            const FFoundationMob* Mob = *Zombie ? A.FindMob(*Zombie) : nullptr;
+            Record(TEXT("views zombie burns at noon"), Mob && A.MobSunBurns > *Burns,
+                FString::Printf(TEXT("time of day %d; sky light %.2f, monsters burn %s; zombie %s, fire ticks %d, sun "
+                                     "burns %d"),
+                    Voxel->GetClock().GetTimeOfDay(), Level, bBurn ? TEXT("yes") : TEXT("no"),
+                    !*Zombie  ? TEXT("not summoned")
+                        : Mob ? *Mob->LocalCm.ToCompactString()
+                              : TEXT("gone"),
+                    Mob ? Mob->Health.FireTicks : -1, A.MobSunBurns - *Burns));
+        });
     Restore();
 #endif
 }

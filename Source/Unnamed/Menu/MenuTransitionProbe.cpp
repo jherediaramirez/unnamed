@@ -27,6 +27,7 @@
 #include "HAL/PlatformTime.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CoreDelegates.h"
+#include "Misc/DelayedAutoRegister.h"
 #include "Misc/FileHelper.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/Parse.h"
@@ -103,7 +104,13 @@ namespace
     class FTransitionProbe
     {
     public:
-        FTransitionProbe()
+        // A global: in a monolithic (packaged) build it is constructed before main, when the command line and GLog
+        // don't exist yet (QC K-BUILD-4: FCommandLine::Get here was a fatal error at static init), so it starts once
+        // the object system is up (before the first map; at once when that has passed, as for the editor's module).
+        FTransitionProbe() : StartHelper(EDelayedRegisterRunPhase::ObjectSystemReady, [this] { Start(); }) {}
+
+    private:
+        void Start()
         {
             if (!FParse::Value(FCommandLine::Get(), TEXT("TransitionProbe="), Base)) return;
             bShots = !FParse::Param(FCommandLine::Get(), TEXT("TransitionNoShots"));
@@ -125,7 +132,6 @@ namespace
             Build();
         }
 
-    private:
         FString Base, Csv;
         bool bShots = true;
         int32 Loops = 1;
@@ -398,6 +404,9 @@ namespace
                 BrowserId(B), int32(T && T->IsOverlayShown()), int32(T && T->IsTitlePainted())));
             LastRowSeconds = Now;
         }
+
+        // Last: when the phase has passed, it calls Start in the constructor, after every other member is made.
+        FDelayedAutoRegisterHelper StartHelper;
     };
 
     FTransitionProbe GTransitionProbe;
