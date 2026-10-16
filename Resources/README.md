@@ -15,8 +15,9 @@ are not kept.
 the game), then [the plan](PlayerBody/unnamed-fp-tp-integration-plan-20261015/PLAN.md).
 
 **Where it stands (2026-10-16):** M0, the asset proof (Blender export, Unreal import into the sandbox
-`C:\dev\sandbox\fpbody-m0`), is done and every gate passed. M1, the game code, is next. M2-M4 come after: the rest of
-the library, new clips, polish.
+`C:\dev\sandbox\fpbody-m0`), is done and every gate passed. M1a, the body in the game in both views, is done
+(`Docs/Records/2026-10-16-Player-Body-M1.md`; the engine's copy is `Art/Characters/UnnamedPlayer/`). M1b (the strike
+through the real hand) is next. M2-M4 come after: the rest of the library, new clips, polish.
 
 | Folder | What | Status |
 |---|---|---|

@@ -10,7 +10,7 @@
 | Branch | `main`, the only branch, here and on GitHub (since 2026-10-16 evening). Unmerged old work is kept as `archive/*` tags |
 | Latest commit | `main` on GitHub: the three QC fixes below, the 12 low fixes (`fix/qc-low-editor-12`), K-WORLD-3 (the dev seed's world starts in Creative) and chat command suggestions. Pushed 2026-10-16 evening |
 | Build | Editor built here at the `main` tip on 2026-10-16 evening |
-| Checks | Native suite 585/585 on the `main` tip (2026-10-16 evening; the full RunChecks profile last ran at `0c8d9a74`). Results are in `_STATUS\LATEST-REPORT.md` |
+| Checks | Native suite 589/589 on the `main` tip with M1a (2026-10-16 evening; the full RunChecks profile last ran at `0c8d9a74`). Results are in `_STATUS\LATEST-REPORT.md` |
 | Engine | UE 5.8 (`C:\Program Files\Epic Games\UE_5.8`) |
 
 Open it with: double-click `Unnamed.uproject`, or play directly:
@@ -47,6 +47,12 @@ Jesus decided on 2026-10-16 to start M1 of the first/third-person body now. For 
 ("no new features until the open bugs are decided"). Brief: `Resources\PlayerBody\FP-BODY-M1-BRIEF.md`. It runs on
 short-lived branches (`feature/fp-body-m1a`, then `-m1b`), each merged into `main` only after the build, the native
 suite and `-Suite body` pass, then deleted. Better Steve stays as `foundation.Body.Set 0`.
+
+- **M1a done (2026-10-16):** the Unnamed Player in both views, with the first-person copy. Crouch uses Jesus's setting
+  B. Record: `Docs\Records\2026-10-16-Player-Body-M1.md`.
+- **Next: M1b**, the pickaxe strike through the real hand.
+- **In a separate session:** the swim and P1 clips, in `Resources\PlayerBody\unnamed-player-clips-v003-20261016\`
+  (uncommitted until reviewed).
 
 ## Not in the build (on purpose)
 
