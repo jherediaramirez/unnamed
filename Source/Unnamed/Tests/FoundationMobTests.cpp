@@ -1,5 +1,6 @@
 #include "Misc/AutomationTest.h"
 #include "Dom/JsonObject.h"
+#include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "Foundation/FoundationAuthority.h"
 #include "Foundation/FoundationBlockRegistry.h"
@@ -11,6 +12,7 @@
 #include "Foundation/FoundationMobView.h"
 #include "Foundation/FoundationMobs.h"
 #include "GameFramework/Actor.h"
+#include "Materials/MaterialInterface.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -2593,6 +2595,86 @@ bool FFoundationMobFarmSwitchTest::RunTest(const FString&)
     TestEqual(TEXT("off: the bucket passes"), L.Use().Outcome, EFoundationOutcome::Pass);
     TestEqual(TEXT("off: still a bucket"), L.HeldId(), FName(TEXT("bucket")));
     TestTrue(TEXT("the console switch defaults on"), FoundationMobFarm::IsOn());
+    return true;
+}
+
+// R47-4: 20e1's switch-off contract is the base appearance, including animals already in the world. Inspect the
+// actual visible mesh instances and their skin material; checking only the saved Variant would miss this bug.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationMobFarmViewSwitchTest, "Unnamed.Foundation.Mobs.FarmViewSwitch",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationMobFarmViewSwitchTest::RunTest(const FString&)
+{
+    const UFoundationMobAssets* Assets = UFoundationMobAssets::LoadDefault();
+    if (!TestNotNull(TEXT("DA_Mobs"), Assets)) return false;
+    MobTestsLocal::FMobLab Lab;
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (World) World->AddToRoot();
+    AActor* Owner = World ? World->SpawnActor<AActor>() : nullptr;
+    if (TestNotNull(TEXT("an actor for the actual mob view"), Owner))
+    {
+        USceneComponent* Root = NewObject<USceneComponent>(Owner);
+        Owner->SetRootComponent(Root);
+        Root->RegisterComponent();
+        FFoundationMobView View(*NewObject<UFoundationInteractionView>(Owner));
+        for (EFoundationMobType Type : {EFoundationMobType::Cow, EFoundationMobType::Pig, EFoundationMobType::Chicken})
+            for (EFoundationMobVariant Variant :
+                {EFoundationMobVariant::Temperate, EFoundationMobVariant::Cold, EFoundationMobVariant::Warm})
+            {
+                Lab.A.ClearMobs();
+                const int32 Id = Lab.A.SpawnMob(Type, FVector::ZeroVector);
+                FFoundationMob* Mob = Lab.A.FindMob(Id);
+                if (!TestNotNull(TEXT("the specific animal"), Mob)) continue;
+                Mob->Variant = Variant;
+                for (const bool bFarm : {true, false, true})
+                {
+                    Lab.A.Options.bMobFarm = bFarm;
+                    View.Update(Lab.A, nullptr, 1);
+                    const FName ModelId =
+                        FoundationMobFarm::GetModelId(Type, bFarm ? Variant : EFoundationMobVariant::Temperate);
+                    const FString Tag = FString::Printf(TEXT("mob %d %s farm %d"), Id, *ModelId.ToString(), bFarm);
+                    const FFoundationMobModelAsset* Model = Assets->FindModel(ModelId);
+                    if (!TestNotNull(*(Tag + TEXT(": expected model")), Model)) continue;
+                    UTexture* ExpectedSkin = Model->Texture.LoadSynchronous();
+                    if (!TestNotNull(*(Tag + TEXT(": expected skin")), ExpectedSkin)) continue;
+                    int32 ExpectedParts = 0;
+                    for (const FFoundationMobPartAsset& Part : Model->Parts)
+                        ExpectedParts += !Part.Faces.IsEmpty();
+                    int32 MatchingParts = 0, OtherParts = 0;
+                    TArray<UInstancedStaticMeshComponent*> Parts;
+                    Owner->GetComponents(Parts);
+                    for (const UInstancedStaticMeshComponent* Part : Parts)
+                    {
+                        if (!Part->IsVisible()) continue;
+                        UTexture* Skin = nullptr;
+                        const UMaterialInterface* Material = Part->GetMaterial(0);
+                        if (Material)
+                            Material->GetTextureParameterValue(FHashedMaterialParameterInfo(TEXT("Skin")), Skin);
+                        for (int32 Instance = 0; Instance < Part->GetInstanceCount(); ++Instance)
+                        {
+                            FTransform Transform;
+                            if (!Part->GetInstanceTransform(Instance, Transform, true) ||
+                                Transform.GetScale3D().IsNearlyZero())
+                                continue;
+                            if (Skin == ExpectedSkin && Part->GetStaticMesh())
+                                ++MatchingParts;
+                            else
+                                ++OtherParts;
+                        }
+                    }
+                    TestTrue(*(Tag + TEXT(": the expected model has geometry")), ExpectedParts > 0);
+                    TestEqual(*(Tag + TEXT(": visible parts use the expected skin")), MatchingParts, ExpectedParts);
+                    TestEqual(*(Tag + TEXT(": no stale variant or duplicate parts remain visible")), OtherParts, 0);
+                    TestEqual(*(Tag + TEXT(": one whole animal")), View.GetWholeCount(), 1);
+                    TestEqual(*(Tag + TEXT(": the original variant survives toggling")), Mob->Variant, Variant);
+                }
+            }
+    }
+    if (World)
+    {
+        World->RemoveFromRoot();
+        World->DestroyWorld(false);
+    }
     return true;
 }
 #endif

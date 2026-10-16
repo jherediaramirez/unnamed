@@ -355,7 +355,20 @@ void UFoundationRuntimeProbe::AddMobCases()
             Shot(TEXT("14b-farm-off"));
         });
     Flush();
-    AddCase(TEXT("mobs: farm restore"), .1, [SetFarm] { SetFarm(1); }, [] {});
+    AddCase(
+        TEXT("mobs: farm restore"), .4, [SetFarm] { SetFarm(1); },
+        [this, Shot, Drawn, FindFarm]
+        {
+            const FFoundationMob* Cold = FindFarm(4);
+            const FFoundationMob* Warm = FindFarm(5);
+            Record(TEXT("mobs: farm 1 restores the same variant animals"),
+                Drawn() == 6 && Cold && Warm && Cold->Variant == EFoundationMobVariant::Cold &&
+                    Warm->Variant == EFoundationMobVariant::Warm,
+                FString::Printf(
+                    TEXT("drawn %d; cold mob %d; warm mob %d"), Drawn(), Cold ? Cold->Id : 0, Warm ? Warm->Id : 0));
+            Shot(TEXT("14c-farm-restored"));
+        });
+    Flush();
     // 20c1: a zombie 1.3 blocks east of a survival player (in reach: the Playground's collision gives A* no path on its
     // floor, a known issue) hits it (3 a hit on Normal, every 20 steps) through the pawn's vitals, and knocks it back
     // west.

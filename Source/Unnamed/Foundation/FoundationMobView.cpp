@@ -356,15 +356,18 @@ void FFoundationMobView::Update(const FFoundationAuthority& Authority, const AFo
     const bool bOn = Authority.Options.bMobs;
     const FVector Origin = Authority.World.OriginCm;
     const FVector Viewer = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
-    // 20e1: with farm extras off every sheep draws as before (white wool, untinted).
+    // 20e1: farm extras off draws white sheep and temperate animals, preserving their stored colours/variants.
     const bool bFarm = Authority.Options.bMobFarm;
     for (int32 DrawIndex = 0; DrawIndex < Types.Num(); ++DrawIndex)
     {
         FTypeDraw& Draw = Types[DrawIndex];
         const int32 TypeIndex = DrawIndex / VariantCount;
         const EFoundationMobVariant Variant = EFoundationMobVariant(DrawIndex % VariantCount);
-        const auto IsDrawn = [TypeIndex, Variant](const FFoundationMob& Mob)
-        { return int32(Mob.Type) == TypeIndex && Mob.Variant == Variant; };
+        const auto IsDrawn = [TypeIndex, Variant, bFarm](const FFoundationMob& Mob)
+        {
+            const EFoundationMobVariant DrawVariant = bFarm ? Mob.Variant : EFoundationMobVariant::Temperate;
+            return int32(Mob.Type) == TypeIndex && DrawVariant == Variant;
+        };
         const bool bAny = bOn && Mobs.ContainsByPredicate(IsDrawn);
         if (!bAny && !Draw.bTried) continue;
         if (bAny && !Prepare(EFoundationMobType(TypeIndex), Variant)) continue;
