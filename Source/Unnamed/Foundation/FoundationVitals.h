@@ -37,6 +37,9 @@ enum class EFoundationDamage : uint8
     // Lava contact (armor applies) and burning (bypasses armor), step 16.
     Lava,
     OnFire,
+    // An arrow (step 19c): armor applies; 26.3's arrow damage type (exhaustion 0.1, scaled by difficulty only from a
+    // living non-player: T6 20d's skeleton).
+    Arrow,
     // Fire and soul fire block contact (armor applies), survival step 16c.
     InFire
 };

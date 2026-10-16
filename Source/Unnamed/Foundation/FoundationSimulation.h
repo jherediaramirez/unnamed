@@ -37,6 +37,8 @@ struct FFoundationIntent
     bool bSprint = false, bCrouch = false, bJump = false;
     bool bAutoJump = false; // Preference "autoJump".
     int32 SprintWindowTicks = 0; // Preference "sprintWindow": double-tap sprint window; 0 disables it.
+    // The held use's FOV factor: a drawn bow's FoundationBow::GetFovTarget (step 19c); 1 otherwise.
+    double ItemFovMultiplier = 1;
 };
 
 struct UNNAMED_API FFoundationSimulation

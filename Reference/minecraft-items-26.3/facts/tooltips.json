@@ -144,6 +144,8 @@
   {"id": "netherite_chestplate", "lines": [[["Netherite Chestplate", "white"]], [], [["When on Chest:", "gray"]], [["+", "blue"], ["8", "blue"], [" ", "blue"], ["Armor", "blue"]], [["+", "blue"], ["3", "blue"], [" ", "blue"], ["Armor Toughness", "blue"]], [["+", "blue"], ["1", "blue"], [" ", "blue"], ["Knockback Resistance", "blue"]]]},
   {"id": "netherite_leggings", "lines": [[["Netherite Leggings", "white"]], [], [["When on Legs:", "gray"]], [["+", "blue"], ["6", "blue"], [" ", "blue"], ["Armor", "blue"]], [["+", "blue"], ["3", "blue"], [" ", "blue"], ["Armor Toughness", "blue"]], [["+", "blue"], ["1", "blue"], [" ", "blue"], ["Knockback Resistance", "blue"]]]},
   {"id": "netherite_boots", "lines": [[["Netherite Boots", "white"]], [], [["When on Feet:", "gray"]], [["+", "blue"], ["3", "blue"], [" ", "blue"], ["Armor", "blue"]], [["+", "blue"], ["3", "blue"], [" ", "blue"], ["Armor Toughness", "blue"]], [["+", "blue"], ["1", "blue"], [" ", "blue"], ["Knockback Resistance", "blue"]]]},
-  {"id": "shield", "lines": [[["Shield", "white"]]]}
+  {"id": "shield", "lines": [[["Shield", "white"]]]},
+  {"id": "bow", "lines": [[["Bow", "white"]]]},
+  {"id": "arrow", "lines": [[["Arrow", "white"]]]}
  ]
 }

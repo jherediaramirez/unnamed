@@ -89,10 +89,17 @@ namespace FoundationHeldPose
         double Mirror;
     };
 
-    inline FPose Get(EFoundationHand Hand, bool bFit)
+    // A drawn bow's pose (step 19c), Draw 0 to 1 over the 20-tick draw: R18's right-arm trace moves the item from
+    // (0.2807, -0.3368, -0.5637) at tick 0 to (0.3028, -0.3309, -0.5325) at tick 20
+    // (survival2.r18.held_item_transforms, partial tick 0), 1 unit = 100 cm: back 3.12, right 2.21, up 0.59, lerped
+    // (provisional; no scale, no shake).
+    constexpr double DrawBackCm = 3.12, DrawRightCm = 2.21, DrawUpCm = .59;
+
+    inline FPose Get(EFoundationHand Hand, bool bFit, double Draw = 0)
     {
         // Pivot, not Main: a unity build may put a global Main (FoundationInteractionTests.cpp) before this header.
-        const FVector Pivot = bFit ? FVector(71.9, 56.2, -52.2) : FVector(42, 24, -24);
+        const FVector Pivot = (bFit ? FVector(71.9, 56.2, -52.2) : FVector(42, 24, -24)) +
+            FVector(-DrawBackCm, DrawRightCm, DrawUpCm) * FMath::Clamp(Draw, 0., 1.);
         if (Hand == EFoundationHand::Off)
             return {TEXT("firstperson_lefthand"), FVector(Pivot.X, -Pivot.Y, Pivot.Z), -1.};
         return {TEXT("firstperson_righthand"), Pivot, 1.};

@@ -26,6 +26,7 @@ namespace
             {TEXT("player"), false, false, false, .1f, {TEXT("death.attack.player"), TEXT("%1$s was slain by %2$s")}},
             {TEXT("lava"), false, false, false, .1f, {TEXT("death.attack.lava"), TEXT("%1$s tried to swim in lava")}},
             {TEXT("onFire"), true, false, false, 0.f, {TEXT("death.attack.onFire"), TEXT("%1$s burned to death")}},
+            {TEXT("arrow"), false, false, false, .1f, {TEXT("death.attack.arrow"), TEXT("%1$s was shot by %2$s")}},
             {TEXT("inFire"), false, false, false, .1f, {TEXT("death.attack.inFire"), TEXT("%1$s went up in flames")}},
         };
         return Rules[int32(Type)];
@@ -266,7 +267,9 @@ FFoundationVitals::FDeathText FFoundationVitals::GetDeathText(
     EFoundationDamage Type, double FallDistanceCm, const FString& Attacker)
 {
     if (Type == EFoundationDamage::Fall && FallDistanceCm > HighFallCm) return FellText;
-    if ((Type == EFoundationDamage::MobAttack || Type == EFoundationDamage::PlayerAttack) && Attacker.IsEmpty())
+    if ((Type == EFoundationDamage::MobAttack || Type == EFoundationDamage::PlayerAttack ||
+            Type == EFoundationDamage::Arrow) &&
+        Attacker.IsEmpty())
         return GetRule(EFoundationDamage::Generic).Death;
     return GetRule(Type).Death;
 }

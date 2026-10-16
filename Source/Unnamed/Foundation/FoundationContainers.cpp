@@ -8,7 +8,13 @@ namespace
              "light up, whether or not their screen is open (T1 steps 8a, 8b). 0: as before 8a: no menu (a right-click "
              "places against them) and no ticks."));
     TAutoConsoleVariable<int32> CVarFurnaceAmbience(TEXT("foundation.Furnace.Ambience"), 1,
-        TEXT("1: a lit furnace, smoker or blast furnace plays its sound (T1 step 8b; rates provisional). 0: silent."));
+        TEXT("1: a lit furnace, smoker or blast furnace plays its sound and shows its smoke and flame (T1 steps 8b, "
+             "8b2b; rates provisional). 0: neither."));
+    TAutoConsoleVariable<int32> CVarFurnaceAmbienceForce(TEXT("foundation.Furnace.AmbienceForce"), 0,
+        TEXT("Dev: 1 every lit furnace, smoker and blast furnace gets a display callback (its smoke and flame, and the "
+             "sound's 0.1 roll) on every ambience tick instead of 1 in 50, for shots and probes (T1 step 8b2b). 0: as "
+             "vanilla's rates."),
+        ECVF_Cheat);
     TAutoConsoleVariable<int32> CVarBarrel(TEXT("foundation.Barrel"), 1,
         TEXT("1: a barrel opens its 27-slot menu and shows its open state while viewed (T1 step 9). 0: as before: no "
              "menu (a right-click places against it)."));
@@ -146,6 +152,11 @@ bool FoundationFurnace::IsAmbienceOn()
     return CVarFurnaceAmbience.GetValueOnAnyThread() != 0;
 }
 
+bool FoundationFurnace::IsAmbienceForced()
+{
+    return CVarFurnaceAmbienceForce.GetValueOnAnyThread() != 0;
+}
+
 int32 FoundationFurnace::StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning)
 {
     constexpr float TicksPerSecond = 20;
@@ -158,6 +169,16 @@ int32 FoundationFurnace::StepAmbienceClock(float& Clock, float DeltaTime, bool b
     const int32 Ticks = FMath::Min(FMath::FloorToInt32(Clock * TicksPerSecond), 4);
     Clock = FMath::Min(Clock - Ticks / TicksPerSecond, 1 / TicksPerSecond);
     return Ticks;
+}
+
+int32 FoundationFurnace::RollDisplayCallbacks(int32 Ticks, TFunctionRef<float()> Roll)
+{
+    if (!IsAmbienceOn()) return 0;
+    if (IsAmbienceForced()) return FMath::Max(Ticks, 0);
+    int32 Callbacks = 0;
+    for (int32 Tick = 0; Tick < Ticks; ++Tick)
+        Callbacks += Roll() < DisplayChance ? 1 : 0;
+    return Callbacks;
 }
 
 EFoundationCookingKind FoundationFurnace::GetCookingKind(FName Block)

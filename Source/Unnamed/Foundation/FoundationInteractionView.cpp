@@ -1,4 +1,5 @@
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationArrowView.h"
 #include "Foundation/FoundationExperienceOrbView.h"
 #include "Foundation/FoundationMobView.h"
 #include "Foundation/FoundationItemEntityView.h"
@@ -234,6 +235,7 @@ void UFoundationInteractionView::BeginPlay()
     ItemEntityView = MakeShared<FFoundationItemEntityView>(*this);
     ExperienceOrbView = MakeShared<FFoundationExperienceOrbView>(*this);
     ExperienceOrbView->Prepare();
+    ArrowView = MakeShared<FFoundationArrowView>(*this);
     MobView = MakeShared<FFoundationMobView>(*this);
     RebuildBlocks(*Lab->GetAuthority());
 }
@@ -798,6 +800,11 @@ void UFoundationInteractionView::HandleEvents(const FFoundationAuthority& Author
             if (BreakEffects && !Event.Interaction.IsNone())
                 BreakEffects->PlayEvent(Event.Interaction, Event.LocationCm, 1.f, .8f + .4f * FMath::FRand());
             break;
+        case EFoundationEventKind::ArrowSound:
+            // An arrow's shoot or hit (step 19c): the authority's volume and pitch (survival.r5.rules).
+            if (BreakEffects && !Event.Interaction.IsNone())
+                BreakEffects->PlayEvent(Event.Interaction, Event.LocationCm, Event.Amount, Event.Pitch);
+            break;
         case EFoundationEventKind::BlockingDisabled:
             // Its disabled_sound, volume 1 and pitch 0.8 + 0.4U like the block (provisional: no report has it).
             if (BreakEffects && !Event.Interaction.IsNone())
@@ -1107,12 +1114,33 @@ void UFoundationInteractionView::UpdateHeldItem(
     // Any other item: its first-person model from DA_Items.
     const FName ItemId = InHand && Icon != TEXT("block") ? InHand->Id : NAME_None;
     const bool bUsing = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main;
-    if (ItemId != HeldItemId || (bHeldSpecial && bUsing != bHeldUsing)) SetHeldItem(ItemId, bUsing);
+    // A drawn bow (step 19c): the pulling model its use ticks pick, and the draw pose (FoundationHeldPose::Get).
+    const bool bDrawing = Player && Player->Use.bActive && Player->Use.bDraws;
+    const int32 DrawTicks = bDrawing ? Player->Use.Ticks : 0;
+    const double Draw = bDrawing ? FMath::Min(double(DrawTicks) / FoundationBow::FullDrawTicks, 1.) : 0.;
+    // A layered model whose case changed with the use (the bow's pulling models) redraws.
+    auto ModelChanged = [this](FName Id, FName Shown, bool bUse, EFoundationHand Hand, int32 Ticks)
+    {
+        const UFoundationItemAssets* Items = Id.IsNone() ? nullptr : UFoundationItemAssets::LoadDefault();
+        FFoundationItemModelView View;
+        return Items && Items->FindModelView(Id, FoundationHeldPose::Get(Hand, false).Context, View, bUse, Ticks) &&
+            View.Model->Name != Shown;
+    };
+    const int32 MainTicks = bDrawing && Player->Use.Hand == EFoundationHand::Main ? DrawTicks : 0;
+    // Only while a use lasts, or just after one, can a layered item's case change: the others skip the lookup.
+    if (ItemId != HeldItemId || (bHeldSpecial && bUsing != bHeldUsing) ||
+        (!bHeldSpecial && (bUsing || bHeldUsing) &&
+            ModelChanged(ItemId, HeldModel, bUsing, EFoundationHand::Main, MainTicks)))
+        SetHeldItem(ItemId, bUsing, EFoundationHand::Main, MainTicks);
     const FFoundationItemInstance* Off = Player ? &Player->Inventory.GetHand(EFoundationHand::Off) : nullptr;
     const FFoundationItemDefinition* InOff = Off && !Off->IsEmpty() ? &Authority.Rules.GetItem(Off->Item) : nullptr;
     const FName OffId = InOff && InOff->Icon != TEXT("block") ? InOff->Id : NAME_None;
     const bool bOffUse = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Off;
-    if (OffId != OffItemId || (bOffSpecial && bOffUse != bOffUsing)) SetHeldItem(OffId, bOffUse, EFoundationHand::Off);
+    const int32 OffTicks = bDrawing && Player->Use.Hand == EFoundationHand::Off ? DrawTicks : 0;
+    if (OffId != OffItemId || (bOffSpecial && bOffUse != bOffUsing) ||
+        (!bOffSpecial && (bOffUse || bOffUsing) &&
+            ModelChanged(OffId, OffModel, bOffUse, EFoundationHand::Off, OffTicks)))
+        SetHeldItem(OffId, bOffUse, EFoundationHand::Off, OffTicks);
     // The glow: fixed (foundation.Held.Glow), or by the light at the eye (foundation.Held.Light 1, generated worlds).
     float Glow = CVarHeldGlow.GetValueOnGameThread(), LightGlow = 0;
     const AVoxelWorld* VoxelWorld = FoundationHeldLight::ReadMode() == 1 ? AVoxelWorld::Find(GetWorld()) : nullptr;
@@ -1176,8 +1204,8 @@ void UFoundationInteractionView::UpdateHeldItem(
     // Eating: the main-hand item's motion replaces the swing while it shows. EatMotion 1 (step 10b): vanilla's eat
     // transform, at once; 0 (step 10): an ease toward the mouth in 0.1 s and a bob once per effect step (4 steps).
     // A raised shield (a special model, step 19b) is a use but not eating: it keeps its display switch only.
-    const bool bEating =
-        Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main && !bHeldSpecial;
+    const bool bEating = Pawn->Interaction.bUsingItem && Pawn->Interaction.UseHand == EFoundationHand::Main &&
+        !bHeldSpecial && !bDrawing;
     const bool bEatMotion = FoundationHand::GetEatMotion() == 1;
     if (!bEating || Pawn->Interaction.UseTicks != EatTicks)
         EatTickAge = 0;
@@ -1200,9 +1228,13 @@ void UFoundationInteractionView::UpdateHeldItem(
             Held->SetRelativeTransform(HandFit ? FoundationHand::MakeHeldBlockDisplay()
                                                : FTransform(FRotator(10, 35, 0), FVector::ZeroVector, FVector(.11)));
     }
-    const FVector Pivot = FoundationHeldPose::Get(EFoundationHand::Main, HandFit != 0).Pivot;
-    // The offhand holds still at its mirrored pivot (no swing or eat motion).
-    OffPivot->SetRelativeLocation(FoundationHeldPose::Get(EFoundationHand::Off, HandFit != 0).Pivot);
+    const FVector Pivot = FoundationHeldPose::Get(
+        EFoundationHand::Main, HandFit != 0, bDrawing && Player->Use.Hand == EFoundationHand::Main ? Draw : 0.)
+                              .Pivot;
+    // The offhand holds still at its mirrored pivot (no swing or eat motion; a drawn bow's pose).
+    OffPivot->SetRelativeLocation(FoundationHeldPose::Get(
+        EFoundationHand::Off, HandFit != 0, bDrawing && Player->Use.Hand == EFoundationHand::Off ? Draw : 0.)
+            .Pivot);
     const int32 UseDuration = Pawn->Interaction.UseDuration;
     if (bEatMotion && bEating && UseDuration > 0)
     {
@@ -1221,7 +1253,7 @@ void UFoundationInteractionView::UpdateHeldItem(
         FRotator(-55 * Swing - 15 * EatBlend, -10 * Swing - 35 * EatBlend, 0));
 }
 
-void UFoundationInteractionView::SetHeldItem(FName Id, bool bUsing, EFoundationHand Hand)
+void UFoundationInteractionView::SetHeldItem(FName Id, bool bUsing, EFoundationHand Hand, int32 UseTicks)
 {
     const bool bOff = Hand == EFoundationHand::Off;
     const FName Context = FoundationHeldPose::Get(Hand, false).Context;
@@ -1230,8 +1262,12 @@ void UFoundationInteractionView::SetHeldItem(FName Id, bool bUsing, EFoundationH
     FName& Sprite = bOff ? DiscardSprite : HeldSprite;
     bool& bSpecial = bOff ? bOffSpecial : bHeldSpecial;
     bool& bSpecialUsing = bOff ? bOffUsing : bHeldUsing;
+    FName& Shown = bOff ? OffModel : HeldModel;
     UStaticMeshComponent* Component = bOff ? OffItem.Get() : HeldItem.Get();
     ItemId = Id;
+    Shown = NAME_None;
+    // Drawn for a use (a special model's raised state, a layered model's use case): the next frame re-checks it.
+    const bool bForUse = bUsing;
     Sprite = NAME_None;
     bSpecial = bSpecialUsing = false;
     UStaticMesh* Mesh = nullptr;
@@ -1251,8 +1287,10 @@ void UFoundationInteractionView::SetHeldItem(FName Id, bool bUsing, EFoundationH
             Display = FoundationItemMesh::MakeDisplayTransform(*Model.Display, HeldModelBlockCm);
         if (!Material) Mesh = nullptr;
     }
-    else if (Items && Items->FindModelView(Id, Context, Model))
+    else if (Items && Items->FindModelView(Id, Context, Model, bUsing, UseTicks))
     {
+        Shown = Model.Model->Name;
+        bSpecialUsing = bForUse;
         const FFoundationItemTextureAsset& Texture = *Model.Texture;
         UStaticMesh* Cached = GetItemMesh(Model);
         Material = Cached ? GetItemMaterial(*Items, Texture.Width == 32) : nullptr;
@@ -1471,7 +1509,7 @@ void UFoundationInteractionView::PlayFootsteps(const FFoundationAuthority& Autho
     if (bStep && BreakEffects) BreakEffects->PlayFootstep(Authority, Pawn->LastFootstepFeet);
 }
 
-void UFoundationInteractionView::PlayFurnaceSounds(
+void UFoundationInteractionView::PlayFurnaceAmbience(
     const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime)
 {
     if (!BreakEffects || !Pawn || !FoundationFurnace::IsAmbienceOn())
@@ -1479,13 +1517,15 @@ void UFoundationInteractionView::PlayFurnaceSounds(
         FurnaceSoundClock = 0;
         return;
     }
-    // A display callback plays its block's sound with chance 0.1, volume 1, pitch 1
-    // (survival2.r15.exact_callback_chances, survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the
-    // callback's scheduling, one on 1 tick in 50 of a 20 Hz clock for each lit block within the sound's 16-block reach
-    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre. Nothing rolls while paused.
-    constexpr float DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
+    // A display callback spawns its block's smoke and flame (FFoundationBreakEffects::SpawnFurnaceParticles, T1 8b2b)
+    // and plays its sound with chance 0.1, volume 1, pitch 1 (survival2.r15.exact_callback_chances,
+    // survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the callback's scheduling, one on 1 tick in
+    // 50 of a 20 Hz clock for each lit block within the sound's 16-block reach (vanilla's is client-spatial, R15), and
+    // the sound's place, the block's bottom centre. Nothing rolls or spawns while paused.
+    constexpr float SoundChance = 1.f / 10, ReachCm = 1600;
     const int32 Ticks = FoundationFurnace::StepAmbienceClock(FurnaceSoundClock, DeltaTime, Pawn->IsSimulationEnabled());
     if (Ticks <= 0) return;
+    const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     const FVector Listener = Pawn->GetActorLocation();
     for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())
     {
@@ -1497,8 +1537,22 @@ void UFoundationInteractionView::PlayFurnaceSounds(
         const TCHAR* Event = Cooking == EFoundationCookingKind::Smoking ? TEXT("block.smoker.smoke")
             : Cooking == EFoundationCookingKind::Blasting               ? TEXT("block.blastfurnace.fire_crackle")
                                                                         : TEXT("block.furnace.fire_crackle");
-        for (int32 Tick = 0; Tick < Ticks; ++Tick)
-            if (FMath::FRand() < DisplayChance * SoundChance) BreakEffects->PlayEvent(Event, At, 1.f, 1.f);
+        const FoundationBreak::EFurnaceBlock Block = Cooking == EFoundationCookingKind::Smoking
+            ? FoundationBreak::EFurnaceBlock::Smoker
+            : Cooking == EFoundationCookingKind::Blasting ? FoundationBreak::EFurnaceBlock::BlastFurnace
+                                                          : FoundationBreak::EFurnaceBlock::Furnace;
+        // The front the smoke and flame leave from: the state's facing (north when it has none).
+        EFoundationFace Facing = EFoundationFace::North;
+        const FName FacingValue = Registry.GetValue(Authority.World.Get(Cell).State, TEXT("facing"));
+        for (const EFoundationFace Side :
+            {EFoundationFace::North, EFoundationFace::South, EFoundationFace::West, EFoundationFace::East})
+            if (FacingValue == FoundationGrid::FaceName(Side)) Facing = Side;
+        const int32 Callbacks = FoundationFurnace::RollDisplayCallbacks(Ticks, [] { return FMath::FRand(); });
+        for (int32 Callback = 0; Callback < Callbacks; ++Callback)
+        {
+            BreakEffects->SpawnFurnaceParticles(Block, Box, Facing);
+            if (FMath::FRand() < SoundChance) BreakEffects->PlayEvent(Event, At, 1.f, 1.f);
+        }
     }
 }
 
@@ -1521,7 +1575,7 @@ void UFoundationInteractionView::TickComponent(
     AFoundationPawn* Pawn = GetLocalPawn();
     PlayFireSounds(Pawn);
     PlayFootsteps(Authority, Pawn);
-    PlayFurnaceSounds(Authority, Pawn, DeltaTime);
+    PlayFurnaceAmbience(Authority, Pawn, DeltaTime);
     const auto* Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     // F1 hides the outline, preview and hand with the HUD; the menu hides them while paused.
     const bool bVisible = Controller && Controller->IsGameplay() && !Controller->GetHud()->bHideHud;
@@ -1556,6 +1610,7 @@ void UFoundationInteractionView::TickComponent(
         Pawn ? FMath::Clamp(Pawn->Simulation.Accumulator / GetDefault<UFoundationProfile>()->TickSeconds, 0., 1.) : 1.;
     if (ItemEntityView) ItemEntityView->Update(Authority, Pawn, StepAlpha, DeltaTime);
     if (ExperienceOrbView) ExperienceOrbView->Update(Authority, Pawn, StepAlpha);
+    if (ArrowView) ArrowView->Update(Authority, Pawn, StepAlpha);
     if (MobView) MobView->Update(Authority, Pawn, StepAlpha);
     if (BreakEffects) BreakEffects->EndFrame(Authority, DeltaTime);
     LastViewMs = (FPlatformTime::Seconds() - Start) * 1000.;

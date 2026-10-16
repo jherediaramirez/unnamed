@@ -330,6 +330,7 @@ FFoundationPlayerFacts AFoundationPawn::MakeInteractionFacts() const
     Facts.bClimbing = Simulation.bClimbing;
     Facts.bAlive = !Vitals.IsDead();
     Facts.Mode = Vitals.Mode;
+    Facts.Difficulty = Vitals.Difficulty;
     Facts.bSecondaryUse = LastIntent.bCrouch;
     Facts.Step = ReferenceSteps;
     return Facts;
@@ -512,6 +513,17 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
         FoundationMobs::ApplyKnockback(
             Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
     }
+    // Survival step 19c: arrow hits through HurtPlayer (a raised shield facing the arrow blocks it); a fresh hit knocks
+    // the player back from where the arrow struck, as a mob's melee (provisional).
+    for (const FFoundationAttack& Hit : Authority.TakeArrowHits(Interaction.PlayerId))
+    {
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Authority.HurtPlayer(Interaction.PlayerId, Vitals, Hit) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.SourceCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
+    }
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.
     if (const int32 Container = Interaction.OpenedContainer)
@@ -637,6 +649,12 @@ void AFoundationPawn::Tick(float DeltaSeconds)
         PlayerController->SetControlRotation(View);
         LastIntent = MakeSimulationIntent(Request, ReadBool(TEXT("autoJump"), false),
             FMath::Clamp(int32(ReadNumber(TEXT("sprintWindow"), Profile.SprintWindowTicks)), 0, 10));
+        // A drawn bow zooms (step 19c; survival2.r18.fov_rule): its target multiplies the movement FOV's, smoothed
+        // with it, and the FOV-effects setting scales the result as before.
+        if (const FFoundationAuthority* BowAuthority = GetAuthority(); BowAuthority && Interaction.bUsingItem)
+            if (const FFoundationPlayer* Player = BowAuthority->FindPlayer(Interaction.PlayerId);
+                Player && Player->Use.bActive && Player->Use.bDraws)
+                LastIntent.ItemFovMultiplier = FoundationBow::GetFovTarget(Player->Use.Ticks);
         // Per reference step: movement against already committed collision, vitals (each step's eligibility
         // and death come from the state the previous step left), then interaction against the resulting
         // pose. Its commits reach the collision provider before the next movement step.

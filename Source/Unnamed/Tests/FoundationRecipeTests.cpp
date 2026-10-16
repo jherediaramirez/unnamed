@@ -22,8 +22,10 @@ namespace
     // (C:\dev\sandbox\inv8a2\recipe_counts.txt). T2 19a2 (the 29 armor pieces appended): 551 shaped, since the 20
     // armor recipes of leather, iron, gold, diamond and copper resolve (recipes.json holds 21 armor recipes; the
     // turtle helmet needs turtle_scute, which DA_Items lacks); all are 3 wide, so the 2x2 count and the shapeless count
-    // stay. T2 19b (the shield appended): 552 shaped, its one 3-wide shaped recipe (recipes.json "shield").
-    constexpr int32 RecipeResolvedShaped = 552;
+    // stay. T2 19b (the shield appended): 552 shaped, its one 3-wide shaped recipe (recipes.json "shield"). T2 19c (the
+    // bow and the arrow appended): 555 shaped, the bow, the arrow and the dispenser (it needs a bow); all are 3 tall,
+    // so none fits 2x2 (spectral_arrow's glowstone dust is here, but its result is not).
+    constexpr int32 RecipeResolvedShaped = 555;
     constexpr int32 RecipeResolvedShapeless = 69;
     constexpr int32 RecipeFit2x2 = 180;
 

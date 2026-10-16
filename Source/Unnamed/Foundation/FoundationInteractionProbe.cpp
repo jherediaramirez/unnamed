@@ -9,6 +9,7 @@
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationArrowView.h"
 #include "Foundation/FoundationExperienceOrbView.h"
 #include "Foundation/FoundationItemEntityView.h"
 #include "Foundation/FoundationItemMesh.h"
@@ -1462,6 +1463,58 @@ void UFoundationRuntimeProbe::AddInteractionCases()
             PressKey(EKeys::RightMouseButton, false);
             SetItemUse(1);
         });
+
+    // 13c2. The bow (step 19c, foundation.Items.Use 1): holding use with a bow and arrows draws it (the drawing use,
+    // the FOV zoom toward 0.85); the release shoots an arrow that sticks in a stone 2.5 blocks ahead and draws.
+    const TSharedRef<int32> ShotsBefore = MakeShared<int32>(0);
+    Prepare(TEXT("bow"), true);
+    AddCase(
+        TEXT("bow draw"), 1.4,
+        [this, Authority, SetItemUse, Look, ShotsBefore]
+        {
+            SetItemUse(1);
+            ResetPlayer({-750, 650, 0});
+            FFoundationAuthority& A = Authority();
+            A.World.Set({-5, 6, 1}, A.World.FindBlock(TEXT("stone"))->GetDefaultState());
+            Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 0, TEXT("bow"), 1);
+            Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 1, TEXT("arrow"), 8);
+            PressKey(EKeys::One, true);
+            PressKey(EKeys::One, false);
+            *ShotsBefore = A.ArrowsShot;
+            Look(FVector(-450, 650, 150));
+            PressKey(EKeys::RightMouseButton, true);
+        },
+        [this, Player, Capture]
+        {
+            const FFoundationPlayer* P = Player();
+            Record(TEXT("holding use with a bow draws it past a full draw; the camera zooms"),
+                P && P->Use.bActive && P->Use.bDraws && P->Use.Ticks >= 20 && Pawn->Simulation.FovMultiplier < .95,
+                FString::Printf(TEXT("drawing %d, ticks %d, fov %.4f"), P && P->Use.bDraws, P ? P->Use.Ticks : -1,
+                    Pawn->Simulation.FovMultiplier));
+            Capture(TEXT("bow-drawn"));
+            PressKey(EKeys::RightMouseButton, false);
+        });
+    AddCase(
+        TEXT("bow arrow"), 1., [] {},
+        [this, Lab, Authority, Solid, Capture, ShotsBefore]
+        {
+            const FFoundationAuthority& A = Authority();
+            const FFoundationArrow* Arrow = A.GetArrows().IsEmpty() ? nullptr : &A.GetArrows().Last();
+            const FFoundationArrowView* View = Lab->GetView()->GetArrowView();
+            Record(TEXT("the release shoots one arrow that sticks in the stone and draws"),
+                A.ArrowsShot - *ShotsBefore == 1 && Arrow && Arrow->bInGround && View && View->GetDrawnCount() >= 1 &&
+                    Solid({-5, 6, 1}),
+                FString::Printf(
+                    TEXT("shot %d, stuck %d at %s (yaw %.1f pitch %.1f), drawn %d, stone %d, feet %s, eye %s, "
+                         "events %d"),
+                    A.ArrowsShot - *ShotsBefore, Arrow && Arrow->bInGround,
+                    Arrow ? *Arrow->LocalCm.ToString() : TEXT("-"), Arrow ? Arrow->Yaw : 0.f,
+                    Arrow ? Arrow->Pitch : 0.f, View ? View->GetDrawnCount() : -1, Solid({-5, 6, 1}),
+                    *Pawn->GetActorLocation().ToString(), *Pawn->GetEyePosition().ToString(), A.GetEvents().Num()));
+            Capture(TEXT("bow-arrow-stuck"));
+        });
+    // The next case resets the lab in this tick; the shot is taken at the frame's end.
+    AddCase(TEXT("bow hold"), .2, [] {}, [] {});
 
     // 13d. Axe stripping (step 14, foundation.Items.Use 1): a right click on an oak log (axis x) with an iron axe
     // strips it (axis kept, 1 wear, item.axe.strip); the capture pair is the stripped log and the same click with the
