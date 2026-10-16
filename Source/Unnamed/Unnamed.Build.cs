@@ -48,5 +48,7 @@ public class Unnamed : ModuleRules
         // VoxelWorld): without them a package's monsters never burn and its night sky light stays 15 (QC R35-3).
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/data/...", StagedFileType.NonUFS);
         RuntimeDependencies.Add("$(ProjectDir)/Reference/minecraft-sky-26.3/attributes.json", StagedFileType.NonUFS);
+        // Third-party credits (CC BY 4.0 attribution) ship beside the game until it has a credits screen of its own.
+        RuntimeDependencies.Add("$(ProjectDir)/CREDITS.md", StagedFileType.NonUFS);
     }
 }
