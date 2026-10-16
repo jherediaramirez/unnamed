@@ -437,8 +437,8 @@ bool FFoundationMiningCreativeTest::RunTest(const FString&)
         TestEqual(Asset.Id.ToString() + TEXT(": breaks in creative unless a sword or a spear"), bBreaks,
             !Item.Tags.HasTagExact(Swords) && !Item.Tags.HasTagExact(Spears));
     }
-    // 144 since T2 19b appended the shield (114 before T2 19a2's 29 armor pieces).
-    TestEqual(TEXT("the flag copied for all 144"), Copied, 144);
+    // 146 since T2 19c appended the bow and the arrow (144 since T2 19b's shield, 114 before T2 19a2's armor pieces).
+    TestEqual(TEXT("the flag copied for all 146"), Copied, 146);
     TestEqual(TEXT("7 swords and 7 spears break nothing in creative"), NoBreak, 14);
 
     // The control: in survival an iron pickaxe takes stone in 8 steps, returns its loot (cobblestone; loot step 2a) and

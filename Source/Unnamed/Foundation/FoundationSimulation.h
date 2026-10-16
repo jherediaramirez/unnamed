@@ -25,6 +25,8 @@ struct FFoundationEligibility
     TFunction<bool(const FBox&)> IsFluidFree;
     // foundation.SwimPose 1: sprinting in water swims in the low box.
     bool bSwimPose = false;
+    // A climbable block holds the feet (foundation.Blocks.Climb 1, FoundationBlockFamilies::IsClimbable).
+    bool bOnClimbable = false;
 };
 
 // One simulation step's request. The pawn builds it from the input layer's FUnnamedInputIntent
@@ -35,6 +37,8 @@ struct FFoundationIntent
     bool bSprint = false, bCrouch = false, bJump = false;
     bool bAutoJump = false; // Preference "autoJump".
     int32 SprintWindowTicks = 0; // Preference "sprintWindow": double-tap sprint window; 0 disables it.
+    // The held use's FOV factor: a drawn bow's FoundationBow::GetFovTarget (step 19c); 1 otherwise.
+    double ItemFovMultiplier = 1;
 };
 
 struct UNNAMED_API FFoundationSimulation
@@ -54,6 +58,8 @@ struct UNNAMED_API FFoundationSimulation
     bool bFlying = false, bHadJump = false;
     // The last step started a jump, and whether it was a sprint jump (food exhaustion facts).
     bool bJumped = false, bSprintJumped = false;
+    // The last step climbed (Eligibility.bOnClimbable, out of fluids and flight).
+    bool bClimbing = false;
     FString Rejection = TEXT("unhindered fixture: sufficient food, no effects");
     // The pose's eye height, before smoothing: swimming, crouching or standing.
     double GetPoseEyesCm(const UFoundationProfile& P) const;

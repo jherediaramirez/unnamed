@@ -85,9 +85,9 @@ bool FHudItemsDurabilityBarTest::RunTest(const FString&)
                     *Expected.Color.ToHex()));
         }
     }
-    // 32 max damage values since T2 19b added the shield's 336 (31 and 10,335 since T2 19a2's armor pieces, 7 and 4,261
-    // before; facts/durability_bar.json).
-    TestEqual(TEXT("32 max damage values, 10,672 damage values"), Values, 10672);
+    // 33 max damage values since T2 19c added the bow's 384 (32 and 10,672 since T2 19b's shield, 31 and 10,335 since
+    // T2 19a2's armor pieces, 7 and 4,261 before; facts/durability_bar.json).
+    TestEqual(TEXT("33 max damage values, 11,057 damage values"), Values, 11057);
     TestEqual(TEXT("table mismatches"), Mismatches, 0);
     TestFalse(TEXT("an item that never wears has no bar"), HudModel::GetDurabilityBar(5, 0).bVisible);
     TestEqual(TEXT("damage past the max: no fill"), HudModel::GetDurabilityBar(300, 250).Width, 0);
@@ -239,7 +239,7 @@ bool FHudItemsTooltipsTest::RunTest(const FString&)
             for (const FHudTooltipLine& Line : Got)
                 AddInfo(FString::Printf(TEXT("  got \"%s\" %s"), *Line.Text, *Line.Color.ToHex()));
     }
-    TestEqual(TEXT("144 tooltips"), Checked, 144);
+    TestEqual(TEXT("146 tooltips"), Checked, 146);
 
     // With a player (the game's case): the base modifiers add its base values, in dark green after a space.
     auto Lines = [Items](const TCHAR* Id)

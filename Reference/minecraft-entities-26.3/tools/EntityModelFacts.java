@@ -10,6 +10,9 @@ import java.util.*;
 
 public class EntityModelFacts {
     static final List<String> WANT = List.of("cow","pig","sheep","sheep_wool","sheep_wool_undercoat","chicken","zombie","skeleton","creeper","spider");
+    // Survival T2 19c: models written after WANT's sorted layers (each model's layers sorted), so no earlier layer moves.
+    // Append only.
+    static final List<String> APPEND = List.of("arrow");
     static String f(float v){ return Float.toString(v); }
     public static void main(String[] a) {
         Map<ModelLayerLocation, LayerDefinition> roots = LayerDefinitions.createRoots();
@@ -17,9 +20,12 @@ public class EntityModelFacts {
         boolean first = true;
         TreeMap<String, ModelLayerLocation> keys = new TreeMap<>();
         for (ModelLayerLocation l : roots.keySet()) keys.put(l.model().getPath() + "#" + l.layer(), l);
-        for (var e : keys.entrySet()) {
+        List<Map.Entry<String, ModelLayerLocation>> order = new ArrayList<>();
+        for (var e : keys.entrySet()) if (WANT.contains(e.getValue().model().getPath())) order.add(e);
+        for (String m : APPEND) for (var e : keys.entrySet()) if (e.getValue().model().getPath().equals(m)) order.add(e);
+        for (var e : order) {
             ModelLayerLocation l = e.getValue();
-            if (!WANT.contains(l.model().getPath()) || l.layer().contains("armor") || l.layer().contains("baby")) continue;
+            if (l.layer().contains("armor") || l.layer().contains("baby")) continue;
             ModelPart root = roots.get(l).bakeRoot();
             if (!first) sb.append(",\n"); first = false;
             sb.append("\"").append(e.getKey()).append("\": {\"parts\": [");
@@ -72,5 +78,7 @@ public class EntityModelFacts {
         // children: probe names via createPartLookup is name->part; use getAllParts order is unnamed, so test known names
         for (String n : NAMES) if (p.hasChild(n)) walk(p.getChild(n), path.isEmpty() ? n : path + "/" + n, out);
     }
-    static final String[] NAMES = {"head","hat","body","right_arm","left_arm","right_leg","left_leg","right_hind_leg","left_hind_leg","right_front_leg","left_front_leg","horns","right_horn","left_horn","snout","beak","red_thing","right_wing","left_wing","body0","body1","right_middle_hind_leg","left_middle_hind_leg","right_middle_front_leg","left_middle_front_leg","jacket","waist","left_sleeve","right_sleeve","left_pants","right_pants"};
+    static final String[] NAMES = {"head","hat","body","right_arm","left_arm","right_leg","left_leg","right_hind_leg","left_hind_leg","right_front_leg","left_front_leg","horns","right_horn","left_horn","snout","beak","red_thing","right_wing","left_wing","body0","body1","right_middle_hind_leg","left_middle_hind_leg","right_middle_front_leg","left_middle_front_leg","jacket","waist","left_sleeve","right_sleeve","left_pants","right_pants",
+        // Survival T2 19c: the arrow's parts (appended; no earlier model has them).
+        "back","cross_1","cross_2"};
 }

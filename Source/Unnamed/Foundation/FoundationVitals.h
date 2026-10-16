@@ -36,7 +36,10 @@ enum class EFoundationDamage : uint8
     PlayerAttack,
     // Lava contact (armor applies) and burning (bypasses armor), step 16.
     Lava,
-    OnFire
+    OnFire,
+    // An arrow (step 19c): armor applies; 26.3's arrow damage type (exhaustion 0.1, scaled by difficulty only from a
+    // living non-player: T6 20d's skeleton).
+    Arrow
 };
 
 // One reference tick of facts from movement and the lab world. Distances are centimeters.
@@ -46,6 +49,8 @@ struct FFoundationVitalsStep
     bool bGrounded = false, bSprinting = false;
     bool bJumped = false, bSprintJumped = false;
     bool bBodyInWater = false, bEyesInWater = false;
+    // The step climbed (FFoundationSimulation::bClimbing): no fall builds, as in water.
+    bool bClimbing = false;
     // The body touches lava (the pawn passes it only with foundation.Fire 1).
     bool bBodyInLava = false;
 };

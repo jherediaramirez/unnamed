@@ -151,7 +151,7 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("foundation.Blocks.Families exists"), Switch.Variable)) return false;
     FFamilyLab L;
     const FFoundationBlockRegistry& Registry = L.A.World.GetRegistry();
-    int32 Families = 0, Placed = 0, Refused = 0, NoItem = 0;
+    int32 Families = 0, Placed = 0, Refused = 0, NoItem = 0, NoFloor = 0;
     for (int32 Index = 1; Index < Registry.GetBlockCount(); ++Index)
     {
         const FFoundationBlockType& Block = Registry.GetBlockAt(Index);
@@ -167,7 +167,12 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
         }
         // Oriented blocks (stairs, doors, beds...) take their facing from the placement, so the state is checked by its
         // block, not as the default state.
-        if (Reason == EFoundationReason::None && &Registry.GetBlock(State) == &Block)
+        // Survival B4b: a ladder hangs only on a wall and weeping vines only from a ceiling, so a click on a floor
+        // alone is refused (family_survival.json; the ladder probe's part A).
+        if ((Block.Id == TEXT("ladder") || Block.Id == TEXT("weeping_vines")) &&
+            Reason == EFoundationReason::CannotSurvive)
+            ++NoFloor;
+        else if (Reason == EFoundationReason::None && &Registry.GetBlock(State) == &Block)
             ++Placed;
         else
             AddError(FString::Printf(TEXT("%s with the switch on: reason %d, placed %s"), *Block.Id.ToString(),
@@ -186,7 +191,9 @@ bool FFoundationFamiliesPlaceTest::RunTest(const FString& Parameters)
     // 310 minus the reference's 286 block items and the 9 sapling items (DA_Items): crops, the vine plants, the filled
     // cauldrons and the fires have no item of their own.
     TestEqual(TEXT("family blocks without an item"), NoItem, 15);
-    TestTrue(TEXT("every family block with an item placed"), Placed == Families - NoItem && Refused == Placed);
+    TestEqual(TEXT("the ladder and weeping vines refused on a floor alone"), NoFloor, 2);
+    TestTrue(TEXT("every other family block with an item placed"),
+        Placed == Families - NoItem - NoFloor && Refused == Placed + NoFloor);
     return true;
 }
 
