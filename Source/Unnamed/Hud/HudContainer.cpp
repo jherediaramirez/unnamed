@@ -153,8 +153,15 @@ bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) co
 TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     FIntPoint Point, int32 Button, bool bShift, const FHudContainerView& View, double Time)
 {
-    // Middle clicks clone only in creative; a press during a drag does nothing.
-    if (Button < 0 || Button > 1 || IsDragging() || bDoubleClick) return {};
+    // Middle clicks clone only in creative. During a drag, another button's press cancels it (minecraft.wiki
+    // "Controls"; QC RA1-3): nothing is sent and the cursor keeps its stack.
+    if (Button < 0 || Button > 1) return {};
+    if (IsDragging())
+    {
+        if (Button != DragButton) ResetDrag();
+        return {};
+    }
+    if (bDoubleClick) return {};
     const int32 Slot = HitTest(Point);
     if (Slot == INDEX_NONE || !IsClickable(Slot)) return {};
     // The second left press on a slot: with a stack on the cursor it collects (PICKUP_ALL), after a shift-click it

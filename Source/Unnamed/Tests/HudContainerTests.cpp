@@ -291,13 +291,19 @@ bool FHudContainerDragTest::RunTest(const FString&)
     Model.MouseDown(ScreenSlotPoint(ScreenMain(3)), 0, false, View, 30);
     ExpectSame(*this, TEXT("press on another item"), Model.MouseUp(ScreenSlotPoint(ScreenMain(3)), 0, View),
         FScreenClicks{{ScreenMain(3), 0, EFoundationClickType::Pickup}});
-    // The other button's release does not end the drag; a press during it does nothing.
+    // The other button's release does not end the drag; its press cancels it (QC RA1-3, minecraft.wiki "Controls"), so
+    // the drag button's release then sends nothing.
     Model.MouseDown(ScreenSlotPoint(ScreenMain(9)), 0, false, View, 40);
     ExpectSame(
         *this, TEXT("right release mid-drag"), Model.MouseUp(ScreenSlotPoint(ScreenMain(9)), 1, View), FScreenClicks());
+    TestTrue(TEXT("still dragging after the other release"), Model.IsDragging());
     ExpectSame(*this, TEXT("right press mid-drag"), Model.MouseDown(ScreenSlotPoint(ScreenMain(9)), 1, false, View, 41),
         FScreenClicks());
-    TestTrue(TEXT("still dragging"), Model.IsDragging());
+    TestFalse(TEXT("the other press cancels the drag"), Model.IsDragging());
+    ExpectSame(*this, TEXT("the release after a cancel sends nothing"),
+        Model.MouseUp(ScreenSlotPoint(ScreenMain(9)), 0, View), FScreenClicks());
+    Model.MouseDown(ScreenSlotPoint(ScreenMain(9)), 0, false, View, 50);
+    TestTrue(TEXT("dragging again"), Model.IsDragging());
     Model.Reset();
     TestFalse(TEXT("Reset ends it"), Model.IsDragging());
     // The head slot takes a helmet.
@@ -977,6 +983,36 @@ bool FHudContainerLargeChestTest::RunTest(const FString&)
             FString::Printf(TEXT("hit test finds slot %d"), Slot), Model.HitTest(At(Slot) + FIntPoint(8, 8)), Slot);
     TestEqual(TEXT("y 221 is in the window"), Model.HitTest({2, 221}), int32(INDEX_NONE));
     TestEqual(TEXT("y 222 is outside"), Model.HitTest({2, 222}), int32(FScreenMenu::Outside));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerDragCancelTest, "Unnamed.Hud.Container.DragCancel", ContainerScreenTestFlags)
+
+bool FHudContainerDragCancelTest::RunTest(const FString&)
+{
+    // QC RA1-3 (minecraft.wiki "Controls"): carrying 8 stone, a left drag over two empty slots, a tap of the right
+    // button, then the left release: the drag is cancelled, nothing moves and the cursor keeps all 8.
+    FScreenLab L;
+    const int32 Stone = L.A.Rules.FindItem(TEXT("stone"));
+    FFoundationInventory& I = L.Inv();
+    I.Carried = I.MakeStack(Stone, 8);
+    L.Down(ScreenMain(0), 0, 0);
+    L.Over(ScreenMain(1));
+    L.Down(ScreenMain(1), 1, 0.5);
+    L.Up(ScreenMain(1), 1);
+    L.Up(ScreenMain(1), 0);
+    TestTrue(TEXT("cancelled: nothing placed, the cursor keeps 8"),
+        I.Main[0].IsEmpty() && I.Main[1].IsEmpty() && ScreenHolds(I.Carried, Stone, 8));
+    TestFalse(TEXT("no drag left"), L.Model.IsDragging());
+    // A right drag is cancelled by the left button the same way.
+    L.Down(ScreenMain(0), 1, 2);
+    L.Over(ScreenMain(1));
+    L.Down(ScreenMain(1), 0, 2.5);
+    L.Up(ScreenMain(1), 0);
+    L.Up(ScreenMain(1), 1);
+    TestTrue(TEXT("right drag cancelled by the left button"),
+        I.Main[0].IsEmpty() && I.Main[1].IsEmpty() && ScreenHolds(I.Carried, Stone, 8));
     return true;
 }
 #endif
