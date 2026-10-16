@@ -3373,14 +3373,12 @@ bool FFoundationAuthority::UseCauldron(FFoundationPlayer& Player, const FFoundat
     }
     else
     {
-        After =
-            Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
+        After = Id == WaterBucketId ? Registry.WithValue(Water->GetDefaultState(), Level, Full) : Lava->GetDefaultState();
         NewItem = Rules.FindItem(BucketId);
         if (NewItem == INDEX_NONE) return false;
     }
     if (After != Before) World.Set(Hit.Cell, After);
-    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is
-    // held.
+    // Creative keeps the used bucket (step 17's provisional rule): a take adds the filled bucket only when none is held.
     if (bTake || !bCreative) SwapBucket(Player, Command.Hand, Stack, NewItem, Hit.Cell, bCreative);
     ++BucketUses;
     Result.Outcome = EFoundationOutcome::Committed;

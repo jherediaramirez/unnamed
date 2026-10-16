@@ -322,6 +322,7 @@ bool FFoundationShieldMobHitsDifficultyTest::RunTest(const FString&)
         FShieldLab L;
         L.Vitals.Difficulty = EFoundationDifficulty::Peaceful;
         L.Raise(5);
+        TestTrue(TEXT("Peaceful: the shield is raised"), L.A.IsBlocking(L.Player));
         FFoundationSimulation Simulation;
         L.ZombieHit(Simulation, 0);
         TestTrue(TEXT("Peaceful: no hit, nothing blocked or worn"),

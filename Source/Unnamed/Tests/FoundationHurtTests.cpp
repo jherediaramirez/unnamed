@@ -89,7 +89,8 @@ bool FFoundationHurtTiltSideTest::RunTest(const FString& Parameters)
     ZombieHit(FVector(0, 200, 0));
     // A fall hurts without a source: the right side stays.
     Vitals.DamageCooldown = 0;
-    Vitals.Hurt(EFoundationDamage::Fall, 2);
+    TestTrue(TEXT("the fall hurts"), Vitals.Hurt(EFoundationDamage::Fall, 2));
+    AFoundationPawn::TakeHits(A, Player, Vitals, Simulation, Side);
     TestTrue(TEXT("a fall keeps the last side"), FMath::IsNearlyEqual(Tilted().Roll, 12.3504, .01));
     return true;
 }
