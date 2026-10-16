@@ -12890,6 +12890,184 @@
     "block_sound": "minecraft:item.shield.block",
     "disabled_sound": "minecraft:item.shield.break"
    }
+  },
+  {
+   "id": "bow",
+   "protocol_id": 1008,
+   "group": "ranged",
+   "material": null,
+   "kind": null,
+   "name": "Bow",
+   "max_stack": 1,
+   "max_damage": 384,
+   "enchantability": 1,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "cooking_fuel",
+    "damage",
+    "enchantable",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_damage",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "enchantable/bow",
+    "enchantable/durability",
+    "enchantable/vanishing",
+    "skeleton_preferred_weapons",
+    "wither_skeleton_disliked_weapons"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1406
+    },
+    {
+     "tab": "combat",
+     "index": 73
+    }
+   ],
+   "model": {
+    "definition": "items/bow.json",
+    "type": "condition",
+    "models": [
+     {
+      "model": "item/bow",
+      "when": {
+       "property": "using_item",
+       "is": [
+        false
+       ]
+      }
+     },
+     {
+      "model": "item/bow_pulling_1",
+      "when": {
+       "property": "using_item",
+       "is": [
+        true
+       ]
+      },
+      "range": {
+       "property": "use_duration",
+       "scale": 0.05,
+       "threshold": 0.65
+      }
+     },
+     {
+      "model": "item/bow_pulling_2",
+      "when": {
+       "property": "using_item",
+       "is": [
+        true
+       ]
+      },
+      "range": {
+       "property": "use_duration",
+       "scale": 0.05,
+       "threshold": 0.9
+      }
+     },
+     {
+      "model": "item/bow_pulling_0",
+      "when": {
+       "property": "using_item",
+       "is": [
+        true
+       ]
+      },
+      "range": {
+       "property": "use_duration",
+       "scale": 0.05,
+       "threshold": null
+      }
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/bow",
+    "item/bow_pulling_1",
+    "item/bow_pulling_2",
+    "item/bow_pulling_0"
+   ]
+  },
+  {
+   "id": "arrow",
+   "protocol_id": 1009,
+   "group": "ranged",
+   "material": null,
+   "kind": null,
+   "name": "Arrow",
+   "max_stack": 64,
+   "max_damage": null,
+   "enchantability": null,
+   "repair": null,
+   "attack": null,
+   "tool": null,
+   "weapon": null,
+   "food": null,
+   "consumable": null,
+   "components": [
+    "attack_animation",
+    "attribute_modifiers",
+    "break_sound",
+    "enchantments",
+    "interact_animation",
+    "item_model",
+    "item_name",
+    "lore",
+    "max_stack_size",
+    "rarity",
+    "repair_cost",
+    "tooltip_display",
+    "use_effects"
+   ],
+   "item_tags": [
+    "arrows"
+   ],
+   "creative": [
+    {
+     "tab": "search",
+     "index": 1408
+    },
+    {
+     "tab": "combat",
+     "index": 78
+    }
+   ],
+   "model": {
+    "definition": "items/arrow.json",
+    "type": "model",
+    "models": [
+     {
+      "model": "item/arrow",
+      "when": null
+     }
+    ],
+    "swap_animation_scale": 1.0,
+    "hand_animation_on_swap": true
+   },
+   "textures": [
+    "item/arrow"
+   ]
   }
  ]
 }

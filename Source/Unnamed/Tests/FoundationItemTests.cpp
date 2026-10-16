@@ -95,7 +95,7 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TEXT("DA_Items and the item reference"), Assets && Reference && ModelsJson && TexturesJson && IndexJson))
         return false;
     const TArray<TSharedPtr<FJsonValue>>& Items = Reference->GetArrayField(TEXT("items"));
-    if (!TestEqual(TEXT("144 items"), Assets->Items.Num(), 144) ||
+    if (!TestEqual(TEXT("146 items"), Assets->Items.Num(), 146) ||
         !TestEqual(TEXT("as many as items.json"), Assets->Items.Num(), Items.Num()))
         return false;
     TestEqual(TEXT("reference digest"), Assets->SourceSha256.Len(), 64);
@@ -352,7 +352,8 @@ bool FFoundationItemsRegistryTest::RunTest(const FString&)
             TestEqual(TEXT("layer pixels of ") + Asset.Name.ToString(),
                 UFoundationBlockImport::HashLayer(Arrays[Array], Asset.Layer), Asset.RgbaSha256);
     }
-    TestTrue(TEXT("147 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 147 && Layers[1] == 7);
+    // 152 since T2 19c's five sprites (ImportItems' log: 159 textures, 152 + 7 array layers).
+    TestTrue(TEXT("152 layers of 16 x 16 and 7 of 32 x 32"), Layers[0] == 152 && Layers[1] == 7);
     for (int32 Array = 0; Array < 2; ++Array)
         if (TestNotNull(Array ? TEXT("T_ItemTextures32") : TEXT("T_ItemTextures"), Arrays[Array]))
         {

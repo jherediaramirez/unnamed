@@ -17803,6 +17803,683 @@
     "firstperson_lefthand": "item/shield_blocking",
     "gui": "item/shield_blocking"
    }
+  },
+  {
+   "id": "item/arrow",
+   "parent": "item/generated",
+   "chain": [
+    "item/arrow",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/arrow"
+   },
+   "layers": [
+    "item/arrow"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "thirdperson_righthand": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      3,
+      1
+     ],
+     "scale": [
+      0.55,
+      0.55,
+      0.55
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "ground": "item/generated",
+    "head": "item/generated",
+    "thirdperson_righthand": "item/generated",
+    "firstperson_righthand": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bow",
+   "parent": "item/generated",
+   "chain": [
+    "item/bow",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bow"
+   },
+   "layers": [
+    "item/bow"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      -80,
+      260,
+      -40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      -80,
+      -280,
+      40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/bow",
+    "thirdperson_lefthand": "item/bow",
+    "firstperson_righthand": "item/bow",
+    "firstperson_lefthand": "item/bow",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bow_pulling_0",
+   "parent": "item/bow",
+   "chain": [
+    "item/bow_pulling_0",
+    "item/bow",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bow_pulling_0"
+   },
+   "layers": [
+    "item/bow_pulling_0"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      -80,
+      260,
+      -40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      -80,
+      -280,
+      40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/bow",
+    "thirdperson_lefthand": "item/bow",
+    "firstperson_righthand": "item/bow",
+    "firstperson_lefthand": "item/bow",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bow_pulling_1",
+   "parent": "item/bow",
+   "chain": [
+    "item/bow_pulling_1",
+    "item/bow",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bow_pulling_1"
+   },
+   "layers": [
+    "item/bow_pulling_1"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      -80,
+      260,
+      -40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      -80,
+      -280,
+      40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/bow",
+    "thirdperson_lefthand": "item/bow",
+    "firstperson_righthand": "item/bow",
+    "firstperson_lefthand": "item/bow",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
+  },
+  {
+   "id": "item/bow_pulling_2",
+   "parent": "item/bow",
+   "chain": [
+    "item/bow_pulling_2",
+    "item/bow",
+    "item/generated",
+    "builtin/generated"
+   ],
+   "textures": {
+    "layer0": "item/bow_pulling_2"
+   },
+   "layers": [
+    "item/bow_pulling_2"
+   ],
+   "generator": "builtin/generated",
+   "gui_light": "front",
+   "display": {
+    "thirdperson_righthand": {
+     "rotation": [
+      -80,
+      260,
+      -40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "thirdperson_lefthand": {
+     "rotation": [
+      -80,
+      -280,
+      40
+     ],
+     "translation": [
+      -1,
+      -2,
+      2.5
+     ],
+     "scale": [
+      0.9,
+      0.9,
+      0.9
+     ]
+    },
+    "firstperson_righthand": {
+     "rotation": [
+      0,
+      -90,
+      25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "firstperson_lefthand": {
+     "rotation": [
+      0,
+      90,
+      -25
+     ],
+     "translation": [
+      1.13,
+      3.2,
+      1.13
+     ],
+     "scale": [
+      0.68,
+      0.68,
+      0.68
+     ]
+    },
+    "ground": {
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "translation": [
+      0,
+      2,
+      0
+     ],
+     "scale": [
+      0.5,
+      0.5,
+      0.5
+     ]
+    },
+    "head": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "translation": [
+      0,
+      13,
+      7
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    },
+    "fixed": {
+     "rotation": [
+      0,
+      180,
+      0
+     ],
+     "scale": [
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "display_from": {
+    "thirdperson_righthand": "item/bow",
+    "thirdperson_lefthand": "item/bow",
+    "firstperson_righthand": "item/bow",
+    "firstperson_lefthand": "item/bow",
+    "ground": "item/generated",
+    "head": "item/generated",
+    "fixed": "item/generated"
+   }
   }
  ]
 }

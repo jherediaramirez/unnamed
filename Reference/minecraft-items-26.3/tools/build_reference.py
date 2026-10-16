@@ -79,11 +79,17 @@ TIER_A = {
               for p in ("helmet", "chestplate", "leggings", "boots")] + ["turtle_helmet"],
     # Survival T2 (shield 19b): the shield, whose definition is a using_item condition between two special models.
     "shield": ["shield"],
+    # Survival T2 (bow 19c): the bow, whose definition is a using_item condition over a use_duration range_dispatch
+    # (the pulling models), and its ammunition (plain arrows only; spectral and tipped need effects and potions).
+    "ranged": ["bow", "arrow"],
 }
 # Groups added after the reference was first imported: their items, and the models and textures they bring, follow
 # the earlier ones (each part sorted as before), so no item, model or texture layer of an earlier build moves. The
 # groups follow each other in this list's order (not by protocol id), so a new group never interleaves with an old one.
-APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor", "shield"]
+APPEND_LAST = ["drop", "mob_drop", "cooking_output", "armor", "shield", "ranged"]
+# Groups whose definitions model_refs reads fully (condition, range_dispatch, special); earlier groups keep the
+# first build's flattening, so none of their records changes.
+OPT_IN = ["shield", "ranged"]
 
 
 def append_rank(group):
@@ -191,13 +197,17 @@ class Tags:
         return self.resolve(bare(selector[1:])) if selector.startswith("#") else {bare(selector)}
 
 
-def model_refs(node, when=None, special=False):
+def model_refs(node, when=None, special=False, range_=None):
     """Every `model` leaf of an item model definition, with the display contexts it is selected for. With `special`
-    (the shield group only, so no earlier record or index entry changes), a `condition` selects on its property
-    (on_false first) and a `special` leaf yields its base model and the special model's type."""
+    (the OPT_IN groups only, so no earlier record or index entry changes), a `condition` selects on its property
+    (on_false first), a `special` leaf yields its base model and the special model's type, and a `range_dispatch`
+    yields each entry with its threshold, then the fallback with threshold None (the bow, 19c)."""
     kind = bare(node.get("type", ""))
     if kind == "model":
-        yield {"model": bare(node["model"]), "when": when, "tints": node.get("tints")}
+        ref = {"model": bare(node["model"]), "when": when, "tints": node.get("tints")}
+        if range_ is not None:
+            ref["range"] = range_
+        yield ref
     elif kind == "select":
         for case in node["cases"]:
             cases = case["when"] if isinstance(case["when"], list) else [case["when"]]
@@ -207,6 +217,12 @@ def model_refs(node, when=None, special=False):
     elif special and kind == "condition":
         for value, branch in ((False, "on_false"), (True, "on_true")):
             yield from model_refs(node[branch], {"property": bare(node["property"]), "is": [value]}, special)
+    elif special and kind == "range_dispatch":
+        rng = {"property": bare(node["property"]), "scale": node.get("scale", 1.0)}
+        for entry in node["entries"]:
+            yield from model_refs(entry["model"], when, special, {**rng, "threshold": entry["threshold"]})
+        if "fallback" in node:
+            yield from model_refs(node["fallback"], when, special, {**rng, "threshold": None})
     elif special and kind == "special":
         yield {"model": bare(node["base"]), "when": when, "tints": None, "special": bare(node["model"]["type"])}
     else:
@@ -334,6 +350,8 @@ def trim_fallback(refs):
 def model_entry(ref):
     """A model case of the item record; "tints" (one per layer, data order) only when the definition has them."""
     entry = {"model": ref["model"], "when": ref["when"]}
+    if ref.get("range"):
+        entry["range"] = ref["range"]
     if ref["tints"]:
         entry["tints"] = ref["tints"]
     return entry
@@ -760,8 +778,9 @@ def derive(src, block_ref=BLOCK_REF):
         definition = src.jar_json(definition_name)
         copies.add(definition_name)
         shield = group_of[item] == "shield"
-        refs = trim_fallback(list(model_refs(definition["model"], special=shield)))
-        kinds = ("model", "select") + (("condition",) if shield else ())
+        opt_in = group_of[item] in OPT_IN
+        refs = trim_fallback(list(model_refs(definition["model"], special=opt_in)))
+        kinds = ("model", "select") + (("condition",) if opt_in else ())
         if bare(definition["model"]["type"]) not in kinds or not refs:
             raise SystemExit(f"{item}: Tier A definitions are a model or a display-context select")
         item_textures = []

@@ -91,35 +91,38 @@ else:
 # 5. Counts and spot values (scout F's appendix A, and the break-time formula's worked cases).
 items = {i["id"]: i for i in load("items.json")["items"]}
 index = load("item_index.json")["items"]
-check(len(items) == 144 and sum(i["group"] == "tool" for i in items.values()) == 35 and
+check(len(items) == 146 and sum(i["group"] == "tool" for i in items.values()) == 35 and
       sum(i["group"] == "spear" for i in items.values()) == 7 and sum(i["group"] == "drop" for i in items.values()) == 23 and
       sum(i["group"] == "mob_drop" for i in items.values()) == 18 and
       sum(i["group"] == "cooking_output" for i in items.values()) == 10 and
       sum(i["group"] == "armor" for i in items.values()) == 29 and
-      sum(i["group"] == "shield" for i in items.values()) == 1,
-      "expected 144 items: 35 tools, 7 spears, 23 drop items, 18 mob drop items, 10 cooking outputs, 29 armor pieces, "
-      "the shield")
+      sum(i["group"] == "shield" for i in items.values()) == 1 and
+      sum(i["group"] == "ranged" for i in items.values()) == 2,
+      "expected 146 items: 35 tools, 7 spears, 23 drop items, 18 mob drop items, 10 cooking outputs, 29 armor pieces, "
+      "the shield, the bow and the arrow")
 # APPEND_LAST: the drop items, then the mob drop items (survival T6 20a), and the models and textures only each group
 # uses, follow the earlier ones: 63 items, 70 models and 70 textures before loot step 2b; 86 items, 93 models and 93
 # textures before 20a; 104 items, 111 models and 111 textures before the cooking outputs (survival T1 8a2). Each group
 # is in APPEND_LAST order, not interleaved by protocol id. The armor pieces (survival T2 19a2) follow at 114-142, with
 # models 121-149 and textures 121-153 (the four leather overlays make 33). The shield (survival T2 19b) follows at 143,
-# with models 150-151 and no texture layer.
+# with models 150-151 and no texture layer. The bow and the arrow (survival T2 19c) follow at 144-145, with models
+# 152-156 and textures 154-158.
 groups = [i["group"] for i in items.values()]
 model_ids = [m["id"] for m in load("models.json")["models"]]
 texture_names = [t["name"] for t in load("textures.json")["textures"]]
 first63, first86, first104 = list(items.values())[:63], list(items.values())[:86], list(items.values())[:104]
-first114, first143 = list(items.values())[:114], list(items.values())[:143]
+first114, first143, first144 = list(items.values())[:114], list(items.values())[:143], list(items.values())[:144]
 models_of = lambda group: {m["model"] for i in group for m in i["model"]["models"]}
 textures_of = lambda group: {t for i in group for t in i["textures"]}
 late_models, late_textures = model_ids[70:93], texture_names[70:93]
 mob_models, mob_textures = model_ids[93:111], texture_names[93:111]
 cooking_models, cooking_textures = model_ids[111:121], texture_names[111:121]
-armor_models, armor_textures = model_ids[121:150], texture_names[121:]
-shield_models = model_ids[150:]
+armor_models, armor_textures = model_ids[121:150], texture_names[121:154]
+shield_models = model_ids[150:152]
+ranged_models, ranged_textures = model_ids[152:], texture_names[154:]
 check(groups[63:86] == ["drop"] * 23 and groups[86:104] == ["mob_drop"] * 18 and
-      groups[104:114] == ["cooking_output"] * 10 and groups[114:143] == ["armor"] * 29 and groups[143:] == ["shield"] and
-      len(model_ids) == 152 and len(texture_names) == 154 and "armor" not in groups[:114] and
+      groups[104:114] == ["cooking_output"] * 10 and groups[114:143] == ["armor"] * 29 and groups[143:144] == ["shield"] and
+      groups[144:] == ["ranged"] * 2 and len(model_ids) == 157 and len(texture_names) == 159 and "armor" not in groups[:114] and
       len(mob_models) == len(mob_textures) == 18 and len(cooking_models) == len(cooking_textures) == 10 and
       "drop" not in groups[:63] and "mob_drop" not in groups[:86] and "cooking_output" not in groups[:104] and
       len(late_models) == 23 and len(late_textures) == 23 and
@@ -131,11 +134,14 @@ check(groups[63:86] == ["drop"] * 23 and groups[86:104] == ["mob_drop"] * 18 and
       set(armor_models) == models_of(first143) - models_of(first114) and
       set(armor_textures) == textures_of(first143) - textures_of(first114) and
       shield_models == ["item/shield", "item/shield_blocking"] and
-      set(shield_models) == models_of(items.values()) - models_of(first143) and
-      textures_of(items.values()) == textures_of(first143) and
+      set(shield_models) == models_of(first144) - models_of(first143) and
+      textures_of(first144) == textures_of(first143) and
+      ranged_models == ["item/arrow", "item/bow", "item/bow_pulling_0", "item/bow_pulling_1", "item/bow_pulling_2"] and
+      set(ranged_models) == models_of(items.values()) - models_of(first144) and
+      set(ranged_textures) == textures_of(items.values()) - textures_of(first144) and
       len(model_ids) == len(set(model_ids)) == len(models_of(items.values())) and
       len(texture_names) == len(set(texture_names)) == len(textures_of(items.values())),
-      "drop, mob drop, cooking output, armor and shield items, models and textures are not appended last")
+      "drop, mob drop, cooking output, armor, shield and ranged items, models and textures are not appended last")
 # Armor spot values (the item components report; minecraft.wiki "Armor"): totals, equippable, the trim fallback only,
 # and leather's dye tint on layer 0.
 ARMOR = {"leather_helmet": (1, 0, 0, "head", "leather"), "chainmail_chestplate": (5, 0, 0, "chest", "chain"),
@@ -172,6 +178,17 @@ check(shield["max_damage"] == 336 and shield["max_stack"] == 1 and shield["attac
                                    "block_sound": "minecraft:item.shield.block",
                                    "disabled_sound": "minecraft:item.shield.break"} and
       (ROOT / "assets/minecraft/textures/entity/shield/shield_base_nopattern.png").is_file(), "shield spot values")
+# Bow and arrow spot values (their item components report; the jar's items/bow.json: a using_item condition over a
+# use_duration range_dispatch, scale 0.05, thresholds 0.65 and 0.9, fallback pulling_0).
+bow, arrow = items["bow"], items["arrow"]
+pulling = lambda t: {"property": "use_duration", "scale": 0.05, "threshold": t}
+check(bow["max_damage"] == 384 and bow["max_stack"] == 1 and bow["attack"] is None and
+      bow["model"]["type"] == "condition" and
+      [(m["model"], m["when"]["is"], m.get("range")) for m in bow["model"]["models"]] ==
+      [("item/bow", [False], None), ("item/bow_pulling_1", [True], pulling(0.65)),
+       ("item/bow_pulling_2", [True], pulling(0.9)), ("item/bow_pulling_0", [True], pulling(None))] and
+      arrow["max_stack"] == 64 and arrow["max_damage"] is None and arrow["textures"] == ["item/arrow"] and
+      all("range" not in m for i in list(items.values())[:144] for m in i["model"]["models"]), "bow and arrow spot values")
 check([items[i]["textures"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] ==
       [[f"block/{i}"] for i in build.TIER_A["drop"] if i.endswith("_sapling")] and
       items["snowball"]["max_stack"] == 16 and items["flint"]["max_stack"] == 64, "drop item spot values")
