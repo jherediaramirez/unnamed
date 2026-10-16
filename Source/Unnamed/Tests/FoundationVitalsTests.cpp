@@ -563,4 +563,142 @@ bool FFoundationVitalsArmorTest::RunTest(const FString&)
     TestTrue(TEXT("respawn keeps the worn pieces"), V.WornArmor == 8 && V.WornToughness == 2.f);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationVitalsFireBlockTest, "Unnamed.Foundation.Vitals.FireBlock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFoundationVitalsFireBlockTest::RunTest(const FString&)
+{
+    // Survival step 16c, fire blocks [survival2.r14.player_fire, SURVIVAL-RUN2-FINDINGS-26.3.md lines 107-118 and the
+    // trace at 39351-39471].
+    FFoundationVitalsStep InFire = Standing();
+    InFire.FireBlockDamage = 1;
+    {
+        // F1-F3: 120 ticks in fire at 1024 health: 1 every 10 ticks from tick 1 (12 in all); not burning for ticks
+        // 1-19, 160 fire ticks at tick 20, then a net 0 or +1 a tick.
+        FFoundationVitals V = Quiet();
+        V.MaxHealth = V.Health = 1024;
+        bool bCadence = true, bGrace = true, bGrowth = true;
+        int32 Grown = 0, Before = 0;
+        for (int32 Tick = 1; Tick <= 120; ++Tick)
+        {
+            const float Health = V.Health;
+            V.Step(InFire);
+            const float Expected = Tick % 10 == 1 ? 1.f : 0.f;
+            if (Health - V.Health != Expected)
+            {
+                bCadence = false;
+                AddError(FString::Printf(TEXT("tick %d: lost %g, expected %g"), Tick, Health - V.Health, Expected));
+            }
+            if (Tick < 20 && V.FireTicks != 0) bGrace = false;
+            if (Tick == 20 && V.FireTicks != 160) bGrace = false;
+            if (Tick > 20)
+            {
+                const int32 Change = V.FireTicks - Before;
+                if (Change != 0 && Change != 1) bGrowth = false;
+                Grown += Change;
+            }
+            Before = V.FireTicks;
+        }
+        TestTrue(TEXT("F1: one hit every 10 ticks from tick 1"), bCadence);
+        TestEqual(TEXT("F1: 12 health in 120 ticks"), V.Health, 1012.f);
+        TestTrue(TEXT("F2: not burning for 19 ticks, 160 fire ticks at the 20th"), bGrace);
+        TestTrue(TEXT("F3: the fire ticks change by 0 or +1 a tick in fire"), bGrowth);
+        // Measured: 210 after 120 ticks (50 of 100 ticks grew); the hash's split must stay near 50/50.
+        TestTrue(TEXT("F3: they grow about every other tick"), Grown >= 30 && Grown <= 70);
+        TestEqual(TEXT("F3: the grace is used up"), V.FireGraceTicks, 0);
+        TestTrue(TEXT("F1: the hits count as fire block or burning hits"), V.FireBlockHurts + V.BurnHurts == 12);
+        // F4: out of the fire it burns as step 16a: 1 every 20 ticks, one fire tick less each tick.
+        const int32 Fire = V.FireTicks, Burns = V.BurnHurts;
+        StepTimes(V, Standing(), 41);
+        TestEqual(TEXT("F4: burning counts down"), V.FireTicks, Fire - 41);
+        TestTrue(TEXT("F4: burning hurts outside the fire"), V.BurnHurts - Burns >= 2 && V.BurnHurts - Burns <= 3);
+        // The fire burns out without water: the grace stays spent and the next touch ignites at once (provisional).
+        StepTimes(V, Standing(), V.FireTicks);
+        TestEqual(TEXT("burned out"), V.FireTicks, 0);
+        V.Step(InFire);
+        TestEqual(TEXT("burned out: the next touch ignites at once"), V.FireTicks, 160);
+    }
+    {
+        // F5: soul fire hurts 2 (minecraft.wiki "Soul Fire"), at ticks 1, 11 and 21.
+        FFoundationVitals V = Quiet();
+        FFoundationVitalsStep Soul = Standing();
+        Soul.FireBlockDamage = 2;
+        StepTimes(V, Soul, 21);
+        TestEqual(TEXT("F5: soul fire takes 6 in 21 ticks"), V.Health, 14.f);
+        // Tick 21 burns first (160 fire ticks), so its soul fire hit deals only the 1 above the burn.
+        TestTrue(TEXT("F5: soul fire hits"), V.FireBlockHurts >= 2 && V.FireBlockHurts + V.BurnHurts >= 3);
+    }
+    {
+        // F6: armor applies to in_fire (26.3 tags/damage_type/bypasses_armor.json lacks it); it is #is_fire wear.
+        FFoundationVitals V = Quiet();
+        V.Armor = 20;
+        V.Step(InFire);
+        TestTrue(TEXT("F6: armor softens the hit"), V.Health > 19.f && V.Health < 20.f);
+        TestEqual(TEXT("F6: fire armor wear"), V.PendingFireArmorWear, 1);
+        // F11: exhaustion 0.1 (26.3 damage_type/in_fire.json).
+        FFoundationVitals E = Quiet();
+        E.Step(InFire);
+        TestTrue(TEXT("F11: a hit costs 0.1 exhaustion"), FMath::IsNearlyEqual(E.Exhaustion, .1f, 1e-6f));
+    }
+    {
+        // F7: the death message (en_us.json death.attack.inFire).
+        FFoundationVitals V = Quiet();
+        V.Health = 1;
+        V.Step(InFire);
+        TestTrue(TEXT("F7: dead"), V.IsDead());
+        TestEqual(TEXT("F7: key"), V.DeathKey, FString(TEXT("death.attack.inFire")));
+        TestEqual(TEXT("F7: message"), V.DeathMessage, FString(TEXT("Player went up in flames")));
+    }
+    {
+        // F8: water puts a burning player out and restores the grace (the water case's final -20 fire ticks).
+        FFoundationVitals V = Quiet();
+        V.FireTicks = 100;
+        V.FireGraceTicks = 0;
+        FFoundationVitalsStep Water = Standing();
+        Water.bBodyInWater = true;
+        V.Step(Water);
+        TestTrue(TEXT("F8: out, the grace back"), V.FireTicks == 0 && V.FireGraceTicks == 20);
+        StepTimes(V, InFire, 19);
+        TestEqual(TEXT("F8: 19 ticks in fire, not burning"), V.FireTicks, 0);
+        V.Step(InFire);
+        TestEqual(TEXT("F8: the 20th ignites"), V.FireTicks, 160);
+    }
+    for (const EFoundationPlayerMode Mode : {EFoundationPlayerMode::Creative, EFoundationPlayerMode::Spectator})
+    {
+        // F9: Creative and Spectator neither take the damage nor ignite.
+        FFoundationVitals V = Quiet();
+        V.Mode = Mode;
+        StepTimes(V, InFire, 40);
+        TestTrue(TEXT("F9: untouched"), V.Health == 20.f && V.FireTicks == 0 && V.FireGraceTicks == 20);
+    }
+    {
+        // F10: no fire fact (foundation.FireBlocks 0 passes none), nothing happens.
+        FFoundationVitals V = Quiet();
+        StepTimes(V, Standing(), 40);
+        TestTrue(TEXT("F10: nothing"), V.Health == 20.f && V.FireTicks == 0 && V.FireBlockHurts == 0);
+    }
+    {
+        // F12: a lava cauldron's lava hurts as lava: 4 at ticks 1, 11 and 21, 300 fire ticks at once.
+        FFoundationVitals V = Quiet();
+        V.MaxHealth = V.Health = 1024;
+        FFoundationVitalsStep Cauldron = Standing();
+        Cauldron.bLavaContact = true;
+        V.Step(Cauldron);
+        TestEqual(TEXT("F12: lava ignites at once"), V.FireTicks, 300);
+        StepTimes(V, Cauldron, 20);
+        TestEqual(TEXT("F12: 12 in 21 ticks"), V.Health, 1012.f);
+        TestEqual(TEXT("F12: three lava hits"), V.LavaHurts, 3);
+    }
+    {
+        // Respawn keeps the count and restores the grace.
+        FFoundationVitals V = Quiet();
+        StepTimes(V, InFire, 25);
+        const int32 Hurts = V.FireBlockHurts;
+        V.Respawn();
+        TestTrue(
+            TEXT("respawn: count kept, grace back"), Hurts >= 2 && V.FireBlockHurts == Hurts && V.FireGraceTicks == 20);
+    }
+    return true;
+}
 #endif

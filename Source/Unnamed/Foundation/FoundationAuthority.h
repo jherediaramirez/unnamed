@@ -274,6 +274,10 @@ struct FFoundationLabOptions
     // plays the open and close sounds. Off, as before: no menu (the click passes on and places). The pawn copies
     // foundation.Chest in before each step.
     bool bChest = false;
+    // Cauldrons (survival step 16c, with bItemUse): a water or lava bucket fills a cauldron, an empty bucket takes a
+    // full one back. Off, as step 17: a bucket ignores cauldrons. The pawn copies foundation.Cauldrons in before each
+    // step.
+    bool bCauldrons = true;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -457,6 +461,12 @@ namespace FoundationBucket
     {
         return Id == TEXT("bucket") || Id == TEXT("water_bucket") || Id == TEXT("lava_bucket");
     }
+}
+
+namespace FoundationCauldrons
+{
+    // foundation.Cauldrons (step 16c): 1 buckets fill and empty cauldrons; 0 as step 17.
+    UNNAMED_API bool IsOn();
 }
 
 namespace FoundationItemUse
@@ -818,6 +828,15 @@ private:
     // no bucket or the switch is off; otherwise Result says what happened (a pass included).
     bool UseBucket(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
         FFoundationResult& Result);
+    // A bucket on a cauldron (step 16c): true when it filled or emptied the hit cauldron (Result filled); false passes
+    // on (no bucket, no cauldron, or an empty bucket on a cauldron that is not full).
+    bool UseCauldron(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
+    // A used bucket becomes NewItem (steps 17 and 16c). Creative keeps the used bucket and adds NewItem only when the
+    // inventory holds none; survival swaps a single bucket in place, or from a stack takes one and adds the new bucket,
+    // dropping it at the player when nothing takes it. Stack is the hand's stack before the use.
+    void SwapBucket(FFoundationPlayer& Player, EFoundationHand Hand, const FFoundationItemInstance& Stack,
+        int32 NewItem, const FIntVector& Cell, bool bCreative);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.

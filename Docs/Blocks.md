@@ -85,7 +85,7 @@ Known gaps:
 - Stems use their age-0 tint for every state (per-state tint in B6).
 - The water cauldron imports as one translucent block, because `water_still` has partial alpha: a known look issue. Lava and powder snow cauldrons are untinted.
 - Campfires draw no cooking items.
-- Fire and campfires are data only: no burning or damage until T3 and B6.
+- Fire and soul fire hurt and ignite the player since step 16c (`foundation.FireBlocks`, `Docs/Items.md` has the cauldrons; `FoundationFireContact`): `in_fire` 1 (soul fire 2) at ticks 1, 11, 21 ..., burning after 20 ticks of contact [survival2.r14.player_fire]; a lava cauldron's lava hurts as lava. Fire does not spread or burn out, mobs ignore it, and campfires are data only until B6.
 - **uvlock for partial faces** (`bake_models.py`): when a face's UV is no transform of its canonical UV, the lock's
   turn is applied after the face's own UV map; whole faces apply it the other way round. Measured over the 26.3 jar
   (`C:\dev\sandbox\b2-blocks\proof\uvlock_orders.py`): the two orders agree on every stair and wall face, and differ

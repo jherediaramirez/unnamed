@@ -5,7 +5,9 @@
 #include "Foundation/FoundationPlantRules.h"
 #include "HAL/IConsoleManager.h"
 
-namespace
+// Named, not unnamed: in a unity build an unnamed namespace would clash with FoundationBlockFamilies.cpp's
+// GetClockWise, IsSide and GetFacing; the using-declarations below let FoundationChests' functions find these first.
+namespace FoundationChestsDetail
 {
     TAutoConsoleVariable<int32> CVarChest(TEXT("foundation.Chest"), 1,
         TEXT("1: a chest or trapped chest opens its 27-slot menu (54 over a double chest), plays its open and close "
@@ -61,6 +63,19 @@ namespace
             FoundationChests::GetType(World.GetRegistry(), State) == FoundationChests::EType::Single &&
             GetFacing(World.GetRegistry(), State) == Facing;
     }
+}
+
+namespace FoundationChests
+{
+    using FoundationChestsDetail::CVarChest;
+    using FoundationChestsDetail::FacingName;
+    using FoundationChestsDetail::GetClockWise;
+    using FoundationChestsDetail::GetFacing;
+    using FoundationChestsDetail::IsSide;
+    using FoundationChestsDetail::IsSingleMatch;
+    using FoundationChestsDetail::TypeName;
+    using FoundationChestsDetail::TypeValues;
+    using FoundationChestsDetail::WithType;
 }
 
 bool FoundationChests::IsOn()

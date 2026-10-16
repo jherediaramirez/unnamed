@@ -1417,6 +1417,7 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
         FireSoundOwner = Pawn;
         HeardLavaHurts = Vitals.LavaHurts;
         HeardBurnHurts = Vitals.BurnHurts;
+        HeardFireBlockHurts = Vitals.FireBlockHurts;
         HeardExtinguishes = Vitals.Extinguishes;
         HeardDamageEvents = Vitals.DamageEvents;
         HeardDeaths = Vitals.Deaths;
@@ -1424,13 +1425,16 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
     // Wiki values (provisional): a fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 +- 0.2; lava's
     // hit adds entity.generic.burn at 0.4, pitch 2 to 2.4; water putting it out plays entity.generic.extinguish_fire
     // at 0.7, pitch 1.6 to 2.4.
-    const bool bLava = Vitals.LavaHurts != HeardLavaHurts, bBurn = Vitals.BurnHurts != HeardBurnHurts;
+    // A fire block's hit (step 16c) plays as burning's [survival2.r23.fire_sounds: hurt_on_fire only].
+    const bool bLava = Vitals.LavaHurts != HeardLavaHurts,
+               bBurn = Vitals.BurnHurts != HeardBurnHurts || Vitals.FireBlockHurts != HeardFireBlockHurts;
     const bool bOut = Vitals.Extinguishes != HeardExtinguishes;
     const bool bHurt = Vitals.DamageEvents != HeardDamageEvents, bDied = Vitals.Deaths != HeardDeaths;
     HeardDamageEvents = Vitals.DamageEvents;
     HeardDeaths = Vitals.Deaths;
     HeardLavaHurts = Vitals.LavaHurts;
     HeardBurnHurts = Vitals.BurnHurts;
+    HeardFireBlockHurts = Vitals.FireBlockHurts;
     HeardExtinguishes = Vitals.Extinguishes;
     if (!BreakEffects) return;
     const FVector At = Pawn->GetActorLocation();

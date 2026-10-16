@@ -91,8 +91,10 @@ namespace FoundationHeldPose
 
     inline FPose Get(EFoundationHand Hand, bool bFit)
     {
-        const FVector Main = bFit ? FVector(71.9, 56.2, -52.2) : FVector(42, 24, -24);
-        if (Hand == EFoundationHand::Off) return {TEXT("firstperson_lefthand"), FVector(Main.X, -Main.Y, Main.Z), -1.};
-        return {TEXT("firstperson_righthand"), Main, 1.};
+        // Pivot, not Main: a unity build may put a global Main (FoundationInteractionTests.cpp) before this header.
+        const FVector Pivot = bFit ? FVector(71.9, 56.2, -52.2) : FVector(42, 24, -24);
+        if (Hand == EFoundationHand::Off)
+            return {TEXT("firstperson_lefthand"), FVector(Pivot.X, -Pivot.Y, Pivot.Z), -1.};
+        return {TEXT("firstperson_righthand"), Pivot, 1.};
     }
 }
