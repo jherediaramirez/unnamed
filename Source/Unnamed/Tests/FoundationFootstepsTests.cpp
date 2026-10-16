@@ -205,4 +205,69 @@ bool FFoundationFootstepsInsideTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// R38-4: the step sound comes from the block under the player's 0.6-wide box, not only under its centre
+// (minecraft.wiki, Java Edition 1.20, Sounds): the centre 10 cm past a platform's edge still steps on the platform, and
+// on a fence whose cell is beside the centre's; 31 cm past the edge the box has left it.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFootstepsEdgeTest, "Unnamed.Foundation.Footsteps.BoxOverEdge", FootstepTestFlags)
+
+bool FFoundationFootstepsEdgeTest::RunTest(const FString& Parameters)
+{
+    FFootstepsLookupWorld Lookup(*this);
+    const double Cm = UFoundationProfile::BlockCm;
+    FoundationFootsteps::FStepBlocks Found;
+    Lookup.Set({0, 0, 0}, TEXT("stone"));
+    if (TestTrue(TEXT("10 cm past the edge: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(Cm + 10, .5 * Cm, Cm), Found)))
+        TestEqual(TEXT("10 cm past the edge: the stone"), Lookup.Id(Found.Primary), FString(TEXT("stone")));
+    TestFalse(TEXT("31 cm past the edge: nothing"),
+        FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(Cm + 31, .5 * Cm, Cm), Found));
+    // An oak fence reaching east to its cell's edge (1.5 blocks tall); the centre 10 cm past it, over the next cell's
+    // air.
+    Lookup.Set({3, 0, 0}, TEXT("oak_fence[east=true]"));
+    if (TestTrue(TEXT("beside a fence: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(4 * Cm + 10, .5 * Cm, 1.5 * Cm), Found)))
+        TestEqual(TEXT("beside a fence: the fence"), Lookup.Id(Found.Primary), FString(TEXT("oak_fence")));
+    return true;
+}
+
+// The sound: the block's step event at its sound type's volume x 0.15 and pitch x 1 (DA_BreakAssets, DA_Sounds); the
+// support under a carpet at a third of that and pitch x 0.8.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFootstepsSoundTest, "Unnamed.Foundation.Footsteps.VolumePitch", FootstepTestFlags)
+
+bool FFoundationFootstepsSoundTest::RunTest(const FString& Parameters)
+{
+    const UFoundationBreakAssets* Break = LoadObject<UFoundationBreakAssets>(
+        nullptr, *UUnnamedProjectSettings::GetBreakAssetPath(TEXT("DA_BreakAssets")).ToString());
+    const UFoundationSoundAssets* Sounds = LoadObject<UFoundationSoundAssets>(
+        nullptr, *UUnnamedProjectSettings::GetSoundAssetPath(TEXT("DA_Sounds")).ToString());
+    if (!TestNotNull(TEXT("DA_BreakAssets"), Break) || !TestNotNull(TEXT("DA_Sounds"), Sounds)) return false;
+    auto IndexOf = [Break](const TCHAR* Id)
+    { return Break->Blocks.IndexOfByPredicate([Id](const FFoundationBreakBlock& B) { return B.Id == FName(Id); }); };
+    FoundationFootsteps::FStepSound Sound;
+    if (TestTrue(
+            TEXT("stone"), FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("stone")), false, Sound)))
+    {
+        TestEqual(TEXT("stone event"), Sound.Event, FName(TEXT("block.stone.step")));
+        TestEqual(TEXT("stone volume 0.15"), Sound.Volume, .15f);
+        TestEqual(TEXT("stone pitch 1"), Sound.Pitch, 1.f);
+    }
+    if (TestTrue(TEXT("gold block"),
+            FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("gold_block")), false, Sound)))
+    {
+        TestEqual(TEXT("metal event"), Sound.Event, FName(TEXT("block.metal.step")));
+        TestEqual(TEXT("metal pitch 1.5"), Sound.Pitch, 1.5f);
+    }
+    if (TestTrue(TEXT("stone under a carpet"),
+            FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("stone")), true, Sound)))
+    {
+        TestEqual(TEXT("under: volume 0.05"), Sound.Volume, .05f, 1e-6f);
+        TestEqual(TEXT("under: pitch 0.8"), Sound.Pitch, .8f);
+    }
+    TestFalse(TEXT("water is silent"),
+        FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("water")), false, Sound));
+    TestFalse(TEXT("out of range"), FoundationFootsteps::GetStepSound(*Break, *Sounds, -1, false, Sound));
+    return true;
+}
 #endif

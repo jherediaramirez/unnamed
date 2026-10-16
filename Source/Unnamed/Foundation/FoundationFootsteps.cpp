@@ -47,17 +47,54 @@ bool FoundationFootsteps::FindStepBlocks(const FFoundationBlockWorld& World, con
     }
     FIntVector Cell = FoundationGrid::CellAt(FeetCm - FVector(0, 0, SupportDepthCm), World.OriginCm);
     FFoundationBlockState Support = World.Get(Cell).State;
-    if (Support.IsAir())
+    bool bFound = !Support.IsAir();
+    if (!bFound)
     {
         // A fence, wall or fence gate is 1.5 blocks tall: its cell is the one below.
         const FIntVector Below = Cell - FIntVector(0, 0, 1);
         const FFoundationBlockState Tall = World.Get(Below).State;
-        if (Tall.IsAir()) return false;
         const FGameplayTagContainer& Tags = World.GetBlock(Tall).Tags;
-        if (!(Tags.HasTag(Fences) || Tags.HasTag(Walls) || Tags.HasTag(FenceGates))) return false;
-        Cell = Below;
-        Support = Tall;
+        if (!Tall.IsAir() && (Tags.HasTag(Fences) || Tags.HasTag(Walls) || Tags.HasTag(FenceGates)))
+        {
+            Cell = Below;
+            Support = Tall;
+            bFound = true;
+        }
     }
+    if (!bFound)
+    {
+        // The centre is past an edge: the block under the 0.6-wide box nearest the centre holds the player up.
+        const double Half = GetDefault<UFoundationProfile>()->WidthCm / 2 - BoxInsetCm;
+        const FIntVector Min = FoundationGrid::CellAt(FeetCm - FVector(Half, Half, SupportDepthCm), World.OriginCm);
+        const FIntVector Max = FoundationGrid::CellAt(FeetCm + FVector(Half, Half, 0), World.OriginCm);
+        double Nearest = TNumericLimits<double>::Max();
+        TArray<FBox> Boxes;
+        for (int32 Z = Min.Z - 1; Z <= Max.Z; ++Z)
+            for (int32 Y = Min.Y; Y <= Max.Y; ++Y)
+                for (int32 X = Min.X; X <= Max.X; ++X)
+                {
+                    const FIntVector Near(X, Y, Z);
+                    const FFoundationBlockState State = World.Get(Near).State;
+                    Boxes.Reset();
+                    if (State.IsAir() || !World.GetCollisionBoxes(Near, State, Boxes)) continue;
+                    const bool bHolds = Boxes.ContainsByPredicate(
+                        [&FeetCm, Half](const FBox& Box)
+                        {
+                            return Box.Min.X < FeetCm.X + Half && Box.Max.X > FeetCm.X - Half &&
+                                Box.Min.Y < FeetCm.Y + Half && Box.Max.Y > FeetCm.Y - Half &&
+                                Box.Max.Z > FeetCm.Z - SupportDepthCm && Box.Max.Z <= FeetCm.Z + BoxInsetCm;
+                        });
+                    const double Distance = FVector::DistSquared2D(
+                        FoundationGrid::CellMin(Near, World.OriginCm) + FVector(UFoundationProfile::BlockCm / 2),
+                        FeetCm);
+                    if (!bHolds || Distance >= Nearest) continue;
+                    Nearest = Distance;
+                    Cell = Near;
+                    Support = State;
+                    bFound = true;
+                }
+    }
+    if (!bFound) return false;
     const FFoundationBlockState Above = World.Get(Cell + FIntVector(0, 0, 1)).State;
     if (!Above.IsAir() && Combination.IsValid() && World.GetBlock(Above).Tags.HasTag(Combination))
     {

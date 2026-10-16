@@ -28,6 +28,9 @@ namespace FoundationFootsteps
     constexpr float UnderPitchScale = .8f;
     // The block stepped on is 0.2 blocks below the feet (provisional, wiki).
     constexpr double SupportDepthCm = 20;
+    // The player's box edges are moved this far in before the support search, so a box touching a block's side does
+    // not stand on it.
+    constexpr double BoxInsetCm = .01;
 
     struct FState
     {
@@ -58,9 +61,10 @@ namespace FoundationFootsteps
     UNNAMED_API EStep Advance(FState& State, const FFacts& Facts);
 
     // What a step at FeetCm stands on: a #inside_step_sound_blocks block the feet are in (a lily pad: it alone plays);
-    // else the cell 0.2 blocks below the feet, or under it a fence, wall or fence gate when that cell is air.
-    // bCombination: the cell above the support is a carpet or snow layer, which plays first (Primary), the support
-    // second (Under).
+    // else the cell 0.2 blocks below the feet, or under it a fence, wall or fence gate when that cell is air; else, the
+    // centre past an edge, the block whose collision top is in those 0.2 blocks under the player's box, nearest the
+    // centre (minecraft.wiki, Java Edition 1.20, Sounds). bCombination: the cell above the support is a carpet or snow
+    // layer, which plays first (Primary), the support second (Under).
     struct FStepBlocks
     {
         FFoundationBlockState Primary;
