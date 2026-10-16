@@ -445,6 +445,15 @@ void AFoundationPawn::TakeHits(
         FoundationMobs::ApplyKnockback(
             Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
     }
+    // A killing hit ends the player's step: the interaction step after it sees the death and finishes no action (the
+    // last bite of an apple stays in the death drops; Codex review 35, finding 2, survival.r6.death_items).
+    if (const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId);
+        Player && Player->Facts.bAlive && Vitals.IsDead())
+    {
+        FFoundationPlayerFacts Facts = Player->Facts;
+        Facts.bAlive = false;
+        Authority.SetFacts(PlayerId, Facts);
+    }
 }
 
 void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)

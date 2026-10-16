@@ -7,6 +7,7 @@
 #include "Foundation/FoundationInteractionView.h"
 #include "Foundation/FoundationInteractionSettings.h"
 #include "Foundation/FoundationItemAssets.h"
+#include "Foundation/FoundationPawn.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -529,6 +530,37 @@ bool FFoundationItemsEatPolishTest::RunTest(const FString&)
         TestEqual(TEXT("still 5 apples"), Lab.Count(0), 5);
         TestEqual(TEXT("none eaten"), Lab.A.ItemsEaten, 0);
     }
+    return true;
+}
+
+// Codex review 35, finding 2: a zombie hit that kills the player on the step its apple would finish ends the step
+// before the interaction step (AFoundationPawn::TakeHits marks the facts dead), so the apple is not eaten and stays in
+// the inventory the death drops [survival.r6.death_items]. Mutation: the facts left alive (the apple eaten, 4 left).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemsEatKilledTest, "Unnamed.Foundation.Items.EatKilled", EatingTestFlags)
+
+bool FFoundationItemsEatKilledTest::RunTest(const FString&)
+{
+    FEatingLab Lab;
+    Lab.I.Press(EFoundationInput::Use, 0);
+    // The client eats on its 33rd step (start, then 32; Unnamed.Foundation.Items.Eat): 32 steps leave it unfinished.
+    for (int32 Step = 0; Step < 32; ++Step)
+    {
+        Lab.NextStep();
+        Lab.I.BeginUpdate();
+        Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+    }
+    if (!TestEqual(TEXT("not eaten yet"), Lab.Count(0), 5)) return false;
+    Lab.NextStep();
+    Lab.I.BeginUpdate();
+    Lab.Vitals.Health = 1;
+    Lab.P().MobHits.Add({1, 3.f, TEXT("Zombie"), FVector(200, 0, 0)});
+    FFoundationSimulation Simulation;
+    AFoundationPawn::TakeHits(Lab.A, Lab.Player, Lab.Vitals, Simulation);
+    TestTrue(TEXT("the hit kills"), Lab.Vitals.IsDead());
+    TestFalse(TEXT("the facts say dead"), Lab.P().Facts.bAlive);
+    Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+    TestEqual(TEXT("the apple is not eaten: 5 to drop"), Lab.Count(0), 5);
+    TestEqual(TEXT("none eaten"), Lab.A.ItemsEaten, 0);
     return true;
 }
 #endif
