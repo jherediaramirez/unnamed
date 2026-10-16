@@ -413,8 +413,8 @@ void AFoundationPawn::DropOnDeath(
                 FeetLocalCm + FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5), Points, Seed ^ 0x5850);
 }
 
-void AFoundationPawn::TakeHits(
-    FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals, FFoundationSimulation& Simulation)
+void AFoundationPawn::TakeHits(FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals,
+    FFoundationSimulation& Simulation, FVector2D& HurtSide)
 {
     // Survival T6 20c: the monsters' melee hits this step, through the whole hurt path with the attacker's name; a
     // fresh hit (not inside the damage cooldown's first half) knocks the player back from the mob [extra.motion,
@@ -429,6 +429,8 @@ void AFoundationPawn::TakeHits(
         Attack.Attacker = Hit.Attacker;
         const bool bFresh = !Vitals.IsInHurtWindow();
         if (!Authority.HurtPlayer(PlayerId, Vitals, Attack) || !bFresh) continue;
+        if (const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId))
+            HurtSide = FoundationHurt::GetHurtSide(Player->Facts.Aim, Player->Facts.FeetCm, Hit.FromCm, HurtSide);
         FVector2D Away(Simulation.Feet - Hit.FromCm);
         if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
         FoundationMobs::ApplyKnockback(
@@ -440,6 +442,8 @@ void AFoundationPawn::TakeHits(
     {
         const bool bFresh = !Vitals.IsInHurtWindow();
         if (!Authority.HurtPlayer(PlayerId, Vitals, Hit) || !bFresh) continue;
+        if (const FFoundationPlayer* Player = Authority.FindPlayer(PlayerId))
+            HurtSide = FoundationHurt::GetHurtSide(Player->Facts.Aim, Player->Facts.FeetCm, Hit.SourceCm, HurtSide);
         FVector2D Away(Simulation.Feet - Hit.SourceCm);
         if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
         FoundationMobs::ApplyKnockback(
@@ -548,7 +552,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
             LevelGains.Add({Player->Facts.Step, Before, Vitals.Level, ++LevelGainSerial});
         }
     }
-    TakeHits(Authority, Interaction.PlayerId, Vitals, Simulation);
+    TakeHits(Authority, Interaction.PlayerId, Vitals, Simulation, HurtSide);
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.
     if (const int32 Container = Interaction.OpenedContainer)
@@ -792,13 +796,15 @@ void AFoundationPawn::Tick(float DeltaSeconds)
         }
     }
     // Survival step 11b (foundation.Death.Screen 1, first person only): the hurt tilt and the death roll about the
-    // view axis. Provisional: the hurt time runs between ticks as hurtTime - partialTick [hurt.camera_tilt]; generic
-    // damage has no direction (hurtDir 0).
+    // view axis. Provisional: the hurt time runs between ticks as hurtTime - partialTick [hurt.camera_tilt]; the tilt
+    // leans toward the last hit's source (HurtSide; damage without one keeps it, the left before any).
     if (FoundationDeath::IsScreenEnabled() && !IsSpringArmView() && Perspective == 0)
     {
         if (const int32 HurtTime = FoundationHurt::GetHurtTime(Vitals); HurtTime > 0)
-            View.Roll += FoundationHurt::GetHurtTiltDegrees(
-                HurtTime - Alpha, 10., FMath::Clamp(ReadNumber(TEXT("damageTiltStrength"), 1.), 0., 1.));
+            FoundationHurt::ApplyHurtTilt(View,
+                FoundationHurt::GetHurtTiltDegrees(
+                    HurtTime - Alpha, 10., FMath::Clamp(ReadNumber(TEXT("damageTiltStrength"), 1.), 0., 1.)),
+                HurtSide);
         if (Vitals.IsDead()) View.Roll += FoundationHurt::GetDeathRollDegrees(Vitals.DeathTicks + Alpha);
     }
     Camera->SetWorldLocationAndRotation(CameraLocation, View);

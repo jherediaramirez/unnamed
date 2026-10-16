@@ -42,12 +42,33 @@ namespace FoundationDeath
 namespace FoundationHurt
 {
     // [hurt.camera_tilt] the roll in degrees: -14 x sin((hurtTime / hurtDuration)^4 x pi) x the Damage Tilt preference.
-    // hurtTime counts down from hurtDuration (10) at the hit. Generic damage has no direction (hurtDir 0), so the tilt
-    // is a plain roll about the view axis.
+    // hurtTime counts down from hurtDuration (10) at the hit. ApplyHurtTilt orients it by the hit's side.
     inline double GetHurtTiltDegrees(double HurtTime, double HurtDuration, double Strength)
     {
         if (HurtDuration <= 0) return 0;
         return -14. * FMath::Sin(FMath::Pow(HurtTime / HurtDuration, 4.) * UE_DOUBLE_PI) * Strength;
+    }
+
+    // [hurt.camera_tilt] the tilt is oriented by hurtDir: it leans toward the entity that dealt the damage
+    // (minecraft.wiki "Damage"). The side of the horizontal look the source is on, as (left, forward), unit length;
+    // LastSide when there is no horizontal direction (damage without an entity reuses the last one; the pawn starts on
+    // the left, (1, 0)).
+    inline FVector2D GetHurtSide(
+        const FVector& Look, const FVector& FeetCm, const FVector& SourceCm, const FVector2D& LastSide)
+    {
+        // Unreal's yaw turns +X toward +Y (the right), so the left of a forward (x, y) is (y, -x).
+        const FVector2D Forward = FVector2D(Look).GetSafeNormal();
+        const FVector2D ToSource = FVector2D(SourceCm - FeetCm).GetSafeNormal();
+        if (Forward.IsZero() || ToSource.IsZero()) return LastSide;
+        return FVector2D(ToSource | FVector2D(Forward.Y, -Forward.X), ToSource | Forward);
+    }
+
+    // The tilt (GetHurtTiltDegrees) on the view, about the axis hurtDir turns: all roll for a source on the left
+    // (hurtDir 0, the native sweep's), the opposite roll on the right, a pitch toward a source in front or behind.
+    inline void ApplyHurtTilt(FRotator& View, double TiltDegrees, const FVector2D& Side)
+    {
+        View.Roll += TiltDegrees * Side.X;
+        View.Pitch += TiltDegrees * Side.Y;
     }
 
     // [hurt.camera] the death roll in degrees: 40 - 8000 / (min(deathTime, 20) + 200).

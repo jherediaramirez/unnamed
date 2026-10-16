@@ -1,6 +1,9 @@
 #include "Misc/AutomationTest.h"
+#include "Foundation/FoundationAuthority.h"
+#include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationChat.h"
 #include "Foundation/FoundationDeath.h"
+#include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationVitals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -35,6 +38,59 @@ bool FFoundationHurtTiltTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("cooldown 10: 0"), FoundationHurt::GetHurtTime(Vitals), 0);
     Vitals.DamageCooldown = 0;
     TestEqual(TEXT("no cooldown: 0"), FoundationHurt::GetHurtTime(Vitals), 0);
+    return true;
+}
+
+// Codex audit RA3-5: the tilt leans toward the entity that dealt the damage (minecraft.wiki "Damage"; hurt.camera_tilt:
+// oriented by hurtDir), the native sweep's roll for a source on the left; damage without a source keeps the last
+// side. The hits go through the pawn's hit step (AFoundationPawn::TakeHits). Mutations: the side never turned (a
+// zombie on the right still rolls left); the roll's sign flipped.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationHurtTiltSideTest, "Unnamed.Foundation.Hurt.TiltSide",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FFoundationHurtTiltSideTest::RunTest(const FString& Parameters)
+{
+    // The player at the origin looking along +X (its left is -Y); a zombie's 3 from 2 blocks away at From.
+    FFoundationAuthority A;
+    A.World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+    const int32 Player = A.AddPlayer();
+    A.Reset();
+    FFoundationPlayerFacts Facts;
+    Facts.EyeCm = FVector(0, 0, 162);
+    Facts.Aim = FVector::ForwardVector;
+    Facts.Step = 1;
+    A.SetFacts(Player, Facts);
+    FFoundationVitals Vitals;
+    FFoundationSimulation Simulation;
+    FVector2D Side(1, 0);
+    const auto ZombieHit = [&](const FVector& From)
+    {
+        Vitals.Health = 20;
+        Vitals.DamageCooldown = 0;
+        Vitals.LastHurt = 0;
+        A.FindPlayer(Player)->MobHits.Add({1, 3.f, TEXT("Zombie"), From});
+        AFoundationPawn::TakeHits(A, Player, Vitals, Simulation, Side);
+    };
+    // hurtTime 9's -12.3504 degrees on a level view.
+    const auto Tilted = [&]()
+    {
+        FRotator View = FRotator::ZeroRotator;
+        FoundationHurt::ApplyHurtTilt(View, FoundationHurt::GetHurtTiltDegrees(9, 10, 1), Side);
+        return View;
+    };
+    ZombieHit(FVector(0, -200, 0));
+    TestTrue(TEXT("on the left: the native roll, -12.35"),
+        FMath::IsNearlyEqual(Tilted().Roll, -12.3504, .01) && FMath::IsNearlyZero(Tilted().Pitch, 1e-6));
+    ZombieHit(FVector(0, 200, 0));
+    TestTrue(TEXT("on the right: the other way, +12.35"),
+        FMath::IsNearlyEqual(Tilted().Roll, 12.3504, .01) && FMath::IsNearlyZero(Tilted().Pitch, 1e-6));
+    ZombieHit(FVector(200, 0, 0));
+    TestTrue(TEXT("in front: a pitch down toward it, no roll"),
+        FMath::IsNearlyEqual(Tilted().Pitch, -12.3504, .01) && FMath::IsNearlyZero(Tilted().Roll, 1e-6));
+    ZombieHit(FVector(0, 200, 0));
+    // A fall hurts without a source: the right side stays.
+    Vitals.DamageCooldown = 0;
+    Vitals.Hurt(EFoundationDamage::Fall, 2);
+    TestTrue(TEXT("a fall keeps the last side"), FMath::IsNearlyEqual(Tilted().Roll, 12.3504, .01));
     return true;
 }
 

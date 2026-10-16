@@ -98,7 +98,8 @@ namespace
             const FVector From =
                 FVector(FMath::Cos(FMath::DegreesToRadians(Yaw)), FMath::Sin(FMath::DegreesToRadians(Yaw)), 0) * 200;
             P().MobHits.Add({1, 3.f, TEXT("Zombie"), From});
-            AFoundationPawn::TakeHits(A, Player, Vitals, Simulation);
+            FVector2D Side(1, 0);
+            AFoundationPawn::TakeHits(A, Player, Vitals, Simulation, Side);
         }
 
         int32 Count(EFoundationEventKind Kind) const

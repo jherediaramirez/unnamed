@@ -130,11 +130,13 @@ public:
     static void DropOnDeath(FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals,
         const FVector& FeetLocalCm, int32 Seed);
     // StepInteraction's mob and arrow hits for PlayerId (a static for the tests): each through HurtPlayer (a raised
-    // shield facing it blocks it; Codex review 35, finding 1); a fresh hit knocks Simulation back. A killing hit marks
-    // the authority's facts dead, so the interaction step after it ends the player's actions instead of finishing one
-    // (review 35, finding 2).
-    static void TakeHits(
-        FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals, FFoundationSimulation& Simulation);
+    // shield facing it blocks it; Codex review 35, finding 1); a fresh hit knocks Simulation back and turns HurtSide
+    // toward its source. A killing hit marks the authority's facts dead, so the interaction step after it ends the
+    // player's actions instead of finishing one (review 35, finding 2).
+    static void TakeHits(FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals,
+        FFoundationSimulation& Simulation, FVector2D& HurtSide);
+    // Where the hurt tilt leans (FoundationHurt::GetHurtSide): the last hit's source, the player's left before any.
+    FVector2D HurtSide = FVector2D(1, 0);
 
 private:
     // Vitals.Deaths as HandleDeath last saw it.

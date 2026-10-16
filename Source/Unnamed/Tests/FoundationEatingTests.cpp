@@ -555,7 +555,8 @@ bool FFoundationItemsEatKilledTest::RunTest(const FString&)
     Lab.Vitals.Health = 1;
     Lab.P().MobHits.Add({1, 3.f, TEXT("Zombie"), FVector(200, 0, 0)});
     FFoundationSimulation Simulation;
-    AFoundationPawn::TakeHits(Lab.A, Lab.Player, Lab.Vitals, Simulation);
+    FVector2D Side(1, 0);
+    AFoundationPawn::TakeHits(Lab.A, Lab.Player, Lab.Vitals, Simulation, Side);
     TestTrue(TEXT("the hit kills"), Lab.Vitals.IsDead());
     TestFalse(TEXT("the facts say dead"), Lab.P().Facts.bAlive);
     Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
