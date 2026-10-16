@@ -153,43 +153,56 @@ bool FFoundationFootstepsBlocksTest::RunTest(const FString& Parameters)
     return true;
 }
 
-// The sound: the block's step event at its sound type's volume x 0.15 and pitch x 1 (DA_BreakAssets, DA_Sounds); the
-// support under a carpet at a third of that and pitch x 0.8.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-    FFoundationFootstepsSoundTest, "Unnamed.Foundation.Footsteps.VolumePitch", FootstepTestFlags)
-
-bool FFoundationFootstepsSoundTest::RunTest(const FString& Parameters)
+namespace
 {
-    const UFoundationBreakAssets* Break = LoadObject<UFoundationBreakAssets>(
-        nullptr, *UUnnamedProjectSettings::GetBreakAssetPath(TEXT("DA_BreakAssets")).ToString());
-    const UFoundationSoundAssets* Sounds = LoadObject<UFoundationSoundAssets>(
-        nullptr, *UUnnamedProjectSettings::GetSoundAssetPath(TEXT("DA_Sounds")).ToString());
-    if (!TestNotNull(TEXT("DA_BreakAssets"), Break) || !TestNotNull(TEXT("DA_Sounds"), Sounds)) return false;
-    auto IndexOf = [Break](const TCHAR* Id)
-    { return Break->Blocks.IndexOfByPredicate([Id](const FFoundationBreakBlock& B) { return B.Id == FName(Id); }); };
-    FoundationFootsteps::FStepSound Sound;
-    if (TestTrue(
-            TEXT("stone"), FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("stone")), false, Sound)))
+    // A small world for the step lookups below, with a parser that reports blocks missing from the set.
+    struct FFootstepsLookupWorld
     {
-        TestEqual(TEXT("stone event"), Sound.Event, FName(TEXT("block.stone.step")));
-        TestEqual(TEXT("stone volume 0.15"), Sound.Volume, .15f);
-        TestEqual(TEXT("stone pitch 1"), Sound.Pitch, 1.f);
-    }
-    if (TestTrue(TEXT("gold block"),
-            FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("gold_block")), false, Sound)))
-    {
-        TestEqual(TEXT("metal event"), Sound.Event, FName(TEXT("block.metal.step")));
-        TestEqual(TEXT("metal pitch 1.5"), Sound.Pitch, 1.5f);
-    }
-    if (TestTrue(TEXT("stone under a carpet"),
-            FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("stone")), true, Sound)))
-    {
-        TestEqual(TEXT("under: volume 0.05"), Sound.Volume, .05f, 1e-6f);
-        TestEqual(TEXT("under: pitch 0.8"), Sound.Pitch, .8f);
-    }
-    TestFalse(TEXT("water is silent"),
-        FoundationFootsteps::GetStepSound(*Break, *Sounds, IndexOf(TEXT("water")), false, Sound));
-    TestFalse(TEXT("out of range"), FoundationFootsteps::GetStepSound(*Break, *Sounds, -1, false, Sound));
+        FFoundationBlockWorld World;
+        FAutomationTestBase& Test;
+
+        explicit FFootstepsLookupWorld(FAutomationTestBase& InTest) : Test(InTest)
+        {
+            World.SetRegistry(FFoundationBlockRegistry::GetDefault());
+            World.BoundsMin = FIntVector(-1, -1, -1);
+            World.BoundsMax = FIntVector(16, 4, 8);
+        }
+        void Set(const FIntVector& Cell, const TCHAR* Text)
+        {
+            FFoundationBlockState State;
+            Test.TestTrue(
+                FString::Printf(TEXT("%s is in the block set"), Text), World.GetRegistry().Parse(Text, State));
+            World.Set(Cell, State);
+        }
+        FString Id(FFoundationBlockState State) const { return World.GetBlock(State).Id.ToString(); }
+    };
+} // namespace
+
+// R38-3: a block of #inside_step_sound_blocks the feet are in plays instead of the block below (minecraft.wiki, Block
+// tag (Java Edition), inside_step_sound_blocks): a lily pad over water, pink petals on grass.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationFootstepsInsideTest, "Unnamed.Foundation.Footsteps.InsideStepBlocks", FootstepTestFlags)
+
+bool FFoundationFootstepsInsideTest::RunTest(const FString& Parameters)
+{
+    FFootstepsLookupWorld Lookup(*this);
+    const double Cm = UFoundationProfile::BlockCm;
+    FoundationFootsteps::FStepBlocks Found;
+    // A lily pad (1.5/16 tall) on water: the feet on its top, the water 0.2 blocks under them.
+    Lookup.Set({0, 0, 0}, TEXT("water"));
+    Lookup.Set({0, 0, 1}, TEXT("lily_pad"));
+    if (TestTrue(TEXT("lily pad: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(.5 * Cm, .5 * Cm, (1 + 1.5 / 16) * Cm), Found)))
+        TestTrue(
+            TEXT("lily pad: the lily pad alone"), Lookup.Id(Found.Primary) == TEXT("lily_pad") && !Found.bCombination);
+    // Pink petals on grass: the feet on the grass, inside the petals' cell.
+    Lookup.Set({1, 0, 0}, TEXT("grass_block"));
+    Lookup.Set({1, 0, 1}, TEXT("pink_petals"));
+    if (TestTrue(TEXT("petals: found"),
+            FoundationFootsteps::FindStepBlocks(Lookup.World, FVector(1.5 * Cm, .5 * Cm, Cm), Found)))
+        TestTrue(TEXT("petals: the petals, not the grass"),
+            Lookup.Id(Found.Primary) == TEXT("pink_petals") && !Found.bCombination);
     return true;
 }
+
 #endif

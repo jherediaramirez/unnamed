@@ -36,7 +36,15 @@ bool FoundationFootsteps::FindStepBlocks(const FFoundationBlockWorld& World, con
     static const FGameplayTag Fences = FGameplayTag::RequestGameplayTag(TEXT("Block.Fences"), false);
     static const FGameplayTag Walls = FGameplayTag::RequestGameplayTag(TEXT("Block.Walls"), false);
     static const FGameplayTag FenceGates = FGameplayTag::RequestGameplayTag(TEXT("Block.FenceGates"), false);
+    static const FGameplayTag Inside = FGameplayTag::RequestGameplayTag(TEXT("Block.InsideStepSoundBlocks"), false);
     Out = FStepBlocks();
+    // A lily pad, petals or lichen the feet are in plays instead of the block below.
+    const FFoundationBlockState In = World.Get(FoundationGrid::CellAt(FeetCm, World.OriginCm)).State;
+    if (!In.IsAir() && Inside.IsValid() && World.GetBlock(In).Tags.HasTag(Inside))
+    {
+        Out.Primary = In;
+        return true;
+    }
     FIntVector Cell = FoundationGrid::CellAt(FeetCm - FVector(0, 0, SupportDepthCm), World.OriginCm);
     FFoundationBlockState Support = World.Get(Cell).State;
     if (Support.IsAir())

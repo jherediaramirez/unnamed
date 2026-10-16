@@ -57,9 +57,10 @@ namespace FoundationFootsteps
     // One reference step. A due step waits for the ground (a jump lands on it).
     UNNAMED_API EStep Advance(FState& State, const FFacts& Facts);
 
-    // What a step at FeetCm stands on: the cell 0.2 blocks below the feet, or under it a fence, wall or fence gate when
-    // that cell is air. bCombination: the cell above that one is a carpet or snow layer, which plays first (Primary),
-    // the support second (Under).
+    // What a step at FeetCm stands on: a #inside_step_sound_blocks block the feet are in (a lily pad: it alone plays);
+    // else the cell 0.2 blocks below the feet, or under it a fence, wall or fence gate when that cell is air.
+    // bCombination: the cell above the support is a carpet or snow layer, which plays first (Primary), the support
+    // second (Under).
     struct FStepBlocks
     {
         FFoundationBlockState Primary;
