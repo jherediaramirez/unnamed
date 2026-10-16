@@ -157,6 +157,11 @@ bool FoundationFurnace::IsAmbienceForced()
     return CVarFurnaceAmbienceForce.GetValueOnAnyThread() != 0;
 }
 
+bool FoundationFurnace::HasAmbience(const FFoundationBlockEntity& Entity, bool bFurnaceSwitch)
+{
+    return Entity.Kind == EFoundationBlockEntityKind::Furnace && bFurnaceSwitch && Entity.IsLit();
+}
+
 int32 FoundationFurnace::StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning)
 {
     constexpr float TicksPerSecond = 20;

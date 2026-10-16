@@ -1538,7 +1538,7 @@ void UFoundationInteractionView::PlayFurnaceAmbience(
     const FVector Listener = Pawn->GetActorLocation();
     for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())
     {
-        if (Entity.Kind != EFoundationBlockEntityKind::Furnace || !Entity.IsLit()) continue;
+        if (!FoundationFurnace::HasAmbience(Entity, Authority.Options.bFurnace)) continue;
         const FBox Box = FoundationGrid::CellBox(Cell, Authority.World.OriginCm);
         const FVector At(Box.GetCenter().X, Box.GetCenter().Y, Box.Min.Z);
         if (FVector::DistSquared(At, Listener) > ReachCm * ReachCm) continue;

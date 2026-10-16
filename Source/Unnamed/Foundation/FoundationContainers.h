@@ -143,6 +143,9 @@ namespace FoundationFurnace
     // container screen keeps it on) it rolls none and starts over (Codex review 25, finding 1; vanilla stops sounds
     // while paused, MC-118081).
     UNNAMED_API int32 StepAmbienceClock(float& Clock, float DeltaTime, bool bRunning);
+    // Whether a block entity's smoke, flame and crackle play: a lit furnace, smoker or blast furnace, with
+    // foundation.Furnace (bFurnaceSwitch) on.
+    UNNAMED_API bool HasAmbience(const FFoundationBlockEntity& Entity, bool bFurnaceSwitch);
     // One lit block's display callbacks over Ticks of that clock: each tick one with chance DisplayChance, Roll's
     // U[0, 1) draw (provisional scheduling, T1 8b1); every tick with foundation.Furnace.AmbienceForce 1; none with
     // foundation.Furnace.Ambience 0. Each callback spawns the block's smoke and flame and rolls its sound (T1 8b2b).

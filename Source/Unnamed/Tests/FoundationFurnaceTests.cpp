@@ -720,6 +720,17 @@ bool FFoundationFurnaceAmbiencePauseTest::RunTest(const FString&)
     TestEqual(TEXT("paused: the clock starts over"), Clock, 0.f);
     TestEqual(TEXT("running: 1 roll after 0.06 s"), FoundationFurnace::StepAmbienceClock(Clock, .06f, true), 1);
     TestEqual(TEXT("running: 4 rolls at most"), FoundationFurnace::StepAmbienceClock(Clock, 1.f, true), 4);
+    // QC RA1-2 (review): a lit furnace has its ambience only with foundation.Furnace on; switched off it is dark and
+    // silent.
+    {
+        FFoundationBlockEntity Unlit;
+        Unlit.Block = TEXT("furnace");
+        FFoundationBlockEntity Lit = Unlit;
+        Lit.LitTime = Lit.LitDuration = 100;
+        TestTrue(TEXT("lit, switch on: ambience"), Lit.IsLit() && FoundationFurnace::HasAmbience(Lit, true));
+        TestFalse(TEXT("lit, switch off: none"), FoundationFurnace::HasAmbience(Lit, false));
+        TestFalse(TEXT("unlit: none"), FoundationFurnace::HasAmbience(Unlit, true));
+    }
 
     // The gate is the pawn's simulation: the pause menu turns it off, a container screen keeps it on (only the input
     // is zeroed), so the sounds go on under the screen.
