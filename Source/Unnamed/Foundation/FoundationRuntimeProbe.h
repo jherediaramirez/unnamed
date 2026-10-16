@@ -88,6 +88,9 @@ private:
     // -FoundationSuite=mobs: a summoned cow walking, hit and dying into its drops, and the foundation.Mobs control
     // pair, with shots (FoundationMobsProbe.cpp).
     void AddMobCases();
+    // -FoundationSuite=smear: mobs and drops moving across the view, the held sword and a turning camera, with shots
+    // for the smear fix's before/after (K-PLAYER-7, FoundationSmearProbe.cpp).
+    void AddSmearCases();
     // The chat commands (step 15), in the interaction and views suites (FoundationCommandsProbe.cpp).
     void AddCommandsCases();
     // The death screen (step 11a) and its switch-0 control, in the interaction suite (FoundationDeathProbe.cpp).

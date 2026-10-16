@@ -1695,10 +1695,15 @@ FString AVoxelWorld::DescribeMobs() const
             Types += FString::Printf(TEXT("%s%s %d"), Types.IsEmpty() ? TEXT("") : TEXT(", "),
                 *FoundationMobs::GetKind(EFoundationMobType(Type)).Id.ToString(), ByType[Type]);
     return FString::Printf(TEXT("  Mobs: live %d (%s); columns seen %d, packs %d, pack-spawned %d; steps %lld, cycles "
-                                "run %d, cycle-spawned %d; last cycle: %d columns, %d creatures, cap %d"),
+                                "run %d, cycle-spawned %d; last cycle: %d columns, %d creatures, cap %d; monster "
+                                "cycles run %d, spawned %d, last %d monsters, cap %d, %.3f ms mean, %.3f ms worst; "
+                                "despawned %d"),
         Live, Types.IsEmpty() ? TEXT("none") : *Types, Authority.MobColumnsSeen, Authority.MobPacks,
         Authority.MobsPackSpawned, Authority.GetMobCycleStep(), Authority.MobCycles, Authority.MobsCycleSpawned,
-        Authority.MobCycleEligible, Authority.MobCycleCount, Authority.MobCycleCap);
+        Authority.MobCycleEligible, Authority.MobCycleCount, Authority.MobCycleCap, Authority.MonsterCycles,
+        Authority.MonstersCycleSpawned, Authority.MonsterCycleCount, Authority.MonsterCycleCap,
+        Authority.GetMobCycleStep() > 0 ? Authority.MonsterCycleMsTotal / double(Authority.GetMobCycleStep()) : 0.,
+        Authority.MonsterCycleMsMax, Authority.MobsDespawned);
 }
 
 void AVoxelWorld::FindCaveShots()

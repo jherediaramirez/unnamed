@@ -39,7 +39,9 @@ enum class EFoundationDamage : uint8
     OnFire,
     // An arrow (step 19c): armor applies; 26.3's arrow damage type (exhaustion 0.1, scaled by difficulty only from a
     // living non-player: T6 20d's skeleton).
-    Arrow
+    Arrow,
+    // Fire and soul fire block contact (armor applies), survival step 16c.
+    InFire
 };
 
 // One reference tick of facts from movement and the lab world. Distances are centimeters.
@@ -53,6 +55,10 @@ struct FFoundationVitalsStep
     bool bClimbing = false;
     // The body touches lava (the pawn passes it only with foundation.Fire 1).
     bool bBodyInLava = false;
+    // Fire block contact (step 16c, foundation.FireBlocks): the in_fire damage of the hottest fire cell the body
+    // touches (fire 1, soul fire 2; 0 = none), and the body inside a lava cauldron's lava (hurts as lava does).
+    int32 FireBlockDamage = 0;
+    bool bLavaContact = false;
 };
 
 // Session-only survival state on the 20 Hz reference tick: health, absorption, armor, food,
@@ -64,6 +70,9 @@ struct UNNAMED_API FFoundationVitals
     // Lava ignites for 15 s [hurt.lava_ignite]; burning hurts every 20 ticks [hurt.burning].
     static constexpr int32 LavaFireTicks = 300;
     static constexpr int32 BurnIntervalTicks = 20;
+    // Fire blocks ignite a player for 8 s, after 20 ticks of contact [survival2.r14.player_fire].
+    static constexpr int32 FireBlockTicks = 160;
+    static constexpr int32 PlayerFireGraceTicks = 20;
 
     // Lab configuration, kept across respawn. Armor and toughness are the attributes' base values (0 for a player);
     // the worn pieces add theirs (survival step 19a). Attack speed stands in for the held item's.
@@ -91,12 +100,18 @@ struct UNNAMED_API FFoundationVitals
     bool bEyesInWater = false;
     // Ticks left burning; lava sets at least LavaFireTicks, water clears it.
     int32 FireTicks = 0;
+    // Fire block contact ticks left before a fire block ignites the player: vanilla's fire ticks from -20 up to 0
+    // [survival2.r14.player_fire], kept apart so FireTicks stays 0 = not burning. Water restores it; once a fire has
+    // burned out it stays 0 until then (provisional).
+    int32 FireGraceTicks = PlayerFireGraceTicks;
     FName MainHandItem;
 
     // Session diagnostics, kept across respawn.
     int32 DamageEvents = 0, Deaths = 0;
     // Fire diagnostics the view plays sounds from: lava hits taken, burning hits taken, fires put out by water.
     int32 LavaHurts = 0, BurnHurts = 0, Extinguishes = 0;
+    // Fire block (in_fire) hits taken (step 16c).
+    int32 FireBlockHurts = 0;
     // The last death (step 11a), kept across respawn: its message as vanilla's chat and death screen show it, the
     // en_us.json key it came from, and the death screen's score (the experience points held at death).
     FString LastDamage = TEXT("none"), DeathMessage, DeathKey;

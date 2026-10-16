@@ -1464,6 +1464,7 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
         FireSoundOwner = Pawn;
         HeardLavaHurts = Vitals.LavaHurts;
         HeardBurnHurts = Vitals.BurnHurts;
+        HeardFireBlockHurts = Vitals.FireBlockHurts;
         HeardExtinguishes = Vitals.Extinguishes;
         HeardDamageEvents = Vitals.DamageEvents;
         HeardDeaths = Vitals.Deaths;
@@ -1471,13 +1472,16 @@ void UFoundationInteractionView::PlayFireSounds(const AFoundationPawn* Pawn)
     // Wiki values (provisional): a fire hurt plays entity.player.hurt_on_fire at volume 1, pitch 1 +- 0.2; lava's
     // hit adds entity.generic.burn at 0.4, pitch 2 to 2.4; water putting it out plays entity.generic.extinguish_fire
     // at 0.7, pitch 1.6 to 2.4.
-    const bool bLava = Vitals.LavaHurts != HeardLavaHurts, bBurn = Vitals.BurnHurts != HeardBurnHurts;
+    // A fire block's hit (step 16c) plays as burning's [survival2.r23.fire_sounds: hurt_on_fire only].
+    const bool bLava = Vitals.LavaHurts != HeardLavaHurts,
+               bBurn = Vitals.BurnHurts != HeardBurnHurts || Vitals.FireBlockHurts != HeardFireBlockHurts;
     const bool bOut = Vitals.Extinguishes != HeardExtinguishes;
     const bool bHurt = Vitals.DamageEvents != HeardDamageEvents, bDied = Vitals.Deaths != HeardDeaths;
     HeardDamageEvents = Vitals.DamageEvents;
     HeardDeaths = Vitals.Deaths;
     HeardLavaHurts = Vitals.LavaHurts;
     HeardBurnHurts = Vitals.BurnHurts;
+    HeardFireBlockHurts = Vitals.FireBlockHurts;
     HeardExtinguishes = Vitals.Extinguishes;
     if (!BreakEffects) return;
     const FVector At = Pawn->GetActorLocation();
@@ -1514,7 +1518,7 @@ void UFoundationInteractionView::PlayFootsteps(const FFoundationAuthority& Autho
     if (bStep && BreakEffects) BreakEffects->PlayFootstep(Authority, Pawn->LastFootstepFeet);
 }
 
-void UFoundationInteractionView::PlayFurnaceSounds(
+void UFoundationInteractionView::PlayFurnaceAmbience(
     const FFoundationAuthority& Authority, const AFoundationPawn* Pawn, float DeltaTime)
 {
     if (!BreakEffects || !Pawn || !FoundationFurnace::IsAmbienceOn())
@@ -1522,13 +1526,15 @@ void UFoundationInteractionView::PlayFurnaceSounds(
         FurnaceSoundClock = 0;
         return;
     }
-    // A display callback plays its block's sound with chance 0.1, volume 1, pitch 1
-    // (survival2.r15.exact_callback_chances, survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the
-    // callback's scheduling, one on 1 tick in 50 of a 20 Hz clock for each lit block within the sound's 16-block reach
-    // (vanilla's is client-spatial, R15), and the sound's place, the block's bottom centre. Nothing rolls while paused.
-    constexpr float DisplayChance = 1.f / 50, SoundChance = 1.f / 10, ReachCm = 1600;
+    // A display callback spawns its block's smoke and flame (FFoundationBreakEffects::SpawnFurnaceParticles, T1 8b2b)
+    // and plays its sound with chance 0.1, volume 1, pitch 1 (survival2.r15.exact_callback_chances,
+    // survival2.r15.sounds). Provisional (provisional-values.md, T1 8b1): the callback's scheduling, one on 1 tick in
+    // 50 of a 20 Hz clock for each lit block within the sound's 16-block reach (vanilla's is client-spatial, R15), and
+    // the sound's place, the block's bottom centre. Nothing rolls or spawns while paused.
+    constexpr float SoundChance = 1.f / 10, ReachCm = 1600;
     const int32 Ticks = FoundationFurnace::StepAmbienceClock(FurnaceSoundClock, DeltaTime, Pawn->IsSimulationEnabled());
     if (Ticks <= 0) return;
+    const FFoundationBlockRegistry& Registry = Authority.World.GetRegistry();
     const FVector Listener = Pawn->GetActorLocation();
     for (const auto& [Cell, Entity] : Authority.BlockEntities.GetAll())
     {
@@ -1540,8 +1546,22 @@ void UFoundationInteractionView::PlayFurnaceSounds(
         const TCHAR* Event = Cooking == EFoundationCookingKind::Smoking ? TEXT("block.smoker.smoke")
             : Cooking == EFoundationCookingKind::Blasting               ? TEXT("block.blastfurnace.fire_crackle")
                                                                         : TEXT("block.furnace.fire_crackle");
-        for (int32 Tick = 0; Tick < Ticks; ++Tick)
-            if (FMath::FRand() < DisplayChance * SoundChance) BreakEffects->PlayEvent(Event, At, 1.f, 1.f);
+        const FoundationBreak::EFurnaceBlock Block = Cooking == EFoundationCookingKind::Smoking
+            ? FoundationBreak::EFurnaceBlock::Smoker
+            : Cooking == EFoundationCookingKind::Blasting ? FoundationBreak::EFurnaceBlock::BlastFurnace
+                                                          : FoundationBreak::EFurnaceBlock::Furnace;
+        // The front the smoke and flame leave from: the state's facing (north when it has none).
+        EFoundationFace Facing = EFoundationFace::North;
+        const FName FacingValue = Registry.GetValue(Authority.World.Get(Cell).State, TEXT("facing"));
+        for (const EFoundationFace Side :
+            {EFoundationFace::North, EFoundationFace::South, EFoundationFace::West, EFoundationFace::East})
+            if (FacingValue == FoundationGrid::FaceName(Side)) Facing = Side;
+        const int32 Callbacks = FoundationFurnace::RollDisplayCallbacks(Ticks, [] { return FMath::FRand(); });
+        for (int32 Callback = 0; Callback < Callbacks; ++Callback)
+        {
+            BreakEffects->SpawnFurnaceParticles(Block, Box, Facing);
+            if (FMath::FRand() < SoundChance) BreakEffects->PlayEvent(Event, At, 1.f, 1.f);
+        }
     }
 }
 
@@ -1564,7 +1584,7 @@ void UFoundationInteractionView::TickComponent(
     AFoundationPawn* Pawn = GetLocalPawn();
     PlayFireSounds(Pawn);
     PlayFootsteps(Authority, Pawn);
-    PlayFurnaceSounds(Authority, Pawn, DeltaTime);
+    PlayFurnaceAmbience(Authority, Pawn, DeltaTime);
     const auto* Controller = Pawn ? Cast<AFoundationController>(Pawn->GetController()) : nullptr;
     // F1 hides the outline, preview and hand with the HUD; the menu hides them while paused.
     const bool bVisible = Controller && Controller->IsGameplay() && !Controller->GetHud()->bHideHud;

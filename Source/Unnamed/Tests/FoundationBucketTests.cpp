@@ -497,4 +497,201 @@ bool FFoundationItemsBucketExtinguishTest::RunTest(const FString&)
     TestEqual(TEXT("switch 0: no extinguish"), Off.CountEvents(EFoundationEventKind::Extinguished), 0);
     return true;
 }
+
+namespace
+{
+    // One press of use through the client (UseOn first, then the item's use), released after the step.
+    void PressUse(FBucketLab& Lab)
+    {
+        Lab.NextStep();
+        Lab.I.Press(EFoundationInput::Use, 0);
+        Lab.NextStep();
+        Lab.I.BeginUpdate();
+        Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+        Lab.I.Release(EFoundationInput::Use);
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationItemsCauldronTest, "Unnamed.Foundation.Items.Cauldron", BucketTestFlags)
+
+bool FFoundationItemsCauldronTest::RunTest(const FString&)
+{
+    // Survival step 16c (minecraft.wiki "Cauldron"): buckets fill and empty a cauldron at Aimed, through the client.
+    static const FName Level(TEXT("level"));
+    auto ItemOf = [](FBucketLab& Lab, const FFoundationEvent* Event)
+    { return Event ? Lab.A.Rules.Items[Event->Item].Id : FName(); };
+    {
+        // K1, K3: a water bucket fills an empty cauldron to level 3 and leaves an empty bucket; the empty bucket takes
+        // the full cauldron back.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestEqual(TEXT("K1: a water cauldron"), Lab.BlockAt(Lab.Aimed), FName(TEXT("water_cauldron")));
+        TestEqual(TEXT("K1: level 3"), Lab.Value(Lab.Aimed, Level), FName(TEXT("3")));
+        TestEqual(TEXT("K1: an empty bucket"), Lab.HandItem(), FName(TEXT("bucket")));
+        TestTrue(TEXT("K1: nothing poured beside"), Lab.A.World.Get(Lab.Beside).State.IsAir());
+        const FFoundationEvent* Emptied = Lab.LastEvent(EFoundationEventKind::Emptied);
+        TestTrue(TEXT("K1: Emptied names the water bucket at the cauldron (item.bucket.empty)"),
+            Emptied && Emptied->Cell == Lab.Aimed && ItemOf(Lab, Emptied) == TEXT("water_bucket"));
+        PressUse(Lab);
+        TestEqual(TEXT("K3: an empty cauldron"), Lab.BlockAt(Lab.Aimed), FName(TEXT("cauldron")));
+        TestEqual(TEXT("K3: a water bucket"), Lab.HandItem(), FName(TEXT("water_bucket")));
+        const FFoundationEvent* Filled = Lab.LastEvent(EFoundationEventKind::Filled);
+        TestTrue(TEXT("K3: Filled names the water bucket at the cauldron's centre (item.bucket.fill)"),
+            Filled && Filled->Cell == Lab.Aimed && ItemOf(Lab, Filled) == TEXT("water_bucket") &&
+                Filled->LocationCm.Equals(FoundationGrid::CellBox(Lab.Aimed, Lab.A.World.OriginCm).GetCenter()));
+        TestEqual(TEXT("two bucket uses"), Lab.A.BucketUses, 2);
+    }
+    {
+        // K2, K4: lava the same.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("lava_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestEqual(TEXT("K2: a lava cauldron"), Lab.BlockAt(Lab.Aimed), FName(TEXT("lava_cauldron")));
+        TestEqual(TEXT("K2: an empty bucket"), Lab.HandItem(), FName(TEXT("bucket")));
+        TestEqual(TEXT("K2: Emptied names the lava bucket (item.bucket.empty_lava)"),
+            ItemOf(Lab, Lab.LastEvent(EFoundationEventKind::Emptied)), FName(TEXT("lava_bucket")));
+        PressUse(Lab);
+        TestEqual(TEXT("K4: an empty cauldron"), Lab.BlockAt(Lab.Aimed), FName(TEXT("cauldron")));
+        TestEqual(TEXT("K4: a lava bucket"), Lab.HandItem(), FName(TEXT("lava_bucket")));
+        TestEqual(TEXT("K4: Filled names the lava bucket (item.bucket.fill_lava)"),
+            ItemOf(Lab, Lab.LastEvent(EFoundationEventKind::Filled)), FName(TEXT("lava_bucket")));
+    }
+    for (const TCHAR* Partial : {TEXT("1"), TEXT("2")})
+    {
+        // K5: an empty bucket on a water cauldron below level 3 does nothing (no fill, no pour).
+        FBucketLab Lab;
+        const FFoundationBlockState Before = Lab.Put(Lab.Aimed, TEXT("water_cauldron"), Level, Partial);
+        PressUse(Lab);
+        TestEqual(TEXT("K5: unchanged"), Lab.A.World.Get(Lab.Aimed).State, Before);
+        TestEqual(TEXT("K5: still an empty bucket"), Lab.HandItem(), FName(TEXT("bucket")));
+        TestEqual(TEXT("K5: no bucket use"), Lab.A.BucketUses, 0);
+    }
+    {
+        // Q2 (provisional): a full bucket on a cauldron holding something else replaces the contents, full.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("lava_cauldron"));
+        PressUse(Lab);
+        TestTrue(TEXT("Q2: water over lava"),
+            Lab.BlockAt(Lab.Aimed) == TEXT("water_cauldron") && Lab.Value(Lab.Aimed, Level) == TEXT("3"));
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("water_cauldron"), Level, TEXT("1"));
+        PressUse(Lab);
+        TestTrue(TEXT("Q2: water tops up level 1"),
+            Lab.Value(Lab.Aimed, Level) == TEXT("3") && Lab.HandItem() == TEXT("bucket"));
+        Lab.Give(0, TEXT("lava_bucket"));
+        PressUse(Lab);
+        TestTrue(TEXT("Q2: lava over water"),
+            Lab.BlockAt(Lab.Aimed) == TEXT("lava_cauldron") && Lab.HandItem() == TEXT("bucket"));
+    }
+    {
+        // K6: Creative keeps the bucket; taking adds the filled bucket only when none is held.
+        FBucketLab Lab;
+        Lab.Vitals.Mode = EFoundationPlayerMode::Creative;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestEqual(TEXT("K6: filled"), Lab.BlockAt(Lab.Aimed), FName(TEXT("water_cauldron")));
+        TestEqual(TEXT("K6: the water bucket kept"), Lab.HandItem(), FName(TEXT("water_bucket")));
+        TestEqual(TEXT("K6: no empty bucket added"), Lab.CountItem(TEXT("bucket")), 0);
+    }
+    {
+        // Adventure: no block changes; the bucket's own use passes too (step 17).
+        FBucketLab Lab;
+        Lab.Vitals.Mode = EFoundationPlayerMode::Adventure;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestTrue(TEXT("Adventure: nothing"),
+            Lab.BlockAt(Lab.Aimed) == TEXT("cauldron") && Lab.HandItem() == TEXT("water_bucket") &&
+                Lab.A.World.Get(Lab.Beside).State.IsAir());
+    }
+    {
+        // K7: crouching with the bucket skips the cauldron: the bucket pours beside it (step 17).
+        FBucketLab Lab;
+        Lab.bSneak = true;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestEqual(TEXT("K7: the cauldron stays empty"), Lab.BlockAt(Lab.Aimed), FName(TEXT("cauldron")));
+        TestTrue(TEXT("K7: water beside it"), Lab.IsSource(Lab.Beside, false));
+    }
+    {
+        // K8: foundation.Items.Use 0: nothing; foundation.Cauldrons 0: the bucket pours beside, as step 17.
+        FBucketLab Off(false);
+        Off.Give(0, TEXT("water_bucket"));
+        Off.Put(Off.Aimed, TEXT("cauldron"));
+        PressUse(Off);
+        TestTrue(TEXT("K8: Items.Use 0, nothing"),
+            Off.BlockAt(Off.Aimed) == TEXT("cauldron") && Off.HandItem() == TEXT("water_bucket") &&
+                Off.A.World.Get(Off.Beside).State.IsAir());
+        FBucketLab NoCauldrons;
+        NoCauldrons.A.Options.bCauldrons = false;
+        NoCauldrons.Give(0, TEXT("water_bucket"));
+        NoCauldrons.Put(NoCauldrons.Aimed, TEXT("cauldron"));
+        PressUse(NoCauldrons);
+        TestEqual(TEXT("K8: Cauldrons 0, the cauldron stays empty"), NoCauldrons.BlockAt(NoCauldrons.Aimed),
+            FName(TEXT("cauldron")));
+        TestTrue(TEXT("K8: Cauldrons 0, water beside it"), NoCauldrons.IsSource(NoCauldrons.Beside, false));
+    }
+    {
+        // K9: a stack of empty buckets: one goes and the filled bucket is added; with no room (and no item entities)
+        // the take is refused and nothing changes.
+        FBucketLab Lab;
+        Lab.A.Options.bFullInventory = false;
+        Lab.Give(0, TEXT("bucket"), 2);
+        Lab.Put(Lab.Aimed, TEXT("water_cauldron"), Level, TEXT("3"));
+        PressUse(Lab);
+        TestTrue(TEXT("K9: a stack takes"),
+            Lab.BlockAt(Lab.Aimed) == TEXT("cauldron") && Lab.HandCount() == 1 &&
+                Lab.CountItem(TEXT("water_bucket")) == 1);
+        Lab.Give(0, TEXT("bucket"), 2);
+        for (int32 Slot = 1; Slot < FFoundationInventory::HotbarSlots; ++Slot)
+            Lab.Give(Slot, TEXT("stone"), 64);
+        Lab.Give(FFoundationInventory::OffhandSlot, TEXT("stone"), 64);
+        const FFoundationBlockState Full = Lab.Put(Lab.Aimed, TEXT("water_cauldron"), Level, TEXT("3"));
+        const int32 Uses = Lab.A.BucketUses;
+        PressUse(Lab);
+        TestTrue(TEXT("K9: a full inventory refuses"),
+            Lab.A.World.Get(Lab.Aimed).State == Full && Lab.HandCount() == 2 && Lab.A.BucketUses == Uses);
+    }
+    {
+        // K10: the offhand's bucket fills it while the main hand is empty.
+        FBucketLab Lab;
+        Lab.Exec(EFoundationCommandType::SelectSlot, EFoundationHand::Main, 1);
+        Lab.Give(FFoundationInventory::OffhandSlot, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        PressUse(Lab);
+        TestEqual(TEXT("K10: filled from the offhand"), Lab.BlockAt(Lab.Aimed), FName(TEXT("water_cauldron")));
+        TestEqual(
+            TEXT("K10: an empty bucket in the offhand"), Lab.HandItem(EFoundationHand::Off), FName(TEXT("bucket")));
+    }
+    {
+        // K11: held, the client fills once and waits the held repeat before taking the water back.
+        FBucketLab Lab;
+        Lab.Give(0, TEXT("water_bucket"));
+        Lab.Put(Lab.Aimed, TEXT("cauldron"));
+        Lab.NextStep();
+        Lab.I.Press(EFoundationInput::Use, 0);
+        Lab.NextStep();
+        Lab.I.BeginUpdate();
+        Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+        TestEqual(TEXT("K11: the press fills"), Lab.BlockAt(Lab.Aimed), FName(TEXT("water_cauldron")));
+        int32 Steps = 0;
+        while (Lab.HandItem() == TEXT("bucket") && Steps < 20)
+        {
+            Lab.NextStep();
+            Lab.I.BeginUpdate();
+            Lab.I.StepOnce(Lab.A, Lab.Vitals, true, 0);
+            ++Steps;
+        }
+        Lab.I.Release(EFoundationInput::Use);
+        TestEqual(TEXT("K11: held, it takes the water back"), Lab.BlockAt(Lab.Aimed), FName(TEXT("cauldron")));
+        TestEqual(TEXT("K11: after the held repeat"), Steps, Lab.I.HeldRepeatSteps);
+    }
+    return true;
+}
 #endif

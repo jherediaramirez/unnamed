@@ -77,6 +77,7 @@ bool FFoundationDeathMessagesTest::RunTest(const FString& Parameters)
         {EFoundationDamage::Lava, TEXT("death.attack.lava")},
         {EFoundationDamage::OnFire, TEXT("death.attack.onFire")},
         {EFoundationDamage::Arrow, TEXT("death.attack.arrow")},
+        {EFoundationDamage::InFire, TEXT("death.attack.inFire")},
     };
     for (const TPair<EFoundationDamage, const TCHAR*>& Cause : Causes)
     {

@@ -209,6 +209,8 @@ struct FFoundationPlayerFacts
     bool bAlive = true;
     // The game mode (survival T6 20c: monsters target Survival and Adventure players only).
     EFoundationPlayerMode Mode = EFoundationPlayerMode::Survival;
+    // The world's difficulty (survival T6 20c2: Peaceful removes monsters and spawns none).
+    EFoundationDifficulty Difficulty = EFoundationDifficulty::Normal;
     // Crouch intent: with something in hand it bypasses block interactions.
     bool bSecondaryUse = false;
     int64 Step = 0;
@@ -286,6 +288,10 @@ struct FFoundationLabOptions
     // around each player. Off, nothing random-ticks, as before. The pawn copies foundation.Blocks.Growth in before each
     // step; tests set it themselves.
     bool bGrowth = false;
+    // Cauldrons (survival step 16c, with bItemUse): a water or lava bucket fills a cauldron, an empty bucket takes a
+    // full one back. Off, as step 17: a bucket ignores cauldrons. The pawn copies foundation.Cauldrons in before each
+    // step.
+    bool bCauldrons = true;
 };
 
 // Definitions and constants the authority applies; pure data, so tests build their own.
@@ -485,6 +491,12 @@ namespace FoundationBucket
     {
         return Id == TEXT("bucket") || Id == TEXT("water_bucket") || Id == TEXT("lava_bucket");
     }
+}
+
+namespace FoundationCauldrons
+{
+    // foundation.Cauldrons (step 16c): 1 buckets fill and empty cauldrons; 0 as step 17.
+    UNNAMED_API bool IsOn();
 }
 
 namespace FoundationItemUse
@@ -735,7 +747,18 @@ public:
     // Survival T6 20b2b: the creature cycle (every CreatureCycleTicks steps), and one eligible column's group rounds
     // (PlayerCells: the live players' feet, in cells); how many mobs the column spawned.
     void RunCreatureCycle();
-    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle);
+    int32 SpawnCycleColumn(const FIntPoint& Column, TConstArrayView<FVector> PlayerCells, int64 Cycle,
+        EFoundationMobCategory Category = EFoundationMobCategory::Creature);
+    // Survival T6 20c2: a category's cycle (the monsters' runs every MonsterCycleTicks steps).
+    void RunSpawnCycle(EFoundationMobCategory Category);
+    // The settled light proxy at a cell (provisional-values.md, T6 20c2): block light, the max over emitters within
+    // 15 of their emission minus the Manhattan distance (no occlusion); the light, the open-sky light of the day where
+    // the sky is visible (above the column's top motion-blocking block) or the block light if higher; OutSky: the
+    // raw sky light (15 or 0).
+    // bBudgeted (the spawn cycle): -1 when a stale section's list waits for a later step's rebuild budget.
+    int32 GetBlockLightProxy(const FIntVector& Cell, bool bBudgeted = false);
+    int32 GetLightProxy(
+        const FIntVector& Cell, int32* OutSky = nullptr, int32* OutBlock = nullptr, bool bBudgeted = false);
     // Removes every mob, without loot; how many.
     int32 ClearMobs();
     // A cell as the mobs' A* sees it (survival T6 20b): the top of the collision boxes that start in it, and whether it
@@ -775,6 +798,10 @@ public:
     int32 ArrowsShot = 0, ArrowHits = 0, ArrowsPickedUp = 0;
     // The last cycle considered: its eligible columns, the creatures counted in them and the cap.
     int32 MobCycleEligible = 0, MobCycleCount = 0, MobCycleCap = 0;
+    // Survival T6 20c2: the monster cycle's runs (under the cap) and spawns, its last census and cap; monsters
+    // despawned (distance, idle roll or Peaceful); the monster cycle's wall time, total and worst (ms).
+    int32 MonsterCycles = 0, MonstersCycleSpawned = 0, MonsterCycleCount = 0, MonsterCycleCap = 0, MobsDespawned = 0;
+    double MonsterCycleMsTotal = 0, MonsterCycleMsMax = 0;
     int64 GetMobCycleStep() const { return MobCycleStep; }
 
 private:
@@ -868,6 +895,15 @@ private:
     // no bucket or the switch is off; otherwise Result says what happened (a pass included).
     bool UseBucket(FFoundationPlayer& Player, const FFoundationCommand& Command, EFoundationPlayerMode Mode,
         FFoundationResult& Result);
+    // A bucket on a cauldron (step 16c): true when it filled or emptied the hit cauldron (Result filled); false passes
+    // on (no bucket, no cauldron, or an empty bucket on a cauldron that is not full).
+    bool UseCauldron(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
+    // A used bucket becomes NewItem (steps 17 and 16c). Creative keeps the used bucket and adds NewItem only when the
+    // inventory holds none; survival swaps a single bucket in place, or from a stack takes one and adds the new bucket,
+    // dropping it at the player when nothing takes it. Stack is the hand's stack before the use.
+    void SwapBucket(FFoundationPlayer& Player, EFoundationHand Hand, const FFoundationItemInstance& Stack,
+        int32 NewItem, const FIntVector& Cell, bool bCreative);
     void UseItemStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
         FFoundationResult& Result);
     // A swappable piece in the hand swaps with its armor slot (survival step 19a). False when the hand holds none.
@@ -942,6 +978,32 @@ private:
     // A cell a passive mob of Type may stand in at the top of its column (X, Y): the feet cell above the top
     // motion-blocking block, which must be a grass block, with room for the box; false when there is none.
     bool FindPackCell(EFoundationMobType Type, int32 X, int32 Y, FIntVector& OutFeet);
+    // Survival T6 20c2: a monster's feet at Feet: a full block top below (not leaves), room for the box, no fluid,
+    // and the light rule (RollMonsterLight's draws from Random).
+    bool FindMonsterCell(EFoundationMobType Type, const FIntVector& Feet, FRandomStream& Random);
+    // No collision box and no fluid in the box of a mob of Type standing at Feet (shrunk a hair off the floor).
+    bool HasMobRoom(EFoundationMobType Type, const FIntVector& Feet);
+    // Any player reports Peaceful.
+    bool IsPeaceful() const;
+    // A cell column's top non-air and top motion-blocking heights (below BoundsMin.Z: none, or not loaded), reused for
+    // LightCacheTicks steps.
+    struct FMobColumnTops
+    {
+        int32 NonAir = 0, Blocking = 0;
+        int64 Step = -1;
+    };
+    FMobColumnTops GetColumnTops(int32 X, int32 Y);
+    // A 16-cube section's light emitters (cell, emission), reused for LightCacheTicks steps.
+    struct FMobEmitters
+    {
+        TArray<TPair<FIntVector, int32>> Emitters;
+        int64 Step = -1;
+    };
+    // Null when bBudgeted and the list is stale with this step's rebuilds spent.
+    const FMobEmitters* GetSectionEmitters(const FIntVector& Section, bool bBudgeted);
+    int32 EmitterRebuilds = 0;
+    TMap<FIntPoint, FMobColumnTops> MobColumnTops;
+    TMap<FIntVector, FMobEmitters> MobEmitters;
     void AddMobSound(const FFoundationMob& Mob, const TCHAR* Sound, float Volume);
     // Survival step 19c: the bow's release (power from the draw; an arrow, a durability, the shoot sound), the
     // inventory slot an arrow is taken from (vanilla's order: the offhand, the main hand, then slots 0-35; INDEX_NONE

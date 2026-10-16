@@ -27,6 +27,7 @@ namespace
             {TEXT("lava"), false, false, false, .1f, {TEXT("death.attack.lava"), TEXT("%1$s tried to swim in lava")}},
             {TEXT("onFire"), true, false, false, 0.f, {TEXT("death.attack.onFire"), TEXT("%1$s burned to death")}},
             {TEXT("arrow"), false, false, false, .1f, {TEXT("death.attack.arrow"), TEXT("%1$s was shot by %2$s")}},
+            {TEXT("inFire"), false, false, false, .1f, {TEXT("death.attack.inFire"), TEXT("%1$s went up in flames")}},
         };
         return Rules[int32(Type)];
     }
@@ -63,21 +64,41 @@ void FFoundationVitals::StepHazards(const FFoundationVitalsStep& Facts, bool bFa
     // Fire [hurt.lava_contact, hurt.lava_ignite, hurt.burning]: water puts it out; burning outside lava hurts 1
     // every 20 ticks; lava ignites for at least 300 ticks and hurts 4 every tick, which the damage cooldown turns
     // into hits at ticks 1, 11, 21 ... Creative and Spectator neither ignite nor take the damage.
-    if (Facts.bBodyInWater && FireTicks > 0)
+    // A lava cauldron's lava hurts as lava does (step 16c, minecraft.wiki "Cauldron"; provisional).
+    const bool bLava = Facts.bBodyInLava || Facts.bLavaContact;
+    if (Facts.bBodyInWater)
     {
-        FireTicks = 0;
-        ++Extinguishes;
+        // Water leaves a player at vanilla's -20 fire ticks [survival2.r14.player_fire, water case].
+        FireGraceTicks = PlayerFireGraceTicks;
+        if (FireTicks > 0)
+        {
+            FireTicks = 0;
+            ++Extinguishes;
+        }
     }
     if (FireTicks > 0)
     {
-        if (FireTicks % BurnIntervalTicks == 0 && !Facts.bBodyInLava && Hurt(EFoundationDamage::OnFire, 1.f))
-            ++BurnHurts;
+        if (FireTicks % BurnIntervalTicks == 0 && !bLava && Hurt(EFoundationDamage::OnFire, 1.f)) ++BurnHurts;
         --FireTicks;
     }
-    if (Facts.bBodyInLava && !IsDead() && !IsInvulnerable())
+    if (bLava && !IsDead() && !IsInvulnerable())
     {
         FireTicks = FMath::Max(FireTicks, LavaFireTicks);
+        FireGraceTicks = 0;
         if (Hurt(EFoundationDamage::Lava, 4.f)) ++LavaHurts;
+    }
+    // Fire blocks [survival2.r14.player_fire]: in_fire every tick (the cooldown makes it a hit every 10 ticks); the
+    // first 20 contact ticks only use up the grace, the 20th ignites for 160 ticks; burning in fire the fire ticks
+    // grow by 0 or 1 a tick, 50/50 as measured (here a fixed hash of Age, not vanilla's random; provisional), with no
+    // cap (210 after 120 ticks, as measured).
+    if (Facts.FireBlockDamage > 0 && !IsDead() && !IsInvulnerable())
+    {
+        if (FireTicks == 0 && FireGraceTicks > 0)
+            --FireGraceTicks;
+        else
+            FireTicks += 1 + int32((uint32(Age) * 2654435761u) >> 31);
+        if (FireGraceTicks == 0) FireTicks = FMath::Max(FireTicks, FireBlockTicks);
+        if (Hurt(EFoundationDamage::InFire, float(Facts.FireBlockDamage))) ++FireBlockHurts;
     }
 }
 
@@ -206,8 +227,9 @@ bool FFoundationVitals::Hurt(EFoundationDamage Type, float Amount, const FString
     {
         const int32 Wear = FMath::Max(1, FMath::FloorToInt32(Dealt / 4.f));
         PendingArmorWear += Wear;
-        // #minecraft:is_fire holds lava and on_fire (26.3 data/minecraft/tags/damage_type/is_fire.json).
-        if (Type == EFoundationDamage::Lava || Type == EFoundationDamage::OnFire) PendingFireArmorWear += Wear;
+        // #minecraft:is_fire holds lava, on_fire and in_fire (26.3 data/minecraft/tags/damage_type/is_fire.json).
+        if (Type == EFoundationDamage::Lava || Type == EFoundationDamage::OnFire || Type == EFoundationDamage::InFire)
+            PendingFireArmorWear += Wear;
         Dealt = GetDamageAfterArmor(Dealt, GetArmor(), GetArmorToughness());
     }
     const float Absorbed = FMath::Min(Dealt, Absorption);
@@ -337,6 +359,7 @@ void FFoundationVitals::Respawn()
     Fresh.Deaths = Deaths;
     Fresh.LavaHurts = LavaHurts;
     Fresh.BurnHurts = BurnHurts;
+    Fresh.FireBlockHurts = FireBlockHurts;
     Fresh.Extinguishes = Extinguishes;
     Fresh.LastDamage = LastDamage;
     Fresh.DeathMessage = DeathMessage;
