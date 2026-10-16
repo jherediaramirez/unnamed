@@ -57,9 +57,10 @@ const walk=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
 walk(path.join(root,'Source/Unnamed'));
 if(!readRoots.size)throw Error('No runtime Reference/ reads found in Source/Unnamed');
 for(const [refRoot,file] of readRoots)if(!staged.some(s=>s.startsWith(refRoot+'/')))throw Error(`${file} reads ${refRoot} at runtime, but Unnamed.Build.cs doesn't stage it (RuntimeDependencies)`);
-// The files those roots' readers open (VoxelWorldgen, VoxelTerrainFactory::ReadInputs, VoxelSkyReference).
+// The files those roots' readers open (VoxelWorldgen, VoxelTerrainFactory::ReadInputs, VoxelSkyReference, and the
+// voxel.BiomeMap console command's jar shares, QC RQ02-2).
 const runtimeReads=['Reference/minecraft-worldgen-26.3/data/minecraft/worldgen/noise_settings/overworld.json',
-  'Reference/minecraft-worldgen-26.3/facts/biome_parameters.json',
+  'Reference/minecraft-worldgen-26.3/facts/biome_parameters.json','Reference/minecraft-worldgen-26.3/facts/biome_lookup_samples.json',
   ...['grass','foliage','dry_foliage'].map(n=>`Reference/minecraft-blocks-26.3/assets/minecraft/textures/colormap/${n}.png`),
   'Reference/minecraft-sky-26.3/data/minecraft/timeline/day.json','Reference/minecraft-sky-26.3/attributes.json'];
 for(const f of runtimeReads){
