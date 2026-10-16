@@ -1266,7 +1266,8 @@ bool FFoundationMobCycleTest::RunTest(const FString&)
     TestEqual(TEXT("cap over none"), GetCreatureCap(0), 0);
 
     TUniquePtr<FMobLab> L = MakeCycleLab(1);
-    StepRecording(*L, CreatureCycleTicks - 1);
+    // The period and the cluster limit are literals here, so a wrong constant fails (RUN2:390, FINDINGS:5331).
+    StepRecording(*L, 399);
     TestEqual(TEXT("no cycle before step 400"), L->A.MobCycles, 0);
     TestEqual(TEXT("no mob before step 400"), L->A.GetMobs().Num(), 0);
     StepRecording(*L, 1);
@@ -1275,7 +1276,7 @@ bool FFoundationMobCycleTest::RunTest(const FString&)
     TestEqual(TEXT("cap 10"), L->A.MobCycleCap, 10);
     const int32 First = CountCreatures(*L);
     TestTrue(*FString::Printf(TEXT("filled to the cap 10 (overshoot under 4): %d"), First),
-        First >= 10 && First <= 10 + ClusterMax - 1);
+        First >= 10 && First <= 10 + 4 - 1);
     TestEqual(TEXT("all from the cycle"), L->A.MobsCycleSpawned, First);
     const FVector Player(-2, 0, 0);
     double Nearest = TNumericLimits<double>::Max();
@@ -1283,7 +1284,7 @@ bool FFoundationMobCycleTest::RunTest(const FString&)
         Nearest = FMath::Min(Nearest, FVector::Dist(Mob.LocalCm / 100, Player));
     TestTrue(*FString::Printf(TEXT("every spawn at least 24 blocks away (nearest %.2f)"), Nearest), Nearest >= 24);
     const FString Mobs = DescribeMobs(*L);
-    StepRecording(*L, CreatureCycleTicks);
+    StepRecording(*L, 400);
     TestEqual(TEXT("at the cap at step 800: no cycle"), L->A.MobCycles, 1);
     TestEqual(TEXT("at the cap: no new mob"), L->A.GetMobs().Num(), First);
     {
@@ -1311,7 +1312,7 @@ bool FFoundationMobCycleTest::RunTest(const FString&)
             Most = FMath::Max(Most, Spawned);
             Total += Spawned;
         }
-        TestEqual(TEXT("a column spawns at most 4, and reaches 4"), Most, ClusterMax);
+        TestEqual(TEXT("a column spawns at most 4, and reaches 4"), Most, 4);
         TestTrue(TEXT("columns spawn"), Total > 0);
         const FVector Inside[] = {FVector(56, 56, 0)};
         const FVector Away[] = {FVector(56 + 200, 56, 0)};
