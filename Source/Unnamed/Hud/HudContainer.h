@@ -153,6 +153,8 @@ public:
     // The items a furnace's fuel slot takes (fuel and the empty bucket, FFoundationContainerMenu::MayPlace).
     TSet<FName> FuelItems;
     bool bFullInventory = true;
+    // The player is in creative: a middle press with a stack starts a clone drag (a full stack in each slot).
+    bool bCreative = false;
     EFoundationMenuKind Kind = EFoundationMenuKind::Inventory;
 
 private:

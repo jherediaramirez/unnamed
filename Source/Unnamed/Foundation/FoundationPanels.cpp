@@ -722,6 +722,10 @@ bool UFoundationPanels::OpenContainerScreen(AFoundationLab& Lab, EFoundationMenu
         .HudAssets(LoadObject<UHudAssets>(nullptr, *UUnnamedProjectSettings::GetHudRegistryPath()))
         .RequestedGuiScale(MakeGuiScale(Controller))
         .Kind(Kind)
+        .Creative_Lambda([WeakPawn]
+        {
+            return WeakPawn.IsValid() && WeakPawn->Vitals.Mode == EFoundationPlayerMode::Creative;
+        })
         .Items(MakeScreenItems(Authority))
         .FuelItems(MoveTemp(FuelItems))
         .GetView([WeakLab, WeakPawn, ContainerId]

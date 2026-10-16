@@ -153,9 +153,10 @@ bool FHudContainerModel::CanDragTo(int32 Slot, const FHudContainerView& View) co
 TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     FIntPoint Point, int32 Button, bool bShift, const FHudContainerView& View, double Time)
 {
-    // Middle clicks clone only in creative. During a drag, another button's press cancels it (minecraft.wiki
+    // The middle button drags only in creative. During a drag, another button's press cancels it (minecraft.wiki
     // "Controls"; QC RA1-3): nothing is sent and the cursor keeps its stack.
-    if (Button < 0 || Button > 1) return {};
+    const bool bMiddle = Button == 2;
+    if (Button < 0 || Button > 2 || (bMiddle && !bCreative)) return {};
     if (IsDragging())
     {
         if (Button != DragButton) ResetDrag();
@@ -164,6 +165,21 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
     if (bDoubleClick) return {};
     const int32 Slot = HitTest(Point);
     if (Slot == INDEX_NONE || !IsClickable(Slot)) return {};
+    if (bMiddle)
+    {
+        // Creative's clone drag (QC RA1-5, value report survival.r7.creative): a middle press on a slot with a stack
+        // on the cursor starts it; a middle press does nothing else here.
+        LastSlot = Slot;
+        LastButton = Button;
+        LastTime = Time;
+        LastQuickMoved = {};
+        if (Slot == FContainerModelMenu::Outside || bShift || View.Carried.IsEmpty()) return {};
+        DragButton = Button;
+        PressSlot = Slot;
+        DragSlots.Reset();
+        if (CanDragTo(Slot, View)) DragSlots.Add(Slot);
+        return {};
+    }
     // The second left press on a slot: with a stack on the cursor it collects (PICKUP_ALL), after a shift-click it
     // moves every stack like the one moved; either happens on the release. Never on the crafting result: each click
     // there crafts (provisional, vanilla play: spam-clicking an output crafts each time; the value report has no
@@ -209,10 +225,10 @@ TArray<FHudContainerClick> FHudContainerModel::MouseDown(
 TArray<FHudContainerClick> FHudContainerModel::MouseMove(FIntPoint Point, const FHudContainerView& View)
 {
     if (!IsDragging()) return {};
-    // Each dragged slot takes at least one item.
+    // Each dragged slot takes at least one item; a clone drag (middle) takes a full stack whatever the cursor holds.
     const int32 Slot = HitTest(Point);
     if (Slot != INDEX_NONE && Slot != FContainerModelMenu::Outside && !DragSlots.Contains(Slot) &&
-        CanDragTo(Slot, View) && DragSlots.Num() < View.Carried.Count)
+        CanDragTo(Slot, View) && (DragButton == 2 || DragSlots.Num() < View.Carried.Count))
         DragSlots.Add(Slot);
     return {};
 }
@@ -250,9 +266,9 @@ TArray<FHudContainerClick> FHudContainerModel::MouseUp(FIntPoint Point, int32 Bu
         Clicks.Add({FContainerModelMenu::Outside, FContainerModelMenu::QuickCraftButton(2, DragButton),
             EFoundationClickType::QuickCraft});
     }
-    else
+    else if (DragButton != 2)
         // One collected slot is a plain click there (vanilla turns a one-slot QUICK_CRAFT into a PICKUP of it); with
-        // none, the press slot (Codex 5b finding 2).
+        // none, the press slot (Codex 5b finding 2). A middle click with a stack on the cursor does nothing.
         Clicks.Add({DragSlots.Num() == 1 ? DragSlots[0] : PressSlot, DragButton, EFoundationClickType::Pickup});
     DragButton = PressSlot = INDEX_NONE;
     DragSlots.Reset();
@@ -300,7 +316,10 @@ void FHudContainerModel::GetDragPreview(
     Slots.Reset();
     Carried = View.Carried;
     if (DragSlots.Num() < 2 || View.Carried.IsEmpty()) return;
-    const int32 Each = DragButton == 0 ? View.Carried.Count / DragSlots.Num() : 1;
+    // Left splits evenly, right places one, a clone drag (middle) a full stack each and empties the cursor.
+    const int32 Each = DragButton == 0 ? View.Carried.Count / DragSlots.Num()
+        : DragButton == 1              ? 1
+                                       : GetMaxStack(View.Carried.Item);
     int32 Remaining = View.Carried.Count;
     for (const int32 Slot : DragSlots)
     {
@@ -311,5 +330,5 @@ void FHudContainerModel::GetDragPreview(
         Slots.Add(Slot, {View.Carried.Item, FMath::Max(Place, Existing), View.Carried.Damage});
     }
     Carried.Count = Remaining;
-    if (Carried.Count <= 0) Carried = {};
+    if (Carried.Count <= 0 || DragButton == 2) Carried = {};
 }

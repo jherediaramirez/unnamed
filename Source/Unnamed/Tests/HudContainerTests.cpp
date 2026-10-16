@@ -1015,4 +1015,50 @@ bool FHudContainerDragCancelTest::RunTest(const FString&)
         I.Main[0].IsEmpty() && I.Main[1].IsEmpty() && ScreenHolds(I.Carried, Stone, 8));
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FHudContainerCreativeDragTest, "Unnamed.Hud.Container.CreativeDrag", ContainerScreenTestFlags)
+
+bool FHudContainerCreativeDragTest::RunTest(const FString&)
+{
+    // QC RA1-5 (value report survival.r7.creative, SURVIVAL-FINDINGS 4069): in creative a middle drag of 64 stone over
+    // three empty slots fills each with a full stack and empties the cursor; in survival it changes nothing.
+    FScreenLab L;
+    const int32 Stone = L.A.Rules.FindItem(TEXT("stone"));
+    FFoundationInventory& I = L.Inv();
+    L.Vitals.Mode = EFoundationPlayerMode::Creative;
+    L.Model.bCreative = true;
+    I.Carried = I.MakeStack(Stone, 64);
+    L.Down(ScreenMain(0), 2, 0);
+    L.Over(ScreenMain(1));
+    L.Over(ScreenMain(2));
+    TMap<int32, FHudCreativeStack> Preview;
+    FHudCreativeStack Cursor;
+    L.Model.GetDragPreview(L.View(), Preview, Cursor);
+    TestTrue(TEXT("creative preview: a full stack each, the cursor empty"),
+        Preview.Num() == 3 && Preview.FindRef(ScreenMain(0)).Count == 64 &&
+            Preview.FindRef(ScreenMain(2)).Count == 64 && Cursor.IsEmpty());
+    L.Up(ScreenMain(2), 2);
+    TestTrue(TEXT("creative: three full stacks, the cursor empty"),
+        ScreenHolds(I.Main[0], Stone, 64) && ScreenHolds(I.Main[1], Stone, 64) && ScreenHolds(I.Main[2], Stone, 64) &&
+            I.Carried.IsEmpty());
+    // Fewer items than slots still fills every slot (the clone drag has no per-slot count).
+    I.Carried = I.MakeStack(Stone, 1);
+    L.Down(ScreenMain(3), 2, 2);
+    L.Over(ScreenMain(4));
+    L.Up(ScreenMain(4), 2);
+    TestTrue(TEXT("creative: one stone clones into two slots"),
+        ScreenHolds(I.Main[3], Stone, 64) && ScreenHolds(I.Main[4], Stone, 64) && I.Carried.IsEmpty());
+    // Survival: the middle button starts nothing.
+    L.Vitals.Mode = EFoundationPlayerMode::Survival;
+    L.Model.bCreative = false;
+    I.Carried = I.MakeStack(Stone, 64);
+    L.Down(ScreenMain(5), 2, 4);
+    L.Over(ScreenMain(6));
+    L.Up(ScreenMain(6), 2);
+    TestTrue(TEXT("survival: nothing moves"),
+        I.Main[5].IsEmpty() && I.Main[6].IsEmpty() && ScreenHolds(I.Carried, Stone, 64));
+    TestFalse(TEXT("survival: no drag"), L.Model.IsDragging());
+    return true;
+}
 #endif
