@@ -3,6 +3,7 @@
 #include "Foundation/FoundationBlockRegistry.h"
 #include "Foundation/FoundationInteraction.h"
 #include "Foundation/FoundationInteractionSettings.h"
+#include "Foundation/FoundationPawn.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 // Survival step 19b: the shield. Values are literals from the 26.3 component report (items.json's blocks_attacks), the
@@ -89,6 +90,15 @@ namespace
                 FVector(FMath::Cos(FMath::DegreesToRadians(Yaw)), FMath::Sin(FMath::DegreesToRadians(Yaw)), 0) * 200;
             Attack.DisableBlockingSeconds = DisableSeconds;
             return A.HurtPlayer(Player, Vitals, Attack);
+        }
+
+        // A zombie's queued 3 from 2 blocks away at Yaw degrees from the look, through the pawn's hit step.
+        void ZombieHit(FFoundationSimulation& Simulation, double Yaw)
+        {
+            const FVector From =
+                FVector(FMath::Cos(FMath::DegreesToRadians(Yaw)), FMath::Sin(FMath::DegreesToRadians(Yaw)), 0) * 200;
+            P().MobHits.Add({1, 3.f, TEXT("Zombie"), From});
+            AFoundationPawn::TakeHits(A, Player, Vitals, Simulation);
         }
 
         int32 Count(EFoundationEventKind Kind) const
@@ -242,6 +252,33 @@ bool FFoundationShieldDisableTest::RunTest(const FString&)
     Sword.Hit(4, 0, 0);
     TestTrue(TEXT("no disable without the weapon's seconds"),
         Sword.Count(EFoundationEventKind::BlockingDisabled) == 0 && Sword.A.IsBlocking(Sword.Player));
+    return true;
+}
+
+// Codex review 35, finding 1: a zombie's queued melee hit takes the pawn's hit step (AFoundationPawn::TakeHits) through
+// HurtPlayer, so a raised shield facing it blocks it as it does an arrow: no damage, no knockback, the block sound, the
+// wear. Mutation: mob hits straight to Vitals.Hurt (hurt 3, knocked back, nothing worn).
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationShieldMobHitsTest, "Unnamed.Foundation.Shield.MobHits", ShieldTestFlags)
+
+bool FFoundationShieldMobHitsTest::RunTest(const FString&)
+{
+    FShieldLab L;
+    if (!TestTrue(TEXT("a shield in hand"), L.Shield != INDEX_NONE)) return false;
+    L.Raise(5);
+    FFoundationSimulation Simulation;
+    L.ZombieHit(Simulation, 0);
+    TestEqual(TEXT("in front: health 20"), L.Vitals.Health, 20.f);
+    TestTrue(TEXT("no knockback"), Simulation.VelocityPerTick.IsNearlyZero());
+    const FFoundationEvent* Blocked = L.A.GetEvents().FindByPredicate(
+        [](const FFoundationEvent& Event) { return Event.Kind == EFoundationEventKind::Blocked; });
+    TestTrue(TEXT("item.shield.block, 3 blocked"),
+        Blocked && Blocked->Interaction == TEXT("item.shield.block") && Blocked->Amount == 3.f);
+    TestEqual(TEXT("worn 1 + floor(3) = 4"), L.ShieldDamage(), 4);
+    // Behind the shield's 90 degrees the hit lands and knocks back.
+    L.ZombieHit(Simulation, 180);
+    TestEqual(TEXT("behind: hurt 3"), L.Vitals.Health, 17.f);
+    TestFalse(TEXT("behind: knocked back"), Simulation.VelocityPerTick.IsNearlyZero());
+    TestEqual(TEXT("behind: no wear"), L.ShieldDamage(), 4);
     return true;
 }
 

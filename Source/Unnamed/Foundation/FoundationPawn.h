@@ -129,6 +129,10 @@ public:
     // so a last-durability piece breaks), then the inventory and, with foundation.Items.Xp, the experience orbs.
     static void DropOnDeath(FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals,
         const FVector& FeetLocalCm, int32 Seed);
+    // StepInteraction's mob and arrow hits for PlayerId (a static for the tests): each through HurtPlayer (a raised
+    // shield facing it blocks it; Codex review 35, finding 1); a fresh hit knocks Simulation back.
+    static void TakeHits(
+        FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals, FFoundationSimulation& Simulation);
 
 private:
     // Vitals.Deaths as HandleDeath last saw it.

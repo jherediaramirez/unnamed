@@ -413,6 +413,40 @@ void AFoundationPawn::DropOnDeath(
                 FeetLocalCm + FVector(0, 0, FoundationExperienceOrbs::BoxCm * .5), Points, Seed ^ 0x5850);
 }
 
+void AFoundationPawn::TakeHits(
+    FFoundationAuthority& Authority, int32 PlayerId, FFoundationVitals& Vitals, FFoundationSimulation& Simulation)
+{
+    // Survival T6 20c: the monsters' melee hits this step, through the whole hurt path with the attacker's name; a
+    // fresh hit (not inside the damage cooldown's first half) knocks the player back from the mob [extra.motion,
+    // movement.knockback_resistance: power 0.4, the player's resistance 0]. Through HurtPlayer, as an arrow: a raised
+    // shield facing the mob blocks the hit (Codex review 35, finding 1).
+    for (const FFoundationMobHit& Hit : Authority.TakeMobHits(PlayerId))
+    {
+        FFoundationAttack Attack;
+        Attack.Type = EFoundationDamage::MobAttack;
+        Attack.Amount = Hit.Damage;
+        Attack.SourceCm = Hit.FromCm;
+        Attack.Attacker = Hit.Attacker;
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Authority.HurtPlayer(PlayerId, Vitals, Attack) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.FromCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
+    }
+    // Survival step 19c: arrow hits through HurtPlayer (a raised shield facing the arrow blocks it); a fresh hit knocks
+    // the player back from where the arrow struck, as a mob's melee (provisional).
+    for (const FFoundationAttack& Hit : Authority.TakeArrowHits(PlayerId))
+    {
+        const bool bFresh = !Vitals.IsInHurtWindow();
+        if (!Authority.HurtPlayer(PlayerId, Vitals, Hit) || !bFresh) continue;
+        FVector2D Away(Simulation.Feet - Hit.SourceCm);
+        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
+        FoundationMobs::ApplyKnockback(
+            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
+    }
+}
+
 void AFoundationPawn::StepVitals(const UFoundationProfile& Profile)
 {
     FFoundationVitalsStep Facts;
@@ -505,29 +539,7 @@ void AFoundationPawn::StepInteraction(FFoundationAuthority& Authority, bool bLat
             LevelGains.Add({Player->Facts.Step, Before, Vitals.Level, ++LevelGainSerial});
         }
     }
-    // Survival T6 20c: the monsters' melee hits this step, through the whole hurt path with the attacker's name; a
-    // fresh hit (not inside the damage cooldown's first half) knocks the player back from the mob [extra.motion,
-    // movement.knockback_resistance: power 0.4, the player's resistance 0].
-    for (const FFoundationMobHit& Hit : Authority.TakeMobHits(Interaction.PlayerId))
-    {
-        const bool bFresh = !Vitals.IsInHurtWindow();
-        if (!Vitals.Hurt(EFoundationDamage::MobAttack, Hit.Damage, Hit.Attacker) || !bFresh) continue;
-        FVector2D Away(Simulation.Feet - Hit.FromCm);
-        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
-        FoundationMobs::ApplyKnockback(
-            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
-    }
-    // Survival step 19c: arrow hits through HurtPlayer (a raised shield facing the arrow blocks it); a fresh hit knocks
-    // the player back from where the arrow struck, as a mob's melee (provisional).
-    for (const FFoundationAttack& Hit : Authority.TakeArrowHits(Interaction.PlayerId))
-    {
-        const bool bFresh = !Vitals.IsInHurtWindow();
-        if (!Authority.HurtPlayer(Interaction.PlayerId, Vitals, Hit) || !bFresh) continue;
-        FVector2D Away(Simulation.Feet - Hit.SourceCm);
-        if (Away.IsNearlyZero()) Away = FVector2D(1, 0);
-        FoundationMobs::ApplyKnockback(
-            Simulation.VelocityPerTick, Away, Simulation.bGrounded, FoundationMobs::KnockbackCm);
-    }
+    TakeHits(Authority, Interaction.PlayerId, Vitals, Simulation);
     Interaction.StepOnce(Authority, Vitals, bLatestStep, NowSeconds);
     // A block's use opened a container (survival step 7): its screen opens; without a screen to show it, it closes.
     if (const int32 Container = Interaction.OpenedContainer)
