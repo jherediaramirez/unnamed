@@ -87,3 +87,9 @@ def entity_asset(asset_name):
 def player_body_asset(asset_name):
     """Package of a player body asset under UUnnamedProjectSettings::PlayerBodyRoot, e.g. player_body_asset("BS_Idle")."""
     return _settings.get_player_body_asset_package(asset_name)
+
+
+def unnamed_player_asset(asset_name):
+    """Package of an Unnamed Player asset under UUnnamedProjectSettings::UnnamedPlayerRoot, e.g.
+    unnamed_player_asset("SK_UnnamedPlayer")."""
+    return _settings.get_unnamed_player_asset_package(asset_name)

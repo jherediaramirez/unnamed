@@ -5,6 +5,7 @@
   "export_manifest_sha256": "1db9a7e3b74a2ce3b222a89d01d3a7b32e478201f526ef45da1f499adc2286fd",
   "source": "Resources/PlayerBody/unnamed-player-export-v002c-20261016/fbx (export v002c, accepted by M0 on 2026-10-16), exported from Resources/PlayerBody/unnamed-player-motion-polish-v002-20261015/blend/UP_Player_arm_polish_v002.blend (SHA-256 26e585d5676d5a8a18a6e6a2fae5d682df3470fa7b83a01972cfae138d4d22c7) by that folder's scripts/export_up.py in Blender 5.2.2",
   "facts": "180 cm tall, 22 bones rooted at root, faces +Y; 2 sections (M_UP_Body, M_UP_Head); sockets hand_r_grip, hand_l_grip, head_eye; 66 clips in anims/ at 60 fps (20 single-frame pose clips, 18 of them look poses made mesh-space additive); SM_UP_Pickaxe; T_UP_Skin_64.png is the skin (the 1024 texture embedded in the FBX is not used)",
+  "gates": "gates/ holds M0's oracle for ImportUnnamedPlayer.py, copied unchanged from Resources/PlayerBody/unnamed-player-export-v002c-20261016/evidence: source_poses.json (every bone of the 20 pose clips, evaluated from the source blend) and ue_expect.json (sole points, the pickaxe tip and the StrikeA frame-9 target)",
   "credit": {
     "title": "Minecraft Steve (Rigged)",
     "author": "Bully Magraptor",
@@ -82,6 +83,8 @@
     "anims/A_UP_Walk_FR.fbx": "65d2670266cf2a309c6c9c5e2dfca1ed284e621649b4b97c2ea7adca7af1d5c2",
     "anims/A_UP_Walk_L.fbx": "c50222e56ceba4e7ef41aec26c4c6829dd123ddfaf864f81489a04cb59b87fdb",
     "anims/A_UP_Walk_R.fbx": "b2e11ef107d920c59872bc160c88f740b5afcc852df7e20aed75ff4ec654d5e2",
+    "gates/source_poses.json": "a9f5b0bd3f167373aadc3f1364d2e173c6fe3acae95ab578af713b310d1df59a",
+    "gates/ue_expect.json": "b183f7281dd045deb59ab3107111d3cc9063df72842a73a62fd28fc50c8246bb",
     "SK_UnnamedPlayer.fbx": "4a0c49c59c76f6894db58c04b7dfc9a856d23b92fefc7c1937056ecd45d69cfa",
     "SM_UP_Pickaxe.fbx": "a5b53c7a659f4f195d5f011d5f9d5ce198a3bf528af1d8ea3afba56280d272b0",
     "T_UP_Skin_64.png": "072116faf535696da893ea8e30151c2d6ac1b0ca84e748ff76d6cc0aca770671",
