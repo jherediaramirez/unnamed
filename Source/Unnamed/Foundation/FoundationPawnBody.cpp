@@ -36,21 +36,21 @@ namespace
         TEXT("First-person body: the corrections are full at this pitch (degrees)."), ECVF_Default);
     TAutoConsoleVariable<float> CVarFpPelvisBack(TEXT("foundation.Body.FP.PelvisBack"), 10,
         TEXT("First-person body: the hips move back this far at full blend, standing (cm)."), ECVF_Default);
-    TAutoConsoleVariable<float> CVarFpPelvisBackCrouch(TEXT("foundation.Body.FP.PelvisBackCrouch"), 15,
+    TAutoConsoleVariable<float> CVarFpPelvisBackCrouch(TEXT("foundation.Body.FP.PelvisBackCrouch"), 22,
         TEXT("First-person body: the hips move back this far at full blend, crouched (cm)."), ECVF_Default);
     TAutoConsoleVariable<float> CVarFpAnchor(TEXT("foundation.Body.FP.Anchor"), 16,
         TEXT("First-person body: neck_01 this far behind the eye at full blend, standing (cm; 4 at no blend)."),
         ECVF_Default);
-    TAutoConsoleVariable<float> CVarFpAnchorCrouch(TEXT("foundation.Body.FP.AnchorCrouch"), 22,
+    TAutoConsoleVariable<float> CVarFpAnchorCrouch(TEXT("foundation.Body.FP.AnchorCrouch"), 30,
         TEXT("First-person body: neck_01 this far behind the eye at full blend, crouched (cm)."), ECVF_Default);
-    TAutoConsoleVariable<float> CVarFpAnchorCrouchMin(TEXT("foundation.Body.FP.AnchorCrouchMin"), 10,
+    TAutoConsoleVariable<float> CVarFpAnchorCrouchMin(TEXT("foundation.Body.FP.AnchorCrouchMin"), 18,
         TEXT("First-person body: neck_01 this far behind the eye looking ahead (no blend), crouched (cm)."),
         ECVF_Default);
-    TAutoConsoleVariable<float> CVarFpCrouchDrop(TEXT("foundation.Body.FP.CrouchDrop"), 0,
+    TAutoConsoleVariable<float> CVarFpCrouchDrop(TEXT("foundation.Body.FP.CrouchDrop"), 14,
         TEXT("First-person body, crouched: the hips this much lower at every pitch, the legs re-solved to the feet "
              "(cm)."),
         ECVF_Default);
-    TAutoConsoleVariable<float> CVarFpCrouchTwist(TEXT("foundation.Body.FP.CrouchTwist"), 0,
+    TAutoConsoleVariable<float> CVarFpCrouchTwist(TEXT("foundation.Body.FP.CrouchTwist"), 1,
         TEXT("First-person body, crouched: the chest turns this fraction (0..1) of the way toward the view, at most 50 "
              "degrees."),
         ECVF_Default);

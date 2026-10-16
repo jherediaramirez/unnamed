@@ -357,7 +357,7 @@ void UFoundationRuntimeProbe::AddFirstPersonBodySweep()
         TEXT("body sweep report"), .2,
         [this, Apply]
         {
-            Apply({0, 10, 22, 15, 0});
+            Apply({14, 18, 30, 22, 1});
             auto Keys = DownKeys;
             for (FKey Down : Keys)
                 PressKey(Down, false);
@@ -577,26 +577,34 @@ void UFoundationRuntimeProbe::AddFirstPersonBodyCases()
         [this, Stand, Spot, Saved]
         {
             Stand(Spot, 0, FRotator(0, 0, 0));
-            UTexture2D* Magenta = UTexture2D::CreateTransient(1, 1, PF_B8G8R8A8);
-            FColor* Texel = static_cast<FColor*>(Magenta->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
-            *Texel = FColor(255, 0, 255, 255);
-            Magenta->GetPlatformData()->Mips[0].BulkData.Unlock();
-            Magenta->Filter = TF_Nearest;
-            Magenta->UpdateResource();
             Saved->Reset();
+            // The head's own material (made for skeletal meshes) with every texture a 1x1 magenta one.
+            UTexture2D* Texture = UTexture2D::CreateTransient(1, 1, PF_B8G8R8A8);
+            *static_cast<FColor*>(Texture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE)) =
+                FColor(255, 0, 255, 255);
+            Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
+            Texture->Filter = TF_Nearest;
+            Texture->UpdateResource();
             for (USkeletalMeshComponent* Body : {Pawn->GetBodyMesh(), Pawn->GetFirstPersonBodyMesh()})
             {
                 const int32 Head = Body->GetMaterialIndex(FirstPersonHeadMaterial);
                 Saved->Add({Head, Body->GetMaterial(Head)});
-                UMaterialInstanceDynamic* Dynamic = Body->CreateDynamicMaterialInstance(Head);
+                UMaterialInstanceDynamic* Magenta = Body->CreateDynamicMaterialInstance(Head);
                 TArray<FMaterialParameterInfo> Infos;
                 TArray<FGuid> Ids;
-                Dynamic->GetAllTextureParameterInfo(Infos, Ids);
+                Magenta->GetAllTextureParameterInfo(Infos, Ids);
                 for (const FMaterialParameterInfo& Info : Infos)
-                    Dynamic->SetTextureParameterValueByInfo(Info, Magenta);
+                    Magenta->SetTextureParameterValueByInfo(Info, Texture);
             }
         },
-        [] {});
+        [this, Saved]
+        {
+            const USkeletalMeshComponent* World = Pawn->GetBodyMesh();
+            const auto* Magenta =
+                Saved->Num() ? Cast<UMaterialInstanceDynamic>(World->GetMaterial((*Saved)[0].Key)) : nullptr;
+            Record(TEXT("body fp head: both heads drawn magenta for the pixel count"), Magenta != nullptr,
+                TEXT("Scripts/CountHeadPixels.py counts them in the -body-fp-head-* shots"));
+        });
     for (const TCHAR* Stance : {TEXT("stand"), TEXT("crouch")})
         for (const double Pitch : {-89.9, -60., -30., 0., 30., 60., 89.9})
         {
@@ -620,6 +628,8 @@ void UFoundationRuntimeProbe::AddFirstPersonBodyCases()
             Controller->SetControlRotation(FRotator(0, 0, 0));
         },
         [Shot] { Shot(TEXT("fp-head-control-front")); });
+    // A shot is taken at the end of its frame, after the next case's Start: give it a frame before restoring.
+    AddCase(TEXT("body fp head control flush"), .3, [] {}, [] {});
     AddCase(
         TEXT("body fp head restore"), .3,
         [this, Saved]
@@ -656,6 +666,7 @@ void UFoundationRuntimeProbe::AddFirstPersonBodyCases()
                 Sun->IsValid() && Pawn->IsBodyShadowOnly() && Pawn->IsFirstPersonBodyShown(),
                 Sun->IsValid() ? TEXT("directional light at pitch -15, yaw 0") : TEXT("no directional light"));
         });
+    AddCase(TEXT("body fp shadow flush"), .3, [] {}, [] {});
     AddCase(
         TEXT("body fp shadow restore"), .2,
         [SunBefore, Sun]

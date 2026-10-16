@@ -22,7 +22,8 @@ struct FFoundationFirstPersonView
     double LowWeight = 0;
 };
 
-// The tuning, all proposed values (PLAN.md 3.4) for Jesus to try: foundation.Body.FP.* override them at runtime.
+// The tuning: the standing values are PLAN.md 3.4's proposal; the crouched ones Jesus picked from the crouch sweep
+// (2026-10-16, setting B: clearance 23.1 cm). foundation.Body.FP.* override them at runtime.
 struct FFoundationFirstPersonTuning
 {
     // The corrections blend in by smoothstep from looking this far down (degrees, negative = down) ...
@@ -30,17 +31,17 @@ struct FFoundationFirstPersonTuning
     // ... to fully at this pitch.
     double EndPitchDeg = -75;
     // Hips moved back at full blend (cm), standing and crouched.
-    double PelvisBackStandCm = 10, PelvisBackCrouchCm = 15;
+    double PelvisBackStandCm = 10, PelvisBackCrouchCm = 22;
     // neck_01 at least this far behind the eye (cm, along the view), at no blend and full blend, standing and crouched.
-    double AnchorStandCm[2] = {4, 16}, AnchorCrouchCm[2] = {10, 22};
+    double AnchorStandCm[2] = {4, 16}, AnchorCrouchCm[2] = {18, 30};
     // The chest lean is shared by spine_01 and spine_02, each at most this much (degrees).
     double MaxSpineBendDeg = 35;
     // Crouched only (scaled by the eyes' crouch, at every pitch): the hips this much lower with the legs re-solved to
     // the base pose's feet, so the shoulders and arms sit further under the low eye (cm) ...
-    double CrouchDropCm = 0;
+    double CrouchDropCm = 14;
     // ... and the chest turned this fraction of the way toward the view (spine_02, at most MaxTwistDeg), so the near
     // shoulder does not swing into the eye when the view is off the body.
-    double CrouchTwist = 0, MaxTwistDeg = 50;
+    double CrouchTwist = 1, MaxTwistDeg = 50;
 };
 
 // What one frame's corrections did, for the probe and the tests.

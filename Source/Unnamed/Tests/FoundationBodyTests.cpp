@@ -4,6 +4,10 @@
 #include "Engine/SkeletalMesh.h"
 #include "Foundation/FoundationBody.h"
 #include "UnnamedProjectSettings.h"
+#if WITH_EDITORONLY_DATA
+#include "Rendering/SkeletalMeshLODModel.h"
+#include "Rendering/SkeletalMeshModel.h"
+#endif
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -301,6 +305,42 @@ bool FFoundationBodyAssetsTest::RunTest(const FString& Parameters)
                 int32(Clip >= Look && Clip < Low ? AAT_RotationOffsetMeshSpace : AAT_None));
         }
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodyHeadSectionTest, "Unnamed.Foundation.Body.HeadSection", BodyTestFlags)
+
+bool FFoundationBodyHeadSectionTest::RunTest(const FString& Parameters)
+{
+    // The first-person copy hides the head by its material's section (M_UP_Head): that section must be the head cube
+    // (140-180 cm in the reference pose) and nothing else, and no other section may reach into it.
+#if WITH_EDITORONLY_DATA
+    auto* Mesh = Cast<USkeletalMesh>(FoundationBodyClip::GetAssetPath(
+        EFoundationBodySet::UnnamedPlayer, FoundationBodyClip::GetMeshName(EFoundationBodySet::UnnamedPlayer))
+            .TryLoad());
+    if (!TestNotNull(TEXT("SK_UnnamedPlayer"), Mesh)) return false;
+    const int32 Head = Mesh->GetMaterials().IndexOfByPredicate(
+        [](const FSkeletalMaterial& Material) { return Material.MaterialSlotName == FName(TEXT("M_UP_Head")); });
+    TestTrue(TEXT("an M_UP_Head slot"), Head != INDEX_NONE);
+    const FSkeletalMeshLODModel& Lod = Mesh->GetImportedModel()->LODModels[0];
+    for (int32 Index = 0; Index < Lod.Sections.Num(); ++Index)
+    {
+        const FSkelMeshSection& Section = Lod.Sections[Index];
+        double Low = TNumericLimits<double>::Max(), High = TNumericLimits<double>::Lowest();
+        for (const FSoftSkinVertex& Vertex : Section.SoftVertices)
+        {
+            Low = FMath::Min(Low, double(Vertex.Position.Z));
+            High = FMath::Max(High, double(Vertex.Position.Z));
+        }
+        const FString Name = FString::Printf(TEXT("section %d (material %d, %d vertices, z %.1f..%.1f cm)"), Index,
+            Section.MaterialIndex, Section.SoftVertices.Num(), Low, High);
+        AddInfo(Name);
+        if (Section.MaterialIndex == Head)
+            TestTrue(Name + TEXT(" is the head cube"), Low >= 139.5 && High <= 180.5);
+        else
+            TestTrue(Name + TEXT(" stays below the head"), High <= 140.5);
+    }
+#endif
     return true;
 }
 
