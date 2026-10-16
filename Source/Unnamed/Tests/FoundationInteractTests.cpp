@@ -1368,6 +1368,21 @@ bool FFoundationInteractClimbSurvivalTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FFoundationInteractFarmlandSurvivalTest, "Unnamed.Foundation.Interact.FarmlandSurvival", InteractTestFlags)
+bool FFoundationInteractFarmlandSurvivalTest::RunTest(const FString& Parameters)
+{
+    // Survival B5: farmland (8 moisture states) and the dirt path, every candidate on all six probes (signature 19 up,
+    // 18 elsewhere).
+    int32 Blocks = 0, States = 0;
+    CheckFamilySurvival(
+        *this, [](const FFoundationBlockType& Block)
+        { return Block.Id == TEXT("farmland") || Block.Id == TEXT("dirt_path"); }, Blocks, States);
+    TestEqual(TEXT("farmland and the dirt path"), Blocks, 2);
+    TestEqual(TEXT("their states (8 + 1)"), States, 9);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FFoundationInteractSwitchPlacementTest, "Unnamed.Foundation.Interact.SwitchPlacement", InteractTestFlags)
 bool FFoundationInteractSwitchPlacementTest::RunTest(const FString& Parameters)
 {

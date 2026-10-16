@@ -173,6 +173,9 @@ struct FFoundationResult
     bool bAte = false;
     // An axe stripped the block at Cell (step 14); State is the stripped state.
     bool bStripped = false;
+    // A hoe tilled (bTilled) or a shovel flattened (bFlattened) the block at Cell (survival B5); State is its new
+    // state.
+    bool bTilled = false, bFlattened = false;
     // A bucket (step 17) took the source at Cell (bFilled) or poured one there (bEmptied); State is the cell's new
     // state.
     bool bFilled = false, bEmptied = false;
@@ -392,7 +395,11 @@ enum class EFoundationEventKind : uint8
     Blocked,
     // An axe hit disabled a raised shield (step 19b): Item the shield, LocationCm the feet, Interaction its disabled
     // sound, Amount the cooldown in ticks.
-    BlockingDisabled
+    BlockingDisabled,
+    // A hoe tilled a block (Tilled) or a shovel flattened one (Flattened) (survival B5): Cell, State (the new state),
+    // Item (the tool).
+    Tilled,
+    Flattened
 };
 
 // What a scheduled block tick does (FFoundationAuthority::ScheduleBlockTick; survival B3b).
@@ -723,7 +730,7 @@ public:
     // Diagnostics.
     int32 Placements = 0, Breaks = 0, Hits = 0, Rejections = 0, Duplicates = 0, Resets = 0, Pops = 0;
     int32 ItemsSpawned = 0, ItemsPickedUp = 0, ItemsThrown = 0, ItemsMerged = 0, ItemsDespawned = 0, ItemsEaten = 0,
-          Strips = 0, BucketUses = 0, AttacksBlocked = 0;
+          Strips = 0, BucketUses = 0, AttacksBlocked = 0, Tills = 0;
     int32 OrbsSpawned = 0, OrbsPickedUp = 0, OrbsMerged = 0, OrbsDespawned = 0;
     int32 MobsSpawned = 0, MobsKilled = 0, MobPaths = 0, MobEggs = 0, MobGrazes = 0;
     // Passive spawning: columns seen loaded, packs spawned, the mobs in them.
@@ -804,6 +811,10 @@ private:
         EFoundationPlayerMode Mode);
     // Axe stripping (step 14): true when the hand's axe stripped the hit block (Result filled). Adventure passes.
     bool StripOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
+        FFoundationResult& Result, EFoundationPlayerMode Mode);
+    // Hoe tilling and shovel flattening (survival B5, FoundationTilling): true when the hand's hoe or shovel changed
+    // the hit block (Result filled). Adventure passes.
+    bool TillOn(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationHit& Hit,
         FFoundationResult& Result, EFoundationPlayerMode Mode);
     void UseEntity(FFoundationPlayer& Player, const FFoundationCommand& Command, FFoundationResult& Result);
     void MineStart(FFoundationPlayer& Player, const FFoundationCommand& Command, const FFoundationVitals& Vitals,
