@@ -6,6 +6,7 @@
 #include "Foundation/FoundationBreakEffects.h"
 #include "Foundation/FoundationController.h"
 #include "Foundation/FoundationInteractionView.h"
+#include "Foundation/FoundationItemMesh.h"
 #include "Foundation/FoundationPlayground.h"
 #include "Input/UnnamedInputSubsystem.h"
 #include "Foundation/FoundationPawn.h"
@@ -34,9 +35,8 @@ namespace
         return Previous;
     }
 
-    // The strike's tool tip in the tool's frame (UE axes: the grip socket maps the tool's +Y to UE -Y; M0's pickaxe
-    // gate) and the contact target in the body's component space (the manifest's target, Blender m -> cm).
-    const FVector StrikeTipCm(0, -42.75, 26.5);
+    // The contact target in the body's component space (the manifest's target, Blender m -> cm); the tool's point is
+    // FoundationBodyGrip::GetStrikeTipCm in the grip's frame.
     const FVector StrikeTargetCm(-5, 80, 125);
 
     // The arms' bones relative to spine_02: the body as drawn against StrikeA's own pose at Time. The worst rotation
@@ -140,7 +140,9 @@ void UFoundationRuntimeProbe::AddStrikeBodyCases()
     };
     auto SocketError = [](const UStaticMeshComponent* Tool, const USkeletalMeshComponent* Body, double& OutDegrees)
     {
-        const FTransform Socket = Body->GetSocketTransform(FoundationBodyGrip::GetGripSocket());
+        // The item model sits at MakeItemGrip in the socket's frame.
+        const FTransform Socket = FoundationBodyGrip::MakeItemGrip(UFoundationInteractionView::HeldModelBlockCm) *
+            Body->GetSocketTransform(FoundationBodyGrip::GetGripSocket());
         const FTransform Drawn = Tool->GetComponentTransform();
         OutDegrees = FMath::RadiansToDegrees(Socket.GetRotation().AngularDistance(Drawn.GetRotation()));
         return FVector::Dist(Socket.GetLocation(), Drawn.GetLocation());
@@ -306,7 +308,9 @@ void UFoundationRuntimeProbe::AddStrikeBodyCases()
                     if (S.K == 3)
                     {
                         // The tip at the contact, in the world body's component space, against the authored target.
-                        const FVector Tip = Pawn->GetBodyTool()->GetComponentTransform().TransformPosition(StrikeTipCm);
+                        const FVector Tip = Pawn->GetBodyTool()->GetComponentTransform().TransformPosition(
+                            FVector(FoundationItemMesh::ToUnreal(
+                                FVector3f(5, 12.5f, 8), UFoundationInteractionView::HeldModelBlockCm)));
                         S.TipErrorCm = FVector::Dist(
                             Pawn->GetBodyMesh()->GetComponentTransform().InverseTransformPosition(Tip), StrikeTargetCm);
                     }

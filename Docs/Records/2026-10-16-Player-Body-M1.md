@@ -93,10 +93,13 @@ picked setting B (drop 14, anchor 18-30, back 22, twist 1): 23.1 cm.
 ## M1b: the pickaxe in the real hand
 
 - **What changed.** The pickaxes are body-held (`FoundationBodyGrip::IsBodyHeld`).
-  - `SM_UP_Pickaxe` hangs on `hand_r_grip` of both bodies with an identity transform (its origin and axes are the
-    grip's).
-  - It is drawn with flat colours on the dev grid material: a wood handle, the head tinted by tier (provisional; the
-    tool has no texture).
+  - The body holds the game's own item: the view hands the pawn its camera model of the main-hand item (the extruded
+    sprite and its material, `AFoundationPawn::SetBodyToolModel`).
+  - `FoundationBodyGrip::MakeItemGrip` lays it on `hand_r_grip` of both bodies: the handle along the grip, the fist
+    at the butt, the sprite's top-left point on the strike's authored contact. That takes 4.41 cm a pixel, a 70 cm
+    sprite; vanilla's third-person hand draws it at 85 cm.
+  - A first version held the builder's block pickaxe `SM_UP_Pickaxe` in flat colours. Jesus: "The game should
+    already have a pickaxe" — replaced the same day.
   - The world body's tool casts the owner's shadow in first person; the copy's tool is owner-only.
   - The view hides its camera pickaxe while the owner sees the body's (`AFoundationPawn::IsMainItemInBody`). Other
     items stay on the camera (LEGACY-HAND).
@@ -128,8 +131,13 @@ picked setting B (drop 14, anchor 18-30, back 22, twist 1): 23.1 cm.
   - Stills: `runtime-60-body-strike-{fp,back}-frame03..15.png` (paused at exact frames), `strike-contact.png`.
   - Not made: the plan's 60 fps and 1/3-speed MP4s. The stills at exact frames and the arm-angle check stand in for
     them.
+- **Generated world.** `-Suite views -ExtraArgs '-FoundationViewsBody'` shoots the body at the dev seed's poses:
+  first person down, ahead, crouched and at the strike's contact; F5 back, back mid-strike and front. Run
+  `Tests/Evidence/2026-10-16/Generated-views/Runtime-body-203605`: 43 checks, 0 failures, `generated-body-contact.png`.
+- **The spring arm by default.** `foundation.View.SpringArm` is 1 since 2026-10-16 (Jesus): F5's back view is the
+  over-the-shoulder spring arm; 0 brings vanilla's back view.
 - **For Jesus to judge.**
-  - The tool's look: flat-coloured blocks, or the game's own item sprite.
+  - The pickaxe's size in first person (70 cm so its point meets the contact).
   - The aim limits.
   - The wind-up (frame 6) brings the fist close past the camera in first person.
 

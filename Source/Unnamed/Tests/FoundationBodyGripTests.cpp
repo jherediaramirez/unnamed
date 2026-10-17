@@ -1,6 +1,7 @@
 #include "Misc/AutomationTest.h"
 #include "Foundation/FoundationBodyGrip.h"
 #include "Foundation/FoundationBodyPose.h"
+#include "Foundation/FoundationItemMesh.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 namespace
@@ -112,6 +113,32 @@ bool FFoundationBodyStrikeTest::RunTest(const FString& Parameters)
         Action.Advance(1 / 60., Frame);
         TestTrue(TEXT("aim clamped to -45 / 30"), Action.AimPitchDeg == -45 && Action.AimYawDeg == 30);
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFoundationBodyItemGripTest, "Unnamed.Foundation.Body.ItemGrip", GripTestFlags)
+
+bool FFoundationBodyItemGripTest::RunTest(const FString& Parameters)
+{
+    // The pickaxe sprite (model pixels) through the grip, at the view's 50 cm block: the point on the contact, the
+    // handle along -Y with the fist near the butt, the sprite flat in the tool's YZ plane.
+    const double BlockCm = 50;
+    const FTransform Grip = FoundationBodyGrip::MakeItemGrip(BlockCm);
+    auto Tool = [&Grip, BlockCm](double X, double Y)
+    {
+        return Grip.TransformPosition(
+            FVector(FoundationItemMesh::ToUnreal(FVector3f(float(X), float(Y), 8.f), BlockCm)));
+    };
+    TestTrue(TEXT("the pick's point on the authored contact"),
+        Tool(5, 12.5).Equals(FoundationBodyGrip::GetStrikeTipCm(), 1e-3));
+    const FVector Butt = Tool(2, 1), Corner = Tool(13.5, 12.5), Other = Tool(13.5, 4);
+    TestTrue(TEXT("the butt just behind the fist"), Butt.Y > 0 && Butt.Y < 5 && FMath::Abs(Butt.Z) < 1e-3);
+    TestTrue(TEXT("the head's corner out along the handle"), Corner.Y < -60 && FMath::Abs(Corner.Z) < 1e-3);
+    TestTrue(TEXT("the other point mirrors the first"),
+        FMath::IsNearlyEqual(Other.Y, -42.75, 1e-3) && FMath::IsNearlyEqual(Other.Z, -26.5, 1e-3));
+    TestTrue(TEXT("the sprite lies flat in the tool's YZ plane"),
+        FMath::Abs(Butt.X) < 1e-3 && FMath::Abs(Corner.X) < 1e-3 && FMath::Abs(Other.X) < 1e-3);
+    TestEqual(TEXT("4.41 cm a pixel"), Grip.GetScale3D().X * BlockCm / 16, 4.409, .001);
     return true;
 }
 

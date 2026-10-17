@@ -47,9 +47,10 @@ namespace
              "in a 0.6 x 0.6 box with the eyes at 0.4, kept while sprinting in water; it stands up only where the "
              "standing (else crouching) box fits."),
         ECVF_Default);
-    TAutoConsoleVariable<int32> CVarSpringArm(TEXT("foundation.View.SpringArm"), 0,
-        TEXT("Third-person preview: 1 turns F5's back view into an over-the-shoulder spring arm (325 cm arm, 55 cm "
-             "right, 30 cm up, smoothed, pulled in by the world's blocks); 0 vanilla's back view."),
+    // On by default since 2026-10-16 (Jesus): F5's back view is the spring arm; 0 brings vanilla's back.
+    TAutoConsoleVariable<int32> CVarSpringArm(TEXT("foundation.View.SpringArm"), 1,
+        TEXT("Third-person view: 1 (default) turns F5's back view into an over-the-shoulder spring arm (325 cm arm, 55 "
+             "cm right, 30 cm up, smoothed, pulled in by the world's blocks); 0 vanilla's back view."),
         ECVF_Default);
     TAutoConsoleVariable<int32> CVarDeathScreen(TEXT("foundation.Death.Screen"), 1,
         TEXT("Death (step 11a): 1 death holds the death screen until its Respawn button (enabled 20 ticks after "

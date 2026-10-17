@@ -4,7 +4,7 @@ Short dated records of completed work, problems, fixes, and remaining gaps.
 
 ## October 16, 2026
 
-- [The full-body player, M1: the Unnamed Player in both views, and the strike in its hand](2026-10-16-Player-Body-M1.md): record and handoff, branches `feature/fp-body-m1a` and `-m1b` (merged). M1b: the pickaxe in the real right hand, StrikeA on the swing clock (contact frame 9 at step 3). `foundation.Body.Set 1`: the Unnamed Player in every view with a headless first-person copy (legs and feet looking down, the shadow keeps the head); M1a's acceptance table measured at 30/60/120 fps; the crouch stop condition and Jesus's setting B. Next: M2, the rest of the existing library.
+- [The full-body player, M1: the Unnamed Player in both views, and the strike in its hand](2026-10-16-Player-Body-M1.md): record and handoff, branches `feature/fp-body-m1a` and `-m1b` (merged). M1b: the game's own pickaxe in the real right hand, StrikeA on the swing clock (contact frame 9 at step 3); the spring arm is F5's default back view. `foundation.Body.Set 1`: the Unnamed Player in every view with a headless first-person copy (legs and feet looking down, the shadow keeps the head); M1a's acceptance table measured at 30/60/120 fps; the crouch stop condition and Jesus's setting B. Next: M2, the rest of the existing library.
 
 ## October 15, 2026
 

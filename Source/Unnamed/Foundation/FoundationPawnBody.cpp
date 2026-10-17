@@ -5,10 +5,7 @@
 #include "Foundation/FoundationProfile.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Engine/StaticMesh.h"
 #include "Foundation/FoundationAuthority.h"
-#include "Materials/MaterialInstanceDynamic.h"
-#include "UnnamedProjectSettings.h"
 #include "Engine/SkeletalMesh.h"
 #include "Rendering/SkeletalMeshRenderData.h"
 #include "UnnamedLog.h"
@@ -132,32 +129,31 @@ USkeletalMeshComponent* AFoundationPawn::MakeBodyComponent(USkeletalMesh* Mesh, 
 
 UStaticMeshComponent* AFoundationPawn::MakeBodyTool(USkeletalMeshComponent* Body, FName Name)
 {
-    auto* Mesh = Cast<UStaticMesh>(
-        FoundationBodyClip::GetAssetPath(EFoundationBodySet::UnnamedPlayer, TEXT("SM_UP_Pickaxe")).TryLoad());
-    if (!Body || !Mesh) return nullptr;
+    if (!Body) return nullptr;
     auto* Tool = NewObject<UStaticMeshComponent>(this, Name);
     Tool->SetupAttachment(Body, FoundationBodyGrip::GetGripSocket());
-    Tool->SetStaticMesh(Mesh);
     Tool->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Tool->SetGenerateOverlapEvents(false);
     Tool->SetHiddenInGame(true);
     Tool->RegisterComponent();
-    // Flat colours on the dev grid material, its lines off (the tool's two sections: handle, head; provisional until
-    // the tool has a texture).
-    if (UMaterialInterface* Grid = UUnnamedProjectSettings::Get().DevGridMaterial.LoadSynchronous())
-        for (int32 Slot = 0; Slot < Tool->GetNumMaterials(); ++Slot)
-        {
-            UMaterialInstanceDynamic* Flat = UMaterialInstanceDynamic::Create(Grid, Tool);
-            for (const TCHAR* Line : {TEXT("SeamOpacity"), TEXT("LabelOpacity"), TEXT("CrossOpacity"),
-                     TEXT("MajorLineOpacity"), TEXT("AxisLines"), TEXT("TileVariation"), TEXT("ClearCoat")})
-                Flat->SetScalarParameterValue(Line, 0);
-            Flat->SetVectorParameterValue(TEXT("Color"),
-                Slot == 0 ? FoundationBodyGrip::GetHandleColor() : FoundationBodyGrip::GetHeadColor(NAME_None));
-            Tool->SetMaterial(Slot, Flat);
-        }
     return Tool;
 }
 
+void AFoundationPawn::SetBodyToolModel(FName Item, UStaticMesh* Mesh, UMaterialInterface* Material, double BlockCm)
+{
+    if (!BodyTool) return;
+    const FName Shown = Mesh && Material ? Item : NAME_None;
+    if (Shown == BodyToolItem && BodyTool->GetStaticMesh() == Mesh) return;
+    BodyToolItem = Shown;
+    const FTransform Grip = FoundationBodyGrip::MakeItemGrip(BlockCm);
+    for (UStaticMeshComponent* Tool : {BodyTool.Get(), FirstPersonBodyTool.Get()})
+        if (Tool)
+        {
+            Tool->SetStaticMesh(Shown.IsNone() ? nullptr : Mesh);
+            if (!Shown.IsNone()) Tool->SetMaterial(0, Material);
+            Tool->SetRelativeTransform(Grip);
+        }
+}
 void AFoundationPawn::CreateBody()
 {
     RequestedBodySet = GetRequestedBodySet();
@@ -298,8 +294,9 @@ void AFoundationPawn::UpdateBody(
             const FFoundationItemInstance& Main = Player->Inventory.GetHand(EFoundationHand::Main);
             if (!Main.IsEmpty()) Item = Authority->Rules.GetItem(Main.Item).Id;
         }
+    // Held once the view has handed over this item's model (a frame after a switch: the view draws after the pawn).
     const bool bHolding = BodySet == EFoundationBodySet::UnnamedPlayer && BodyTool &&
-        FoundationBodyGrip::IsBodyHeld(Item) && !Vitals.IsDead();
+        FoundationBodyGrip::IsBodyHeld(Item) && Item == BodyToolItem && !Vitals.IsDead();
     if (BodySet == EFoundationBodySet::UnnamedPlayer)
     {
         FFoundationBodyActionFrame Action;
@@ -364,16 +361,8 @@ void AFoundationPawn::UpdateBody(
     if (FirstPersonBodyMesh) ShowBody(FirstPersonBodyMesh, bCopyShown, bBody);
 
     // The tool follows its body: the world one as the world body (the owner's shadow in first person), the copy's
-    // with the copy; the head tinted for the item. While the owner sees it in the body's hand the view hides its
-    // camera copy (no item is drawn twice).
-    if (bHolding && Item != BodyToolItem)
-    {
-        BodyToolItem = Item;
-        for (UStaticMeshComponent* Tool : {BodyTool.Get(), FirstPersonBodyTool.Get()})
-            if (auto* Head = Tool && Tool->GetNumMaterials() > 1 ? Cast<UMaterialInstanceDynamic>(Tool->GetMaterial(1))
-                                                                 : nullptr)
-                Head->SetVectorParameterValue(TEXT("Color"), FoundationBodyGrip::GetHeadColor(Item));
-    }
+    // with the copy. While the owner sees it in the body's hand the view hides its camera copy (no item is drawn
+    // twice).
     if (BodyTool)
     {
         const bool bShowTool = bHolding && bWorldShown;
