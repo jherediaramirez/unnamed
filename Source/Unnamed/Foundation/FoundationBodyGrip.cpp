@@ -1,4 +1,5 @@
 #include "Foundation/FoundationBodyGrip.h"
+#include "Foundation/FoundationItemMesh.h"
 
 namespace
 {
@@ -15,25 +16,33 @@ bool FoundationBodyGrip::IsBodyHeld(FName ItemId)
     return !ItemId.IsNone() && ItemId.ToString().EndsWith(TEXT("_pickaxe"));
 }
 
-FLinearColor FoundationBodyGrip::GetHandleColor()
+FTransform FoundationBodyGrip::MakeItemGrip(double BlockCm)
 {
-    // The builder's M_Prop_Wood (up_build.py build_props).
-    return FLinearColor(.42f, .29f, .16f);
+    // The pickaxe sprite in model pixels (Mojang, Y up, the slab's middle at Z 8): the handle's centre line runs at 45
+    // degrees from the butt (2, 1) to the head's outer corner (13.5, 12.5); the head's points are (5, 12.5) and
+    // (13.5, 4), mirror images across it.
+    auto Model = [BlockCm](double X, double Y)
+    { return FVector(FoundationItemMesh::ToUnreal(FVector3f(float(X), float(Y), 8.f), BlockCm)); };
+    const FVector Butt = Model(2, 1), Corner = Model(13.5, 12.5), Point = Model(5, 12.5);
+    const FVector Along = (Corner - Butt).GetSafeNormal();
+    const FVector ToPoint = Point - Butt;
+    const double PointAlong = FVector::DotProduct(ToPoint, Along);
+    const FVector Across = ToPoint - Along * PointAlong;
+    const FVector Side = Across.GetSafeNormal();
+    const FVector Normal = FVector::CrossProduct(Along, Side);
+    // The point lands on the contact: its distance off the handle sets the scale, its distance along it the grip.
+    const FVector Tip = GetStrikeTipCm();
+    const double Scale = Tip.Z / Across.Size();
+    const FVector Grip = Butt + Along * (PointAlong - FMath::Abs(Tip.Y) / Scale);
+    // Along -> tool -Y (toward the head), Side -> +Z (toward the point), their normal -> -X: rows are the images of
+    // the mesh axes.
+    const FVector ToAlong(0, -1, 0), ToSide(0, 0, 1), ToNormal = FVector::CrossProduct(ToAlong, ToSide);
+    FMatrix Rotation = FMatrix::Identity;
+    for (int32 Axis = 0; Axis < 3; ++Axis)
+        Rotation.SetAxis(Axis, ToAlong * Along[Axis] + ToSide * Side[Axis] + ToNormal * Normal[Axis]);
+    const FQuat Turn(Rotation);
+    return FTransform(Turn, -Turn.RotateVector(Grip * Scale), FVector(Scale));
 }
-
-FLinearColor FoundationBodyGrip::GetHeadColor(FName ItemId)
-{
-    // Flat stand-ins for the vanilla tiers until the tool gets its own texture (provisional).
-    const FString Id = ItemId.ToString();
-    if (Id.StartsWith(TEXT("wooden"))) return FLinearColor(.55f, .40f, .22f);
-    if (Id.StartsWith(TEXT("iron"))) return FLinearColor(.80f, .80f, .80f);
-    if (Id.StartsWith(TEXT("golden"))) return FLinearColor(.95f, .78f, .20f);
-    if (Id.StartsWith(TEXT("diamond"))) return FLinearColor(.30f, .88f, .82f);
-    if (Id.StartsWith(TEXT("netherite"))) return FLinearColor(.27f, .24f, .25f);
-    // Stone, and the builder's M_Prop_PickStone.
-    return FLinearColor(.50f, .50f, .52f);
-}
-
 void FFoundationBodyAction::Reset()
 {
     bStriking = false;

@@ -9,6 +9,7 @@
 #include "Foundation/FoundationPawn.h"
 #include "Foundation/FoundationProfile.h"
 #include "Foundation/FoundationVitals.h"
+#include "Input/UnnamedInputSubsystem.h"
 #include "Menu/MenuPreferences.h"
 #include "Storage/VoxelColumn.h"
 #include "Voxel/VoxelColumnPipeline.h"
@@ -936,6 +937,115 @@ void UFoundationRuntimeProbe::AddViewsCases()
                 });
         return Pose;
     };
+
+    // -FoundationViewsBody: the Unnamed Player at each pose instead of the general views: holding the real pickaxe,
+    // looking down, ahead and crouched in first person, the strike's contact (paused on frame 9) in first person and
+    // the back view, and the back and front views (shots <report>-views-<pose>-body-*.png).
+    if (FParse::Param(FCommandLine::Get(), TEXT("FoundationViewsBody")))
+    {
+        AddCase(
+            TEXT("views body pickaxe"), .4,
+            [this, Authority]
+            {
+                FFoundationAuthority& A = Authority();
+                Pawn->Interaction.SetCreativeSlot(A, Pawn->Vitals, 0, TEXT("iron_pickaxe"), 1);
+                Pawn->Interaction.SelectSlot(A, Pawn->Vitals, 0);
+            },
+            [this, Holding]
+            {
+                Record(TEXT("views body: holding the iron pickaxe, the Unnamed Player"),
+                    Holding(TEXT("iron_pickaxe")) && Pawn->GetBodySet() == EFoundationBodySet::UnnamedPlayer,
+                    FoundationBodyClip::GetMeshName(Pawn->GetBodySet()));
+            });
+        auto Sneak = [this](bool bDown)
+        {
+            const FKey Key = Controller->GetInputSubsystem()->GetCurrentKey(TEXT("key.sneak"));
+            if (DownKeys.Contains(Key) != bDown) PressKey(Key, bDown);
+        };
+        // The strike drawn at its contact: a click, then the simulation paused on step start + 2 (drawn at alpha 1,
+        // phase 3 / 6: frame 9); the shot, then the simulation resumes.
+        auto Strike = [this, ShotBase](const FString& Name, int32 View, FRotator Look)
+        {
+            AddCase(
+                TEXT("views ") + Name, 1.2,
+                [this, View, Look]
+                {
+                    Pawn->SetPerspective(View);
+                    Controller->SetControlRotation(Look);
+                    PressKey(EKeys::LeftMouseButton, true);
+                    PressKey(EKeys::LeftMouseButton, false);
+                    FrameHook = [this]
+                    {
+                        const FFoundationBodyAction& Action = Pawn->BodyAction;
+                        if (Pawn->IsSimulationEnabled() && Action.bStriking &&
+                            Pawn->Interaction.Step >= Action.StartStep + 2)
+                            Pawn->SetSimulationEnabled(false);
+                    };
+                },
+                [this, ShotBase, Name]
+                {
+                    Record(TEXT("views shot ") + Name, !Pawn->IsSimulationEnabled() && Pawn->BodyAction.bStriking,
+                        FString::Printf(TEXT("strike frame %.1f"), Pawn->BodyAction.StrikeTime * 60));
+                    FScreenshotRequest::RequestScreenshot(ShotBase + Name + TEXT(".png"), true, false);
+                });
+            AddCase(TEXT("views flush ") + Name, .3, [this] { Pawn->SetSimulationEnabled(true); }, [] {});
+        };
+        for (const TCHAR* PoseName : {TEXT("day-open"), TEXT("forest"), TEXT("water"), TEXT("cave")})
+        {
+            const FViewsPose* Pose = FindPose(PoseName);
+            if (!Pose) continue;
+            const FString Base = FString(PoseName) + TEXT("-body-");
+            const double Yaw = Pose->Yaw, Pitch = Pose->Pitch;
+            Go(PoseName, PoseStance(*Pose));
+            Shot(
+                Base + TEXT("fp-down"),
+                [this, Yaw]
+                {
+                    Pawn->SetPerspective(0);
+                    Controller->SetControlRotation(FRotator(-75, Yaw, 0));
+                },
+                [this](FString& Detail)
+                {
+                    Detail = Pawn->Simulation.Feet.ToCompactString();
+                    return Pawn->IsFirstPersonBodyShown() && Pawn->IsMainItemInBody();
+                });
+            Shot(
+                Base + TEXT("fp-ahead"),
+                [this, Yaw, Pitch] { Controller->SetControlRotation(FRotator(Pitch, Yaw, 0)); },
+                [this](FString& Detail) { return Pawn->IsFirstPersonBodyShown(); });
+            Shot(
+                Base + TEXT("fp-crouch"),
+                [this, Sneak, Yaw]
+                {
+                    Sneak(true);
+                    Controller->SetControlRotation(FRotator(-60, Yaw, 0));
+                },
+                [this](FString& Detail) { return Pawn->Simulation.bCrouched && Pawn->IsFirstPersonBodyShown(); });
+            AddCase(TEXT("views body stand ") + FString(PoseName), .4, [Sneak] { Sneak(false); }, [] {});
+            Strike(Base + TEXT("fp-strike"), 0, FRotator(FMath::Max(Pitch, 0.), Yaw, 0));
+            Shot(
+                Base + TEXT("back"),
+                [this, Yaw]
+                {
+                    Pawn->SetPerspective(1);
+                    Controller->SetControlRotation(FRotator(-10, Yaw, 0));
+                },
+                [this](FString& Detail) { return Pawn->IsBodyShown(); });
+            Strike(Base + TEXT("back-strike"), 1, FRotator(0, Yaw, 0));
+            Shot(
+                Base + TEXT("front"),
+                [this, Yaw]
+                {
+                    Pawn->SetPerspective(2);
+                    Controller->SetControlRotation(FRotator(-10, Yaw, 0));
+                },
+                [this](FString& Detail) { return Pawn->IsBodyShown(); });
+            AddCase(
+                TEXT("views body first person ") + FString(PoseName), .3, [this] { Pawn->SetPerspective(0); }, [] {});
+        }
+        Restore();
+        return;
+    }
     // A general view: holding stone at the pose (the feet within a block of its feet, grounded, the eyes' cell free of
     // collision), defaults, at the time of day given.
     auto General = [this, Shot, SetTime, Voxel, View, Holding, Describe, Authority, CellMin](

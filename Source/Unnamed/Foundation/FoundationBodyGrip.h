@@ -12,10 +12,18 @@ namespace FoundationBodyGrip
     // The items the body holds itself (the camera's held copy hides while it does): the pickaxes. The other items stay
     // on the camera (PLAN's LEGACY-HAND) until their clips come.
     UNNAMED_API bool IsBodyHeld(FName ItemId);
-    // SM_UP_Pickaxe's colours (its sections: 0 the handle, 1 the head), the head by the pickaxe's material.
-    UNNAMED_API FLinearColor GetHandleColor();
-    UNNAMED_API FLinearColor GetHeadColor(FName ItemId);
-    // The grip socket on SK_UnnamedPlayer; SM_UP_Pickaxe's origin and axes are the grip's (identity attachment).
+    // The held item's own model (the extruded sprite the view draws on the camera, built at BlockCm per block) placed
+    // in the grip socket's tool frame: the handle along the grip (-Y toward the head), the fist at the butt, the
+    // sprite's flat in the tool's YZ plane and its top-left pick point on the strike's authored contact point
+    // (StrikeTipCm). Vanilla's pickaxe sprites share one shape; the scale (4.41 cm a pixel, a 70 cm sprite) is what
+    // lands the point on the contact (vanilla's third-person hand draws it at 85 cm).
+    UNNAMED_API FTransform MakeItemGrip(double BlockCm);
+    // The strike's tool tip in the grip's tool frame (UE axes; the authored contact point, SM_UP_Pickaxe's tip).
+    inline FVector GetStrikeTipCm()
+    {
+        return FVector(0, -42.75, 26.5);
+    }
+    // The grip socket on SK_UnnamedPlayer (its tool frame is SM_UP_Pickaxe's: origin the grip, +Z toward the point).
     inline const TCHAR* GetGripSocket()
     {
         return TEXT("hand_r_grip");

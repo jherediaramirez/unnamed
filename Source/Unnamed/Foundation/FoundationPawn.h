@@ -20,6 +20,8 @@ class UCameraComponent;
 class USkeletalMesh;
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
+class UStaticMesh;
+class UMaterialInterface;
 
 UCLASS()
 class UNNAMED_API AFoundationPawn : public APawn
@@ -115,6 +117,9 @@ public:
     UStaticMeshComponent* GetFirstPersonBodyTool() const { return FirstPersonBodyTool; }
     // The main-hand item is drawn in the body's hand for the owner this frame: the view hides its camera copy.
     bool IsMainItemInBody() const { return bMainItemInBody; }
+    // The view hands over its model of the main-hand item (the camera's extruded sprite, built at BlockCm per block):
+    // the body's tools draw that same model in the hand (FoundationBodyGrip::MakeItemGrip). Unchanged calls are free.
+    void SetBodyToolModel(FName Item, UStaticMesh* Mesh, UMaterialInterface* Material, double BlockCm);
     // After a respawn, lab reset or teleport: the body stands facing the view, no jump or landing pending.
     void ResetBody();
 
@@ -178,7 +183,7 @@ private:
     void DestroyBody();
     // A body mesh component with the body's anim instance, placed by UpdateBody; null without its clips.
     USkeletalMeshComponent* MakeBodyComponent(USkeletalMesh* Mesh, FName Name);
-    // SM_UP_Pickaxe on a body's grip socket, hidden until held; null when the mesh is missing.
+    // A tool component on a body's grip socket, hidden and empty until the view hands over the item's model.
     UStaticMeshComponent* MakeBodyTool(USkeletalMeshComponent* Body, FName Name);
     // Places, poses and shows or hides the bodies for this frame (Eye: the rendered eyes; CameraLocation: the camera).
     void UpdateBody(
@@ -198,7 +203,8 @@ private:
     TObjectPtr<UStaticMeshComponent> BodyTool;
     UPROPERTY()
     TObjectPtr<UStaticMeshComponent> FirstPersonBodyTool;
-    // The item the tools are tinted for, and whether the owner sees the main-hand item in the body's hand.
+    // The item whose model the tools draw (from the view), and whether the owner sees the main-hand item in the body's
+    // hand.
     FName BodyToolItem;
     bool bMainItemInBody = false;
     // The set the bodies were made for (foundation.Body.Set as last read: a change remakes them) and the one they are.

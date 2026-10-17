@@ -1148,6 +1148,9 @@ void UFoundationInteractionView::UpdateHeldItem(
         (!bHeldSpecial && (bUsing || bHeldUsing) &&
             ModelChanged(ItemId, HeldModel, bUsing, EFoundationHand::Main, MainTicks)))
         SetHeldItem(ItemId, bUsing, EFoundationHand::Main, MainTicks);
+    // The body holds this same model in its real hand (the Unnamed Player's pickaxe, FoundationBodyGrip).
+    Pawn->SetBodyToolModel(HeldItemId, HeldItem->GetStaticMesh(),
+        HeldItem->GetStaticMesh() ? HeldItem->GetMaterial(0) : nullptr, HeldModelBlockCm);
     const FFoundationItemInstance* Off = Player ? &Player->Inventory.GetHand(EFoundationHand::Off) : nullptr;
     const FFoundationItemDefinition* InOff = Off && !Off->IsEmpty() ? &Authority.Rules.GetItem(Off->Item) : nullptr;
     const FName OffId = InOff && InOff->Icon != TEXT("block") ? InOff->Id : NAME_None;
