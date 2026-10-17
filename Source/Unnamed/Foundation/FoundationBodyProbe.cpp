@@ -324,7 +324,7 @@ void UFoundationRuntimeProbe::AddBodyCases()
         TEXT("body restore"), .3,
         [this]
         {
-            SetBodyProbeCVar(TEXT("foundation.View.SpringArm"), 0);
+            SetBodyProbeCVar(TEXT("foundation.View.SpringArm"), 1);
             SetBodyProbeCVar(TEXT("foundation.Body.Yaw"), 1);
             ResetPlayer();
             Pawn->SetPerspective(0);
